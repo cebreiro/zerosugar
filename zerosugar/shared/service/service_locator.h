@@ -54,7 +54,7 @@ namespace zerosugar
         const int64_t id = service_id_type::Get<T>();
         auto iter = _services.find(id);
 
-        return iter != _services.end() ? iter->second.get() : nullptr;
+        return iter != _services.end() ? static_cast<T*>(iter->second.get()) : nullptr;
     }
 
     template <std::derived_from<IService> T>
@@ -63,6 +63,31 @@ namespace zerosugar
         const int64_t id = service_id_type::Get<T>();
         auto iter = _services.find(id);
 
-        return iter != _services.end() ? iter->second.get() : nullptr;
+        return iter != _services.end() ? static_cast<const T*>(iter->second.get()) : nullptr;
     }
+
+    template <typename... TServices> requires std::conjunction_v<std::is_base_of<IService, TServices>...>
+    class ServiceLocatorT
+    {
+    public:
+        /*explicit*/ ServiceLocatorT(ServiceLocator& serviceLocator)
+            : _tuple({ serviceLocator.Find<TServices>()... })
+        {
+        }
+
+        template <typename U> requires std::disjunction_v<std::is_same<U, TServices>...>
+        auto Find() -> U*
+        {
+            return std::get<U*>(_tuple);
+        }
+
+        template <typename U> requires std::disjunction_v<std::is_same<U, TServices>...>
+        auto Find() const -> const U*
+        {
+            return std::get<U*>(_tuple);
+        }
+
+    private:
+        std::tuple<TServices*...> _tuple;
+    };
 }
