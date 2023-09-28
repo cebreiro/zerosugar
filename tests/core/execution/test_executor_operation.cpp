@@ -1,4 +1,5 @@
-#include "zerosugar/core/execution/impl/asio_executor.h"
+#include "zerosugar/core/execution/executor/executor.hpp"
+#include "zerosugar/core/execution/executor/impl/asio_executor.h"
 
 #include <atomic>
 #include <future>
@@ -7,8 +8,8 @@ class ExecutorOperationTest : public ::testing::Test
 {
 public:
     ExecutorOperationTest()
-        : _asioExecutor(4)
-        , executor(_asioExecutor)
+        : _asioExecutor(std::make_shared<zerosugar::execution::executor::AsioExecutor>(4))
+        , executor(*_asioExecutor)
     {
     }
 
@@ -16,17 +17,17 @@ public:
 
     void SetUp() override
     {
-        _asioExecutor.Run();
+        _asioExecutor->Run();
     }
 
     void TearDown() override
     {
-        _asioExecutor.Stop();
-        _asioExecutor.Join(nullptr);
+        _asioExecutor->Stop();
+        _asioExecutor->Join(nullptr);
     }
 
 private:
-    zerosugar::execution::AsioExecutor _asioExecutor;
+    std::shared_ptr<zerosugar::execution::executor::AsioExecutor> _asioExecutor;
 
 protected:
     zerosugar::execution::IExecutor& executor;

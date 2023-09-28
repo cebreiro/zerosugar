@@ -2,10 +2,12 @@
 #include <cassert>
 #include <memory>
 #include <ranges>
-#include <type_traits>
 
 namespace zerosugar
 {
+    template <typename T>
+    using PtrNotNull = T*;
+
     template <typename T>
     using UniquePtrNotNull = std::unique_ptr<T>;
 

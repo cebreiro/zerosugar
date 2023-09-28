@@ -3,13 +3,12 @@
 #include <cassert>
 #include <future>
 
-namespace zerosugar::execution
+namespace zerosugar::execution::executor
 {
     AsioExecutor::AsioExecutor(int64_t workerCount)
         : _workerCount(workerCount)
         , _workGuard(make_work_guard(_ioContext))
     {
-
     }
 
     AsioExecutor::~AsioExecutor()
@@ -29,6 +28,56 @@ namespace zerosugar::execution
     void AsioExecutor::Post(std::move_only_function<void()> function)
     {
         post(_ioContext, std::move(function));
+    }
+
+    void AsioExecutor::Dispatch(const std::function<void()>& function)
+    {
+        dispatch(_ioContext, function);
+    }
+
+    void AsioExecutor::Dispatch(std::move_only_function<void()> function)
+    {
+        dispatch(_ioContext, std::move(function));
+    }
+
+    void AsioExecutor::Delay(const std::function<void()>& function, std::chrono::milliseconds milliseconds)
+    {
+        auto timer = std::make_shared<boost::asio::steady_timer>(_ioContext);
+        timer->expires_after(milliseconds);
+        timer->async_wait([timer, function](const boost::system::error_code& ec) mutable
+            {
+                if (ec)
+                {
+                    return;
+                }
+
+                function();
+            });
+    }
+
+    void AsioExecutor::Delay(std::move_only_function<void()> function, std::chrono::milliseconds milliseconds)
+    {
+        auto timer = std::make_shared<boost::asio::steady_timer>(_ioContext);
+        timer->expires_after(milliseconds);
+        timer->async_wait([timer, function = std::move(function)](const boost::system::error_code& ec) mutable
+            {
+                if (ec)
+                {
+                    return;
+                }
+
+                function();
+            });
+    }
+
+    auto AsioExecutor::SharedFromThis() -> SharedPtrNotNull<IExecutor>
+    {
+        return shared_from_this();
+    }
+
+    auto AsioExecutor::SharedFromThis() const -> SharedPtrNotNull<const IExecutor>
+    {
+        return shared_from_this();
     }
 
     auto AsioExecutor::GetIoContext() -> boost::asio::io_context&

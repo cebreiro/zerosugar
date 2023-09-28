@@ -1,24 +1,12 @@
 #pragma once
-#include <functional>
 #include <concepts>
+#include <functional>
 #include <type_traits>
-#include <boost/system/error_code.hpp>
+#include "zerosugar/core/execution/context/execution_context.h"
+#include "zerosugar/core/execution/executor/executor_interface.h"
 
 namespace zerosugar::execution
 {
-    class IExecutor
-    {
-    public:
-        virtual ~IExecutor() = default;
-
-        virtual void Run() = 0;
-        virtual void Stop() = 0;
-        virtual void Join(std::vector<boost::system::error_code>* errors) = 0;
-
-        virtual void Post(const std::function<void()>& function) = 0;
-        virtual void Post(std::move_only_function<void()> function) = 0;
-    };
-
     template <typename T, typename... Args> requires std::invocable<T, Args...>
     void Post(IExecutor& executor, T&& function, Args&&... args)
     {
@@ -28,17 +16,22 @@ namespace zerosugar::execution
                 std::is_move_constructible_v<T>,
                 std::move_only_function<void()>, std::function<void()>>;
 
-            executor.Post(function_type(std::forward<T>(function)));
+            executor.Post(function_type([fn = std::forward<T>(function), ex = executor.SharedFromThis()]() mutable 
+                {
+                    ExecutionContext::ExecutorGuard guard(ex.get());
+                    std::invoke(fn);
+                }));
         }
         else
         {
             using function_type = std::conditional_t<
-                std::is_move_constructible_v<T> && std::conjunction_v<std::is_move_constructible<Args>...>,
+                std::is_move_constructible_v<T>&& std::conjunction_v<std::is_move_constructible<Args>...>,
                 std::move_only_function<void()>, std::function<void()>>;
 
             executor.Post(function_type(
-                [fn = std::forward<T>(function), ...args = std::forward<Args>(args)]() mutable
+                [fn = std::forward<T>(function), ...args = std::forward<Args>(args), ex = executor.SharedFromThis()]() mutable
                 {
+                    ExecutionContext::ExecutorGuard guard(ex.get());
                     std::invoke(fn, std::forward<Args>(args)...);
                 }));
         }
