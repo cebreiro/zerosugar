@@ -1,9 +1,0 @@
-file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/*.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp
-)
-
-target_sources(zerosugar_shared PRIVATE ${SRC_FILES})
-
-add_subdirectory(impl)

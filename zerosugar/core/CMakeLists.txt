@@ -6,8 +6,6 @@ target_link_libraries(zerosugar_core PUBLIC
 	spdlog::spdlog
 )
 
-add_subdirectory(execution)
-
 file(GLOB_RECURSE ZEROSUGAR_CORE_SRC_FILES CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/*.h
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
