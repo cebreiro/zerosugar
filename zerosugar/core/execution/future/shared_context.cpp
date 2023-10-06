@@ -21,20 +21,7 @@ namespace zerosugar::execution::future
 
     void SharedContextBase::Wait()
     {
-        std::unique_lock lock(_mutex);
-        _condVariable.wait(lock, [this]()
-            {
-                return !IsPending();
-            });
-    }
-
-    bool SharedContextBase::WaitFor(std::chrono::milliseconds milliseconds)
-    {
-        std::unique_lock lock(_mutex);
-        return _condVariable.wait_for(lock, milliseconds, [this]()
-            {
-                return !IsPending();
-            });
+        _status.wait(FutureStatus::Pending);
     }
 
     bool SharedContextBase::Cancel()
@@ -51,7 +38,7 @@ namespace zerosugar::execution::future
             _continuation.swap(continuation);
         }
 
-        _condVariable.notify_one();
+        _status.notify_one();
 
         if (continuation)
         {
@@ -63,15 +50,15 @@ namespace zerosugar::execution::future
 
     void SharedContextBase::OnFailure(const std::exception_ptr& exception)
     {
+        FutureStatus expected = FutureStatus::Pending;
+        if (!_status.compare_exchange_strong(expected, FutureStatus::Complete))
+        {
+            return;
+        }
+
         std::move_only_function<void()> continuation;
         {
             std::lock_guard lock(_mutex);
-
-            FutureStatus expected = FutureStatus::Pending;
-            if (!_status.compare_exchange_strong(expected, FutureStatus::Complete))
-            {
-                return;
-            }
 
             assert(!_exception);
 
@@ -79,7 +66,7 @@ namespace zerosugar::execution::future
             _continuation.swap(continuation);
         }
 
-        _condVariable.notify_one();
+        _status.notify_one();
 
         if (continuation)
         {
@@ -89,15 +76,12 @@ namespace zerosugar::execution::future
 
     void SharedContextBase::SetContinuation(std::move_only_function<void()> function)
     {
+        if (_status.load() == FutureStatus::Pending)
         {
             std::lock_guard lock(_mutex);
 
             assert(!_continuation);
-
-            if (_status.load() == FutureStatus::Pending)
-            {
-                _continuation = std::move(function);
-            }
+            _continuation = std::move(function);
         }
 
         if (function)
@@ -122,20 +106,20 @@ namespace zerosugar::execution::future
 
     void SharedContext<void>::OnSuccess()
     {
+        FutureStatus expected = FutureStatus::Pending;
+        if (!_status.compare_exchange_strong(expected, FutureStatus::Complete))
+        {
+            return;
+        }
+
         std::move_only_function<void()> continuation;
         {
             std::lock_guard lock(_mutex);
 
-            FutureStatus expected = FutureStatus::Pending;
-            if (!_status.compare_exchange_strong(expected, FutureStatus::Complete))
-            {
-                return;
-            }
-
             _continuation.swap(continuation);
         }
 
-        _condVariable.notify_one();
+        _status.notify_one();
 
         if (continuation)
         {

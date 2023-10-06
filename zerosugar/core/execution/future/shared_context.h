@@ -1,7 +1,7 @@
 #pragma once
+#include <atomic>
 #include <concepts>
 #include <mutex>
-#include <condition_variable>
 #include <functional>
 #include <optional>
 #include "zerosugar/core/execution/context/cancelable_interface.h"
@@ -30,7 +30,6 @@ namespace zerosugar::execution::future
         bool IsCanceled() const noexcept final;
 
         void Wait();
-        bool WaitFor(std::chrono::milliseconds milliseconds);
 
         bool Cancel() final;
         void OnFailure(const std::exception_ptr& exception);
@@ -42,7 +41,6 @@ namespace zerosugar::execution::future
 
     protected:
         std::mutex _mutex;
-        std::condition_variable _condVariable;
         std::move_only_function<void()> _continuation = {};
         std::exception_ptr _exception = nullptr;
         std::atomic<FutureStatus> _status = FutureStatus::Pending;
@@ -76,21 +74,21 @@ namespace zerosugar::execution::future
     template <std::move_constructible T>
     void SharedContext<T>::OnSuccess(T&& value)
     {
+        FutureStatus expected = FutureStatus::Pending;
+        if (!_status.compare_exchange_strong(expected, FutureStatus::Complete))
+        {
+            return;
+        }
+
         std::move_only_function<void()> continuation;
         {
             std::lock_guard lock(_mutex);
-
-            FutureStatus expected = FutureStatus::Pending;
-            if (!_status.compare_exchange_strong(expected, FutureStatus::Complete))
-            {
-                return;
-            }
 
             _value = std::move(value);
             _continuation.swap(continuation);
         }
 
-        _condVariable.notify_one();
+        _status.notify_one();
 
         if (continuation)
         {

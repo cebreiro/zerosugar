@@ -49,7 +49,6 @@ namespace zerosugar::execution
         bool Cancel();
 
         void Wait();
-        bool WaitFor(std::chrono::milliseconds milliseconds);
 
         auto Get() -> std::conditional_t<std::is_same_v<T, void>, void, T>;
 
@@ -108,13 +107,6 @@ namespace zerosugar::execution
     {
         assert(IsValid());
         _context->Wait();
-    }
-
-    template <typename T>
-    bool Future<T>::WaitFor(std::chrono::milliseconds milliseconds)
-    {
-        assert(IsValid());
-        return _context->WairFor(milliseconds);
     }
 
     template <typename T>
