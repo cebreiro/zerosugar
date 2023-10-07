@@ -190,17 +190,17 @@ TEST_F(AsyncEnumerableTest, YieldException)
 
             AsyncEnumerable<int32_t> asyncEnumerable = asyncEnumerableFunction(context);
 
-            try
-            {
                 while (asyncEnumerable.HasNext())
                 {
-                    (void)co_await asyncEnumerable;
+                    try
+                    {
+                        (void)co_await asyncEnumerable;
+                    }
+                    catch (...)
+                    {
+                        context.exception = std::current_exception();
+                    }
                 }
-            }
-            catch (...)
-            {
-                context.exception = std::current_exception();
-            }
 
             context.waiter.store(true);
             context.waiter.notify_one();
