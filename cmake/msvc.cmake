@@ -12,7 +12,6 @@ add_compile_definitions(
 
 if (CMAKE_CXX_FLAGS MATCHES "-fsanitize=address")
 
-    add_compile_options(/fsanitize-address-use-after-return)
     add_link_options(/INCREMENTAL:NO)
 
 elseif (POLICY CMP0141)
