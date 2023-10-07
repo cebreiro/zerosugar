@@ -9,6 +9,7 @@
 #include <functional>
 #include <mutex>
 #include <queue>
+#include <boost/container/small_vector.hpp>
 #include "zerosugar/core/execution/channel/channel_status.h"
 #include "zerosugar/core/execution/channel/channel_signal.h"
 
@@ -57,7 +58,7 @@ namespace zerosugar::execution::channel
         std::atomic<ChannelStatus> _status = ChannelStatus::Open;
         mutable std::mutex _mutex;
         std::queue<item_type> _items;
-        std::vector<std::move_only_function<void()>> _signalHandlers;
+        boost::container::small_vector<std::move_only_function<void()>, 8> _signalHandlers;
     };
 
     template <std::move_constructible T>

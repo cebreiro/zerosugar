@@ -20,6 +20,8 @@ namespace zerosugar
         bool operator!=(const ValueType& other) const;
         bool operator<(const ValueType& other) const;
 
+        static auto Default() -> ValueType;
+
     private:
         T _value = {};
     };
@@ -58,6 +60,19 @@ namespace zerosugar
     bool ValueType<T, Tag>::operator<(const ValueType& other) const
     {
         return _value < other._value;
+    }
+
+    template <std::integral T, typename Tag>
+    auto ValueType<T, Tag>::Default() -> ValueType
+    {
+        if constexpr (std::is_unsigned_v<T>)
+        {
+            return ValueType(0);
+        }
+        else
+        {
+            return ValueType(-1);
+        }
     }
 }
 
