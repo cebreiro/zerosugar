@@ -1,4 +1,5 @@
 #include "zerosugar/core/execution/executor/strand.h"
+#include "zerosugar/core/execution/executor/executor_coroutine_traits.h"
 #include "zerosugar/core/execution/executor/static_thread_pool.h"
 #include "zerosugar/core/execution/executor/impl/asio_executor.h"
 #include "zerosugar/core/execution/future/future.hpp"
@@ -477,37 +478,61 @@ TEST_F(FutureTest, Coroutine_ResumeOnOriginExecutor)
         IExecutor& executor;
         std::shared_ptr<Strand> strand1;
         std::shared_ptr<Strand> strand2;
+        std::shared_ptr<Strand> strand3;
 
-        IExecutor* executor1 = nullptr;
-        IExecutor* executor2 = nullptr;
-        IExecutor* executor3 = nullptr;
-        IExecutor* executor4 = nullptr;
-        IExecutor* executor5 = nullptr;
+        IExecutor* innerExecutor1 = nullptr;
+        IExecutor* innerExecutor2 = nullptr;
+        IExecutor* innerExecutor3 = nullptr;
+
+        IExecutor* outerExecutor1 = nullptr;
+        IExecutor* outerExecutor2 = nullptr;
+        IExecutor* outerExecutor3 = nullptr;
+
+        IExecutor* outerChangedExecutor1 = nullptr;
+        IExecutor* outerChangedExecutor2 = nullptr;
+        IExecutor* outerChangedExecutor3 = nullptr;
     };
 
     TestContext context{
         .executor = executor,
         .strand1 = std::make_shared<Strand>(executor.SharedFromThis()),
         .strand2 = std::make_shared<Strand>(executor.SharedFromThis()),
+        .strand3 = std::make_shared<Strand>(executor.SharedFromThis()),
     };
 
     auto coroutine = [](TestContext& context) -> Future<void>
         {
-            context.executor1 = ExecutionContext::GetExecutor();
+            context.outerExecutor1 = ExecutionContext::GetExecutor();
 
             co_await StartAsync(context.executor, [&context]()
                 {
-                    context.executor2 = ExecutionContext::GetExecutor();
+                    context.innerExecutor1 = ExecutionContext::GetExecutor();
                 });
 
-            context.executor3 = ExecutionContext::GetExecutor();
+            context.outerExecutor2 = ExecutionContext::GetExecutor();
 
             co_await StartAsync(*context.strand2, [&context]()
                 {
-                    context.executor4 = ExecutionContext::GetExecutor();
+                    context.innerExecutor2 = ExecutionContext::GetExecutor();
                 });
 
-            context.executor5 = ExecutionContext::GetExecutor();
+            context.outerExecutor3 = ExecutionContext::GetExecutor();
+
+            co_await *context.strand3;
+
+            context.outerChangedExecutor1 = ExecutionContext::GetExecutor();
+
+            co_await zerosugar::execution::Delay(std::chrono::milliseconds(1));
+
+            context.outerChangedExecutor2 = ExecutionContext::GetExecutor();
+
+            co_await StartAsync(*context.strand2, [&context]()
+                {
+                    context.innerExecutor3 = ExecutionContext::GetExecutor();
+                });
+
+            context.outerChangedExecutor3 = ExecutionContext::GetExecutor();
+
             co_return;
         };
 
@@ -522,9 +547,14 @@ TEST_F(FutureTest, Coroutine_ResumeOnOriginExecutor)
         }).wait();
 
     // assert
-    EXPECT_EQ(context.executor1, context.strand1.get());
-    EXPECT_EQ(context.executor2, &context.executor);
-    EXPECT_EQ(context.executor3, context.strand1.get());
-    EXPECT_EQ(context.executor4, context.strand2.get());
-    EXPECT_EQ(context.executor5, context.strand1.get());
+    EXPECT_EQ(context.innerExecutor1, &context.executor);
+    EXPECT_EQ(context.innerExecutor2, context.strand2.get());
+
+    EXPECT_EQ(context.outerExecutor1, context.strand1.get());
+    EXPECT_EQ(context.outerExecutor2, context.strand1.get());
+    EXPECT_EQ(context.outerExecutor3, context.strand1.get());
+
+    EXPECT_EQ(context.outerChangedExecutor1, context.strand3.get());
+    EXPECT_EQ(context.outerChangedExecutor2, context.strand3.get());
+    EXPECT_EQ(context.outerChangedExecutor3, context.strand3.get());
 }
