@@ -129,7 +129,9 @@ namespace zerosugar::execution
     template <std::move_constructible T, typename TChannel>
     void AsyncEnumerable<T, TChannel>::promise_type::unhandled_exception()
     {
-        _channel->Send(std::current_exception(), ChannelSignal::NotifyAll);
+        _channel->Send(std::current_exception());
+        [[maybe_unused]] const bool closed = _channel->Close();
+        assert(closed);
     }
 
     template <std::move_constructible T, typename TChannel>
