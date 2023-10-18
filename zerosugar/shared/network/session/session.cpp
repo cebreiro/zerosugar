@@ -1,6 +1,6 @@
 #include "session.h"
 
-namespace zerosugar::network
+namespace zerosugar
 {
     Session::Session(id_type id, SharedPtrNotNull<session::event_channel_type> channel,
         boost::asio::ip::tcp::socket socket, boost::asio::strand<boost::asio::io_context::executor_type> strand)
@@ -23,7 +23,7 @@ namespace zerosugar::network
             .port = _remotePort,
         };
 
-        _eventChannel->Send(std::move(event), execution::ChannelSignal::NotifyAll);
+        _eventChannel->Send(std::move(event), channel::ChannelSignal::NotifyAll);
     }
 
     void Session::StartReceive()
@@ -171,7 +171,7 @@ namespace zerosugar::network
             .errorCode = ec,
         };
 
-        _eventChannel->Send(event, execution::ChannelSignal::NotifyAll);
+        _eventChannel->Send(event, channel::ChannelSignal::NotifyAll);
     }
 
     void Session::SendReceiveEvent(Buffer buffer)
@@ -181,7 +181,7 @@ namespace zerosugar::network
             .buffer = std::move(buffer),
         };
 
-        _eventChannel->Send(std::move(event), execution::ChannelSignal::NotifyAll);
+        _eventChannel->Send(std::move(event), channel::ChannelSignal::NotifyAll);
     }
 
     void Session::ExpandReceiveBuffer()

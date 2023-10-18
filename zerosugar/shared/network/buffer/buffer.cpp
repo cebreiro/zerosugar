@@ -3,7 +3,7 @@
 #include <cassert>
 #include <numeric>
 
-namespace zerosugar::network
+namespace zerosugar
 {
     Buffer::Buffer(Buffer&& other) noexcept
         : _size(std::exchange(other._size, 0))

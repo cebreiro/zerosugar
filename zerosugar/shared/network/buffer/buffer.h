@@ -2,7 +2,7 @@
 #include <list>
 #include "zerosugar/shared/network/buffer/fragment.h"
 
-namespace zerosugar::network
+namespace zerosugar
 {
     class Buffer
     {

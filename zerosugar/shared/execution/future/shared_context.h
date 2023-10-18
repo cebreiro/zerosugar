@@ -12,9 +12,9 @@ namespace zerosugar::execution
     class IExecutor;
 }
 
-namespace zerosugar::execution::future
+namespace zerosugar::future
 {
-    class SharedContextBase : public ICancelable
+    class SharedContextBase : public execution::ICancelable
     {
     public:
         SharedContextBase(const SharedContextBase&) = delete;
@@ -35,16 +35,16 @@ namespace zerosugar::execution::future
         void OnFailure(const std::exception_ptr& exception);
 
         void SetContinuation(std::move_only_function<void()> function);
-        void SetExecutor(std::shared_ptr<IExecutor> executor) noexcept;
+        void SetExecutor(std::shared_ptr<execution::IExecutor> executor) noexcept;
 
-        auto GetExecutor() const -> IExecutor&;
+        auto GetExecutor() const ->execution::IExecutor&;
 
     protected:
         std::mutex _mutex;
         std::move_only_function<void()> _continuation = {};
         std::exception_ptr _exception = nullptr;
         std::atomic<FutureStatus> _status = FutureStatus::Pending;
-        std::shared_ptr<IExecutor> _executor;
+        std::shared_ptr<execution::IExecutor> _executor;
     };
 
     template <typename T>

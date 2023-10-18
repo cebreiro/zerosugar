@@ -3,7 +3,7 @@
 #include <cassert>
 #include <future>
 
-namespace zerosugar::execution::executor
+namespace zerosugar::execution
 {
     AsioExecutor::AsioExecutor(int64_t workerCount)
         : _workerCount(workerCount)

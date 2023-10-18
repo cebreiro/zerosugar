@@ -3,7 +3,7 @@
 #include <boost/asio.hpp>
 #include "zerosugar/shared/network/session/event.h"
 
-namespace zerosugar::network
+namespace zerosugar
 {
     class Session : public std::enable_shared_from_this<Session>
     {

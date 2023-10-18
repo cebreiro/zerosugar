@@ -9,7 +9,7 @@
 #include "zerosugar/shared/execution/context/execution_context.h"
 #include "zerosugar/shared/execution/executor/operation/post.h"
 
-namespace zerosugar::execution
+namespace zerosugar
 {
     template <std::move_constructible T, typename TChannel = Channel<T>>
     class AsyncEnumerable
@@ -30,7 +30,7 @@ namespace zerosugar::execution
             auto await_resume() -> decltype(auto);
 
         private:
-            void RegisterHandleForCoroutineResume(SharedPtrNotNull<IExecutor> ex, std::coroutine_handle<> handle);
+            void RegisterHandleForCoroutineResume(SharedPtrNotNull<execution::IExecutor> ex, std::coroutine_handle<> handle);
             bool TrySetCurrent();
 
         private:
@@ -98,7 +98,7 @@ namespace zerosugar::execution
     template <std::ranges::range R> requires std::convertible_to<std::ranges::range_value_t<R>, T>
     auto AsyncEnumerable<T, TChannel>::promise_type::yield_value(R&& range) -> std::suspend_never
     {
-        _channel->Send(std::forward<R>(range), ChannelSignal::NotifyAll);
+        _channel->Send(std::forward<R>(range), channel::ChannelSignal::NotifyOne);
 
         return std::suspend_never{};
     }
@@ -106,7 +106,7 @@ namespace zerosugar::execution
     template <std::move_constructible T, typename TChannel>
     auto AsyncEnumerable<T, TChannel>::promise_type::yield_value(T value) -> std::suspend_never
     {
-        _channel->Send(std::move(value), ChannelSignal::NotifyAll);
+        _channel->Send(std::move(value), channel::ChannelSignal::NotifyOne);
 
         return std::suspend_never{};
     }
@@ -114,7 +114,7 @@ namespace zerosugar::execution
     template <std::move_constructible T, typename TChannel>
     auto AsyncEnumerable<T, TChannel>::promise_type::yield_value(const std::exception_ptr& exception) -> std::suspend_never
     {
-        _channel->Send(exception, ChannelSignal::NotifyAll);
+        _channel->Send(exception, channel::ChannelSignal::NotifyOne);
 
         return std::suspend_never{};
     }
@@ -177,7 +177,7 @@ namespace zerosugar::execution
     template <std::move_constructible T, typename TChannel>
     void AsyncEnumerable<T, TChannel>::Enumerator::await_suspend(std::coroutine_handle<> handle)
     {
-        IExecutor* executor = ExecutionContext::GetExecutor();
+        execution::IExecutor* executor = ExecutionContext::GetExecutor();
         assert(executor);
 
         RegisterHandleForCoroutineResume(executor->SharedFromThis(), handle);
@@ -205,14 +205,14 @@ namespace zerosugar::execution
     }
 
     template <std::move_constructible T, typename TChannel>
-    void AsyncEnumerable<T, TChannel>::Enumerator::RegisterHandleForCoroutineResume(SharedPtrNotNull<IExecutor> ex,
+    void AsyncEnumerable<T, TChannel>::Enumerator::RegisterHandleForCoroutineResume(SharedPtrNotNull<execution::IExecutor> ex,
         std::coroutine_handle<> handle)
     {
         _channel->AddOrExecuteSignalHandler([this, ex = std::move(ex), handle]() mutable
         {
-            IExecutor& executor = *ex;
+            execution::IExecutor& executor = *ex;
 
-            execution::Post(executor, [ex = std::move(ex), this, handle]() mutable
+            Post(executor, [ex = std::move(ex), this, handle]() mutable
             {
                 if (TrySetCurrent() || _channel->IsClosed())
                 {

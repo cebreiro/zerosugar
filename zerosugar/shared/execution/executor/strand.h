@@ -6,9 +6,9 @@
 #include "zerosugar/shared/type/not_null_pointer.h"
 #include "zerosugar/shared/execution/executor/executor_interface.h"
 
-namespace zerosugar::execution
+namespace zerosugar
 {
-    class Strand : public IExecutor, public std::enable_shared_from_this<Strand>
+    class Strand : public execution::IExecutor, public std::enable_shared_from_this<Strand>
     {
         using task_type = std::variant<std::function<void()>, std::move_only_function<void()>>;
 

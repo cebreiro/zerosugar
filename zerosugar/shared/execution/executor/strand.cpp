@@ -5,7 +5,7 @@
 
 #include "zerosugar/shared/execution/executor/operation/post.h"
 
-namespace zerosugar::execution
+namespace zerosugar
 {
     thread_local bool Strand::_isInTaskExecuteContext = false;
 

@@ -4,8 +4,8 @@
 #include "zerosugar/shared/execution/executor/operation/post.h"
 
 using zerosugar::execution::IExecutor;
-using zerosugar::execution::Strand;
-using zerosugar::execution::StaticThreadPool;
+using zerosugar::Strand;
+using zerosugar::StaticThreadPool;
 
 
 TEST(Strand, SimpleArithmeticAdd)

@@ -4,17 +4,17 @@
 #include "zerosugar/shared/execution/executor/impl/asio_executor.h"
 #include "zerosugar/shared/execution/future/future.hpp"
 
-using zerosugar::execution::AsyncEnumerable;
-using zerosugar::execution::StaticThreadPool;
+using zerosugar::AsyncEnumerable;
+using zerosugar::StaticThreadPool;
 using zerosugar::execution::IExecutor;
-using zerosugar::execution::ExecutionContext;
-using zerosugar::execution::Future;
+using zerosugar::ExecutionContext;
+using zerosugar::Future;
 
 class AsyncEnumerableTest : public ::testing::Test
 {
 public:
     AsyncEnumerableTest()
-        : _asioExecutor(std::make_shared<zerosugar::execution::executor::AsioExecutor>(4))
+        : _asioExecutor(std::make_shared<zerosugar::execution::AsioExecutor>(4))
         , executor(*_asioExecutor)
     {
     }
@@ -33,7 +33,7 @@ public:
     }
 
 private:
-    std::shared_ptr<zerosugar::execution::executor::AsioExecutor> _asioExecutor;
+    std::shared_ptr<zerosugar::execution::AsioExecutor> _asioExecutor;
 
 protected:
     IExecutor& executor;
@@ -122,7 +122,7 @@ TEST_F(AsyncEnumerableTest, YieldIntValue_ResumeExecutor)
                     context.innerExecutor1 = ExecutionContext::GetExecutor();
                     co_yield expected0;
 
-                    co_await zerosugar::execution::Delay(std::chrono::milliseconds(200));
+                    co_await zerosugar::Delay(std::chrono::milliseconds(200));
 
                     context.innerExecutor2 = ExecutionContext::GetExecutor();
                     co_yield expected1;

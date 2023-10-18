@@ -1,6 +1,6 @@
 #include "promise.h"
 
-namespace zerosugar::execution
+namespace zerosugar
 {
     bool Promise<void>::IsCanceled() const noexcept
     {

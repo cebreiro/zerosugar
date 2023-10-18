@@ -2,7 +2,7 @@
 
 #include <cassert>
 
-namespace zerosugar::execution::future
+namespace zerosugar::future
 {
     bool SharedContextBase::IsPending() const noexcept
     {
@@ -90,14 +90,14 @@ namespace zerosugar::execution::future
         }
     }
 
-    void SharedContextBase::SetExecutor(std::shared_ptr<IExecutor> executor) noexcept
+    void SharedContextBase::SetExecutor(std::shared_ptr<execution::IExecutor> executor) noexcept
     {
         assert(!_executor);
 
         _executor = std::move(executor);
     }
 
-    auto SharedContextBase::GetExecutor() const -> IExecutor&
+    auto SharedContextBase::GetExecutor() const -> execution::IExecutor&
     {
         assert(_executor);
 

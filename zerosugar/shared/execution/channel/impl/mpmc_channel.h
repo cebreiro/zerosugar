@@ -13,7 +13,7 @@
 #include "zerosugar/shared/execution/channel/channel_status.h"
 #include "zerosugar/shared/execution/channel/channel_signal.h"
 
-namespace zerosugar::execution::channel
+namespace zerosugar::channel
 {
     template <std::move_constructible T>
     class MpmcChannel

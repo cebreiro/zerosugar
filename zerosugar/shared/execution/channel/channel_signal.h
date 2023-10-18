@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace zerosugar::execution
+namespace zerosugar::channel
 {
     enum class ChannelSignal : int32_t
     {

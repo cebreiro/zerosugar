@@ -1,7 +1,7 @@
 #include "zerosugar/shared/network/buffer/buffer.h"
 
-using zerosugar::network::Buffer;
-using zerosugar::network::buffer::Fragment;
+using zerosugar::Buffer;
+using zerosugar::buffer::Fragment;
 
 TEST(Buffer, DefaultConstruct)
 {

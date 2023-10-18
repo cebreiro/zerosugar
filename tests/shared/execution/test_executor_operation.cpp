@@ -4,11 +4,13 @@
 #include <atomic>
 #include <future>
 
+using zerosugar::execution::IExecutor;
+
 class ExecutorOperationTest : public ::testing::Test
 {
 public:
     ExecutorOperationTest()
-        : _asioExecutor(std::make_shared<zerosugar::execution::executor::AsioExecutor>(4))
+        : _asioExecutor(std::make_shared<zerosugar::execution::AsioExecutor>(4))
         , executor(*_asioExecutor)
     {
     }
@@ -27,10 +29,10 @@ public:
     }
 
 private:
-    std::shared_ptr<zerosugar::execution::executor::AsioExecutor> _asioExecutor;
+    std::shared_ptr<zerosugar::execution::AsioExecutor> _asioExecutor;
 
 protected:
-    zerosugar::execution::IExecutor& executor;
+    IExecutor& executor;
 };
 
 class CopyOnlyType

@@ -1,6 +1,6 @@
 #include "future_coroutine_traits.h"
 
-namespace zerosugar::execution::future
+namespace zerosugar::future
 {
     auto FuturePromise<void>::get_return_object() -> Future<void>
     {

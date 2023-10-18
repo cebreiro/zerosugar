@@ -6,7 +6,7 @@
 #include <boost/asio.hpp>
 #include "zerosugar/shared/execution/executor/executor_interface.h"
 
-namespace zerosugar::execution::executor
+namespace zerosugar::execution
 {
     class AsioExecutor final : public IExecutor, public std::enable_shared_from_this<AsioExecutor>
     {

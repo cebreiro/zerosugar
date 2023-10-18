@@ -1,6 +1,6 @@
 #include "mpmc_channel.h"
 
-namespace zerosugar::execution::channel
+namespace zerosugar::channel
 {
 
 }

@@ -5,7 +5,7 @@
 #include <span>
 #include "zerosugar/shared/type/not_null_pointer.h"
 
-namespace zerosugar::network::buffer
+namespace zerosugar::buffer
 {
     class Fragment
     {

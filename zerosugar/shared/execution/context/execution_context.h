@@ -3,10 +3,13 @@
 #include <thread>
 #include "zerosugar/shared/type/not_null_pointer.h"
 
-namespace zerosugar::execution
+namespace zerosugar
 {
-    class IExecutor;
-    class ICancelable;
+    namespace execution
+    {
+        class IExecutor;
+        class ICancelable;
+    }
 
     class ExecutionContext
     {
@@ -14,22 +17,22 @@ namespace zerosugar::execution
         ExecutionContext() = delete;
 
     private:
-        static void PushExecutor(PtrNotNull<IExecutor> executor, std::thread::id id = std::this_thread::get_id());
+        static void PushExecutor(PtrNotNull<execution::IExecutor> executor, std::thread::id id = std::this_thread::get_id());
         static void PopExecutor(std::thread::id id = std::this_thread::get_id());
 
-        static void PushCancelable(PtrNotNull<ICancelable> cancelable, std::thread::id id = std::this_thread::get_id());
+        static void PushCancelable(PtrNotNull<execution::ICancelable> cancelable, std::thread::id id = std::this_thread::get_id());
         static void PopCancelable(std::thread::id id = std::this_thread::get_id());
 
     public:
-        static auto GetExecutor() -> IExecutor*;
-        static auto GetCancelable() -> ICancelable&;
+        static auto GetExecutor() -> execution::IExecutor*;
+        static auto GetCancelable() -> execution::ICancelable&;
 
     public:
         struct ExecutorGuard
         {
             ExecutorGuard() = delete;
 
-            explicit ExecutorGuard(PtrNotNull<IExecutor> executor);
+            explicit ExecutorGuard(PtrNotNull<execution::IExecutor> executor);
             ~ExecutorGuard();
         };
 
@@ -37,12 +40,12 @@ namespace zerosugar::execution
         {
             CancelableGuard() = delete;
 
-            explicit CancelableGuard(PtrNotNull<ICancelable> cancelable);
+            explicit CancelableGuard(PtrNotNull<execution::ICancelable> cancelable);
             ~CancelableGuard();
         };
 
     private:
-        static thread_local std::vector<std::pair<IExecutor*, std::thread::id>> _executors;
-        static thread_local std::vector<std::pair<ICancelable*, std::thread::id>> _cancelables;
+        static thread_local std::vector<std::pair<execution::IExecutor*, std::thread::id>> _executors;
+        static thread_local std::vector<std::pair<execution::ICancelable*, std::thread::id>> _cancelables;
     };
 }

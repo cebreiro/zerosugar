@@ -5,16 +5,16 @@
 #include "zerosugar/shared/execution/future/future.hpp"
 
 using zerosugar::execution::IExecutor;
-using zerosugar::execution::Strand;
-using zerosugar::execution::StaticThreadPool;
-using zerosugar::execution::Future;
-using zerosugar::execution::ExecutionContext;
+using zerosugar::Strand;
+using zerosugar::StaticThreadPool;
+using zerosugar::Future;
+using zerosugar::ExecutionContext;
 
 class FutureTest : public ::testing::Test
 {
 public:
     FutureTest()
-        : _asioExecutor(std::make_shared<zerosugar::execution::executor::AsioExecutor>(4))
+        : _asioExecutor(std::make_shared<zerosugar::execution::AsioExecutor>(4))
         , executor(*_asioExecutor)
     {
     }
@@ -33,7 +33,7 @@ public:
     }
 
 private:
-    std::shared_ptr<zerosugar::execution::executor::AsioExecutor> _asioExecutor;
+    std::shared_ptr<zerosugar::execution::AsioExecutor> _asioExecutor;
 
 protected:
     IExecutor& executor;
@@ -367,7 +367,7 @@ TEST_F(FutureTest, Delay)
     const auto delay = std::chrono::milliseconds(50);
 
     // act
-    zerosugar::execution::Delay(delay).Wait();
+    zerosugar::Delay(delay).Wait();
     end = clock_type::now();
 
     // assert
@@ -522,7 +522,7 @@ TEST_F(FutureTest, Coroutine_ResumeOnOriginExecutor)
 
             context.outerChangedExecutor1 = ExecutionContext::GetExecutor();
 
-            co_await zerosugar::execution::Delay(std::chrono::milliseconds(1));
+            co_await zerosugar::Delay(std::chrono::milliseconds(1));
 
             context.outerChangedExecutor2 = ExecutionContext::GetExecutor();
 

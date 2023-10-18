@@ -1,6 +1,6 @@
 #include "zerosugar/shared/execution/channel/channel.h"
 
-using zerosugar::execution::Channel;
+using zerosugar::Channel;
 
 TEST(Channel, Construct)
 {

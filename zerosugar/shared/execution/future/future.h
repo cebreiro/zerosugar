@@ -8,7 +8,7 @@
 #include "zerosugar/shared/execution/executor/executor_interface.h"
 #include "zerosugar/shared/execution/future/shared_context.h"
 
-namespace zerosugar::execution
+namespace zerosugar
 {
     namespace future
     {
@@ -53,10 +53,10 @@ namespace zerosugar::execution
         auto Get() -> std::conditional_t<std::is_same_v<T, void>, void, T>;
 
         template <typename Callable, typename Result = boost::callable_traits::return_type_t<Callable>>
-        auto Then(IExecutor& executor, Callable&& callable) -> Future<Result>;
+        auto Then(execution::IExecutor& executor, Callable&& callable) -> Future<Result>;
 
         template <typename Callable, typename Result = boost::callable_traits::return_type_t<Callable>>
-        auto ContinuationWith(IExecutor& executor, Callable&& callable) -> Future<Result>;
+        auto ContinuationWith(execution::IExecutor& executor, Callable&& callable) -> Future<Result>;
 
     private:
         SharedPtrNotNull<context_type> _context;
@@ -125,14 +125,14 @@ namespace zerosugar::execution
 
     template <typename T>
     template <typename Callable, typename Result>
-    auto Future<T>::Then(IExecutor& executor, Callable&& callable) -> Future<Result>
+    auto Future<T>::Then(execution::IExecutor& executor, Callable&& callable) -> Future<Result>
     {
         auto then = std::make_shared<future::SharedContext<Result>>();
         then->SetExecutor(executor.SharedFromThis());
 
         _context->SetContinuation([context = _context, then, callable = std::forward<Callable>(callable)]() mutable
             {
-                IExecutor& executor = then->GetExecutor();
+                execution::IExecutor& executor = then->GetExecutor();
 
                 Post(executor, [context = std::move(context),
                     then = std::move(then), callable = std::forward<Callable>(callable)]() mutable
@@ -181,14 +181,14 @@ namespace zerosugar::execution
 
     template <typename T>
     template <typename Callable, typename Result>
-    auto Future<T>::ContinuationWith(IExecutor& executor, Callable&& callable) -> Future<Result>
+    auto Future<T>::ContinuationWith(execution::IExecutor& executor, Callable&& callable) -> Future<Result>
     {
         auto continuation = std::make_shared<future::SharedContext<Result>>();
         continuation->SetExecutor(executor.SharedFromThis());
 
         _context->SetContinuation([context = _context, continuation, callable = std::forward<Callable>(callable)]() mutable
             {
-                IExecutor& executor = continuation->GetExecutor();
+                execution::IExecutor& executor = continuation->GetExecutor();
 
                 Post(executor, [context = std::move(context),
                     continuation = std::move(continuation), callable = std::forward<Callable>(callable)]() mutable

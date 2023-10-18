@@ -2,12 +2,12 @@
 
 #include <cassert>
 
-namespace zerosugar::execution
+namespace zerosugar
 {
-    thread_local std::vector<std::pair<IExecutor*, std::thread::id>> ExecutionContext::_executors;
-    thread_local std::vector<std::pair<ICancelable*, std::thread::id>> ExecutionContext::_cancelables;
+    thread_local std::vector<std::pair<execution::IExecutor*, std::thread::id>> ExecutionContext::_executors;
+    thread_local std::vector<std::pair<execution::ICancelable*, std::thread::id>> ExecutionContext::_cancelables;
 
-    void ExecutionContext::PushExecutor(PtrNotNull<IExecutor> executor, std::thread::id id)
+    void ExecutionContext::PushExecutor(PtrNotNull<execution::IExecutor> executor, std::thread::id id)
     {
         _executors.emplace_back(executor, id);
     }
@@ -20,7 +20,7 @@ namespace zerosugar::execution
         _executors.pop_back();
     }
 
-    void ExecutionContext::PushCancelable(PtrNotNull<ICancelable> cancelable, std::thread::id id)
+    void ExecutionContext::PushCancelable(PtrNotNull<execution::ICancelable> cancelable, std::thread::id id)
     {
         _cancelables.emplace_back(cancelable, id);
     }
@@ -33,18 +33,18 @@ namespace zerosugar::execution
         _cancelables.pop_back();
     }
 
-    auto ExecutionContext::GetExecutor() -> IExecutor*
+    auto ExecutionContext::GetExecutor() -> execution::IExecutor*
     {
         return _executors.back().first;
     }
 
-    auto ExecutionContext::GetCancelable() -> ICancelable&
+    auto ExecutionContext::GetCancelable() -> execution::ICancelable&
     {
         assert(!_cancelables.empty());
         return *_cancelables.back().first;
     }
 
-    ExecutionContext::ExecutorGuard::ExecutorGuard(PtrNotNull<IExecutor> executor)
+    ExecutionContext::ExecutorGuard::ExecutorGuard(PtrNotNull<execution::IExecutor> executor)
     {
         PushExecutor(executor);
     }
@@ -54,7 +54,7 @@ namespace zerosugar::execution
         PopExecutor();
     }
 
-    ExecutionContext::CancelableGuard::CancelableGuard(PtrNotNull<ICancelable> cancelable)
+    ExecutionContext::CancelableGuard::CancelableGuard(PtrNotNull<execution::ICancelable> cancelable)
     {
         PushCancelable(cancelable);
     }

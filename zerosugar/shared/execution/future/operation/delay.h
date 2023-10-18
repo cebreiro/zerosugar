@@ -2,7 +2,7 @@
 #include <chrono>
 #include "zerosugar/shared/execution/future/future.h"
 
-namespace zerosugar::execution
+namespace zerosugar
 {
     auto Delay(std::chrono::milliseconds milliseconds) -> Future<void>;
 }

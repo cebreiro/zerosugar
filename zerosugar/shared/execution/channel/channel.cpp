@@ -1,6 +1,6 @@
 #include "channel.h"
 
-namespace zerosugar::execution
+namespace zerosugar
 {
 
 }

@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace zerosugar::execution
+namespace zerosugar
 {
     enum class FutureStatus : int32_t
     {

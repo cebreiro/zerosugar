@@ -1,7 +1,7 @@
 #pragma once
 #include "zerosugar/shared/execution/future/future.h"
 
-namespace zerosugar::execution
+namespace zerosugar
 {
     template <typename T>
     class Promise;

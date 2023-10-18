@@ -4,7 +4,7 @@
 #include "zerosugar/shared/network/buffer/buffer.h"
 #include "zerosugar/shared/network/session/id.h"
 
-namespace zerosugar::network::session
+namespace zerosugar::session
 {
     struct ReceiveEvent
     {
@@ -26,5 +26,5 @@ namespace zerosugar::network::session
     };
 
     using event_type = std::variant<ReceiveEvent, IoErrorEvent, DestructEvent>;
-    using event_channel_type = execution::Channel<event_type>;
+    using event_channel_type = Channel<event_type>;
 }

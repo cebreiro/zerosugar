@@ -1,6 +1,6 @@
 #include "fragment.h"
 
-namespace zerosugar::network::buffer
+namespace zerosugar::buffer
 {
     Fragment::Fragment(SharedPtrNotNull<char[]> ptr, int64_t startOffset, int64_t size)
         : _ptr(std::move(ptr))

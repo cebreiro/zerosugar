@@ -5,7 +5,7 @@
 #include "zerosugar/shared/type/not_null_pointer.h"
 #include "zerosugar/shared/execution/future/future.h"
 
-namespace zerosugar::execution::future
+namespace zerosugar::future
 {
     template <typename T>
     class FuturePromise;
@@ -112,7 +112,7 @@ namespace zerosugar::execution::future
     template <typename T>
     void FutureAwaiter<T>::await_suspend(std::coroutine_handle<> handle)
     {
-        IExecutor* executor = ExecutionContext::GetExecutor();
+        execution::IExecutor* executor = ExecutionContext::GetExecutor();
         assert(executor);
 
         Future<T>(_context).ContinuationWith(*executor,
@@ -129,7 +129,7 @@ namespace zerosugar::execution::future
     }
 }
 
-namespace zerosugar::execution
+namespace zerosugar
 {
     template <typename T>
     auto operator co_await(Future<T> future) -> future::FutureAwaiter<T>
