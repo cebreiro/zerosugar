@@ -42,9 +42,9 @@ namespace zerosugar
 
     void Strand::Dispatch(const std::function<void()>& function)
     {
-        if (_isInTaskExecuteContext)
+        if (CanExecuteImmediately())
         {
-            _backBuffer.emplace_back(function);
+            std::invoke(function);
         }
         else
         {
@@ -54,9 +54,9 @@ namespace zerosugar
 
     void Strand::Dispatch(std::move_only_function<void()> function)
     {
-        if (_isInTaskExecuteContext)
+        if (CanExecuteImmediately())
         {
-            _backBuffer.emplace_back(std::move(function));
+            std::invoke(function);
         }
         else
         {
@@ -124,9 +124,6 @@ namespace zerosugar
 
     void Strand::ExecuteTasks()
     {
-        constexpr int64_t recursionCheckCount = 1'000'000;
-        int64_t executeTaskCount = 0;
-
         while (!_backBuffer.empty())
         {
             task_type task = std::move(_backBuffer.back());
@@ -136,12 +133,6 @@ namespace zerosugar
             {
                 std::invoke(va);
             }, std::move(task));
-
-            if (++executeTaskCount >= recursionCheckCount)
-            {
-                assert(false);
-                break;
-            }
         }
     }
 
@@ -157,5 +148,10 @@ namespace zerosugar
         }
 
         return false;
+    }
+
+    bool Strand::CanExecuteImmediately()
+    {
+        return _isInTaskExecuteContext;
     }
 }

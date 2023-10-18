@@ -37,6 +37,8 @@ namespace zerosugar
         void ExecuteTasks();
         bool FinalizeFlush();
 
+        static bool CanExecuteImmediately();
+
     private:
         SharedPtrNotNull<IExecutor> _executor;
 

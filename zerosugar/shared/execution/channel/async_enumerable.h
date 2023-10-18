@@ -7,7 +7,7 @@
 #include <optional>
 #include "zerosugar/shared/execution/channel/channel.h"
 #include "zerosugar/shared/execution/context/execution_context.h"
-#include "zerosugar/shared/execution/executor/operation/post.h"
+#include "zerosugar/shared/execution/executor/operation/dispatch.h"
 
 namespace zerosugar
 {
@@ -212,7 +212,7 @@ namespace zerosugar
         {
             execution::IExecutor& executor = *ex;
 
-            Post(executor, [ex = std::move(ex), this, handle]() mutable
+            Dispatch(executor, [ex = std::move(ex), this, handle]() mutable
             {
                 if (TrySetCurrent() || _channel->IsClosed())
                 {

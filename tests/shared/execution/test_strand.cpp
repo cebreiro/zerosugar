@@ -61,7 +61,7 @@ TEST(Strand, Dispatch)
                 });
             Dispatch(*strand, [&result, &done]()
                 {
-                    result.push_back(1);
+                    result.push_back(0);
 
                     if (result.size() == 3)
                     {
@@ -71,7 +71,7 @@ TEST(Strand, Dispatch)
                 });
             Dispatch(*strand, [&result, &done]()
                 {
-                    result.push_back(0);
+                    result.push_back(1);
 
                     if (result.size() == 3)
                     {

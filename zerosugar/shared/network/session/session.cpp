@@ -23,7 +23,7 @@ namespace zerosugar
             .port = _remotePort,
         };
 
-        _eventChannel->Send(std::move(event), channel::ChannelSignal::NotifyAll);
+        _eventChannel->Send(std::move(event), channel::ChannelSignal::NotifyOne);
     }
 
     void Session::StartReceive()
@@ -171,7 +171,7 @@ namespace zerosugar
             .errorCode = ec,
         };
 
-        _eventChannel->Send(event, channel::ChannelSignal::NotifyAll);
+        _eventChannel->Send(event, channel::ChannelSignal::NotifyOne);
     }
 
     void Session::SendReceiveEvent(Buffer buffer)
@@ -181,7 +181,7 @@ namespace zerosugar
             .buffer = std::move(buffer),
         };
 
-        _eventChannel->Send(std::move(event), channel::ChannelSignal::NotifyAll);
+        _eventChannel->Send(std::move(event), channel::ChannelSignal::NotifyOne);
     }
 
     void Session::ExpandReceiveBuffer()
