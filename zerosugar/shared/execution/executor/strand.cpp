@@ -1,5 +1,6 @@
 #include "strand.h"
 
+#include <cassert>
 #include <algorithm>
 #include <ranges>
 

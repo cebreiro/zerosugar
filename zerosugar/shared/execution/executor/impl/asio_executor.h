@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <vector>
 #include <thread>
+#include <future>
 #include <functional>
 #include <boost/asio.hpp>
 #include "zerosugar/shared/execution/executor/executor_interface.h"
@@ -32,6 +33,8 @@ namespace zerosugar::execution
 
         auto GetIoContext() -> boost::asio::io_context&;
         auto GetIoContext() const -> const boost::asio::io_context&;
+
+        auto GetConcurrency() const -> int64_t;
 
     private:
         int64_t _workerCount = 0;

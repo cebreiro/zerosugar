@@ -10,6 +10,9 @@ namespace zerosugar
     class ValueType
     {
     public:
+        using value_type = T;
+
+    public:
         ValueType() = default;
         explicit ValueType(T value);
 
@@ -65,14 +68,7 @@ namespace zerosugar
     template <std::integral T, typename Tag>
     auto ValueType<T, Tag>::Default() -> ValueType
     {
-        if constexpr (std::is_unsigned_v<T>)
-        {
-            return ValueType(0);
-        }
-        else
-        {
-            return ValueType(-1);
-        }
+        return ValueType(0);
     }
 }
 

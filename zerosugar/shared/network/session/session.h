@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 #include <boost/asio.hpp>
-#include "zerosugar/shared/network/session/event.h"
+#include "zerosugar/shared/network/server/event.h"
 
 namespace zerosugar
 {
@@ -19,7 +19,7 @@ namespace zerosugar
         Session& operator=(Session&& other) noexcept = delete;
 
         Session(id_type id,
-            SharedPtrNotNull<session::event_channel_type> channel,
+            SharedPtrNotNull<server::event_channel_type> channel,
             boost::asio::ip::tcp::socket socket,
             boost::asio::strand<boost::asio::io_context::executor_type> strand);
         ~Session();
@@ -53,7 +53,7 @@ namespace zerosugar
 
     private:
         id_type _id = id_type::Default();
-        SharedPtrNotNull<session::event_channel_type> _eventChannel;
+        SharedPtrNotNull<server::event_channel_type> _channel;
         boost::asio::ip::tcp::socket _socket;
         boost::asio::strand<boost::asio::io_context::executor_type> _strand;
 

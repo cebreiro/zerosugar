@@ -90,6 +90,11 @@ namespace zerosugar::execution
         return _ioContext;
     }
 
+    auto AsioExecutor::GetConcurrency() const -> int64_t
+    {
+        return _workerCount;
+    }
+
     void AsioExecutor::Run()
     {
         assert(_workers.empty());

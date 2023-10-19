@@ -2,10 +2,10 @@
 
 namespace zerosugar
 {
-    Session::Session(id_type id, SharedPtrNotNull<session::event_channel_type> channel,
+    Session::Session(id_type id, SharedPtrNotNull<server::event_channel_type> channel,
         boost::asio::ip::tcp::socket socket, boost::asio::strand<boost::asio::io_context::executor_type> strand)
         : _id(id)
-        , _eventChannel(std::move(channel))
+        , _channel(std::move(channel))
         , _socket(std::move(socket))
         , _strand(std::move(strand))
         , _localAddress(_socket.local_endpoint().address().to_string())
@@ -17,13 +17,11 @@ namespace zerosugar
 
     Session::~Session()
     {
-        session::DestructEvent event{
+        server::SessionDestructEvent event{
             .id = _id,
-            .remoteAddress = _remoteAddress,
-            .port = _remotePort,
         };
 
-        _eventChannel->Send(std::move(event), channel::ChannelSignal::NotifyOne);
+        _channel->Send(std::move(event), channel::ChannelSignal::NotifyOne);
     }
 
     void Session::StartReceive()
@@ -36,7 +34,7 @@ namespace zerosugar
 
     void Session::Send(Buffer buffer)
     {
-        post(_strand, [self = shared_from_this(), buffer = std::move(buffer)]() mutable
+        dispatch(_strand, [self = shared_from_this(), buffer = std::move(buffer)]() mutable
             {
                 self->SendAsync(std::move(buffer));
             });
@@ -44,7 +42,7 @@ namespace zerosugar
 
     void Session::Close()
     {
-        post(_strand, [self = shared_from_this()]()
+        dispatch(_strand, [self = shared_from_this()]()
             {
                 boost::system::error_code ec;
                 self->_socket.close(ec);
@@ -166,22 +164,22 @@ namespace zerosugar
 
     void Session::HandleError(const boost::system::error_code& ec)
     {
-        session::IoErrorEvent event{
+        server::SessionIoErrorEvent event{
             .id = _id,
             .errorCode = ec,
         };
 
-        _eventChannel->Send(event, channel::ChannelSignal::NotifyOne);
+        _channel->Send(event, channel::ChannelSignal::NotifyOne);
     }
 
     void Session::SendReceiveEvent(Buffer buffer)
     {
-        session::ReceiveEvent event{
+        server::SessionReceiveEvent event{
             .id = _id,
             .buffer = std::move(buffer),
         };
 
-        _eventChannel->Send(std::move(event), channel::ChannelSignal::NotifyOne);
+        _channel->Send(std::move(event), channel::ChannelSignal::NotifyOne);
     }
 
     void Session::ExpandReceiveBuffer()
