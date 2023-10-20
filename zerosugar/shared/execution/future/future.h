@@ -6,6 +6,7 @@
 #include "zerosugar/shared/type/not_null_pointer.h"
 #include "zerosugar/shared/execution/context/execution_context.h"
 #include "zerosugar/shared/execution/executor/executor_interface.h"
+#include "zerosugar/shared/execution/executor/operation/post.h"
 #include "zerosugar/shared/execution/future/shared_context.h"
 
 namespace zerosugar
