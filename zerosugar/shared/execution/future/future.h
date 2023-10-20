@@ -130,6 +130,7 @@ namespace zerosugar
         auto then = std::make_shared<future::SharedContext<Result>>();
         then->SetExecutor(executor.SharedFromThis());
 
+        assert(IsValid());
         _context->SetContinuation([context = _context, then, callable = std::forward<Callable>(callable)]() mutable
             {
                 execution::IExecutor& executor = then->GetExecutor();
@@ -186,6 +187,7 @@ namespace zerosugar
         auto continuation = std::make_shared<future::SharedContext<Result>>();
         continuation->SetExecutor(executor.SharedFromThis());
 
+        assert(IsValid());
         _context->SetContinuation([context = _context, continuation, callable = std::forward<Callable>(callable)]() mutable
             {
                 execution::IExecutor& executor = continuation->GetExecutor();

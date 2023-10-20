@@ -1,0 +1,57 @@
+#include "asio_strand.h"
+
+namespace zerosugar::execution
+{
+    AsioStrand::AsioStrand(boost::asio::strand<boost::asio::io_context::executor_type> strand)
+        : _strand(std::move(strand))
+    {
+    }
+
+    AsioStrand::~AsioStrand()
+    {
+    }
+
+    void AsioStrand::Stop()
+    {
+    }
+
+    void AsioStrand::Post(const std::function<void()>& function)
+    {
+        post(_strand, function);
+    }
+
+    void AsioStrand::Post(std::move_only_function<void()> function)
+    {
+        post(_strand, std::move(function));
+    }
+
+    void AsioStrand::Dispatch(const std::function<void()>& function)
+    {
+        dispatch(_strand, function);
+    }
+
+    void AsioStrand::Dispatch(std::move_only_function<void()> function)
+    {
+        dispatch(_strand, std::move(function));
+    }
+
+    auto AsioStrand::SharedFromThis() -> SharedPtrNotNull<IExecutor>
+    {
+        return shared_from_this();
+    }
+
+    auto AsioStrand::SharedFromThis() const -> SharedPtrNotNull<const IExecutor>
+    {
+        return shared_from_this();
+    }
+
+    auto AsioStrand::GetStrand() -> boost::asio::strand<boost::asio::io_context::executor_type>&
+    {
+        return _strand;
+    }
+
+    auto AsioStrand::GetStrand() const -> const boost::asio::strand<boost::asio::io_context::executor_type>&
+    {
+        return _strand;
+    }
+}

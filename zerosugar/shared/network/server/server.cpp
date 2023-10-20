@@ -5,6 +5,7 @@
 #include "zerosugar/shared/execution/channel/async_enumerable.h"
 #include "zerosugar/shared/execution/future/future.hpp"
 #include "zerosugar/shared/execution/executor/impl/asio_executor.h"
+#include "zerosugar/shared/execution/executor/impl/asio_strand.h"
 #include "zerosugar/shared/execution/executor/operation/post.h"
 #include "zerosugar/shared/network/session/session.h"
 
@@ -12,7 +13,7 @@ namespace zerosugar
 {
     Server::Server(execution::AsioExecutor& executor)
         : _executor(executor)
-        , _channel(std::make_shared<server::event_channel_type>())
+        , _externalChannel(std::make_shared<server::event_channel_type>())
     {
     }
 
@@ -38,17 +39,6 @@ namespace zerosugar
             return false;
         }
 
-        const int64_t concurrency = _executor.GetConcurrency();
-        assert(concurrency > 0);
-
-        for (int64_t i = 0; i < std::max<int64_t>(1, concurrency); ++i)
-        {
-            Post(_executor, [this]()
-                {
-                    Run();
-                });
-        }
-
         AcceptAsync();
 
         return true;
@@ -61,12 +51,51 @@ namespace zerosugar
         boost::system::error_code ec;
         _acceptor->cancel(ec);
 
-        _channel->Close();
+        {
+            std::lock_guard lock(_sessionMutex);
+            for (const auto& session : _sessions | std::views::values)
+            {
+                session->Close();
+            }
+        }
+
+        _externalChannel->Close();
+    }
+
+    bool Server::IsOpen() const
+    {
+        if (!_acceptor.has_value())
+        {
+            return false;
+        }
+
+        return _acceptor->is_open();
+    }
+
+    auto Server::GetExecutor() -> execution::AsioExecutor&
+    {
+        return _executor;
+    }
+
+    auto Server::GetExecutor() const -> const execution::AsioExecutor&
+    {
+        return _executor;
     }
 
     auto Server::GetListenPort() const -> uint16_t
     {
         return _listenPort;
+    }
+
+    auto Server::GetSessionCount() const -> int64_t
+    {
+        return _sessionCount.load();
+    }
+
+    auto Server::GetEventChannel() -> const std::shared_ptr<server::event_channel_type>&
+    {
+        assert(_externalChannel);
+        return _externalChannel;
     }
 
     void Server::AcceptAsync()
@@ -92,74 +121,131 @@ namespace zerosugar
                 return;
             }
 
-            _channel->Send(AcceptError{ .errorCode = ec }, channel::ChannelSignal::NotifyOne);
+            HandleAcceptError(ec);
         }
         else
         {
-            _channel->Send(AcceptEvent{ .socket = std::move(socket) }, channel::ChannelSignal::NotifyOne);
+            HandleAccept(std::move(socket));
         }
 
         AcceptAsync();
     }
 
-    auto Server::Run() -> Future<void>
+    void Server::HandleAccept(boost::asio::ip::tcp::socket socket)
     {
+        session::id_type id = PublishSessionId();
+        auto channel = std::make_shared<session::event_channel_type>();
+        auto strand = std::make_shared<execution::AsioStrand>(make_strand(_executor.GetIoContext()));
+        auto session = std::make_shared<Session>(id, channel, std::move(socket), strand);
+
+        decltype(_sessions)::accessor accessor;
+        if (_sessions.insert(accessor, id))
+        {
+            accessor->second = session;
+        }
+        else
+        {
+            session->Close();
+            assert(false);
+
+            return;
+        }
+
+        ++_sessionCount;
+        session->StartReceive();
+
+        Post(*strand, [this, channel = std::move(channel), strand]() mutable
+            {
+                Run(std::move(channel), std::move(strand));
+            });
+
+        _externalChannel->Send(server::ConnectionEvent{ .id = id, .session = std::move(session) },
+            channel::ChannelSignal::NotifyOne);
+    }
+
+    void Server::HandleAcceptError(const boost::system::error_code& ec)
+    {
+        (void)ec;
+    }
+
+    auto Server::Run(
+        std::shared_ptr<session::event_channel_type> channel,
+        SharedPtrNotNull<execution::AsioStrand> strand) -> Future<void>
+    {
+        (void)strand;
+
         const auto holder = shared_from_this();
         (void)holder;
 
-        AsyncEnumerable<server::event_type> enumerable(_channel);
+        AsyncEnumerable<session::event_type> enumerable(std::move(channel));
+        assert(ExecutionContext::GetExecutor() == strand.get());
 
         while (enumerable.HasNext())
         {
-            server::event_type event = co_await enumerable;
-
-            std::visit([this]<typename T>(T && arg)
+            try
             {
-                if constexpr (std::is_same_v<T, std::monostate>)
-                {
-                    assert(false);
-                }
-                else if constexpr (std::is_same_v<T, server::AcceptEvent>)
-                {
-                    session::id_type id = PublishSessionId();
-                    auto session = std::make_shared<Session>(id, _channel, std::move(arg.socket),
-                        make_strand(_executor.GetIoContext()));
-
-                    decltype(_sessions)::accessor accessor;
-                    if (_sessions.insert(accessor, id))
-                    {
-                        accessor->second = session;
-                    }
-                    else
-                    {
-                        session->Close();
-                        assert(false);
-
-                        return;
-                    }
-
-                    session->StartReceive();
-                }
-                else if constexpr (std::is_same_v<T, server::AcceptError>)
-                {
-
-                }
-                else if constexpr (std::is_same_v<T, server::SessionReceiveEvent>)
-                {
-                }
-                else if constexpr (std::is_same_v<T, server::SessionIoErrorEvent>)
-                {
-                }
-                else if constexpr (std::is_same_v<T, server::SessionDestructEvent>)
-                {
-                    _sessionIdRecycleQueue.push(arg.id.Unwrap());
-                }
-                else
-                {
-                    static_assert(!sizeof(T), "not implemented");
-                }
-            }, std::move(event));
+                HandleSessionEvent(co_await enumerable);
+            }
+            catch (...)
+            {
+                co_return;
+            }
         }
+    }
+
+    void Server::HandleSessionEvent(session::event_type event)
+    {
+        std::visit([this]<typename T>(T&& arg)
+        {
+            if constexpr (std::is_same_v<T, session::ReceiveEvent>)
+            {
+                this->HandleSessionReceive(std::forward<T>(arg));
+            }
+            else if constexpr (std::is_same_v<T, session::IoErrorEvent>)
+            {
+                this->HandleSessionError(std::forward<T>(arg));
+            }
+            else if constexpr (std::is_same_v<T, session::DestructEvent>)
+            {
+                this->HandleSessionDestruct(std::forward<T>(arg));
+            }
+            else
+            {
+                static_assert(!sizeof(T), "not implemented");
+            }
+        }, std::move(event));
+    }
+
+    void Server::HandleSessionReceive(session::ReceiveEvent event)
+    {
+        server::ReceiveEvent serverEvent{
+            .id = event.id,
+            .buffer = std::move(event.buffer),
+        };
+
+        _externalChannel->Send(std::move(serverEvent), channel::ChannelSignal::NotifyOne);
+    }
+
+    void Server::HandleSessionError(session::IoErrorEvent event)
+    {
+        // log
+        bool erased = false;
+        {
+            std::lock_guard lock(_sessionMutex);
+            erased = _sessions.erase(event.id);
+        }
+
+        if (erased)
+        {
+            _externalChannel->Send(server::DisconnectionEvent{ .id = event.id, },
+                channel::ChannelSignal::NotifyOne);
+        }
+    }
+
+    void Server::HandleSessionDestruct(session::DestructEvent event)
+    {
+        _sessionIdRecycleQueue.push(event.id.Unwrap());
+        --_sessionCount;
     }
 
     auto Server::PublishSessionId() -> session::id_type

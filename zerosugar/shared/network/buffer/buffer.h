@@ -29,6 +29,8 @@ namespace zerosugar
         void MergeBack(Buffer buffer);
         void MergeBack(fragment_container_type fragments);
 
+        auto Clone() -> Buffer;
+
         void Clear();
 
         auto GetSize() const -> int64_t;

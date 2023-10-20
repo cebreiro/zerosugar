@@ -1,20 +1,17 @@
 #include "app.h"
 
-#include <cassert>
-
 #include "zerosugar/shared/app/app_intance.h"
 #include "zerosugar/shared/service/service_locator.h"
+#include "zerosugar/shared/execution/executor/static_thread_pool.h"
 
 namespace zerosugar
 {
     std::atomic<AppInstance*> App::_instance = nullptr;
     thread_local AppInstance* App::_localInstance = nullptr;
 
-    void App::Set(AppInstance& instance)
+    void App::SetInstance(AppInstance* instance)
     {
-        assert(_instance == nullptr);
-
-        _instance.store(&instance);
+        _instance.store(instance);
     }
 
     void App::Shutdown()
@@ -34,6 +31,16 @@ namespace zerosugar
 
         static ServiceLocator nullObject;
         return nullObject;
+    }
+
+    auto App::GetExecutor() -> execution::IExecutor&
+    {
+        if (AppInstance* instance = LoadInstance(); instance != nullptr)
+        {
+            return instance->GetExecutor();
+        }
+
+        return StaticThreadPool::GetInstance();
     }
 
     auto App::LoadInstance() -> AppInstance*

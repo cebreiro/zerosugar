@@ -1,9 +1,11 @@
 #include "session.h"
 
+#include "zerosugar/shared/execution/executor/impl/asio_strand.h"
+
 namespace zerosugar
 {
-    Session::Session(id_type id, SharedPtrNotNull<server::event_channel_type> channel,
-        boost::asio::ip::tcp::socket socket, boost::asio::strand<boost::asio::io_context::executor_type> strand)
+    Session::Session(id_type id, SharedPtrNotNull<session::event_channel_type> channel,
+        boost::asio::ip::tcp::socket socket, SharedPtrNotNull<execution::AsioStrand> strand)
         : _id(id)
         , _channel(std::move(channel))
         , _socket(std::move(socket))
@@ -13,11 +15,14 @@ namespace zerosugar
         , _remoteAddress(_socket.remote_endpoint().address().to_string())
         , _remotePort(_socket.remote_endpoint().port())
     {
+        assert(_socket.is_open());
+
+        ExpandReceiveBuffer();
     }
 
     Session::~Session()
     {
-        server::SessionDestructEvent event{
+        session::DestructEvent event{
             .id = _id,
         };
 
@@ -26,7 +31,7 @@ namespace zerosugar
 
     void Session::StartReceive()
     {
-        post(_strand, [self = shared_from_this()]()
+        post(_strand->GetStrand(), [self = shared_from_this()]()
             {
                 self->ReceiveAsync();
             });
@@ -34,7 +39,7 @@ namespace zerosugar
 
     void Session::Send(Buffer buffer)
     {
-        dispatch(_strand, [self = shared_from_this(), buffer = std::move(buffer)]() mutable
+        dispatch(_strand->GetStrand(), [self = shared_from_this(), buffer = std::move(buffer)]() mutable
             {
                 self->SendAsync(std::move(buffer));
             });
@@ -42,11 +47,22 @@ namespace zerosugar
 
     void Session::Close()
     {
-        dispatch(_strand, [self = shared_from_this()]()
+        dispatch(_strand->GetStrand(), [self = shared_from_this()]()
             {
                 boost::system::error_code ec;
                 self->_socket.close(ec);
+                self->_channel->Close();
             });
+    }
+
+    bool Session::IsOpen() const
+    {
+        return _socket.is_open();
+    }
+
+    auto Session::GetId() const -> id_type
+    {
+        return _id;
     }
 
     auto Session::GetLocalAddress() const -> const std::string&
@@ -81,7 +97,7 @@ namespace zerosugar
             _mutableBuffers.emplace_back(fragment.GetData(), fragment.GetSize());
         }
 
-        _socket.async_read_some(_mutableBuffers, bind_executor(_strand,
+        _socket.async_read_some(_mutableBuffers, bind_executor(_strand->GetStrand(),
             [self = shared_from_this()](const boost::system::error_code& ec, size_t bytes)
             {
                 if (ec)
@@ -132,15 +148,22 @@ namespace zerosugar
         WriteAsync(ConfigureConstBuffer(sendBuffer));
     }
 
-    void Session::HandleSend(int64_t bytes)
+    void Session::OnWriteAsync(int64_t bytes)
     {
         assert(_sendBuffer.has_value());
         assert(!_constBuffers.empty());
 
         _constBuffers.clear();
+        if (!_sendBuffer.has_value())
+        {
+            assert(false);
+            Close();
+
+            return;
+        }
 
         Buffer buffer;
-        if (!_sendBuffer.has_value() || _sendBuffer->SliceFront(buffer, bytes))
+        if (!_sendBuffer->SliceFront(buffer, bytes))
         {
             assert(false);
             Close();
@@ -164,7 +187,7 @@ namespace zerosugar
 
     void Session::HandleError(const boost::system::error_code& ec)
     {
-        server::SessionIoErrorEvent event{
+        session::IoErrorEvent event{
             .id = _id,
             .errorCode = ec,
         };
@@ -174,7 +197,7 @@ namespace zerosugar
 
     void Session::SendReceiveEvent(Buffer buffer)
     {
-        server::SessionReceiveEvent event{
+        session::ReceiveEvent event{
             .id = _id,
             .buffer = std::move(buffer),
         };
@@ -227,7 +250,7 @@ namespace zerosugar
 
     void Session::WriteAsync(const std::vector<boost::asio::const_buffer>& constBuffer)
     {
-        async_write(_socket, constBuffer, bind_executor(_strand,
+        async_write(_socket, constBuffer, bind_executor(_strand->GetStrand(),
             [self = shared_from_this()](const boost::system::error_code& ec, size_t bytes)
             {
                 if (ec)
@@ -236,7 +259,7 @@ namespace zerosugar
                     return;
                 }
 
-                self->HandleSend(static_cast<int64_t>(bytes));
+                self->OnWriteAsync(static_cast<int64_t>(bytes));
             }));
     }
 }

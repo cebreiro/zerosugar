@@ -8,6 +8,7 @@ namespace zerosugar
 {
     namespace execution
     {
+        class IExecutor;
         class AsioExecutor;
     }
 
@@ -32,8 +33,15 @@ namespace zerosugar
         template <std::derived_from<IService> T>
         auto FindService() const -> const T*;
 
+        bool IsRunning() const;
+
         auto GetServiceLocator() -> ServiceLocator&;
         auto GetServiceLocator() const -> const ServiceLocator&;
+        auto GetExecutor() -> execution::IExecutor&;
+        auto GetExecutor() const -> const execution::IExecutor&;
+
+    protected:
+        auto GetAsioExecutor() -> execution::AsioExecutor&;
 
     private:
         virtual void OnStartUp(ServiceLocator& serviceLocator) = 0;
@@ -41,7 +49,7 @@ namespace zerosugar
         virtual void OnExit(const std::vector<boost::system::error_code>&);
 
     private:
-        std::atomic<bool> _running = true;
+        std::atomic<bool> _running = false;
         ServiceLocator _serviceLocator;
         int64_t _workerCount = 1;
         std::shared_ptr<execution::AsioExecutor> _executor;

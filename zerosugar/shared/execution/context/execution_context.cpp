@@ -16,6 +16,7 @@ namespace zerosugar
     {
         assert(!_executors.empty());
         assert(_executors.back().second == id);
+        (void)id;
 
         _executors.pop_back();
     }
@@ -29,6 +30,7 @@ namespace zerosugar
     {
         assert(!_cancelables.empty());
         assert(_cancelables.back().second == id);
+        (void)id;
 
         _cancelables.pop_back();
     }

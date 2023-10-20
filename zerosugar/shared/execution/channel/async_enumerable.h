@@ -27,7 +27,7 @@ namespace zerosugar
 
             bool await_ready();
             void await_suspend(std::coroutine_handle<> handle);
-            auto await_resume() -> decltype(auto);
+            auto await_resume() -> value_type;
 
         private:
             void RegisterHandleForCoroutineResume(SharedPtrNotNull<execution::IExecutor> ex, std::coroutine_handle<> handle);
@@ -70,10 +70,12 @@ namespace zerosugar
 
         bool HasNext() const;
 
+        auto GetChannel() const -> const std::shared_ptr<channel_type>&;
+
         auto operator co_await() const -> Enumerator;
 
     private:
-        std::shared_ptr<channel_type> _channel;
+        SharedPtrNotNull<channel_type> _channel;
     };
 
     template <std::move_constructible T, typename TChannel>
@@ -152,6 +154,12 @@ namespace zerosugar
     }
 
     template <std::move_constructible T, typename TChannel>
+    auto AsyncEnumerable<T, TChannel>::GetChannel() const -> const std::shared_ptr<channel_type>&
+    {
+        return _channel;
+    }
+
+    template <std::move_constructible T, typename TChannel>
     auto AsyncEnumerable<T, TChannel>::operator co_await() const -> Enumerator
     {
         return Enumerator(_channel);
@@ -177,6 +185,8 @@ namespace zerosugar
     template <std::move_constructible T, typename TChannel>
     void AsyncEnumerable<T, TChannel>::Enumerator::await_suspend(std::coroutine_handle<> handle)
     {
+        assert(handle);
+
         execution::IExecutor* executor = ExecutionContext::GetExecutor();
         assert(executor);
 
@@ -184,7 +194,7 @@ namespace zerosugar
     }
 
     template <std::move_constructible T, typename TChannel>
-    auto AsyncEnumerable<T, TChannel>::Enumerator::await_resume() -> decltype(auto)
+    auto AsyncEnumerable<T, TChannel>::Enumerator::await_resume() -> value_type
     {
         if (!_current.has_value())
         {
@@ -216,7 +226,7 @@ namespace zerosugar
             {
                 if (TrySetCurrent() || _channel->IsClosed())
                 {
-                    handle();
+                    handle.resume();
                 }
                 else
                 {

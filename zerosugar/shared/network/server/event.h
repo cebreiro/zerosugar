@@ -5,35 +5,30 @@
 #include "zerosugar/shared/network/buffer/buffer.h"
 #include "zerosugar/shared/network/session/id.h"
 
+namespace zerosugar
+{
+    class Session;
+}
+
 namespace zerosugar::server
 {
-    struct AcceptEvent
+    struct ConnectionEvent
     {
-        boost::asio::ip::tcp::socket socket;
+        session::id_type id = session::id_type::Default();
+        SharedPtrNotNull<Session> session;
     };
 
-    struct AcceptError
-    {
-        boost::system::error_code errorCode;
-    };
-
-    struct SessionReceiveEvent
+    struct ReceiveEvent
     {
         session::id_type id = session::id_type::Default();
         Buffer buffer;
     };
 
-    struct SessionIoErrorEvent
-    {
-        session::id_type id = session::id_type::Default();
-        boost::system::error_code errorCode;
-    };
-
-    struct SessionDestructEvent
+    struct DisconnectionEvent
     {
         session::id_type id = session::id_type::Default();
     };
 
-    using event_type = std::variant<std::monostate, AcceptEvent, AcceptError, SessionReceiveEvent, SessionIoErrorEvent, SessionDestructEvent>;
+    using event_type = std::variant<ConnectionEvent, ReceiveEvent, DisconnectionEvent>;
     using event_channel_type = Channel<event_type>;
 }

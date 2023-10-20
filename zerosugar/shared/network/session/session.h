@@ -1,10 +1,16 @@
 #pragma once
 #include <memory>
 #include <boost/asio.hpp>
-#include "zerosugar/shared/network/server/event.h"
+#include "zerosugar/shared/execution/future/promise.h"
+#include "zerosugar/shared/network/session/event.h"
 
 namespace zerosugar
 {
+    namespace execution
+    {
+        class AsioStrand;
+    }
+
     class Session : public std::enable_shared_from_this<Session>
     {
     public:
@@ -19,15 +25,18 @@ namespace zerosugar
         Session& operator=(Session&& other) noexcept = delete;
 
         Session(id_type id,
-            SharedPtrNotNull<server::event_channel_type> channel,
+            SharedPtrNotNull<session::event_channel_type> channel,
             boost::asio::ip::tcp::socket socket,
-            boost::asio::strand<boost::asio::io_context::executor_type> strand);
+            SharedPtrNotNull<execution::AsioStrand> strand);
         ~Session();
 
         void StartReceive();
         void Send(Buffer buffer);
         void Close();
 
+        bool IsOpen() const;
+
+        auto GetId() const -> id_type;
         auto GetLocalAddress() const -> const std::string&;
         auto GetLocalPort() const -> uint16_t;
 
@@ -39,7 +48,7 @@ namespace zerosugar
         void HandleReceive(int64_t bytes);
 
         void SendAsync(Buffer buffer);
-        void HandleSend(int64_t bytes);
+        void OnWriteAsync(int64_t bytes);
 
         void HandleError(const boost::system::error_code& ec);
 
@@ -53,9 +62,10 @@ namespace zerosugar
 
     private:
         id_type _id = id_type::Default();
-        SharedPtrNotNull<server::event_channel_type> _channel;
+        SharedPtrNotNull<session::event_channel_type> _channel;
         boost::asio::ip::tcp::socket _socket;
-        boost::asio::strand<boost::asio::io_context::executor_type> _strand;
+        SharedPtrNotNull<execution::AsioStrand> _strand;
+        std::function<void()> _disconnectionCallback;
 
         std::string _localAddress;
         uint16_t _localPort = 0;

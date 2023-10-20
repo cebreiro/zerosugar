@@ -4,10 +4,10 @@
 #include <type_traits>
 #include "zerosugar/shared/execution/future/future.h"
 
-namespace zerosugar::execution
+namespace zerosugar
 {
     template <typename... Futures>
-    auto WaitAll(IExecutor& executor, Futures&&... futures) -> Future<void>
+    auto WaitAll(execution::IExecutor& executor, Futures&&... futures) -> Future<void>
     {
         static constexpr size_t operationCount = sizeof...(Futures);
         const auto counter = std::make_shared<std::atomic<size_t>>(0);
@@ -32,7 +32,7 @@ namespace zerosugar::execution
     }
 
     template <std::ranges::range R>
-    auto WaitAll(IExecutor& executor, R&& range) -> Future<void>
+    auto WaitAll(execution::IExecutor& executor, R&& range) -> Future<void>
     {
         size_t operationCount = std::ranges::distance(range);
         auto counter = std::make_shared<std::atomic<size_t>>(0);

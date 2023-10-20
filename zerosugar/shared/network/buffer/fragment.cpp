@@ -7,7 +7,6 @@ namespace zerosugar::buffer
         , _startOffset(startOffset)
         , _size(size)
     {
-        assert(size <= MAX_SIZE);
     }
 
     bool Fragment::IsValid() const

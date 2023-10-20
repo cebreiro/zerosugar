@@ -4,10 +4,10 @@
 #include <type_traits>
 #include "zerosugar/shared/execution/future/future.h"
 
-namespace zerosugar::execution
+namespace zerosugar
 {
     template <typename... Futures>
-    auto WaitAny(IExecutor& executor, Futures&&... futures) -> Future<void>
+    auto WaitAny(execution::IExecutor& executor, Futures&&... futures) -> Future<void>
     {
         const auto counter = std::make_shared<std::atomic<size_t>>(0);
         auto context = (std::make_shared<future::SharedContext<void>>());

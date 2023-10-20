@@ -6,10 +6,10 @@
 namespace zerosugar
 {
     StaticThreadPool::StaticThreadPool()
-        : _executor([]()
+        : _concurrency(std::thread::hardware_concurrency())
+        , _executor([concurrency = _concurrency]()
             {
-                auto e = std::make_shared<execution::AsioExecutor>(
-                    static_cast<int64_t>(std::thread::hardware_concurrency()));
+                auto e = std::make_shared<execution::AsioExecutor>(concurrency);
                 e->Run();
 
                 return e;
@@ -29,6 +29,11 @@ namespace zerosugar
         auto executor = static_cast<execution::AsioExecutor*>(_executor.get());
 
         executor->Delay(std::move(function), milliseconds);
+    }
+
+    auto StaticThreadPool::GetConcurrency() const -> int64_t
+    {
+        return _concurrency;
     }
 
     StaticThreadPool::operator execution::IExecutor& ()

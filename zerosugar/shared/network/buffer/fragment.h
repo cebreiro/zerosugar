@@ -10,9 +10,6 @@ namespace zerosugar::buffer
     class Fragment
     {
     public:
-        static constexpr int64_t MAX_SIZE = 256;
-
-    public:
         Fragment(const Fragment& other) = delete;
         Fragment& operator=(const Fragment& other) = delete;
 

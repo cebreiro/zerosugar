@@ -1,3 +1,5 @@
+#include <locale>
+
 int main()
 {
     std::locale::global(std::locale("kor"));

@@ -115,6 +115,28 @@ namespace zerosugar
         assert(GetSize() == CalculateSize());
     }
 
+    auto Buffer::Clone() -> Buffer
+    {
+        if (_size == 0)
+        {
+            return {};
+        }
+
+        Buffer result;
+        result.Add(buffer::Fragment([this]() -> std::shared_ptr<char[]>
+            {
+                auto buffer = std::make_shared<char[]>(_size);
+                auto range = _fragments | std::views::transform([](const buffer::Fragment& fragment) -> std::span<const char>
+                    {
+                        return fragment.GetSpan();
+                    }) | std::views::join;
+                std::ranges::copy(range, buffer.get());
+
+                return buffer;
+            }(), 0, _size));
+        return result;
+    }
+
     void Buffer::Clear()
     {
         _size = 0;

@@ -29,10 +29,11 @@ namespace zerosugar
     class Promise<T>
     {
     public:
-        using value_type = void;
+        using value_type = T;
         using context_type = future::SharedContext<value_type>;
 
     public:
+        bool IsValid() const;
         bool IsCanceled() const noexcept;
 
         void Set(T value);
@@ -43,6 +44,12 @@ namespace zerosugar
     private:
         SharedPtrNotNull<context_type> _context = std::make_shared<context_type>();
     };
+
+    template <std::move_constructible T>
+    bool Promise<T>::IsValid() const
+    {
+        return _context.operator bool();
+    }
 
     template <std::move_constructible T>
     bool Promise<T>::IsCanceled() const noexcept
