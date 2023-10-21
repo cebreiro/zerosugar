@@ -94,7 +94,7 @@ bool ServerEventHandler::HandleEvent(ReceiveEvent event)
     if (_table.find(accessor, event.id))
     {
         context = accessor->second;
-        assert(serverContext);
+        assert(context);
     }
     else
     {
