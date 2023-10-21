@@ -58,4 +58,14 @@ namespace zerosugar::buffer
     {
         return std::span{ GetData(), static_cast<size_t>(GetSize()) };
     }
+
+    auto Fragment::CreateFrom(std::span<const char> span) -> Fragment
+    {
+        const auto size = std::ssize(span);
+        auto buffer = std::make_shared<char[]>(size);
+
+        std::ranges::copy(span, buffer.get());
+
+        return { std::move(buffer), 0, size };
+    }
 }

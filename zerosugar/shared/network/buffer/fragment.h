@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <span>
 #include <memory>
 #include <optional>
 #include <span>
@@ -29,6 +30,8 @@ namespace zerosugar::buffer
         auto GetSize() const -> int64_t;
 
         auto GetSpan() const->std::span<const char>;
+
+        static auto CreateFrom(std::span<const char> span) -> Fragment;
 
     private:
         SharedPtrNotNull<char[]> _ptr;

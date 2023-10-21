@@ -178,6 +178,16 @@ namespace zerosugar
         return const_iterator(_fragments.end(), _fragments.end(), 0);
     }
 
+    auto Buffer::cbegin() const -> const_iterator
+    {
+        return begin();
+    }
+
+    auto Buffer::cend() const -> const_iterator
+    {
+        return end();
+    }
+
     auto Buffer::CalculateSize() const -> int64_t
     {
         return CalculateSize(_fragments);

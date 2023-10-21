@@ -43,6 +43,9 @@ namespace zerosugar
         auto begin() const -> const_iterator;
         auto end() const -> const_iterator;
 
+        auto cbegin() const -> const_iterator;
+        auto cend() const -> const_iterator;
+
     private:
         auto CalculateSize() const -> int64_t;
         static auto CalculateSize(const fragment_container_type& fragments) -> int64_t;
@@ -84,7 +87,7 @@ namespace zerosugar
         int64_t _index = 0;
     };
 
-    class Buffer::const_iterator
+    class Buffer::const_iterator : public std::forward_iterator_tag
     {
     public:
         using iterator_category = std::forward_iterator_tag;

@@ -1,7 +1,11 @@
 #include "zerosugar/shared/network/buffer/buffer.h"
+#include "zerosugar/shared/network/buffer/buffer_reader.h"
+#include "zerosugar/shared/network/buffer/buffer_creator.h"
 
 using zerosugar::Buffer;
 using zerosugar::buffer::Fragment;
+using zerosugar::BufferReader;
+using zerosugar::BufferCreator;
 
 TEST(Buffer, DefaultConstruct)
 {
@@ -158,4 +162,44 @@ TEST(Buffer, IteratorRead)
     {
         EXPECT_EQ(result[i], static_cast<char>(i));
     }
+}
+
+
+TEST(Buffer, BufferCreateRead)
+{
+    constexpr int8_t expected1 = 0x41;
+    constexpr int16_t expected2 = 0x6433;
+    constexpr int32_t expected3 = 0x63415431;
+    constexpr int64_t expected4 = 0x1234567887654321;
+
+#pragma pack(push,1)
+    struct Data
+    {
+        int8_t v1 = expected1;
+        int16_t v2 = expected2;
+        int32_t v3 = expected3;
+        int64_t v4 = expected4;
+    };
+#pragma pack(pop)
+
+    // arrange
+    Data expected;
+
+    BufferCreator bufferCreator;
+
+    // act
+    bufferCreator.Write(expected1);
+    bufferCreator.Write(expected2);
+    bufferCreator.Write(expected3);
+    bufferCreator.Write(expected4);
+
+    Buffer result = bufferCreator.CreateBuffer();
+    BufferReader reader(result.cbegin(), result.cend());
+
+    // assert
+    EXPECT_EQ(reader.Read<decltype(expected1)>(), expected.v1);
+    EXPECT_EQ(reader.Read<decltype(expected2)>(), expected.v2);
+    EXPECT_EQ(reader.Read<decltype(expected3)>(), expected.v3);
+    EXPECT_EQ(reader.Read<decltype(expected4)>(), expected.v4);
+    EXPECT_ANY_THROW(reader.Read<int8_t>());
 }
