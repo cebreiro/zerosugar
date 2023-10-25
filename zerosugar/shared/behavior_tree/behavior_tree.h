@@ -1,19 +1,24 @@
 #pragma once
+#include <mutex>
+#include <cassert>
+#include <stdexcept>
 #include "zerosugar/shared/behavior_tree/task/state.h"
 #include "zerosugar/shared/behavior_tree/task/task.h"
+#include "zerosugar/shared/behavior_tree/task/impl/task_impl.h"
+#include "zerosugar/shared/behavior_tree/task/impl/decorator_impl.h"
+#include "zerosugar/shared/behavior_tree/task/task_factory.h"
+#include "zerosugar/shared/behavior_tree/task/task_factory_register.h"
 
 namespace zerosugar
 {
-    namespace bt
-    {
-        class TaskFactory;
-    }
-
+    template <typename TContext>
     class BehaviorTree
     {
     public:
         BehaviorTree() = default;
-        void Initialize(const bt::TaskFactory& factory, const pugi::xml_node& root);
+        explicit  BehaviorTree(std::remove_cvref_t<TContext>& context);
+
+        void Initialize(const pugi::xml_node& root);
 
         bool IsValid() const;
         auto Execute() -> bt::State;
@@ -23,6 +28,69 @@ namespace zerosugar
         auto GetState() const -> bt::State;
 
     private:
-        bt::task_pointer_type _root = nullptr;
+        std::remove_const_t<TContext>* _context = nullptr;
+        bt::task_pointer_type<TContext> _root = nullptr;
+
+        static std::once_flag _registerFlag;
     };
+
+    template <typename TContext>
+    BehaviorTree<TContext>::BehaviorTree(std::remove_cvref_t<TContext>& context)
+        : _context(&context)
+    {
+    }
+
+    template <typename TContext>
+    void BehaviorTree<TContext>::Initialize(const pugi::xml_node& root)
+    {
+        std::call_once(_registerFlag, bt::RegisterBaseTaskToFactory<TContext>);
+
+        const auto& child = root.first_child();
+        if (!child)
+        {
+            throw std::runtime_error("empty behavior tree");
+        }
+
+        auto& factory = bt::TaskFactory<TContext>::GetInstance();
+
+        _root = factory.CreateTask(*_context, child.name());
+        if (!_root)
+        {
+            throw std::runtime_error("fail to find root node from factory");
+        }
+
+        _root->Initialize(child);
+    }
+
+    template <typename TContext>
+    bool BehaviorTree<TContext>::IsValid() const
+    {
+        return _root.operator bool();
+    }
+
+    template <typename TContext>
+    auto BehaviorTree<TContext>::Execute() -> bt::State
+    {
+        assert(IsValid());
+        return _root->Execute();
+    }
+
+    template <typename TContext>
+    void BehaviorTree<TContext>::Reset()
+    {
+        assert(IsValid());
+
+        _root->Reset();
+    }
+
+    template <typename TContext>
+    auto BehaviorTree<TContext>::GetState() const -> bt::State
+    {
+        assert(IsValid());
+
+        return _root->GetState();
+    }
+
+    template <typename TContext>
+    std::once_flag BehaviorTree<TContext>::_registerFlag;
 }
