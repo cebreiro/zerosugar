@@ -4,8 +4,6 @@
 #include <stdexcept>
 #include "zerosugar/shared/behavior_tree/task/state.h"
 #include "zerosugar/shared/behavior_tree/task/task.h"
-#include "zerosugar/shared/behavior_tree/task/impl/task_impl.h"
-#include "zerosugar/shared/behavior_tree/task/impl/decorator_impl.h"
 #include "zerosugar/shared/behavior_tree/task/task_factory.h"
 #include "zerosugar/shared/behavior_tree/task/task_factory_register.h"
 
