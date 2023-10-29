@@ -2,7 +2,7 @@
 #include <cassert>
 #include <stdexcept>
 #include <format>
-#include "zerosugar/shared/behavior_tree/task/decorator/decorator.h"
+#include "zerosugar/shared/ai/behavior_tree/task/decorator/decorator.h"
 
 namespace zerosugar::bt
 {

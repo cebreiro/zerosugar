@@ -1,20 +1,19 @@
 #pragma once
 #include <vector>
 #include <stdexcept>
-#include "zerosugar/shared/behavior_tree/task/task.h"
-#include "zerosugar/shared/behavior_tree/task/task_factory.h"
+#include "zerosugar/shared/ai/behavior_tree/task/task.h"
+#include "zerosugar/shared/ai/behavior_tree/task/task_factory.h"
 
 namespace zerosugar::bt
 {
-    template <typename TContext>
-    class Sequence : public TaskInheritanceHelper<Sequence<TContext>, TContext>
+   template <typename TContext>
+    class Selector : public TaskInheritanceHelper<Selector<TContext>, TContext>
     {
     public:
-        static constexpr const char* class_name = "sequence";
+        static constexpr const char* class_name = "selector";
 
     public:
-        explicit Sequence(TContext& context);
-
+        explicit Selector(TContext& context);
         void Initialize(const pugi::xml_node& node) override;
 
         void Reset() override;
@@ -27,23 +26,22 @@ namespace zerosugar::bt
     };
 
     template <typename TContext>
-    Sequence<TContext>::Sequence(TContext& context)
-        : TaskInheritanceHelper<Sequence, TContext>(context)
+    Selector<TContext>::Selector(TContext& context)
+        : TaskInheritanceHelper<Selector, TContext>(context)
     {
     }
 
     template <typename TContext>
-    void Sequence<TContext>::Initialize(const pugi::xml_node& node)
+    void Selector<TContext>::Initialize(const pugi::xml_node& node)
     {
         auto& factory = TaskFactory<TContext>::GetInstance();
 
         for (const pugi::xml_node& child : node.children())
         {
-            const auto* childName = child.name();
-            auto task = factory.CreateTask(this->_context, childName);
+            auto task = factory.CreateTask(this->_context, child.name());
             if (!task)
             {
-                throw std::runtime_error("fail to find sequence child name");
+                throw std::runtime_error("fail to find selector child name");
             }
 
             _tasks.emplace_back(std::move(task))->Initialize(child);
@@ -51,9 +49,9 @@ namespace zerosugar::bt
     }
 
     template <typename TContext>
-    void Sequence<TContext>::Reset()
+    void Selector<TContext>::Reset()
     {
-        TaskInheritanceHelper<Sequence, TContext>::Reset();
+        TaskInheritanceHelper<Selector, TContext>::Reset();
         for (const auto& task : _tasks)
         {
             task->Reset();
@@ -61,7 +59,7 @@ namespace zerosugar::bt
     }
 
     template <typename TContext>
-    auto Sequence<TContext>::Run() const -> Runnable
+    auto Selector<TContext>::Run() const -> Runnable
     {
         const int64_t size = std::ssize(_tasks);
         for (int64_t i = 0; i < size;)
@@ -71,10 +69,10 @@ namespace zerosugar::bt
             switch (task->Execute())
             {
             case State::Success:
+                co_return true;
+            case State::Failure:
                 ++i;
                 continue;
-            case State::Failure:
-                co_return false;
             case State::Running:
                 co_await running;
                 break;
@@ -84,6 +82,6 @@ namespace zerosugar::bt
             }
         }
 
-        co_return true;
+        co_return false;
     }
 }

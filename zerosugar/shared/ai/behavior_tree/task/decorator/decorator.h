@@ -1,8 +1,8 @@
 #pragma once
 #include <stdexcept>
 #include <format>
-#include "zerosugar/shared/behavior_tree/task/task.h"
-#include "zerosugar/shared/behavior_tree/task/task_factory.h"
+#include "zerosugar/shared/ai/behavior_tree/task/task.h"
+#include "zerosugar/shared/ai/behavior_tree/task/task_factory.h"
 
 namespace zerosugar::bt
 {

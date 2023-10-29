@@ -5,7 +5,7 @@
 #include <string>
 #include <optional>
 #include <pugixml.hpp>
-#include "zerosugar/shared/behavior_tree/task/runnable.h"
+#include "zerosugar/shared/ai/behavior_tree/task/runnable.h"
 
 namespace zerosugar::bt
 {

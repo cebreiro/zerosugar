@@ -2,18 +2,18 @@
 #include <cassert>
 #include <stdexcept>
 #include <format>
-#include "zerosugar/shared/behavior_tree/task/decorator/decorator.h"
+#include "zerosugar/shared/ai/behavior_tree/task/decorator/decorator.h"
 
 namespace zerosugar::bt
 {
     template <typename TContext>
-    class RetryUntilSuccess : public DecoratorInheritanceHelper<RetryUntilSuccess<TContext>, TContext>
+    class Repeat : public DecoratorInheritanceHelper<Repeat<TContext>, TContext>
     {
     public:
-        static constexpr const char* class_name = "retry_until_success";
+        static constexpr const char* class_name = "repeat";
 
     public:
-        explicit RetryUntilSuccess(TContext& context);
+        explicit Repeat(TContext& context);
 
         void Initialize(const pugi::xml_node& node) override;
 
@@ -25,15 +25,15 @@ namespace zerosugar::bt
     };
 
     template <typename TContext>
-    RetryUntilSuccess<TContext>::RetryUntilSuccess(TContext& context)
-        : DecoratorInheritanceHelper<RetryUntilSuccess, TContext>(context)
+    Repeat<TContext>::Repeat(TContext& context)
+        : DecoratorInheritanceHelper<Repeat, TContext>(context)
     {
     }
 
     template <typename TContext>
-    void RetryUntilSuccess<TContext>::Initialize(const pugi::xml_node& node)
+    void Repeat<TContext>::Initialize(const pugi::xml_node& node)
     {
-        DecoratorInheritanceHelper<RetryUntilSuccess, TContext>::Initialize(node);
+        Decorator<TContext>::Initialize(node);
 
         if (const pugi::xml_attribute& attribute = node.attribute("count"); attribute)
         {
@@ -48,7 +48,7 @@ namespace zerosugar::bt
     }
 
     template <typename TContext>
-    auto RetryUntilSuccess<TContext>::Run() const -> Runnable
+    auto Repeat<TContext>::Run() const -> Runnable
     {
         for (size_t i = 0; i < _count;)
         {
@@ -56,16 +56,19 @@ namespace zerosugar::bt
             switch (state)
             {
             case State::Success:
-                co_return true;
-            case State::Failure:
                 ++i;
-                continue;
+                break;
+            case State::Failure:
+                co_return false;
             case State::Running:
                 co_await running;
+                break;
             case State::None:
             default:
                 assert(false);
             }
         }
+
+        co_return true;
     }
 }

@@ -2,10 +2,10 @@
 #include <mutex>
 #include <cassert>
 #include <stdexcept>
-#include "zerosugar/shared/behavior_tree/task/state.h"
-#include "zerosugar/shared/behavior_tree/task/task.h"
-#include "zerosugar/shared/behavior_tree/task/task_factory.h"
-#include "zerosugar/shared/behavior_tree/task/task_factory_register.h"
+#include "zerosugar/shared/ai/behavior_tree/task/state.h"
+#include "zerosugar/shared/ai/behavior_tree/task/task.h"
+#include "zerosugar/shared/ai/behavior_tree/task/task_factory.h"
+#include "zerosugar/shared/ai/behavior_tree/task/task_factory_register.h"
 
 namespace zerosugar
 {

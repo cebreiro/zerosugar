@@ -1,6 +1,6 @@
-#include "zerosugar/shared/behavior_tree/behavior_tree.h"
-#include "zerosugar/shared/behavior_tree/task/task.h"
-#include "zerosugar/shared/behavior_tree/task/task_factory.h"
+#include "zerosugar/shared/ai/behavior_tree/behavior_tree.h"
+#include "zerosugar/shared/ai/behavior_tree/task/task.h"
+#include "zerosugar/shared/ai/behavior_tree/task/task_factory.h"
 
 
 struct TestContext

@@ -2,39 +2,39 @@
 #include <cassert>
 #include <stdexcept>
 #include <format>
-#include "zerosugar/shared/behavior_tree/task/decorator/decorator.h"
+#include "zerosugar/shared/ai/behavior_tree/task/decorator/decorator.h"
 
 namespace zerosugar::bt
 {
     template <typename TContext>
-    class ForceFailure : public DecoratorInheritanceHelper<ForceFailure<TContext>, TContext>
+    class ForceSuccess : public DecoratorInheritanceHelper<ForceSuccess<TContext>, TContext>
     {
     public:
-        static constexpr const char* class_name = "force_failure";
+        static constexpr const char* class_name = "force_success";
 
     public:
-        explicit ForceFailure(TContext& context);
+        explicit ForceSuccess(TContext& context);
 
         void Initialize(const pugi::xml_node& node) override;
 
     private:
-        auto Run() const -> Runnable override;
+        auto Run() const->Runnable override;
     };
 
     template <typename TContext>
-    ForceFailure<TContext>::ForceFailure(TContext& context)
-        : DecoratorInheritanceHelper<ForceFailure, TContext>(context)
+    ForceSuccess<TContext>::ForceSuccess(TContext& context)
+        : DecoratorInheritanceHelper<ForceSuccess, TContext>(context)
     {
     }
 
     template <typename TContext>
-    void ForceFailure<TContext>::Initialize(const pugi::xml_node& node)
+    void ForceSuccess<TContext>::Initialize(const pugi::xml_node& node)
     {
-        DecoratorInheritanceHelper<ForceFailure, TContext>::Initialize(node);
+        DecoratorInheritanceHelper<ForceSuccess, TContext>::Initialize(node);
     }
 
     template <typename TContext>
-    auto ForceFailure<TContext>::Run() const -> Runnable
+    auto ForceSuccess<TContext>::Run() const -> Runnable
     {
         while (true)
         {
@@ -43,14 +43,14 @@ namespace zerosugar::bt
             {
             case State::Success:
             case State::Failure:
-                co_return false;
+                co_return true;
             case State::Running:
                 co_await running;
                 break;
             case State::None:
             default:
                 assert(false);
-                co_return false;
+                co_return true;
             }
         }
     }

@@ -1,6 +1,6 @@
 #pragma once
 #include <coroutine>
-#include "zerosugar/shared/behavior_tree/task/state.h"
+#include "zerosugar/shared/ai/behavior_tree/task/state.h"
 
 namespace zerosugar::bt
 {

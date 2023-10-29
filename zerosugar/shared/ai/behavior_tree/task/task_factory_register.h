@@ -1,11 +1,11 @@
 #pragma once
-#include "zerosugar/shared/behavior_tree/task/flow_control/sequence.h"
-#include "zerosugar/shared/behavior_tree/task/flow_control/selector.h"
-#include "zerosugar/shared/behavior_tree/task/decorator/force_failure.h"
-#include "zerosugar/shared/behavior_tree/task/decorator/force_success.h"
-#include "zerosugar/shared/behavior_tree/task/decorator/inverter.h"
-#include "zerosugar/shared/behavior_tree/task/decorator/repeat.h"
-#include "zerosugar/shared/behavior_tree/task/decorator/retry_until_success.h"
+#include "zerosugar/shared/ai/behavior_tree/task/flow_control/sequence.h"
+#include "zerosugar/shared/ai/behavior_tree/task/flow_control/selector.h"
+#include "zerosugar/shared/ai/behavior_tree/task/decorator/force_failure.h"
+#include "zerosugar/shared/ai/behavior_tree/task/decorator/force_success.h"
+#include "zerosugar/shared/ai/behavior_tree/task/decorator/inverter.h"
+#include "zerosugar/shared/ai/behavior_tree/task/decorator/repeat.h"
+#include "zerosugar/shared/ai/behavior_tree/task/decorator/retry_until_success.h"
 
 namespace zerosugar::bt
 {

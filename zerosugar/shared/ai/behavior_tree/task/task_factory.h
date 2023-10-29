@@ -3,7 +3,7 @@
 #include <string>
 #include <functional>
 #include <unordered_map>
-#include "zerosugar/shared/behavior_tree/task/task.h"
+#include "zerosugar/shared/ai/behavior_tree/task/task.h"
 
 namespace zerosugar::bt
 {
