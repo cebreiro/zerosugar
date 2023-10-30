@@ -1,6 +1,6 @@
 #pragma once
-#include "tools/code_generator/generator/generator_interface.h"
-#include "tools/code_generator/generator/generator_factory.h"
+#include "tools/proto_generator/generator/generator_interface.h"
+#include "tools/proto_generator/generator/generator_factory.h"
 
 namespace google::protobuf
 {

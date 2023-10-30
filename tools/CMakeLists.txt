@@ -1,2 +1,2 @@
-add_subdirectory(code_generator)
+add_subdirectory(proto_generator)
 add_subdirectory(foo)

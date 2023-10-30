@@ -2,7 +2,7 @@
 #include <string>
 #include <sstream>
 #include <format>
-#include "tools/code_generator/constants.h"
+#include "tools/proto_generator/constants.h"
 
 namespace zerosugar
 {

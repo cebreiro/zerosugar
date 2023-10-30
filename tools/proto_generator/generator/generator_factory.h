@@ -4,7 +4,7 @@
 #include <memory>
 #include <unordered_map>
 #include <functional>
-#include "tools/code_generator/generator/generator_interface.h"
+#include "tools/proto_generator/generator/generator_interface.h"
 
 namespace zerosugar
 {

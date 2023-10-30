@@ -3,9 +3,9 @@
 #include <ranges>
 #include <google/protobuf/descriptor.h>
 
-#include "tools/code_generator/text_writer.h"
-#include "tools/code_generator/proto_util.h"
-#include "tools/code_generator/string_util.h"
+#include "tools/proto_generator/text_writer.h"
+#include "tools/proto_generator/proto_util.h"
+#include "tools/proto_generator/string_util.h"
 
 using google::protobuf::FileDescriptor;
 using google::protobuf::Descriptor;

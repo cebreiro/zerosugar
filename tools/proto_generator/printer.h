@@ -4,7 +4,7 @@
 #include <format>
 #include <sstream>
 #include <google/protobuf/io/printer.h>
-#include "tools/code_generator/constants.h"
+#include "tools/proto_generator/constants.h"
 
 namespace google::protobuf::io
 {

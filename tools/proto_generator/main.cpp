@@ -10,7 +10,7 @@
 #include <format>
 #include <Windows.h>
 
-#include "tools/code_generator/generator/generator_factory.h"
+#include "tools/proto_generator/generator/generator_factory.h"
 
 using namespace google::protobuf;
 using namespace google::protobuf::compiler;
