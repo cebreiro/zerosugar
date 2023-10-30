@@ -24,10 +24,14 @@ namespace zerosugar::bt::model
         template <typename T> requires std::is_arithmetic_v<T>
         static auto As(const pugi::xml_attribute& attribute) -> std::optional<T>;
 
+        template <typename T> requires std::is_arithmetic_v<T>
+        static auto As(const std::string& str) -> std::optional<T>;
+
         template <typename T> requires std::is_base_of_v<Param, T>
         static auto As(const pugi::xml_attribute& attribute) -> std::optional<T>;
 
         template <typename T> requires std::is_same_v<T, std::vector<typename T::value_type>>
+            && std::is_arithmetic_v<typename T::value_type>
         static auto As(const pugi::xml_attribute& attribute) -> std::optional<T>;
 
         auto GetName() const -> const std::string&;
@@ -84,10 +88,15 @@ namespace zerosugar::bt::model
     template <typename T> requires std::is_arithmetic_v<T>
     auto Param::As(const pugi::xml_attribute& attribute) -> std::optional<T>
     {
+        return As<T>(attribute.as_string());
+    }
 
+    template <typename T> requires std::is_arithmetic_v<T>
+    auto Param::As(const std::string& str) -> std::optional<T>
+    {
         try
         {
-            return boost::lexical_cast<T>(attribute.as_string());
+            return boost::lexical_cast<T>(str);
         }
         catch (...)
         {
@@ -109,6 +118,7 @@ namespace zerosugar::bt::model
     }
 
     template <typename T> requires std::is_same_v<T, std::vector<typename T::value_type>>
+        && std::is_arithmetic_v<typename T::value_type>
     auto Param::As(const pugi::xml_attribute& attribute) -> std::optional<T>
     {
         std::string attr = attribute.as_string();
@@ -121,7 +131,7 @@ namespace zerosugar::bt::model
 
         for (const std::string& str : splits)
         {
-            std::optional<typename T::value_type> temp = As<typename T::value_type>();
+            std::optional<typename T::value_type> temp = As<typename T::value_type>(str);
             if (!temp.has_value())
             {
                 return std::nullopt;

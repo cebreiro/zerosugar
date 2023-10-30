@@ -1,5 +1,8 @@
 #include "task.proto.h"
 
+#include <cassert>
+#include <cstring>
+
 namespace zerosugar::bt::model
 {
     bool Sequence::Deserialize(const pugi::xml_node& node)
@@ -28,6 +31,8 @@ namespace zerosugar::bt::model
 
     bool Selector::Deserialize(const pugi::xml_node& node)
     {
+        assert(!::_stricmp(node.name(), class_name));
+
         if (!Model::Deserialize(node))
         {
             return false;
@@ -50,6 +55,8 @@ namespace zerosugar::bt::model
 
     bool ForceSuccess::Deserialize(const pugi::xml_node& node)
     {
+        assert(!::_stricmp(node.name(), class_name));
+
         if (!Model::Deserialize(node))
         {
             return false;
@@ -68,6 +75,8 @@ namespace zerosugar::bt::model
 
     bool ForceFailure::Deserialize(const pugi::xml_node& node)
     {
+        assert(!::_stricmp(node.name(), class_name));
+
         if (!Model::Deserialize(node))
         {
             return false;
@@ -86,6 +95,8 @@ namespace zerosugar::bt::model
 
     bool Inverter::Deserialize(const pugi::xml_node& node)
     {
+        assert(!::_stricmp(node.name(), class_name));
+
         if (!Model::Deserialize(node))
         {
             return false;
@@ -104,6 +115,8 @@ namespace zerosugar::bt::model
 
     bool Repeat::Deserialize(const pugi::xml_node& node)
     {
+        assert(!::_stricmp(node.name(), class_name));
+
         if (!Model::Deserialize(node))
         {
             return false;
@@ -115,14 +128,14 @@ namespace zerosugar::bt::model
             return false;
         }
 
-            if (auto opt = Param::As<int32_t>(node.attribute("count")); opt.has_value())
-            {
-                _count = std::move(*opt);
-            }
-            else
-            {
-                return false;
-            }
+        if (auto opt = Param::As<int32_t>(node.attribute("count")); opt.has_value())
+        {
+            _count = std::move(*opt);
+        }
+        else
+        {
+            return false;
+        }
 
         return true;
     }
@@ -131,6 +144,8 @@ namespace zerosugar::bt::model
 
     bool RetryUntilSuccess::Deserialize(const pugi::xml_node& node)
     {
+        assert(!::_stricmp(node.name(), class_name));
+
         if (!Model::Deserialize(node))
         {
             return false;
