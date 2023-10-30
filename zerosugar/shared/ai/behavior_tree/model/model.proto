@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package zerosugar.bt.model;
+
+message Model
+{
+}
+
+message Param
+{
+}

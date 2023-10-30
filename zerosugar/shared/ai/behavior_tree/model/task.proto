@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+import "model.proto";
+
+package zerosugar.bt.model;
+
+message Sequence
+{
+    repeated Model children = 1;
+}
+
+message Selector
+{
+    repeated Model children = 1;
+}
+
+message ForceSuccess
+{
+    Model child = 1;
+}
+
+message ForceFailure
+{
+    Model child = 1;
+}
+
+message Inverter
+{
+    Model child = 1;
+}
+
+message Repeat
+{
+    Model child = 1;
+    int32 count = 2;
+}
+
+message RetryUntilSuccess
+{
+    Model child = 1;
+    int32 count = 2;
+}

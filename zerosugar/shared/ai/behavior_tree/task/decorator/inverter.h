@@ -1,21 +1,15 @@
 #pragma once
 #include <cassert>
-#include <stdexcept>
-#include <format>
 #include "zerosugar/shared/ai/behavior_tree/task/decorator/decorator.h"
+#include "zerosugar/shared/ai/behavior_tree/model/generated/task.proto.h"
 
 namespace zerosugar::bt
 {
     template <typename TContext>
-    class Inverter : public DecoratorInheritanceHelper<Inverter<TContext>, TContext>
+    class Inverter : public Decorator<TContext, model::Inverter>
     {
     public:
-        static constexpr const char* class_name = "inverter";
-
-    public:
         explicit Inverter(TContext& context);
-
-        void Initialize(const pugi::xml_node& node) override;
 
     private:
         auto Run() const -> Runnable override;
@@ -23,14 +17,8 @@ namespace zerosugar::bt
 
     template <typename TContext>
     Inverter<TContext>::Inverter(TContext& context)
-        : DecoratorInheritanceHelper<Inverter, TContext>(context)
+        : Decorator<TContext, model::Inverter>(context)
     {
-    }
-
-    template <typename TContext>
-    void Inverter<TContext>::Initialize(const pugi::xml_node& node)
-    {
-        DecoratorInheritanceHelper<Inverter, TContext>::Initialize(node);
     }
 
     template <typename TContext>

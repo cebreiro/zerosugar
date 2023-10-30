@@ -1,21 +1,18 @@
 #pragma once
 #include <vector>
-#include <stdexcept>
 #include "zerosugar/shared/ai/behavior_tree/task/task.h"
 #include "zerosugar/shared/ai/behavior_tree/task/task_factory.h"
+#include "zerosugar/shared/ai/behavior_tree/model/generated/task.proto.h"
 
 namespace zerosugar::bt
 {
     template <typename TContext>
-    class Sequence : public TaskInheritanceHelper<Sequence<TContext>, TContext>
+    class Sequence : public TaskT<TContext, model::Sequence>
     {
-    public:
-        static constexpr const char* class_name = "sequence";
-
     public:
         explicit Sequence(TContext& context);
 
-        void Initialize(const pugi::xml_node& node) override;
+        bool Initialize(const pugi::xml_node& node) override;
 
         void Reset() override;
 
@@ -28,32 +25,42 @@ namespace zerosugar::bt
 
     template <typename TContext>
     Sequence<TContext>::Sequence(TContext& context)
-        : TaskInheritanceHelper<Sequence, TContext>(context)
+        : TaskT<TContext, model::Sequence>(context)
     {
     }
 
     template <typename TContext>
-    void Sequence<TContext>::Initialize(const pugi::xml_node& node)
+    bool Sequence<TContext>::Initialize(const pugi::xml_node& node)
     {
+        if (!TaskT<TContext, model::Sequence>::Initialize(node))
+        {
+            return false;
+        }
+
         auto& factory = TaskFactory<TContext>::GetInstance();
 
         for (const pugi::xml_node& child : node.children())
         {
-            const auto* childName = child.name();
-            auto task = factory.CreateTask(this->_context, childName);
+            auto task = factory.CreateTask(this->_context, child.name());
             if (!task)
             {
-                throw std::runtime_error("fail to find sequence child name");
+                return false;
             }
 
-            _tasks.emplace_back(std::move(task))->Initialize(child);
+            if (!task->Initialize(child))
+            {
+                return false;
+            }
+
+            _tasks.emplace_back(std::move(task));
         }
+
+        return true;
     }
 
     template <typename TContext>
     void Sequence<TContext>::Reset()
     {
-        TaskInheritanceHelper<Sequence, TContext>::Reset();
         for (const auto& task : _tasks)
         {
             task->Reset();

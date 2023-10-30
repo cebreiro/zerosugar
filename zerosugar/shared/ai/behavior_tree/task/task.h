@@ -22,7 +22,7 @@ namespace zerosugar::bt
         explicit Task(TContext& context);
         virtual ~Task() = default;
 
-        virtual void Initialize(const pugi::xml_node& node) = 0;
+        virtual bool Initialize(const pugi::xml_node& node) = 0;
 
         auto Execute() -> State;
         virtual void Reset();
@@ -39,6 +39,17 @@ namespace zerosugar::bt
     private:
         State _state = State::None;
         std::optional<Runnable> _runnable = std::nullopt;
+    };
+
+    template <typename TContext, typename TModel>
+    class TaskT : public Task<TContext>, public TModel
+    {
+    public:
+        explicit TaskT(TContext& context);
+
+        bool Initialize(const pugi::xml_node& node) override;
+
+        auto GetName() const->std::string_view  override;
     };
 
     template <typename TContext>
@@ -88,33 +99,30 @@ namespace zerosugar::bt
         return _state;
     }
 
+    template <typename TContext, typename TModel>
+    TaskT<TContext, TModel>::TaskT(TContext& context)
+        : Task<TContext>(context)
+    {
+    }
+
+    template <typename TContext, typename TModel>
+    bool TaskT<TContext, TModel>::Initialize(const pugi::xml_node& node)
+    {
+        return TModel::Deserialize(node);
+    }
+
+    template <typename TContext, typename TModel>
+    auto TaskT<TContext, TModel>::GetName() const -> std::string_view
+    {
+        return TModel::class_name;
+    }
+
     template <typename T, typename TContext>
     concept task_concept = requires (T t)
     {
         requires std::is_base_of_v<Task<TContext>, T>;
         { T::class_name } -> std::convertible_to<std::string>;
     };
-
-    template <typename T, typename TContext>
-    class TaskInheritanceHelper : public Task<TContext>
-    {
-    public:
-        explicit TaskInheritanceHelper(TContext& context);
-
-        auto GetName() const -> std::string_view  override;
-    };
-
-    template <typename T, typename TContext>
-    TaskInheritanceHelper<T, TContext>::TaskInheritanceHelper(TContext& context)
-        : Task<TContext>(context)
-    {
-    }
-
-    template <typename T, typename TContext>
-    auto TaskInheritanceHelper<T, TContext>::GetName() const -> std::string_view
-    {
-        return T::class_name;
-    }
 
     template <typename TContext>
     using task_pointer_type = std::unique_ptr<Task<TContext>>;

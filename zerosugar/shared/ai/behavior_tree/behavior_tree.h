@@ -16,7 +16,7 @@ namespace zerosugar
         BehaviorTree() = default;
         explicit  BehaviorTree(std::remove_cvref_t<TContext>& context);
 
-        void Initialize(const pugi::xml_node& root);
+        bool Initialize(const pugi::xml_node& root);
 
         bool IsValid() const;
         auto Execute() -> bt::State;
@@ -39,14 +39,14 @@ namespace zerosugar
     }
 
     template <typename TContext>
-    void BehaviorTree<TContext>::Initialize(const pugi::xml_node& root)
+    bool BehaviorTree<TContext>::Initialize(const pugi::xml_node& root)
     {
         std::call_once(_registerFlag, bt::RegisterBaseTaskToFactory<TContext>);
 
         const auto& child = root.first_child();
         if (!child)
         {
-            throw std::runtime_error("empty behavior tree");
+            return false;
         }
 
         auto& factory = bt::TaskFactory<TContext>::GetInstance();
@@ -54,10 +54,10 @@ namespace zerosugar
         _root = factory.CreateTask(*_context, child.name());
         if (!_root)
         {
-            throw std::runtime_error("fail to find root node from factory");
+            return false;
         }
 
-        _root->Initialize(child);
+        return _root->Initialize(child);
     }
 
     template <typename TContext>

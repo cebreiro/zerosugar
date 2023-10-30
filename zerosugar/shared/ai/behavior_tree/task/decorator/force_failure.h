@@ -3,19 +3,15 @@
 #include <stdexcept>
 #include <format>
 #include "zerosugar/shared/ai/behavior_tree/task/decorator/decorator.h"
+#include "zerosugar/shared/ai/behavior_tree/model/generated/task.proto.h"
 
 namespace zerosugar::bt
 {
     template <typename TContext>
-    class ForceFailure : public DecoratorInheritanceHelper<ForceFailure<TContext>, TContext>
+    class ForceFailure : public Decorator<TContext, model::ForceFailure>
     {
     public:
-        static constexpr const char* class_name = "force_failure";
-
-    public:
         explicit ForceFailure(TContext& context);
-
-        void Initialize(const pugi::xml_node& node) override;
 
     private:
         auto Run() const -> Runnable override;
@@ -23,14 +19,8 @@ namespace zerosugar::bt
 
     template <typename TContext>
     ForceFailure<TContext>::ForceFailure(TContext& context)
-        : DecoratorInheritanceHelper<ForceFailure, TContext>(context)
+        : Decorator<TContext, model::ForceFailure>(context)
     {
-    }
-
-    template <typename TContext>
-    void ForceFailure<TContext>::Initialize(const pugi::xml_node& node)
-    {
-        DecoratorInheritanceHelper<ForceFailure, TContext>::Initialize(node);
     }
 
     template <typename TContext>

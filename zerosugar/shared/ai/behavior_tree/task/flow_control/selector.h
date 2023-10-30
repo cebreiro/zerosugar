@@ -1,20 +1,18 @@
 #pragma once
 #include <vector>
-#include <stdexcept>
 #include "zerosugar/shared/ai/behavior_tree/task/task.h"
 #include "zerosugar/shared/ai/behavior_tree/task/task_factory.h"
+#include "zerosugar/shared/ai/behavior_tree/model/generated/task.proto.h"
 
 namespace zerosugar::bt
 {
    template <typename TContext>
-    class Selector : public TaskInheritanceHelper<Selector<TContext>, TContext>
+    class Selector : public TaskT<TContext, model::Selector>
     {
     public:
-        static constexpr const char* class_name = "selector";
-
-    public:
         explicit Selector(TContext& context);
-        void Initialize(const pugi::xml_node& node) override;
+
+        bool Initialize(const pugi::xml_node& node) override;
 
         void Reset() override;
 
@@ -27,13 +25,18 @@ namespace zerosugar::bt
 
     template <typename TContext>
     Selector<TContext>::Selector(TContext& context)
-        : TaskInheritanceHelper<Selector, TContext>(context)
+        : TaskT<TContext, model::Selector>(context)
     {
     }
 
     template <typename TContext>
-    void Selector<TContext>::Initialize(const pugi::xml_node& node)
+    bool Selector<TContext>::Initialize(const pugi::xml_node& node)
     {
+        if (!TaskT<TContext, model::Selector>::Initialize(node))
+        {
+            return false;
+        }
+
         auto& factory = TaskFactory<TContext>::GetInstance();
 
         for (const pugi::xml_node& child : node.children())
@@ -41,17 +44,23 @@ namespace zerosugar::bt
             auto task = factory.CreateTask(this->_context, child.name());
             if (!task)
             {
-                throw std::runtime_error("fail to find selector child name");
+                return false;
             }
 
-            _tasks.emplace_back(std::move(task))->Initialize(child);
+            if (!task->Initialize(child))
+            {
+                return false;
+            }
+
+            _tasks.emplace_back(std::move(task));
         }
+
+        return true;
     }
 
     template <typename TContext>
     void Selector<TContext>::Reset()
     {
-        TaskInheritanceHelper<Selector, TContext>::Reset();
         for (const auto& task : _tasks)
         {
             task->Reset();

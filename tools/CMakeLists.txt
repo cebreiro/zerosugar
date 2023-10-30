@@ -1,6 +1,2 @@
-
-
-
-project(zerosugar_tool)
-
+add_subdirectory(code_generator)
 add_subdirectory(foo)

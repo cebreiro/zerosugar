@@ -6,13 +6,13 @@
 
 namespace zerosugar::bt
 {
-    template <typename TContext>
-    class Decorator : public Task<TContext>
+    template <typename TContext, typename TModel>
+    class Decorator : public TaskT<TContext, TModel>
     {
     public:
         explicit Decorator(TContext& context);
 
-        void Initialize(const pugi::xml_node& node) override;
+        bool Initialize(const pugi::xml_node& node) override;
 
         void Reset() override;
 
@@ -21,63 +21,38 @@ namespace zerosugar::bt
     };
 
 
-    template <typename TContext>
-    Decorator<TContext>::Decorator(TContext& context)
-        : Task<TContext>(context)
+    template <typename TContext, typename TModel>
+    Decorator<TContext, TModel>::Decorator(TContext& context)
+        : TaskT<TContext, TModel>(context)
     {
     }
 
-    template <typename TContext>
-    void Decorator<TContext>::Initialize(const pugi::xml_node& node)
+    template <typename TContext, typename TModel>
+    bool Decorator<TContext, TModel>::Initialize(const pugi::xml_node& node)
     {
-        auto& factory = TaskFactory<TContext>::GetInstance();
-
-        if (node.children().empty())
+        if (!TaskT<TContext, TModel>::Initialize(node))
         {
-            throw std::runtime_error(
-                std::format("fail to initialize {} node - no child. xml_node_name: {}",
-                    this->GetName(), node.name()));
+            return false;
         }
 
         const pugi::xml_node& child = node.first_child();
-
-        _task = factory.CreateTask(this->_context, child.name());
-        if (!_task)
+        if (!child)
         {
-            throw std::runtime_error(
-                std::format("fail to find {} node from factory. xml_node_name: {}",
-                this->GetName(), node.name()));
+            return false;
         }
 
-        _task->Initialize(child);
+        _task = TaskFactory<TContext>::GetInstance().CreateTask(this->_context, child.name());
+        if (!_task)
+        {
+            return false;
+        }
+
+        return _task->Initialize(child);
     }
 
-    template <typename TContext>
-    void Decorator<TContext>::Reset()
+    template <typename TContext, typename TModel>
+    void Decorator<TContext, TModel>::Reset()
     {
-        Task<TContext>::Reset();
-
         _task->Reset();
-    }
-
-    template <typename T, typename TContext>
-    class DecoratorInheritanceHelper : public Decorator<TContext>
-    {
-    public:
-        explicit DecoratorInheritanceHelper(TContext& context);
-
-        auto GetName() const -> std::string_view override;
-    };
-
-    template <typename T, typename TContext>
-    DecoratorInheritanceHelper<T, TContext>::DecoratorInheritanceHelper(TContext& context)
-        : Decorator<TContext>(context)
-    {
-    }
-
-    template <typename T, typename TContext>
-    auto DecoratorInheritanceHelper<T, TContext>::GetName() const -> std::string_view
-    {
-        return T::class_name;
     }
 }
