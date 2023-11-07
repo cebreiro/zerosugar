@@ -8,6 +8,7 @@ project(zerosugar)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/msvc.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/find_packages.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/protobuf.cmake)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
