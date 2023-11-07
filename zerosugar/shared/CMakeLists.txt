@@ -4,6 +4,7 @@ target_link_libraries(zerosugar_shared PUBLIC
 	Boost::boost
 	TBB::tbb
 	spdlog::spdlog
+    pugixml::shared pugixml::pugixml
 )
 
 file(GLOB_RECURSE ZEROSUGAR_SHARED_SRC_FILES CONFIGURE_DEPENDS

@@ -4,8 +4,8 @@
 
 namespace zerosugar
 {
-    BufferReader::BufferReader(const value_type& begin, const value_type& end)
-        : BasicStreamReader(begin, end)
+    BufferReader::BufferReader(value_type begin, value_type end)
+        : StreamReader(std::move(begin), std::move(end))
     {
     }
 

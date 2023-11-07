@@ -9,13 +9,13 @@ namespace zerosugar
         class IBufferReadable;
     }
 
-    class BufferReader : public BasicStreamReader<Buffer::const_iterator>
+    class BufferReader : public StreamReader<Buffer::const_iterator>
     {
     public:
-        using BasicStreamReader::Read;
+        using StreamReader::Read;
 
     public:
-        BufferReader(const value_type& begin, const value_type& end);
+        BufferReader(value_type begin, value_type end);
 
         void Read(buffer::IBufferReadable& readable);
     };

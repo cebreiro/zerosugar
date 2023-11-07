@@ -13,24 +13,24 @@ namespace zerosugar
     {
         { ++t } -> std::same_as<T&>;
         { t++ } -> std::same_as<T>;
-        requires std::same_as<typename T::value_type, const char>;
+        requires std::convertible_to<typename T::value_type, const char>;
     };
 
     template <stream_readable_concept T>
-    class BasicStreamReader
+    class StreamReader
     {
     public:
-        using value_type = T;
+        using value_type = std::decay_t<T>;
 
     public:
-        BasicStreamReader() = delete;
-        BasicStreamReader(const BasicStreamReader&) = delete;
-        BasicStreamReader(BasicStreamReader&&) noexcept = delete;
-        BasicStreamReader& operator=(const BasicStreamReader&) = delete;
-        BasicStreamReader& operator=(BasicStreamReader&&) noexcept = delete;
+        StreamReader() = delete;
+        StreamReader(const StreamReader&) = delete;
+        StreamReader(StreamReader&&) noexcept = delete;
+        StreamReader& operator=(const StreamReader&) = delete;
+        StreamReader& operator=(StreamReader&&) noexcept = delete;
 
-        BasicStreamReader(const T& begin, const T& end);
-        ~BasicStreamReader() = default;
+        StreamReader(T begin, T end);
+        ~StreamReader() = default;
 
         bool Empty() const noexcept;
         bool CanRead(int64_t size) const noexcept;
@@ -56,16 +56,16 @@ namespace zerosugar
     };
 
     template <stream_readable_concept T>
-    BasicStreamReader<T>::BasicStreamReader(const T& begin, const T& end)
+    StreamReader<T>::StreamReader(T begin, T end)
         : _begin(begin)
-        , _iter(begin)
-        , _end(end)
+        , _iter(std::move(begin))
+        , _end(std::move(end))
         , _remainSize(std::distance(_iter, _end))
     {
     }
 
     template <stream_readable_concept T>
-    bool BasicStreamReader<T>::Empty() const noexcept
+    bool StreamReader<T>::Empty() const noexcept
     {
         assert(_remainSize == std::distance(_iter, _end));
 
@@ -73,7 +73,7 @@ namespace zerosugar
     }
 
     template <stream_readable_concept T>
-    bool BasicStreamReader<T>::CanRead(int64_t size) const noexcept
+    bool StreamReader<T>::CanRead(int64_t size) const noexcept
     {
         assert(_remainSize == std::distance(_iter, _end));
 
@@ -82,7 +82,7 @@ namespace zerosugar
 
     template <stream_readable_concept T>
     template <std::integral U>
-    auto BasicStreamReader<T>::Read() -> U
+    auto StreamReader<T>::Read() -> U
     {
         constexpr int64_t size = sizeof(U);
 
@@ -107,7 +107,7 @@ namespace zerosugar
 
     template <stream_readable_concept T>
     template <std::floating_point U>
-    auto BasicStreamReader<T>::Read() -> U
+    auto StreamReader<T>::Read() -> U
     {
         constexpr int64_t size = sizeof(U);
 
@@ -129,7 +129,7 @@ namespace zerosugar
     }
 
     template <stream_readable_concept T>
-    auto BasicStreamReader<T>::ReadString() -> std::string
+    auto StreamReader<T>::ReadString() -> std::string
     {
         int64_t size = 0;
         auto iter = _iter;
@@ -149,7 +149,7 @@ namespace zerosugar
     }
 
     template <stream_readable_concept T>
-    auto BasicStreamReader<T>::ReadString(int64_t size) -> std::string
+    auto StreamReader<T>::ReadString(int64_t size) -> std::string
     {
         if (size <= 0)
         {
@@ -176,7 +176,7 @@ namespace zerosugar
     }
 
     template <stream_readable_concept T>
-    void BasicStreamReader<T>::ReadBuffer(char* buffer, int64_t size)
+    void StreamReader<T>::ReadBuffer(char* buffer, int64_t size)
     {
         if (!CanRead(size))
         {
@@ -195,13 +195,13 @@ namespace zerosugar
     }
 
     template <stream_readable_concept T>
-    auto BasicStreamReader<T>::begin() const -> T
+    auto StreamReader<T>::begin() const -> T
     {
         return _begin;
     }
 
     template <stream_readable_concept T>
-    auto BasicStreamReader<T>::end() const -> T
+    auto StreamReader<T>::end() const -> T
     {
         return _end;
     }

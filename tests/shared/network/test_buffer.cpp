@@ -1,11 +1,11 @@
+#include <boost/container/small_vector.hpp>
+#include "zerosugar/shared/io/stream_writer.h"
 #include "zerosugar/shared/network/buffer/buffer.h"
 #include "zerosugar/shared/network/buffer/buffer_reader.h"
-#include "zerosugar/shared/network/buffer/buffer_creator.h"
 
 using zerosugar::Buffer;
 using zerosugar::buffer::Fragment;
 using zerosugar::BufferReader;
-using zerosugar::BufferCreator;
 
 TEST(Buffer, DefaultConstruct)
 {
@@ -165,7 +165,7 @@ TEST(Buffer, IteratorRead)
 }
 
 
-TEST(Buffer, BufferCreateRead)
+TEST(Buffer, BufferWrite)
 {
     constexpr int8_t expected1 = 0x41;
     constexpr int16_t expected2 = 0x6433;
@@ -185,21 +185,62 @@ TEST(Buffer, BufferCreateRead)
     // arrange
     Data expected;
 
-    BufferCreator bufferCreator;
+    boost::container::small_vector<char, 256> buffer;
+    zerosugar::StreamWriter bufferWriter(buffer);
 
     // act
-    bufferCreator.Write(expected1);
-    bufferCreator.Write(expected2);
-    bufferCreator.Write(expected3);
-    bufferCreator.Write(expected4);
-
-    Buffer result = bufferCreator.CreateBuffer();
-    BufferReader reader(result.cbegin(), result.cend());
+    bufferWriter.Write(expected1);
+    bufferWriter.Write(expected2);
+    bufferWriter.Write(expected3);
+    bufferWriter.Write(expected4);
 
     // assert
-    EXPECT_EQ(reader.Read<decltype(expected1)>(), expected.v1);
-    EXPECT_EQ(reader.Read<decltype(expected2)>(), expected.v2);
-    EXPECT_EQ(reader.Read<decltype(expected3)>(), expected.v3);
-    EXPECT_EQ(reader.Read<decltype(expected4)>(), expected.v4);
+    const Data& result = *reinterpret_cast<const Data*>(buffer.data());
+
+    EXPECT_EQ(result.v1, expected.v1);
+    EXPECT_EQ(result.v2, expected.v2);
+    EXPECT_EQ(result.v3, expected.v3);
+    EXPECT_EQ(result.v4, expected.v4);
+}
+
+TEST(Buffer, BufferRead)
+{
+    const int8_t expected1 = 0x41;
+    const int16_t expected2 = 0x6433;
+    const int32_t expected3 = 0x63415431;
+    const int64_t expected4 = 0x1234567887654321;
+
+    // arrange
+    Buffer buffer = []()
+        {
+            std::vector<char> buffer;
+            zerosugar::StreamWriter bufferWriter(buffer);
+
+            bufferWriter.Write(expected1);
+            bufferWriter.Write(expected2);
+            bufferWriter.Write(expected3);
+            bufferWriter.Write(expected4);
+
+            Buffer result;
+            result.Add(Fragment::CreateFrom(buffer));
+
+            return result;
+        }();
+
+    BufferReader reader(buffer.cbegin(), buffer.cend());
+
+    // act
+
+    const int8_t result1 = reader.Read<int8_t>();
+    const int16_t result2 = reader.Read<int16_t>();
+    const int32_t result3 = reader.Read<int32_t>();
+    const int64_t result4 = reader.Read<int64_t>();
+
+    // assert
+
+    EXPECT_EQ(result1, expected1);
+    EXPECT_EQ(result2, expected2);
+    EXPECT_EQ(result3, expected3);
+    EXPECT_EQ(result4, expected4);
     EXPECT_ANY_THROW(reader.Read<int8_t>());
 }

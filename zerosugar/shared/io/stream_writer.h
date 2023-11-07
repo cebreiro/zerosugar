@@ -6,6 +6,7 @@
 #include <iterator>
 #include <algorithm>
 #include <optional>
+#include <stdexcept>
 
 namespace zerosugar
 {
@@ -16,56 +17,77 @@ namespace zerosugar
     };
 
     template <stream_writable_concept T>
-    class BasicStreamWriter
+    class StreamWriter
     {
     public:
-        BasicStreamWriter() = default;
-        BasicStreamWriter(const BasicStreamWriter& other) = delete;
-        BasicStreamWriter(BasicStreamWriter&& other) noexcept = delete;
-        BasicStreamWriter& operator=(const BasicStreamWriter& other) = delete;
-        BasicStreamWriter& operator=(BasicStreamWriter&& other) noexcept = delete;
+        StreamWriter() = default;
+        StreamWriter(const StreamWriter& other) = delete;
+        StreamWriter(StreamWriter&& other) noexcept = delete;
+        StreamWriter& operator=(const StreamWriter& other) = delete;
+        StreamWriter& operator=(StreamWriter&& other) noexcept = delete;
 
-        explicit BasicStreamWriter(T& container);
-        ~BasicStreamWriter() = default;
+        explicit StreamWriter(T& container);
+        ~StreamWriter() = default;
 
         template <std::integral U>
         void Write(U value);
-
         void WriteString(const std::string& str);
         void WriteBuffer(std::span<const char> buffer);
 
+        template <std::integral U>
+        void Write(U value, int64_t offset);
+
     protected:
-        std::optional<std::back_insert_iterator<T>> _iter = std::nullopt;
+        T& _container;
     };
 
     template <stream_writable_concept T>
-    BasicStreamWriter<T>::BasicStreamWriter(T& container)
-        : _iter(std::back_inserter(container))
+    StreamWriter<T>::StreamWriter(T& container)
+        : _container(container)
     {
     }
 
     template <stream_writable_concept T>
     template <std::integral U>
-    void BasicStreamWriter<T>::Write(U value)
+    void StreamWriter<T>::Write(U value)
     {
         const char* begin = reinterpret_cast<const char*>(&value);
         const char* end = begin + sizeof(value);
 
-        assert(_iter.has_value());
-        std::copy(begin, end, *_iter);
+        std::copy(begin, end, std::back_inserter(_container));
     }
 
     template <stream_writable_concept T>
-    void BasicStreamWriter<T>::WriteString(const std::string& str)
+    void StreamWriter<T>::WriteString(const std::string& str)
     {
-        assert(_iter.has_value());
-        std::copy(str.begin(), str.end(), *_iter);
+        std::copy(str.begin(), str.end(), std::back_inserter(_container));
     }
 
     template <stream_writable_concept T>
-    void BasicStreamWriter<T>::WriteBuffer(std::span<const char> buffer)
+    void StreamWriter<T>::WriteBuffer(std::span<const char> buffer)
     {
-        assert(_iter.has_value());
-        std::ranges::copy(buffer, *_iter);
+        std::ranges::copy(buffer, std::back_inserter(_container));
+    }
+
+    template <stream_writable_concept T>
+    template <std::integral U>
+    void StreamWriter<T>::Write(U value, int64_t offset)
+    {
+        const int64_t size = std::ssize(_container);
+        if (offset < 0 || offset > size)
+        {
+            throw std::runtime_error("fail to write stream. invalid offset");
+        }
+        else if (offset == size)
+        {
+            Write<U>(value);
+            return;
+        }
+
+        
+        const char* begin = reinterpret_cast<const char*>(&value);
+        const char* end = begin + sizeof(value);
+
+        std::copy(begin, end, std::next(_container.begin(), offset));
     }
 }
