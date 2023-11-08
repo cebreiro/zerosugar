@@ -18,7 +18,7 @@ public:
 public:
     TestApp();
 
-    auto GetServer() -> Server&;
+    auto GetServer() -> class TestServer&;
     auto GetStrands() const -> const std::vector<SharedPtrNotNull<Strand>>&;
 
 private:
@@ -26,6 +26,6 @@ private:
     void OnShutdown() override;
 
 private:
-    SharedPtrNotNull<Server> _server;
+    SharedPtrNotNull<class TestServer> _server;
     std::vector<SharedPtrNotNull<Strand>> _strands;
 };

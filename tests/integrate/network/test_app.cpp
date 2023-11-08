@@ -1,11 +1,13 @@
 #include "test_app.h"
 
+#include "tests/integrate/network/test_server.h"
+
 TestApp::TestApp()
-    : _server(std::make_shared<Server>(GetAsioExecutor()))
+    : _server(std::make_shared<TestServer>(GetAsioExecutor(), *this))
 {
 }
 
-auto TestApp::GetServer() -> Server&
+auto TestApp::GetServer() -> TestServer&
 {
     return *_server;
 }

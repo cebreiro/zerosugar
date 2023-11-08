@@ -2,11 +2,12 @@
 #include <random>
 #include <vector>
 
-#include "tests/integrate/network/test_app.h"
 #include "tests/integrate/network/client.h"
-#include "tests/integrate/network/server_event_handler.h"
-#include "zerosugar/shared/execution/future/operation/wait_all.h"
+#include "tests/integrate/network/test_app.h"
+#include "tests/integrate/network/test_server.h"
+#include "zerosugar/shared/execution/future/future.hpp"
 
+using zerosugar::Future;
 
 TEST(IntegarteNetwork, EchoCompareBytes)
 {
@@ -20,10 +21,8 @@ TEST(IntegarteNetwork, EchoCompareBytes)
     {
     }
 
-    Server& server = app.GetServer();
+    TestServer& server = app.GetServer();
     ASSERT_TRUE(server.IsOpen());
-
-    auto serverEventHandler = std::make_shared<ServerEventHandler>(app);
 
     std::mt19937 mt(std::random_device{}());
     std::vector<std::shared_ptr<Client>> clients;
@@ -32,8 +31,6 @@ TEST(IntegarteNetwork, EchoCompareBytes)
     results.reserve(clientCount);
 
     // act
-    Future<bool> serverOperation = serverEventHandler->Run();
-
     for (int64_t i = 0; i < clientCount; ++i)
     {
         Promise<boost::system::error_code> promise;
@@ -46,11 +43,10 @@ TEST(IntegarteNetwork, EchoCompareBytes)
 
     WaitAll(app.GetExecutor(), results).Wait();
 
-    server.Shutdown();
-    const bool serverOperationResult = serverOperation.Get();
+    app.Shutdown();
+    thread.join();
 
     // assert
-    ASSERT_TRUE(serverOperationResult);
 
     for (Future<boost::system::error_code>& clientOperation : results)
     {
@@ -78,9 +74,6 @@ TEST(IntegarteNetwork, EchoCompareBytes)
             EXPECT_EQ(sendBuffer[i], receiveBuffer[i]) << std::format("diff i={}", i);
         }
     }
-
-    // finalize
-    app.Shutdown();
 }
 
 int main()

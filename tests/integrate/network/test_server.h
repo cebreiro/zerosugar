@@ -2,20 +2,16 @@
 #include <memory>
 #include <tbb/concurrent_hash_map.h>
 #include "zerosugar/shared/execution/future/future.h"
-#include "zerosugar/shared/network/server/event.h"
+#include "zerosugar/shared/network/server/server.h"
 #include "zerosugar/shared/network/session/session.h"
 
 using zerosugar::SharedPtrNotNull;
-using zerosugar::Future;
 using zerosugar::Session;
 using zerosugar::session::id_type;
-using zerosugar::server::ConnectionEvent;
-using zerosugar::server::DisconnectionEvent;
-using zerosugar::server::ReceiveEvent;
 
 class TestApp;
 
-class ServerEventHandler : public std::enable_shared_from_this<ServerEventHandler>
+class TestServer final : public zerosugar::Server
 {
 public:
     struct Context
@@ -31,16 +27,13 @@ public:
     };
 
 public:
-    explicit ServerEventHandler(TestApp& app);
-
-    auto Run() -> Future<bool>;
+    TestServer(zerosugar::execution::AsioExecutor& executor, TestApp& app);
 
 private:
-    auto RunImpl() -> Future<bool>;
 
-    bool HandleEvent(ConnectionEvent event);
-    bool HandleEvent(DisconnectionEvent event);
-    bool HandleEvent(ReceiveEvent event);
+    void OnAccept(Session& session) override;
+    void OnReceive(Session& session, zerosugar::Buffer buffer) override;
+    void OnError(Session& session, const boost::system::error_code& error) override;
 
 private:
     TestApp& _app;

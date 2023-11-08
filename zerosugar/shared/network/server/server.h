@@ -7,7 +7,6 @@
 #include <tbb/concurrent_queue.h>
 #include <tbb/concurrent_hash_map.h>
 #include "zerosugar/shared/execution/future/future.h"
-#include "zerosugar/shared/network/server/event.h"
 #include "zerosugar/shared/network/session/event.h"
 
 namespace zerosugar
@@ -34,7 +33,6 @@ namespace zerosugar
         auto GetExecutor() const -> const execution::AsioExecutor&;
         auto GetListenPort() const -> uint16_t;
         auto GetSessionCount() const -> int64_t;
-        auto GetEventChannel() -> const std::shared_ptr<server::event_channel_type>&;
 
     private:
         void AcceptAsync();
@@ -51,13 +49,19 @@ namespace zerosugar
         void HandleSessionError(session::IoErrorEvent event);
         void HandleSessionDestruct(session::DestructEvent event);
 
+    private:
+        virtual void OnAccept(Session& session) = 0;
+        virtual void OnReceive(Session& session, Buffer buffer) = 0;
+        virtual void OnError(Session& session, const boost::system::error_code& error) = 0;
+
+    private:
+        auto FindSession(session::id_type id) const -> std::shared_ptr<Session>;
         auto PublishSessionId() -> session::id_type;
 
     private:
         execution::AsioExecutor& _executor;
         uint16_t _listenPort = 0;
         std::optional<boost::asio::ip::tcp::acceptor> _acceptor = std::nullopt;
-        std::shared_ptr<server::event_channel_type> _externalChannel;
 
         std::atomic<int64_t> _sessionCount = 0;
         std::atomic<session::id_type::value_type> _nextSessionId = session::id_type::Default().Unwrap();

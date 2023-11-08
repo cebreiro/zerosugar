@@ -13,7 +13,6 @@ namespace zerosugar
 {
     Server::Server(execution::AsioExecutor& executor)
         : _executor(executor)
-        , _externalChannel(std::make_shared<server::event_channel_type>())
     {
     }
 
@@ -58,8 +57,6 @@ namespace zerosugar
                 session->Close();
             }
         }
-
-        _externalChannel->Close();
     }
 
     bool Server::IsOpen() const
@@ -92,12 +89,6 @@ namespace zerosugar
         return _sessionCount.load();
     }
 
-    auto Server::GetEventChannel() -> const std::shared_ptr<server::event_channel_type>&
-    {
-        assert(_externalChannel);
-        return _externalChannel;
-    }
-
     void Server::AcceptAsync()
     {
         assert(_acceptor.has_value());
@@ -112,8 +103,6 @@ namespace zerosugar
 
     void Server::OnAccept(const boost::system::error_code& ec, boost::asio::ip::tcp::socket socket)
     {
-        using namespace zerosugar::server;
-
         if (ec)
         {
             if (ec == boost::asio::error::operation_aborted)
@@ -152,15 +141,14 @@ namespace zerosugar
         }
 
         ++_sessionCount;
+
+        this->OnAccept(*session);
         session->StartReceive();
 
         Post(*strand, [this, channel = std::move(channel), strand]() mutable
             {
                 Run(std::move(channel), std::move(strand));
             });
-
-        _externalChannel->Send(server::ConnectionEvent{ .id = id, .session = std::move(session) },
-            channel::ChannelSignal::NotifyOne);
     }
 
     void Server::HandleAcceptError(const boost::system::error_code& ec)
@@ -218,34 +206,49 @@ namespace zerosugar
 
     void Server::HandleSessionReceive(session::ReceiveEvent event)
     {
-        server::ReceiveEvent serverEvent{
-            .id = event.id,
-            .buffer = std::move(event.buffer),
-        };
+        std::shared_ptr<Session> session = FindSession(event.id);
+        if (!session)
+        {
+            return;
+        }
 
-        _externalChannel->Send(std::move(serverEvent), channel::ChannelSignal::NotifyOne);
+        this->OnReceive(*session, std::move(event.buffer));
     }
 
     void Server::HandleSessionError(session::IoErrorEvent event)
     {
-        // log
-        bool erased = false;
+        std::shared_ptr<Session> session;
+
+        decltype(_sessions)::accessor accessor;
+        if (_sessions.find(accessor, event.id))
         {
-            std::lock_guard lock(_sessionMutex);
-            erased = _sessions.erase(event.id);
+            session = std::move(accessor->second);
+            _sessions.erase(accessor);
         }
 
-        if (erased)
+        if (!session)
         {
-            _externalChannel->Send(server::DisconnectionEvent{ .id = event.id, },
-                channel::ChannelSignal::NotifyOne);
+            return;
         }
+
+        this->OnError(*session, event.errorCode);
     }
 
     void Server::HandleSessionDestruct(session::DestructEvent event)
     {
         _sessionIdRecycleQueue.push(event.id.Unwrap());
         --_sessionCount;
+    }
+
+    auto Server::FindSession(session::id_type id) const -> std::shared_ptr<Session>
+    {
+        decltype(_sessions)::const_accessor accessor;
+        if (_sessions.find(accessor, id))
+        {
+            return accessor->second;
+        }
+
+        return nullptr;
     }
 
     auto Server::PublishSessionId() -> session::id_type
