@@ -22,5 +22,6 @@ namespace zerosugar::sl
         virtual void Update(db::Account account) -> Future<bool> = 0;
 
         virtual auto Find(int64_t id) const -> Future<std::optional<db::Account>> = 0;
+        virtual auto Find(std::string account) const -> Future<std::optional<db::Account>> = 0;
     };
 }
