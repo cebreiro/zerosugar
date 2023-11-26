@@ -10,27 +10,27 @@ namespace zerosugar
     namespace detail
     {
         template <typename T>
-        class SpdLogServiceBaseBuildConfig
+        class SpdlogLoggerBaseBuildConfig
         {
             friend class SpdLogServiceBuilder;
 
         public:
             auto SetLogLevel(LogLevel logLevel) -> T&;
-            auto SetShouldLogAsync(bool shouldLogAsync) -> T&;
+            auto SetAsync(bool async) -> T&;
             auto SetPattern(std::string pattern) -> T&;
 
             auto GetLogLevel() const noexcept -> LogLevel;
-            bool GetShouldLogAsync() const noexcept;
+            bool IsAsync() const noexcept;
             auto GetPattern() const noexcept -> const std::string&;
 
         private:
             LogLevel _logLevel = LogLevel::Debug;
-            bool _shouldLogAsync = false;
+            bool _async = false;
             std::string _pattern = "[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] [%s:%#] %v";
         };
 
         template <typename T>
-        T& SpdLogServiceBaseBuildConfig<T>::SetLogLevel(LogLevel logLevel)
+        auto SpdlogLoggerBaseBuildConfig<T>::SetLogLevel(LogLevel logLevel) -> T&
         {
             _logLevel = logLevel;
 
@@ -38,15 +38,15 @@ namespace zerosugar
         }
 
         template <typename T>
-        T& SpdLogServiceBaseBuildConfig<T>::SetShouldLogAsync(bool shouldLogAsync)
+        auto SpdlogLoggerBaseBuildConfig<T>::SetAsync(bool async) -> T&
         {
-            _shouldLogAsync = shouldLogAsync;
+            _async = async;
 
             return static_cast<T&>(*this);
         }
 
         template <typename T>
-        T& SpdLogServiceBaseBuildConfig<T>::SetPattern(std::string pattern)
+        auto SpdlogLoggerBaseBuildConfig<T>::SetPattern(std::string pattern) -> T&
         {
             _pattern = std::move(pattern);
 
@@ -54,30 +54,30 @@ namespace zerosugar
         }
 
         template <typename T>
-        auto SpdLogServiceBaseBuildConfig<T>::GetLogLevel() const noexcept -> LogLevel
+        auto SpdlogLoggerBaseBuildConfig<T>::GetLogLevel() const noexcept -> LogLevel
         {
             return _logLevel;
         }
 
         template <typename T>
-        bool SpdLogServiceBaseBuildConfig<T>::GetShouldLogAsync() const noexcept
+        bool SpdlogLoggerBaseBuildConfig<T>::IsAsync() const noexcept
         {
-            return _shouldLogAsync;
+            return _async;
         }
 
         template <typename T>
-        auto SpdLogServiceBaseBuildConfig<T>::GetPattern() const noexcept -> const std::string&
+        auto SpdlogLoggerBaseBuildConfig<T>::GetPattern() const noexcept -> const std::string&
         {
             return _pattern;
         }
     }
 
-    class SpdLogConsoleLogConfig : public detail::SpdLogServiceBaseBuildConfig<SpdLogConsoleLogConfig>
+    class SpdLogConsoleLoggerConfig : public detail::SpdlogLoggerBaseBuildConfig<SpdLogConsoleLoggerConfig>
     {
-        friend class SpdLogServiceBuilder;
+        friend class SpdLogLoggerBuilder;
 
     public:
-        SpdLogConsoleLogConfig& SetColor(LogLevel logLevel, uint16_t color);
+        SpdLogConsoleLoggerConfig& SetColor(LogLevel logLevel, uint16_t color);
 
         auto GetColors() const noexcept -> const std::map<LogLevel, uint16_t>&;
 
@@ -85,12 +85,16 @@ namespace zerosugar
         std::map<LogLevel, uint16_t> _colors;
     };
 
-    class SpdLogDailyFileLogConfig : public detail::SpdLogServiceBaseBuildConfig<SpdLogDailyFileLogConfig>
+    class SpdLogDailyFileLoggerConfig : public detail::SpdlogLoggerBaseBuildConfig<SpdLogDailyFileLoggerConfig>
     {
-        friend class SpdLogServiceBuilder;
+        friend class SpdLogLoggerBuilder;
 
     public:
-        SpdLogDailyFileLogConfig& SetPath(std::filesystem::path path);
+        SpdLogDailyFileLoggerConfig();
+
+        SpdLogDailyFileLoggerConfig& SetPath(std::filesystem::path path);
+
+        auto GetPath() const -> const std::filesystem::path&;
 
     private:
         std::filesystem::path _path = std::filesystem::current_path() / "log";

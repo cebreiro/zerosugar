@@ -1,15 +1,20 @@
 #pragma once
-#include <string>
-#include <source_location>
-#include "zerosugar/shared/service/service_interface.h"
-#include "zerosugar/shared/log/log_level.h"
+#include <tbb/concurrent_unordered_map.h>
+#include "zerosugar/shared/log/log_service_interface.h"
+#include "zerosugar/shared/type/not_null_pointer.h"
 
 namespace zerosugar
 {
-    class LogService : public IService
+    class LogService final : public ILogService
     {
     public:
-        virtual void Log(LogLevel logLevel, const std::string& message, const std::source_location& location) = 0;
-        virtual void Flush() = 0;
+        void Log(LogLevel logLevel, const std::string& message, const std::source_location& location) override;
+        void Flush() override;
+
+        bool Add(int64_t key, SharedPtrNotNull<ILogger> logger) override;
+        auto Find(int64_t key) -> ILogService* override;
+
+    private:
+        tbb::concurrent_unordered_map<int64_t, SharedPtrNotNull<ILogService>> _logServices;
     };
 }
