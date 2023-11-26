@@ -119,7 +119,7 @@ namespace DatabaseCodeGenerator.Generate.Table.Method
             cxx.WriteLine($"        {resultType} results;");
             cxx.WriteLine("        std::copy(result.rows().begin(), result.rows().end(), std::back_inserter(result));");
             cxx.BreakLine();
-            cxx.WriteLine("        return results");
+            cxx.WriteLine("        return results;");
             cxx.WriteLine("    }");
         }
     }

@@ -56,10 +56,24 @@ try
         parseResults.Add(result);
     }
 
+    List<string> generatedFilePaths = new();
+
     foreach (var result in new ClassWriter().GenerateSourceFile(parseResults))
     {
-        File.WriteAllText(Path.Combine(outputDirectory, $"{result.FileName}.h"), result.Header);
-        File.WriteAllText(Path.Combine(outputDirectory, $"{result.FileName}.cpp"), result.Cxx);
+        string headerPath = Path.Combine(outputDirectory, $"{result.FileName}.h");
+        string cxxPath = Path.Combine(outputDirectory, $"{result.FileName}.cpp");
+
+        File.WriteAllText(headerPath, result.Header);
+        File.WriteAllText(cxxPath, result.Cxx);
+
+        generatedFilePaths.Add(headerPath);
+        generatedFilePaths.Add(cxxPath);
+    }
+
+    Console.WriteLine("----------------------------------------------");
+    foreach (var path in generatedFilePaths)
+    {
+        Console.WriteLine($"generated: {path}");
     }
 
     Console.WriteLine("----------------------------------------------");

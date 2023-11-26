@@ -9,19 +9,19 @@ namespace zerosugar::sl::db
     struct Account
     {
         ZEROSUGAR_DATABASE_OPTION(PK)
-		int64_t id = -1;
+        int64_t id = -1;
 
         ZEROSUGAR_DATABASE_OPTION(UNIQUE, MAX_LENGTH = 30)
-		std::string account;
+        std::string account;
 
         ZEROSUGAR_DATABASE_OPTION(MAX_LENGTH = 30)
-		std::string password;
+        std::string password;
 
-		int8_t gm_level = 0;
+        int8_t gm_level = 0;
 
-		std::optional<int8_t> banned = 0;
+        std::optional<int8_t> banned = 0;
 
         ZEROSUGAR_DATABASE_OPTION(MAX_LENGTH = 1024)
-		std::optional<std::string> ban_reason;
+        std::optional<std::string> ban_reason;
     };
 }
