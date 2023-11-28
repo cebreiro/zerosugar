@@ -70,7 +70,7 @@ namespace zerosugar
     class ServiceLocatorT
     {
     public:
-        /*explicit*/ ServiceLocatorT(ServiceLocator& serviceLocator)
+        explicit(false) ServiceLocatorT(ServiceLocator& serviceLocator)
             : _tuple({ serviceLocator.Find<TServices>()... })
         {
         }
