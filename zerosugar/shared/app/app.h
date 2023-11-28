@@ -1,10 +1,10 @@
 #pragma once
 #include <atomic>
+#include "zerosugar/shared/service/service_locator.h"
 
 namespace zerosugar
 {
     class AppInstance;
-    class ServiceLocator;
 
     namespace execution
     {
@@ -22,6 +22,9 @@ namespace zerosugar
         static auto GetServiceLocator() -> ServiceLocator&;
         static auto GetExecutor() -> execution::IExecutor&;
 
+        template <std::derived_from<IService> T>
+        static auto Find() -> T*;
+
     private:
         static auto LoadInstance() -> AppInstance*;
 
@@ -29,4 +32,10 @@ namespace zerosugar
         static std::atomic<AppInstance*> _instance;
         static thread_local AppInstance* _localInstance;
     };
+
+    template <std::derived_from<IService> T>
+    auto App::Find() -> T*
+    {
+        return GetServiceLocator().Find<T>();
+    }
 }

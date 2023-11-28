@@ -8,11 +8,13 @@
 #include "zerosugar/shared/execution/executor/impl/asio_strand.h"
 #include "zerosugar/shared/execution/executor/operation/post.h"
 #include "zerosugar/shared/network/session/session.h"
+#include "zerosugar/shared/app/app_log.h"
 
 namespace zerosugar
 {
-    Server::Server(execution::AsioExecutor& executor)
-        : _executor(executor)
+    Server::Server(std::string name, execution::AsioExecutor& executor)
+        : _name(std::move(name))
+        , _executor(executor)
     {
     }
 
@@ -29,8 +31,10 @@ namespace zerosugar
                 boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), _listenPort),
                 reuseAddress);
         }
-        catch (...)
+        catch (const std::exception& e)
         {
+            ZEROSUGAR_APP_LOG_CRITICAL(std::format("[{}_server] fail to start. exception: {}",
+                _name, e.what()));
         }
 
         if (!_acceptor.has_value() || !_acceptor->is_open())
@@ -56,6 +60,12 @@ namespace zerosugar
             {
                 session->Close();
             }
+        }
+
+        if (ec)
+        {
+            ZEROSUGAR_APP_LOG_CRITICAL(std::format("[{}_server] fail to shutdown. errorCode: [{}, {}]",
+                _name, ec.value(), ec.message()));
         }
     }
 
@@ -153,7 +163,11 @@ namespace zerosugar
 
     void Server::HandleAcceptError(const boost::system::error_code& ec)
     {
-        (void)ec;
+        if (ec)
+        {
+            ZEROSUGAR_APP_LOG_CRITICAL(std::format("[{}_server] fail to accept session. errorCode: [{}, {}]",
+                _name, ec.value(), ec.message()));
+        }
     }
 
     auto Server::Run(
@@ -174,8 +188,10 @@ namespace zerosugar
             {
                 HandleSessionEvent(co_await enumerable);
             }
-            catch (...)
+            catch (const std::exception& e)
             {
+                ZEROSUGAR_APP_LOG_CRITICAL(std::format("[{}_server] session event handler throw an exception. exception: {}",
+                    _name, e.what()));
                 co_return;
             }
         }

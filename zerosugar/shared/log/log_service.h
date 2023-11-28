@@ -12,9 +12,9 @@ namespace zerosugar
         void Flush() override;
 
         bool Add(int64_t key, SharedPtrNotNull<ILogger> logger) override;
-        auto Find(int64_t key) -> ILogService* override;
+        auto Find(int64_t key) -> ILogger* override;
 
     private:
-        tbb::concurrent_unordered_map<int64_t, SharedPtrNotNull<ILogService>> _loggers;
+        tbb::concurrent_unordered_map<int64_t, SharedPtrNotNull<ILogger>> _loggers;
     };
 }

@@ -7,7 +7,7 @@ namespace zerosugar
 {
     void LogService::Log(LogLevel logLevel, const std::string& message, const std::source_location& location)
     {
-        for (ILogService& logService : _loggers | std::views::values | notnull::reference)
+        for (ILogger& logService : _loggers | std::views::values | notnull::reference)
         {
             logService.Log(logLevel, message, location);
         }
@@ -15,7 +15,7 @@ namespace zerosugar
 
     void LogService::Flush()
     {
-        for (ILogService& logService : _loggers | std::views::values | notnull::reference)
+        for (ILogger& logService : _loggers | std::views::values | notnull::reference)
         {
             logService.Flush();
         }
@@ -27,7 +27,7 @@ namespace zerosugar
         return _loggers.emplace(key, std::move(logger)).second;
     }
 
-    auto LogService::Find(int64_t key) -> ILogService*
+    auto LogService::Find(int64_t key) -> ILogger*
     {
         auto iter = _loggers.find(key);
         return iter != _loggers.end() ? iter->second.get() : nullptr;

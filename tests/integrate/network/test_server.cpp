@@ -5,7 +5,7 @@
 
 
 TestServer::TestServer(zerosugar::execution::AsioExecutor& executor, TestApp& app)
-    : Server(executor)
+    : Server("integrate_test", executor)
     , _app(app)
 {
 }

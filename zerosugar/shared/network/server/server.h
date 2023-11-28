@@ -22,10 +22,10 @@ namespace zerosugar
     class Server : public std::enable_shared_from_this<Server>
     {
     public:
-        explicit Server(execution::AsioExecutor& executor);
+        Server(std::string name, execution::AsioExecutor& executor);
 
-        bool StartUp(uint16_t listenPort);
-        void Shutdown();
+        virtual bool StartUp(uint16_t listenPort);
+        virtual void Shutdown();
 
         bool IsOpen() const;
 
@@ -59,6 +59,7 @@ namespace zerosugar
         auto PublishSessionId() -> session::id_type;
 
     private:
+        std::string _name;
         execution::AsioExecutor& _executor;
         uint16_t _listenPort = 0;
         std::optional<boost::asio::ip::tcp::acceptor> _acceptor = std::nullopt;
