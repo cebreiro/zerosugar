@@ -15,6 +15,6 @@ namespace zerosugar
         auto Find(int64_t key) -> ILogService* override;
 
     private:
-        tbb::concurrent_unordered_map<int64_t, SharedPtrNotNull<ILogService>> _logServices;
+        tbb::concurrent_unordered_map<int64_t, SharedPtrNotNull<ILogService>> _loggers;
     };
 }

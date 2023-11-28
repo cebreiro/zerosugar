@@ -24,15 +24,13 @@ namespace zerosugar
     public:
         SpdLogLogger() = delete;
 
-        SpdLogLogger(const SpdLogConsoleLoggerConfig& console, const SpdLogDailyFileLoggerConfig& dailyFile);
+        SpdLogLogger(std::shared_ptr<spdlog::logger> logger, std::shared_ptr<spdlog::async_logger> asyncLogger);
         ~SpdLogLogger() override;
 
         void Log(LogLevel logLevel, const std::string& message, const std::source_location& location) override;
         void Flush() override;
 
     private:
-        auto CreateUniqueLoggerName(bool async) -> std::string;
-
         static void InitializeSpdLog();
 
     private:
