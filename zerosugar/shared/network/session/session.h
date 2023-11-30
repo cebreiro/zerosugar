@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <format>
 #include <boost/asio.hpp>
 #include "zerosugar/shared/execution/future/promise.h"
 #include "zerosugar/shared/network/session/event.h"
@@ -78,5 +79,19 @@ namespace zerosugar
         std::optional<Buffer> _sendBuffer;
         std::vector<Buffer> _sendWaitQueue;
         std::vector<boost::asio::const_buffer> _constBuffers;
+    };
+}
+
+namespace std
+{
+    template <>
+    struct formatter<zerosugar::Session> : formatter<string>
+    {
+        auto format(const zerosugar::Session& session, format_context& ctx) const
+        {
+            return formatter<string>::format(
+                std::format("{{ id: \"{}\", address: \"{}\" }}",
+                    session.GetId(), session.GetRemoteAddress()), ctx);
+        }
     };
 }
