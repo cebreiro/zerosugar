@@ -74,7 +74,7 @@ namespace DatabaseCodeGenerator.Generate.Table
                 header.WriteLine($"    BOOST_DESCRIBE_STRUCT({udt.GetFullName()}, (), ({temp}))");
                 header.BreakLine();
 
-                string className = udt.GetClassName();
+                string className = udt.GetGeneratedClassName();
 
                 header.WriteLine($"    class {className}");
                 header.WriteLine("    {");

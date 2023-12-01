@@ -16,7 +16,7 @@ namespace DatabaseCodeGenerator.Generate.Table.Method
 
             header.WriteLine($"        void {methodName}();");
 
-            cxx.WriteLine($"    void {udt.GetClassName()}::{methodName}()");
+            cxx.WriteLine($"    void {udt.GetGeneratedClassName()}::{methodName}()");
             cxx.WriteLine("    {");
             cxx.WriteLine("        constexpr const char* queryString = R\"delimiter(");
             cxx.WriteLine($"DROP TABLE IF EXISTS `{udt.GetDbTableName()}`;");

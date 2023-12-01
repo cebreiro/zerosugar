@@ -1,4 +1,4 @@
-add_executable(zerosugar_sl_database)
+add_library(zerosugar_sl_database)
 
 find_package(OpenSSL REQUIRED)
 

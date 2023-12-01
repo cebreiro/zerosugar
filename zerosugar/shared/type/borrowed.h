@@ -11,14 +11,14 @@ namespace zerosugar
         requires std::move_constructible<T>;
     };
 
-    template <typename T, borrowed_value_concept TBorrowed>
-    concept value_owner_concept = requires (T t, TBorrowed& b)
+    template <typename T, typename U>
+    concept value_owner_concept = requires (T t, U & u)
     {
-        { t.TakeBack(b) };
+        requires borrowed_value_concept<U>;
+        { t.TakeBack(u) } -> std::same_as<void>;
     };
 
     template <borrowed_value_concept T, typename U>
-        requires value_owner_concept<U, T>
     class Borrowed
     {
     public:
@@ -44,14 +44,15 @@ namespace zerosugar
         SharedPtrNotNull<U> _owner; 
     };
 
-    template <borrowed_value_concept T, typename U> requires value_owner_concept<U, T>
+    template <borrowed_value_concept T, typename U> 
     Borrowed<T, U>::Borrowed(Borrowed&& other) noexcept
         : _item(std::exchange(other._item, nullptr))
         , _owner(std::move(other._owner))
     {
+        static_assert(value_owner_concept<U, T>);
     }
 
-    template <borrowed_value_concept T, typename U> requires value_owner_concept<U, T>
+    template <borrowed_value_concept T, typename U> 
     Borrowed<T, U>& Borrowed<T, U>::operator=(Borrowed&& other) noexcept
     {
         if (IsValid())
@@ -65,7 +66,7 @@ namespace zerosugar
         return *this;
     }
 
-    template <borrowed_value_concept T, typename U> requires value_owner_concept<U, T>
+    template <borrowed_value_concept T, typename U> 
     Borrowed<T, U>::Borrowed(T& item, SharedPtrNotNull<U> owner)
         : _item(&item)
         , _owner(std::move(owner))
@@ -74,7 +75,7 @@ namespace zerosugar
         assert(_owner.operator bool());
     }
 
-    template <borrowed_value_concept T, typename U> requires value_owner_concept<U, T>
+    template <borrowed_value_concept T, typename U> 
     Borrowed<T, U>::~Borrowed()
     {
         if (!_item)
@@ -85,34 +86,34 @@ namespace zerosugar
         _owner->TakeBack(*_item);
     }
 
-    template <borrowed_value_concept T, typename U> requires value_owner_concept<U, T>
+    template <borrowed_value_concept T, typename U> 
     bool Borrowed<T, U>::IsValid() const
     {
         return _item;
     }
 
-    template <borrowed_value_concept T, typename U> requires value_owner_concept<U, T>
+    template <borrowed_value_concept T, typename U> 
     auto Borrowed<T, U>::operator*() -> T&
     {
         assert(IsValid());
         return *_item;
     }
 
-    template <borrowed_value_concept T, typename U> requires value_owner_concept<U, T>
+    template <borrowed_value_concept T, typename U> 
     auto Borrowed<T, U>::operator*() const -> const T&
     {
         assert(IsValid());
         return *_item;
     }
 
-    template <borrowed_value_concept T, typename U> requires value_owner_concept<U, T>
+    template <borrowed_value_concept T, typename U> 
     auto Borrowed<T, U>::operator->() -> T*
     {
         assert(IsValid());
         return _item;
     }
 
-    template <borrowed_value_concept T, typename U> requires value_owner_concept<U, T>
+    template <borrowed_value_concept T, typename U> 
     auto Borrowed<T, U>::operator->() const -> const T*
     {
         assert(IsValid());

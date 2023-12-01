@@ -19,23 +19,10 @@ namespace zerosugar
 
 namespace zerosugar::sl::db
 {
-    namespace detail
-    {
-        class BorrowedConnectionOwner
-        {
-        public:
-            virtual ~BorrowedConnectionOwner() = default;
-            virtual void TakeBack(boost::mysql::tcp_ssl_connection& connection) = 0;
-            virtual auto Lend() -> Future<Borrowed<boost::mysql::tcp_ssl_connection, BorrowedConnectionOwner>> = 0;
-        };
-    }
-
-    class ConnectionPool
-        : public detail::BorrowedConnectionOwner
-        , public std::enable_shared_from_this<ConnectionPool>
+    class ConnectionPool : public std::enable_shared_from_this<ConnectionPool>
     {
     public:
-        using BorrowedConnection = Borrowed<boost::mysql::tcp_ssl_connection, BorrowedConnectionOwner>;
+        using BorrowedConnection = Borrowed<boost::mysql::tcp_ssl_connection, ConnectionPool>;
 
     public:
         ConnectionPool(SharedPtrNotNull<execution::IExecutor> executor, ConnectionPoolOption option);
@@ -43,8 +30,8 @@ namespace zerosugar::sl::db
         void Start();
         void Stop();
 
-        auto Lend() -> Future<BorrowedConnection> override;
-        void TakeBack(boost::mysql::tcp_ssl_connection& connection) override;
+        auto Lend() -> Future<BorrowedConnection>;
+        void TakeBack(boost::mysql::tcp_ssl_connection& connection);
 
     private:
         struct Context;

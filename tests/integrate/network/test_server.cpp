@@ -5,7 +5,7 @@
 
 
 TestServer::TestServer(zerosugar::execution::AsioExecutor& executor, TestApp& app)
-    : Server("integrate_test", executor)
+    : Server("integrate_test", app.GetServiceLocator(), executor)
     , _app(app)
 {
 }

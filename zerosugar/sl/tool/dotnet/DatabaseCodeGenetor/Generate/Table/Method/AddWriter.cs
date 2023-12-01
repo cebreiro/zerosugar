@@ -12,7 +12,7 @@ namespace DatabaseCodeGenerator.Generate.Table.Method
     {
         public void Write(Struct udt, Text header, Text cxx)
         {
-            string className = udt.GetClassName();
+            string className = udt.GetGeneratedClassName();
             string methodName = "Add";
             string paramType = $"const {udt.GetFullName()}&";
             string paramName = "item";

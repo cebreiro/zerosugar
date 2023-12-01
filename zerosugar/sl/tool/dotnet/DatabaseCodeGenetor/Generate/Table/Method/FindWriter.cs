@@ -62,7 +62,7 @@ namespace DatabaseCodeGenerator.Generate.Table.Method
 
         private void WriteFindMethod(Struct udt, Text header, Text cxx, Struct.Column column, string methodName)
         {
-            string className = udt.GetClassName();
+            string className = udt.GetGeneratedClassName();
             string resultType = $"std::optional<{udt.GetFullName()}>";
             string paramType = $"const {column.TypeName}&";
             string paramName = $"{column.FieldName}";
@@ -95,7 +95,7 @@ namespace DatabaseCodeGenerator.Generate.Table.Method
 
         private void WriteFindRangeMethod(Struct udt, Text header, Text cxx, Struct.Column column, string methodName)
         {
-            string className = udt.GetClassName();
+            string className = udt.GetGeneratedClassName();
             string resultType = $"std::vector<{udt.GetFullName()}>";
             string paramType = $"const {column.TypeName}&";
             string paramName = $"{column.FieldName}";
@@ -113,11 +113,18 @@ namespace DatabaseCodeGenerator.Generate.Table.Method
             cxx.WriteLine("        auto stmt = _connection.prepare_statement(queryString);");
             cxx.WriteLine($"        auto bound = stmt.bind({column.FieldName});");
             cxx.BreakLine();
-            cxx.WriteLine($"        boost::mysql::static_results<{resultType}> result;");
+            cxx.WriteLine($"        boost::mysql::static_results<{udt.GetFullName()}> result;");
             cxx.WriteLine("        _connection.execute(bound, result);");
             cxx.BreakLine();
+            cxx.WriteLine("        const auto& front = result.rows();");
+            cxx.BreakLine();
             cxx.WriteLine($"        {resultType} results;");
-            cxx.WriteLine("        std::copy(result.rows().begin(), result.rows().end(), std::back_inserter(result));");
+            cxx.WriteLine("        results.reserve(front.size());");
+            cxx.BreakLine();
+            cxx.WriteLine("        for (const auto& element : front)");
+            cxx.WriteLine("        {");
+            cxx.WriteLine("            results.push_back(element);");
+            cxx.WriteLine("        }");
             cxx.BreakLine();
             cxx.WriteLine("        return results;");
             cxx.WriteLine("    }");

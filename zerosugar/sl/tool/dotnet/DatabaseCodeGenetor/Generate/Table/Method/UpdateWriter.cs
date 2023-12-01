@@ -27,7 +27,7 @@ namespace DatabaseCodeGenerator.Generate.Table.Method
         private void WriteUpdateMethod(Struct udt, Text header, Text cxx,
             Column column, string methodName)
         {
-            string className = udt.GetClassName();
+            string className = udt.GetGeneratedClassName();
             string paramType = $"const {udt.GetFullName()}&";
             string paramName = "item";
 

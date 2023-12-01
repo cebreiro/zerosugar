@@ -12,7 +12,7 @@ namespace DatabaseCodeGenerator.Generate.Table.Method
     {
         public void Write(Struct udt, Text header, Text cxx)
         {
-            string className = udt.GetClassName();
+            string className = udt.GetGeneratedClassName();
 
             header.WriteLine($"        ~{className}() = default;");
             header.WriteLine($"        explicit {className}(boost::mysql::tcp_ssl_connection& connection);");

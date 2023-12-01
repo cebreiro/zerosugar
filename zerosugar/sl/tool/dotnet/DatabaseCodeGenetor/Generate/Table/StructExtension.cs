@@ -9,7 +9,7 @@ namespace DatabaseCodeGenetor.Generate.Table
 {
     internal static class StructExtension
     {
-        public static string GetClassName(this Struct udt)
+        public static string GetGeneratedClassName(this Struct udt)
         {
             return $"{udt.Name}Table";
         }
