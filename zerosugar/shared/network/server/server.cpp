@@ -8,12 +8,13 @@
 #include "zerosugar/shared/execution/executor/impl/asio_strand.h"
 #include "zerosugar/shared/execution/executor/operation/post.h"
 #include "zerosugar/shared/network/session/session.h"
-#include "zerosugar/shared/app/app_log.h"
+#include "zerosugar/shared/service/service_locator_log.h"
 
 namespace zerosugar
 {
-    Server::Server(std::string name, execution::AsioExecutor& executor)
+    Server::Server(std::string name, Locator locator, execution::AsioExecutor& executor)
         : _name(std::move(name))
+        , _locator(std::move(locator))
         , _executor(executor)
     {
     }
@@ -33,8 +34,8 @@ namespace zerosugar
         }
         catch (const std::exception& e)
         {
-            ZEROSUGAR_APP_LOG_CRITICAL(std::format("[{}_server] fail to start. exception: {}",
-                _name, e.what()));
+            ZEROSUGAR_LOG_CRITICAL(_locator, std::format("[{}_server] fail to start. exception: {}",
+                GetName(), e.what()));
         }
 
         if (!_acceptor.has_value() || !_acceptor->is_open())
@@ -64,8 +65,8 @@ namespace zerosugar
 
         if (ec)
         {
-            ZEROSUGAR_APP_LOG_CRITICAL(std::format("[{}_server] fail to shutdown. errorCode: [{}, {}]",
-                _name, ec.value(), ec.message()));
+            ZEROSUGAR_LOG_CRITICAL(_locator, std::format("[{}_server] fail to shutdown. errorCode: [{}, {}]",
+                GetName(), ec.value(), ec.message()));
         }
     }
 
@@ -77,6 +78,11 @@ namespace zerosugar
         }
 
         return _acceptor->is_open();
+    }
+
+    auto Server::GetName() const -> const std::string&
+    {
+        return _name;
     }
 
     auto Server::GetExecutor() -> execution::AsioExecutor&
@@ -165,8 +171,8 @@ namespace zerosugar
     {
         if (ec)
         {
-            ZEROSUGAR_APP_LOG_CRITICAL(std::format("[{}_server] fail to accept session. errorCode: [{}, {}]",
-                _name, ec.value(), ec.message()));
+            ZEROSUGAR_LOG_CRITICAL(_locator, std::format("[{}_server] fail to accept session. errorCode: [{}, {}]",
+                GetName(), ec.value(), ec.message()));
         }
     }
 
@@ -190,8 +196,8 @@ namespace zerosugar
             }
             catch (const std::exception& e)
             {
-                ZEROSUGAR_APP_LOG_CRITICAL(std::format("[{}_server] session event handler throw an exception. exception: {}",
-                    _name, e.what()));
+                ZEROSUGAR_LOG_CRITICAL(_locator, std::format("[{}_server] session event handler throw an exception. exception: {}",
+                    GetName(), e.what()));
                 co_return;
             }
         }

@@ -6,6 +6,8 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <tbb/concurrent_queue.h>
 #include <tbb/concurrent_hash_map.h>
+#include "zerosugar/shared/log/log_service_interface.h"
+#include "zerosugar/shared/service/service_locator.h"
 #include "zerosugar/shared/execution/future/future.h"
 #include "zerosugar/shared/network/session/event.h"
 
@@ -22,13 +24,17 @@ namespace zerosugar
     class Server : public std::enable_shared_from_this<Server>
     {
     public:
-        Server(std::string name, execution::AsioExecutor& executor);
+        using Locator = ServiceLocatorRef<ILogService>;
+
+    public:
+        Server(std::string name, Locator locator, execution::AsioExecutor& executor);
 
         virtual bool StartUp(uint16_t listenPort);
         virtual void Shutdown();
 
         bool IsOpen() const;
 
+        auto GetName() const -> const std::string&;
         auto GetExecutor() -> execution::AsioExecutor&;
         auto GetExecutor() const -> const execution::AsioExecutor&;
         auto GetListenPort() const -> uint16_t;
@@ -60,6 +66,7 @@ namespace zerosugar
 
     private:
         std::string _name;
+        Locator _locator;
         execution::AsioExecutor& _executor;
         uint16_t _listenPort = 0;
         std::optional<boost::asio::ip::tcp::acceptor> _acceptor = std::nullopt;

@@ -2,7 +2,7 @@
 
 using zerosugar::IService;
 using zerosugar::ServiceLocator;
-using zerosugar::ServiceLocatorT;
+using zerosugar::ServiceLocatorRef;
 
 class FooService : public IService {};
 class BarService : public IService {};
@@ -68,7 +68,7 @@ TEST(ServiceLocatorTest, AddAndRemove)
     EXPECT_EQ(findResultFoo, nullptr);
 }
 
-TEST(ServiceLocatorTTest, ConstructAndFind)
+TEST(ServiceLocatorRef, ConstructAndFind)
 {
     // arrange
     auto foo = std::make_shared<FooService>();
@@ -79,7 +79,7 @@ TEST(ServiceLocatorTTest, ConstructAndFind)
     (void)serviceLocator.Add<BarService>(bar);
 
     // act
-    using service_locator_type = ServiceLocatorT<FooService, BarService, BazService>;
+    using service_locator_type = ServiceLocatorRef<FooService, BarService, BazService>;
     service_locator_type serviceLocatorT(serviceLocator);
 
     const FooService* fooService = serviceLocatorT.Find<FooService>();
@@ -90,4 +90,43 @@ TEST(ServiceLocatorTTest, ConstructAndFind)
     EXPECT_EQ(fooService, foo.get());
     EXPECT_EQ(barService, bar.get());
     EXPECT_EQ(bazService, nullptr);
+}
+
+TEST(ServiceLocatorRef, ConstructFromOther)
+{
+    // arrange
+    auto foo = std::make_shared<FooService>();
+    auto bar = std::make_shared<BarService>();
+
+    ServiceLocator serviceLocator;
+    (void)serviceLocator.Add<FooService>(foo);
+    (void)serviceLocator.Add<BarService>(bar);
+
+    // act
+    ServiceLocatorRef<FooService, BarService, BazService> superset(serviceLocator);
+    ServiceLocatorRef<FooService> subset1(superset);
+    ServiceLocatorRef<BarService> subset2(superset);
+    ServiceLocatorRef<BazService> subset3(superset);
+    ServiceLocatorRef<FooService, BarService> subset4(superset);
+    ServiceLocatorRef<FooService, BazService> subset5(superset);
+    ServiceLocatorRef<BarService, BazService> subset6(superset);
+    ServiceLocatorRef<FooService, BarService, BazService> subset7(superset);
+
+    // assert
+    EXPECT_EQ(subset1.Find<FooService>(), foo.get());
+    EXPECT_EQ(subset2.Find<BarService>(), bar.get());
+    EXPECT_EQ(subset3.Find<BazService>(), nullptr);
+
+    EXPECT_EQ(subset4.Find<FooService>(), foo.get());
+    EXPECT_EQ(subset4.Find<BarService>(), bar.get());
+
+    EXPECT_EQ(subset5.Find<FooService>(), foo.get());
+    EXPECT_EQ(subset5.Find<BazService>(), nullptr);
+
+    EXPECT_EQ(subset6.Find<BarService>(), bar.get());
+    EXPECT_EQ(subset6.Find<BazService>(), nullptr);
+
+    EXPECT_EQ(subset7.Find<FooService>(), foo.get());
+    EXPECT_EQ(subset7.Find<BarService>(), bar.get());
+    EXPECT_EQ(subset7.Find<BazService>(), nullptr);
 }

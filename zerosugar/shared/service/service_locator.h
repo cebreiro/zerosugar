@@ -67,21 +67,32 @@ namespace zerosugar
     }
 
     template <typename... TServices> requires std::conjunction_v<std::is_base_of<IService, TServices>...>
-    class ServiceLocatorT
+    class ServiceLocatorRef
     {
     public:
-        explicit(false) ServiceLocatorT(ServiceLocator& serviceLocator)
+        template <typename T, typename... TServices>
+        using is_one_of = std::disjunction<std::is_same<T, TServices>...>;
+
+    public:
+        explicit(false) ServiceLocatorRef(ServiceLocator& serviceLocator)
             : _tuple({ serviceLocator.Find<TServices>()... })
         {
         }
 
-        template <typename U> requires std::disjunction_v<std::is_same<U, TServices>...>
+        template <typename ...UServices>
+            requires std::conjunction_v<is_one_of<TServices, UServices...>...>
+        explicit(false) ServiceLocatorRef(ServiceLocatorRef<UServices...>& serviceLocator)
+            : _tuple({ serviceLocator.template Find<TServices>()... })
+        {
+        }
+
+        template <typename U> requires is_one_of<U, TServices...>::value
         auto Find() -> U*
         {
             return std::get<U*>(_tuple);
         }
 
-        template <typename U> requires std::disjunction_v<std::is_same<U, TServices>...>
+        template <typename U> requires is_one_of<U, TServices...>::value
         auto Find() const -> const U*
         {
             return std::get<U*>(_tuple);
