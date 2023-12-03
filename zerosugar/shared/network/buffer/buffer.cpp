@@ -1,7 +1,9 @@
 #include "buffer.h"
 
 #include <cassert>
+#include <ios>
 #include <numeric>
+#include <sstream>
 
 namespace zerosugar
 {
@@ -186,6 +188,34 @@ namespace zerosugar
     auto Buffer::cend() const -> const_iterator
     {
         return end();
+    }
+
+    auto Buffer::ToString() const -> std::string
+    {
+        std::ostringstream oss;
+        oss << std::uppercase;
+        oss << std::hex;
+
+        int32_t temp = 0;
+        for (char c : *this)
+        {
+            temp = c & 0xFF;
+            if (temp >= 0 && temp <= 0xF)
+            {
+                oss << '0';
+            }
+
+            oss << temp;
+            oss << " ";
+        }
+
+        std::string str = oss.str();
+        if (!str.empty())
+        {
+            str.pop_back();
+        }
+
+        return str;
     }
 
     auto Buffer::CalculateSize() const -> int64_t

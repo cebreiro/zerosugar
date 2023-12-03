@@ -14,6 +14,8 @@ namespace zerosugar
     concept stream_writable_concept = requires (T t, typename T::value_type v)
     {
         { t.push_back(v) } -> std::same_as<void>;
+        { t.begin() };
+        { t.size() } -> std::same_as<size_t>;
     };
 
     template <stream_writable_concept T>

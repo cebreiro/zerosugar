@@ -46,6 +46,8 @@ namespace zerosugar
         auto cbegin() const -> const_iterator;
         auto cend() const -> const_iterator;
 
+        auto ToString() const -> std::string;
+
     private:
         auto CalculateSize() const -> int64_t;
         static auto CalculateSize(const fragment_container_type& fragments) -> int64_t;

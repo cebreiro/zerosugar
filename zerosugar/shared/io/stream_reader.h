@@ -48,10 +48,13 @@ namespace zerosugar
         auto begin() const -> T;
         auto end() const -> T;
 
+        auto GetReadSize() const -> int64_t;
+
     private:
         T _begin;
         T _iter;
         T _end;
+        int64_t _readSize = 0;
         int64_t _remainSize = 0;
     };
 
@@ -99,6 +102,7 @@ namespace zerosugar
             ++_iter;
         }
 
+        _readSize += size;
         _remainSize -= size;
         assert(_remainSize == std::distance(_iter, _end));
 
@@ -122,6 +126,7 @@ namespace zerosugar
         std::array<char, size> buffer;
         std::copy(iter, _iter, buffer.begin());
 
+        _readSize += size;
         _remainSize -= size;
         assert(_remainSize == std::distance(_iter, _end));
 
@@ -169,6 +174,7 @@ namespace zerosugar
             ++_iter;
         }
 
+        _readSize += size;
         _remainSize -= size;
         assert(_remainSize == std::distance(_iter, _end));
 
@@ -190,6 +196,7 @@ namespace zerosugar
             ++_iter;
         }
 
+        _readSize += size;
         _remainSize -= size;
         assert(_remainSize == std::distance(_iter, _end));
     }
@@ -204,5 +211,11 @@ namespace zerosugar
     auto StreamReader<T>::end() const -> T
     {
         return _end;
+    }
+
+    template <stream_readable_concept T>
+    auto StreamReader<T>::GetReadSize() const -> int64_t
+    {
+        return _readSize;
     }
 }

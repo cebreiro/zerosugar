@@ -32,6 +32,7 @@ namespace zerosugar::buffer
         auto GetSpan() const->std::span<const char>;
 
         static auto CreateFrom(std::span<const char> span) -> Fragment;
+        static auto Create(int64_t size) -> Fragment;
 
     private:
         SharedPtrNotNull<char[]> _ptr;

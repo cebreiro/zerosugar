@@ -68,4 +68,12 @@ namespace zerosugar::buffer
 
         return { std::move(buffer), 0, size };
     }
+
+    auto Fragment::Create(int64_t size) -> Fragment
+    {
+        assert(size > 0);
+
+        auto buffer = std::make_shared<char[]>(size);
+        return { std::move(buffer), 0, size };
+    }
 }
