@@ -22,7 +22,7 @@ public:
     auto GetStrands() const -> const std::vector<SharedPtrNotNull<Strand>>&;
 
 private:
-    void OnStartUp(ServiceLocator& serviceLocator) override;
+    void OnStartUp(std::span<char*> args) override;
     void OnShutdown() override;
 
 private:

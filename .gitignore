@@ -39,3 +39,6 @@ obj/
 
 # Generated
 generated/
+
+# Config
+*.config

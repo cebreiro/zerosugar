@@ -24,11 +24,11 @@ namespace zerosugar
         assert(!IsRunning());
     }
 
-    auto AppInstance::Run() -> int32_t
+    auto AppInstance::Run(std::span<char*> args) -> int32_t
     {
         _executor->Run();
 
-        this->OnStartUp(_serviceLocator);
+        this->OnStartUp(args);
 
         _running.store(true);
         _running.wait(true);

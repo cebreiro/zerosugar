@@ -15,7 +15,8 @@ TEST(IntegarteNetwork, EchoCompareBytes)
     TestApp app;
     std::jthread thread([&app]()
         {
-            app.Run();
+            const std::span<char*> args;
+            app.Run(args);
         });
     while (!app.IsRunning())
     {

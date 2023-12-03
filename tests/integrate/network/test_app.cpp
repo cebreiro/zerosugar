@@ -17,9 +17,9 @@ auto TestApp::GetStrands() const -> const std::vector<SharedPtrNotNull<Strand>>&
     return _strands;
 }
 
-void TestApp::OnStartUp(ServiceLocator& serviceLocator)
+void TestApp::OnStartUp(std::span<char*> args)
 {
-    (void)serviceLocator;
+    (void)args;
 
     if (!_server->StartUp(PORT))
     {

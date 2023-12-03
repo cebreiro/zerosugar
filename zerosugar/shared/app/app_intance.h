@@ -24,7 +24,7 @@ namespace zerosugar
         explicit AppInstance(int64_t workerCount);
         virtual ~AppInstance();
 
-        auto Run() -> int32_t;
+        auto Run(std::span<char*> args) -> int32_t;
         void Shutdown();
 
         template <std::derived_from<IService> T>
@@ -44,7 +44,7 @@ namespace zerosugar
         auto GetAsioExecutor() -> execution::AsioExecutor&;
 
     private:
-        virtual void OnStartUp(ServiceLocator& serviceLocator) = 0;
+        virtual void OnStartUp(std::span<char*> args) = 0;
         virtual void OnShutdown() = 0;
         virtual void OnExit(const std::vector<boost::system::error_code>&);
 
