@@ -1,6 +1,5 @@
 #pragma once
 #include <memory>
-#include <mutex>
 #include "zerosugar/shared/log/logger_interface.h"
 
 namespace spdlog
@@ -31,12 +30,7 @@ namespace zerosugar
         void Flush() override;
 
     private:
-        static void InitializeSpdLog();
-
-    private:
         std::shared_ptr<spdlog::logger> _syncLogger;
         std::shared_ptr<spdlog::async_logger> _asyncLogger;
-
-        static std::once_flag _initFlag;
     };
 }

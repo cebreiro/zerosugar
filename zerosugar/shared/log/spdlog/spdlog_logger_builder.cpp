@@ -10,6 +10,13 @@
 
 namespace zerosugar
 {
+    std::once_flag SpdLogLoggerBuilder::_initFlag;
+
+    SpdLogLoggerBuilder::SpdLogLoggerBuilder()
+    {
+        std::call_once(_initFlag, InitializeSpdLog);
+    }
+
     void SpdLogLoggerBuilder::SetConfig(const SpdLogConsoleLoggerConfig& config)
     {
         _consoleConfig = config;
@@ -101,5 +108,11 @@ namespace zerosugar
         }
 
         return std::make_shared<SpdLogLogger>(std::move(syncLogger), std::move(asyncLogger));
+    }
+
+    void SpdLogLoggerBuilder::InitializeSpdLog()
+    {
+        spdlog::init_thread_pool(8192, 4);
+        spdlog::flush_every(std::chrono::seconds(5));
     }
 }

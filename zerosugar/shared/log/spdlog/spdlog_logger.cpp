@@ -1,18 +1,14 @@
 #include "spdlog_logger.h"
 
-#include "spdlog/spdlog.h"
 #include "spdlog/async.h"
 #include "zerosugar/shared/log/spdlog/spdlog_convert.h"
 
 namespace zerosugar
 {
-
     SpdLogLogger::SpdLogLogger(std::shared_ptr<spdlog::logger> logger, std::shared_ptr<spdlog::async_logger> asyncLogger)
         : _syncLogger(std::move(logger))
         , _asyncLogger(std::move(asyncLogger))
     {
-        InitializeSpdLog();
-
         if (_syncLogger)
         {
             spdlog::register_logger(_syncLogger);
@@ -61,11 +57,5 @@ namespace zerosugar
         {
             _asyncLogger->flush();
         }
-    }
-
-    void SpdLogLogger::InitializeSpdLog()
-    {
-        spdlog::init_thread_pool(8192, 4);
-        spdlog::flush_every(std::chrono::seconds(5));
     }
 }
