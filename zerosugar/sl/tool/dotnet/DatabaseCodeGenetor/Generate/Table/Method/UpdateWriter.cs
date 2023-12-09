@@ -22,6 +22,8 @@ namespace DatabaseCodeGenerator.Generate.Table.Method
 
             string methodName = "Update";
             WriteUpdateMethod(udt, header, cxx, column, methodName);
+
+            WriteUpdateDifferenceMethod(udt, header, cxx, column);
         }
 
         private void WriteUpdateMethod(Struct udt, Text header, Text cxx,
@@ -56,6 +58,68 @@ namespace DatabaseCodeGenerator.Generate.Table.Method
             temp3 += ($", {paramName}.{column.FieldName}");
 
             cxx.WriteLine($"        auto bound = stmt.bind({temp3});");
+            cxx.BreakLine();
+            cxx.WriteLine("        boost::mysql::results result;");
+            cxx.WriteLine("        _connection.execute(bound, result);");
+            cxx.WriteLine("    }");
+        }
+
+        private void WriteUpdateDifferenceMethod(Struct udt, Text header, Text cxx,
+            Column column)
+        {
+            Column? pk = udt.GetPrimaryKeyColumn();
+            if (pk == null)
+            {
+                return;
+            }
+
+            string className = udt.GetGeneratedClassName();
+            string methodName = "UpdateDifference";
+            string paramType = $"const {udt.GetFullName()}&";
+            string param1Name = "oldOne";
+            string param2Name = "newOne";
+
+            header.WriteLine($"        void {methodName}({paramType} {param1Name}, {paramType} {param2Name});");
+
+            cxx.WriteLine($"    void {className}::{methodName}({paramType} {param1Name}, {paramType} {param2Name})");
+            cxx.WriteLine("    {");
+            cxx.WriteLine($"        if ({param1Name}.{pk.FieldName} != {param2Name}.{pk.FieldName})");
+            cxx.WriteLine("        {");
+            cxx.WriteLine("            assert(false);");
+            cxx.WriteLine("            return;");
+            cxx.WriteLine("        }");
+            cxx.BreakLine();
+            
+            cxx.WriteLine("        using field_views_t = boost::container::static_vector<");
+            cxx.WriteLine("            boost::mysql::field_view,");
+            cxx.WriteLine($"            boost::mp11::mp_size<boost::describe::describe_members<");
+            cxx.WriteLine($"                {udt.GetFullName()},");
+            cxx.WriteLine("                boost::describe::mod_any_access>>::value>;");
+            cxx.WriteLine("        std::ostringstream oss;");
+            cxx.WriteLine("        field_views_t views;");
+            cxx.BreakLine();
+            cxx.WriteLine("        if (!FillDifference(oldOne, newOne, oss, views))");
+            cxx.WriteLine("        {");
+            cxx.WriteLine("            return;");
+            cxx.WriteLine("        }");
+            cxx.WriteLine("        ");
+            cxx.WriteLine($"        views.emplace_back({param2Name}.{pk.FieldName});");
+            cxx.WriteLine("        ");
+            cxx.WriteLine("        std::string difference = oss.str();");
+            cxx.WriteLine("        assert(!difference.empty());");
+            cxx.WriteLine("        ");
+            cxx.WriteLine("        difference.pop_back();");
+            cxx.WriteLine("        constexpr const char* queryString = R\"delimiter(");
+            cxx.WriteLine($"UPDATE `{udt.GetDbTableName()}`");
+            cxx.WriteLine($"SET");
+            cxx.WriteLine("    {}");
+            cxx.WriteLine("WHERE");
+            cxx.WriteLine($"    {column.FieldName} = ?;");
+            cxx.WriteLine(")delimiter\";");
+            cxx.BreakLine();
+            cxx.WriteLine("        const std::string dynamicQuery = std::format(queryString, difference);");
+            cxx.WriteLine("        auto stmt = _connection.prepare_statement(dynamicQuery);");
+            cxx.WriteLine("        auto bound = stmt.bind(views.begin(), views.end());");
             cxx.BreakLine();
             cxx.WriteLine("        boost::mysql::results result;");
             cxx.WriteLine("        _connection.execute(bound, result);");

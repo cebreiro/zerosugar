@@ -61,7 +61,13 @@ namespace DatabaseCodeGenerator.Generate.Table
 
             cxx.WriteLine($"#include \"{GetFileName(result)}.h\"");
             cxx.BreakLine();
+            cxx.WriteLine("#include <cassert>");
+            cxx.WriteLine("#include <sstream>");
             cxx.WriteLine("#include <vector>");
+            cxx.WriteLine("#include <boost/container/static_vector.hpp>");
+            cxx.BreakLine();
+            // todo: make includes passed from command line args
+            cxx.WriteLine("#include \"zerosugar/sl/database/helper/compare.h\"");
             cxx.BreakLine();
             cxx.WriteLine("namespace zerosugar::sl::db");
             cxx.WriteLine("{");
