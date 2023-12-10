@@ -9,6 +9,8 @@ using zerosugar::Server;
 using zerosugar::Strand;
 using zerosugar::ServiceLocator;
 using zerosugar::SharedPtrNotNull;
+using zerosugar::execution::AsioExecutor;
+using zerosugar::execution::IExecutor;
 
 class TestApp final : public AppInstance
 {
@@ -19,13 +21,17 @@ public:
     TestApp();
 
     auto GetServer() -> class TestServer&;
+    auto GetExecutor() -> IExecutor&;
     auto GetStrands() const -> const std::vector<SharedPtrNotNull<Strand>>&;
+
+    auto GetName() const -> std::string_view override;
 
 private:
     void OnStartUp(std::span<char*> args) override;
     void OnShutdown() override;
 
 private:
+    SharedPtrNotNull<AsioExecutor> _executor;
     SharedPtrNotNull<class TestServer> _server;
     std::vector<SharedPtrNotNull<Strand>> _strands;
 };

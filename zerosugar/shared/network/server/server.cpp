@@ -12,8 +12,8 @@
 
 namespace zerosugar
 {
-    Server::Server(std::string name, Locator locator, execution::AsioExecutor& executor)
-        : _name(std::move(name))
+    Server::Server(std::string name, locator_type locator, execution::AsioExecutor& executor)
+        : _name(std::format("{}_server", std::move(name)))
         , _locator(std::move(locator))
         , _executor(executor)
     {
@@ -34,7 +34,7 @@ namespace zerosugar
         }
         catch (const std::exception& e)
         {
-            ZEROSUGAR_LOG_CRITICAL(_locator, std::format("[{}_server] fail to start. exception: {}",
+            ZEROSUGAR_LOG_CRITICAL(_locator, std::format("[{}] fail to start. exception: {}",
                 GetName(), e.what()));
         }
 
@@ -65,7 +65,7 @@ namespace zerosugar
 
         if (ec)
         {
-            ZEROSUGAR_LOG_CRITICAL(_locator, std::format("[{}_server] fail to shutdown. errorCode: [{}, {}]",
+            ZEROSUGAR_LOG_CRITICAL(_locator, std::format("[{}] fail to shutdown. errorCode: [{}, {}]",
                 GetName(), ec.value(), ec.message()));
         }
     }
@@ -171,7 +171,7 @@ namespace zerosugar
     {
         if (ec)
         {
-            ZEROSUGAR_LOG_CRITICAL(_locator, std::format("[{}_server] fail to accept session. errorCode: [{}, {}]",
+            ZEROSUGAR_LOG_CRITICAL(_locator, std::format("[{}] fail to accept session. errorCode: [{}, {}]",
                 GetName(), ec.value(), ec.message()));
         }
     }
@@ -196,7 +196,7 @@ namespace zerosugar
             }
             catch (const std::exception& e)
             {
-                ZEROSUGAR_LOG_CRITICAL(_locator, std::format("[{}_server] session event handler throw an exception. exception: {}",
+                ZEROSUGAR_LOG_CRITICAL(_locator, std::format("[{}] session event handler throw an exception. exception: {}",
                     GetName(), e.what()));
                 co_return;
             }

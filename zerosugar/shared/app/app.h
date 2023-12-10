@@ -20,7 +20,6 @@ namespace zerosugar
         static void Shutdown();
 
         static auto GetServiceLocator() -> ServiceLocator&;
-        static auto GetExecutor() -> execution::IExecutor&;
 
         template <std::derived_from<IService> T>
         static auto Find() -> T*;

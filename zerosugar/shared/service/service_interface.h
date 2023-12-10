@@ -1,4 +1,6 @@
 #pragma once
+#include <vector>
+#include <boost/system/error_code.hpp>
 
 namespace zerosugar
 {
@@ -12,5 +14,8 @@ namespace zerosugar
 
         IService() = default;
         virtual ~IService() = default;
+
+        virtual void Shutdown() {}
+        virtual void Join(std::vector<boost::system::error_code>&) {}
     };
 }

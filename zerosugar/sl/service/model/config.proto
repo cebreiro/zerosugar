@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package zerosugar.sl.service;
+
+message DatabaseConfig
+{
+    string address = 1;
+    int32 port = 2;
+    string user = 3;
+    string password = 4;
+    string database = 5;
+}
+
+message RepositoryServiceConfig
+{
+    DatabaseConfig database_config = 1;
+}

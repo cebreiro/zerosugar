@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package zerosugar.sl.service;
+
+message AuthToken
+{
+    string values = 1;
+}
+
+message Account
+{
+    int64 id = 1;
+    string account = 2;
+    string password = 3;
+    int64 gm_level = 4;
+    bool banned = 5;
+    string ban_reason = 6;
+}
+
+message AccountUpdate
+{
+    int64 id = 1;
+
+    optional string password = 2;
+    optional int64 gm_level = 3;
+    optional bool banned = 4;
+    optional string ban_reason = 5;
+}

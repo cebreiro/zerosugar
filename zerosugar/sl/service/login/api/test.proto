@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package zerosugar.sl.service;
+
+message LoginRequest
+{
+    int32 testParam = 1;
+}
+
+message LoginReply
+{
+    int32 testResult = 1;
+}
+
+service LoginService
+{
+    rpc SayHello (LoginRequest) returns (LoginReply) {}
+}
+
+// The greeting service definition.
+service Greeter {
+  // Sends a greeting
+  rpc SayHello (stream HelloRequest) returns (stream HelloReply) {}
+  // Sends another greeting
+  rpc SayHelloAgain (HelloRequest) returns (HelloReply) {}
+}
+
+// The request message containing the user's name.
+message HelloRequest {
+  string name = 1;
+}
+
+// The response message containing the greetings
+message HelloReply {
+  string message = 1;
+}

@@ -1,6 +1,6 @@
 #include "connection_pool_option.h"
 
-namespace zerosugar::sl
+namespace zerosugar::sl::db
 {
     ConnectionPoolOption::ConnectionPoolOption(
         boost::asio::ip::tcp::endpoint endPoint, const boost::mysql::handshake_params& handShakeParams,

@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+import "shared.proto";
+
+package zerosugar.sl.service;
+
+
+service RepositoryService
+{
+    rpc FindAccount (FindAccountParam) returns (FindAccountResult);
+    rpc UpdateAccount (UpdateAccountParam) returns (UpdateAccountResult);
+}
+
+enum RepositoryServiceErrorCode
+{
+    repository_error_none = 0;
+
+    repository_internal_error = 10000;
+    repository_internal_db_error = 10001;
+
+    repository_account_error = 20000;
+    repository_account_fail_to_find_key = 20001;
+}
+
+message FindAccountParam
+{
+    string account = 1;
+}
+
+message FindAccountResult
+{
+    RepositoryServiceErrorCode error_code = 1;
+    optional Account account = 2;
+}
+
+message UpdateAccountParam
+{
+    AccountUpdate account_update = 1;
+}
+
+message UpdateAccountResult
+{
+    RepositoryServiceErrorCode error_code = 1;
+}

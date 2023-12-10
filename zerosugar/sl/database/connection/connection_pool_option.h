@@ -5,7 +5,7 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/mysql/handshake_params.hpp>
 
-namespace zerosugar::sl
+namespace zerosugar::sl::db
 {
     class ConnectionPoolOption
     {

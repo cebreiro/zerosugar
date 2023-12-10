@@ -8,6 +8,8 @@ target_link_libraries(zerosugar_sl_database PRIVATE
     zerosugar_shared
 )
 
+target_precompile_headers(zerosugar_sl_database REUSE_FROM zerosugar_sl_pch)
+
 file(GLOB_RECURSE ZEROSUGAR_SL_DATABASE_SRC_FILES CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/*.h
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
@@ -21,7 +23,7 @@ set(ZEROSUGAR_DB_GENETOR_TOOL_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../tool/dotnet/Da
 set(ZEROSUGAR_DB_TARGET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/model/)
 set(ZEROSUGAR_DB_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/generated/)
 
-add_custom_target(zerosugar_generate_database_code
+add_custom_target(zerosugar_sl_generate_database_code
     COMMAND dotnet ${ZEROSUGAR_DB_GENETOR_TOOL_PATH}
         ${ZEROSUGAR_DB_TARGET_PATH}
         ${ZEROSUGAR_DB_OUTPUT_PATH}

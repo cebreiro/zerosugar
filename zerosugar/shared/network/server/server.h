@@ -24,10 +24,10 @@ namespace zerosugar
     class Server : public std::enable_shared_from_this<Server>
     {
     public:
-        using Locator = ServiceLocatorRef<ILogService>;
+        using locator_type = ServiceLocatorRef<ILogService>;
 
     public:
-        Server(std::string name, Locator locator, execution::AsioExecutor& executor);
+        Server(std::string name, locator_type locator, execution::AsioExecutor& executor);
 
         virtual bool StartUp(uint16_t listenPort);
         virtual void Shutdown();
@@ -66,7 +66,7 @@ namespace zerosugar
 
     private:
         std::string _name;
-        Locator _locator;
+        locator_type _locator;
         execution::AsioExecutor& _executor;
         uint16_t _listenPort = 0;
         std::optional<boost::asio::ip::tcp::acceptor> _acceptor = std::nullopt;

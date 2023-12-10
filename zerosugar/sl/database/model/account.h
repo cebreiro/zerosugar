@@ -19,7 +19,7 @@ namespace zerosugar::sl::db
 
         int8_t gm_level = 0;
 
-        std::optional<int8_t> banned = 0;
+        int8_t banned = 0;
 
         ZEROSUGAR_DATABASE_OPTION(MAX_LENGTH = 1024)
         std::optional<std::string> ban_reason;

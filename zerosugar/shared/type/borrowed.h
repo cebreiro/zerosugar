@@ -33,6 +33,7 @@ namespace zerosugar
         ~Borrowed();
 
         bool IsValid() const;
+        void Reset();
 
         auto operator*() -> T&;
         auto operator*() const -> const T&;
@@ -57,7 +58,7 @@ namespace zerosugar
     {
         if (IsValid())
         {
-            this->~Borrowed();
+            Reset();
         }
 
         _item = std::exchange(other._item, nullptr);
@@ -78,18 +79,25 @@ namespace zerosugar
     template <borrowed_value_concept T, typename U> 
     Borrowed<T, U>::~Borrowed()
     {
-        if (!_item)
-        {
-            return;
-        }
-
-        _owner->TakeBack(*_item);
+        Reset();
     }
 
     template <borrowed_value_concept T, typename U> 
     bool Borrowed<T, U>::IsValid() const
     {
         return _item;
+    }
+
+    template <borrowed_value_concept T, typename U>
+    void Borrowed<T, U>::Reset()
+    {
+        if (!IsValid())
+        {
+            return;
+        }
+
+        _owner->TakeBack(*_item);
+        _owner.reset();
     }
 
     template <borrowed_value_concept T, typename U> 

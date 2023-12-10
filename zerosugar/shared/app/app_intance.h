@@ -27,6 +27,8 @@ namespace zerosugar
         auto Run(std::span<char*> args) -> int32_t;
         void Shutdown();
 
+        virtual auto GetName() const -> std::string_view = 0;
+
         template <std::derived_from<IService> T>
         auto FindService() -> T*;
 
@@ -37,22 +39,16 @@ namespace zerosugar
 
         auto GetServiceLocator() -> ServiceLocator&;
         auto GetServiceLocator() const -> const ServiceLocator&;
-        auto GetExecutor() -> execution::IExecutor&;
-        auto GetExecutor() const -> const execution::IExecutor&;
-
-    protected:
-        auto GetAsioExecutor() -> execution::AsioExecutor&;
 
     private:
         virtual void OnStartUp(std::span<char*> args) = 0;
         virtual void OnShutdown() = 0;
-        virtual void OnExit(const std::vector<boost::system::error_code>&);
+        virtual void OnExit(std::vector<boost::system::error_code>&);
 
     private:
         std::atomic<bool> _running = false;
         ServiceLocator _serviceLocator;
         int64_t _workerCount = 1;
-        std::shared_ptr<execution::AsioExecutor> _executor;
         std::vector<boost::system::error_code> _errorCodes;
     };
 

@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+import "shared.proto";
+
+package zerosugar.sl.service;
+
+
+service LoginService
+{
+    rpc Login (LoginParam) returns (LoginResult) {}
+    rpc Logout (LogoutParam) returns (LogoutResult) {}
+}
+
+enum LoginServiceErrorCode
+{
+    login_error_none = 0;
+    login_error_fail_invalid = 1;
+}
+
+message LoginParam
+{
+    string account = 1;
+    string password = 2;
+    string context = 3;
+}
+
+message LoginResult
+{
+    LoginServiceErrorCode error_code = 1;
+    AuthToken token = 2;
+    int64 account_id = 3;
+}
+
+message LogoutParam
+{
+    AuthToken token = 1;
+    string context = 2;
+}
+
+message LogoutResult
+{
+    LoginServiceErrorCode error_code = 1;
+}

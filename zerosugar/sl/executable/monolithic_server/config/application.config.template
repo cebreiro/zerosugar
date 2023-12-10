@@ -1,0 +1,19 @@
+{
+    "log": {
+        "console": {
+            "async": false,
+            "level": 1
+        },
+        "file": {
+            "path": "logs/log.txt"
+        }
+    },
+    "database": {
+        "address": "",
+        "port": 0,
+        "user": "",
+        "password": "",
+        "database": "",
+        "connection_count": 1
+    }
+}

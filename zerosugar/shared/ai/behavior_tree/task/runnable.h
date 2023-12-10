@@ -33,7 +33,7 @@ namespace zerosugar::bt
         Runnable& operator=(Runnable&& other) noexcept;
 
         explicit Runnable(std::coroutine_handle<promise_type> handle);
-        explicit Runnable(State state);
+        explicit(false) Runnable(State state);
         ~Runnable();
 
         bool IsDone() const;

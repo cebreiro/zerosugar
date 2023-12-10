@@ -33,16 +33,6 @@ namespace zerosugar
         return nullObject;
     }
 
-    auto App::GetExecutor() -> execution::IExecutor&
-    {
-        if (AppInstance* instance = LoadInstance(); instance != nullptr)
-        {
-            return instance->GetExecutor();
-        }
-
-        return StaticThreadPool::GetInstance();
-    }
-
     auto App::LoadInstance() -> AppInstance*
     {
         if (_localInstance == nullptr)
