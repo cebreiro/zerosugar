@@ -10,7 +10,7 @@ namespace zerosugar
 namespace zerosugar::sl
 {
     class LoginServer;
-    class Client;
+    class LoginClient;
 
     class ILoginPacketHandler
     {
@@ -20,7 +20,7 @@ namespace zerosugar::sl
     public:
         virtual ~ILoginPacketHandler() = default;
 
-        virtual auto Handle(Client& client, Buffer& buffer) const -> Future<LoginPacketDeserializeResult> = 0;
+        virtual auto Handle(LoginClient& client, Buffer& buffer) const -> Future<LoginPacketDeserializeResult> = 0;
         virtual auto GetOpcode() const -> int8_t = 0;
         virtual auto GetName() const -> std::string_view = 0;
     };
@@ -33,14 +33,14 @@ namespace zerosugar::sl
         auto GetName() const -> std::string_view final;
 
     private:
-        auto Handle(Client& client, Buffer& buffer) const -> Future<LoginPacketDeserializeResult> final;
+        auto Handle(LoginClient& client, Buffer& buffer) const -> Future<LoginPacketDeserializeResult> final;
 
     private:
-        virtual auto HandlePacket(Client& client, const T& packet) const -> Future<void> = 0;
+        virtual auto HandlePacket(LoginClient& client, const T& packet) const -> Future<void> = 0;
     };
 
     template <login_packet_concept T>
-    auto LoginPacketHandlerT<T>::Handle(Client& client, Buffer& buffer) const
+    auto LoginPacketHandlerT<T>::Handle(LoginClient& client, Buffer& buffer) const
         -> Future<LoginPacketDeserializeResult>
     {
         T t = {};

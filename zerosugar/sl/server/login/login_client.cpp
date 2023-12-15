@@ -1,4 +1,4 @@
-#include "client.h"
+#include "login_client.h"
 
 #include "zerosugar/shared/network/buffer/buffer_reader.h"
 #include "zerosugar/shared/network/buffer/buffer_writer.h"
@@ -10,7 +10,7 @@
 
 namespace zerosugar::sl
 {
-    Client::Client(locator_type locator, id_type id, SharedPtrNotNull<Strand> strand)
+    LoginClient::LoginClient(locator_type locator, id_type id, SharedPtrNotNull<Strand> strand)
         : _locator(std::move(locator))
         , _id(id)
         , _strand(std::move(strand))
@@ -18,27 +18,27 @@ namespace zerosugar::sl
         assert(locator.Find<service::ILoginService>());
     }
 
-    Client::~Client()
+    LoginClient::~LoginClient()
     {
     }
 
-    void Client::Close()
+    void LoginClient::Close()
     {
         _shutdown.store(true);
 
-        if (_loginSession)
+        if (_session)
         {
-            _loginSession->Close();
+            _session->Close();
         }
     }
 
-    void Client::StartLoginPacketProcess(std::shared_ptr<Session> session,
+    void LoginClient::StartLoginPacketProcess(std::shared_ptr<Session> session,
         std::unique_ptr<Decoder> decoder, std::unique_ptr<Encoder> encoder)
     {
-        _loginSession = std::move(session);
-        _loginPacketDecoder = std::move(decoder);
-        _loginPacketEncoder = std::move(encoder);
-        _loginBufferChannel = std::make_shared<Channel<Buffer>>();
+        _session = std::move(session);
+        _decoder = std::move(decoder);
+        _encoder = std::move(encoder);
+        _bufferChannel = std::make_shared<Channel<Buffer>>();
 
         Post(*_strand, [self = shared_from_this()]()
             {
@@ -46,26 +46,26 @@ namespace zerosugar::sl
             });
     }
 
-    void Client::StopLoginPacketProcess()
+    void LoginClient::StopLoginPacketProcess()
     {
-        assert(_loginBufferChannel);
-        _loginBufferChannel->Close();
+        assert(_bufferChannel);
+        _bufferChannel->Close();
     }
 
-    void Client::ReceiveLoginPacket(Buffer buffer)
+    void LoginClient::ReceiveLoginPacket(Buffer buffer)
     {
-        assert(_loginBufferChannel);
-        _loginBufferChannel->Send(std::move(buffer), channel::ChannelSignal::NotifyOne);
+        assert(_bufferChannel);
+        _bufferChannel->Send(std::move(buffer), channel::ChannelSignal::NotifyOne);
     }
 
-    auto Client::ToString() const -> std::string
+    auto LoginClient::ToString() const -> std::string
     {
         std::ostringstream oss;
         oss << "{ id: " << GetId().Unwrap();
 
-        if (_loginSession)
+        if (_session)
         {
-            oss << std::format(", login_session: {}", *_loginSession);
+            oss << std::format(", login_session: {}", *_session);
         }
 
         oss << " }";
@@ -73,28 +73,38 @@ namespace zerosugar::sl
         return oss.str();
     }
 
-    auto Client::GetLocator() -> locator_type&
+    auto LoginClient::GetLocator() -> locator_type&
     {
         return _locator;
     }
 
-    auto Client::GetId() const -> const id_type&
+    auto LoginClient::GetId() const -> const id_type&
     {
         return _id;
     }
 
-    auto Client::RunLoginPacketProcess() -> Future<void>
+    auto LoginClient::GetState() const -> LoginClientState
     {
-        assert(_loginSession);
-        assert(_loginPacketDecoder);
-        assert(_loginPacketEncoder);
-        assert(_loginBufferChannel);
+        return _state;
+    }
+
+    void LoginClient::SetState(LoginClientState state)
+    {
+        _state = state;
+    }
+
+    auto LoginClient::RunLoginPacketProcess() -> Future<void>
+    {
+        assert(_session);
+        assert(_decoder);
+        assert(_encoder);
+        assert(_bufferChannel);
         assert(ExecutionContext::GetExecutor() == _strand.get());
 
         [[maybe_unused]]
         const auto holder = shared_from_this();
 
-        AsyncEnumerable<Buffer> enumerable(_loginBufferChannel);
+        AsyncEnumerable<Buffer> enumerable(_bufferChannel);
 
         try
         {
@@ -103,26 +113,26 @@ namespace zerosugar::sl
                 Buffer received = co_await enumerable;
                 assert(ExecutionContext::GetExecutor() == _strand.get());
 
-                _loginReceiveBuffer.MergeBack(std::move(received));
+                _receiveBuffer.MergeBack(std::move(received));
 
-                while (_loginReceiveBuffer.GetSize() > 2)
+                while (_receiveBuffer.GetSize() > 2)
                 {
                     const int64_t packetSize = [this]()
                         {
-                            BufferReader reader(_loginReceiveBuffer.cbegin(), _loginReceiveBuffer.cend());
+                            BufferReader reader(_receiveBuffer.cbegin(), _receiveBuffer.cend());
                             return reader.Read<uint16_t>() + 3;
                         }();
 
-                    if (_loginReceiveBuffer.GetSize() < packetSize)
+                    if (_receiveBuffer.GetSize() < packetSize)
                     {
                         break;
                     }
 
                     Buffer packet;
-                    [[maybe_unused]] const bool sliced = _loginReceiveBuffer.SliceFront(packet, packetSize);
+                    [[maybe_unused]] const bool sliced = _receiveBuffer.SliceFront(packet, packetSize);
                     assert(sliced);
 
-                    _loginPacketDecoder->Decode(std::next(packet.begin(), 2), packet.end());
+                    _decoder->Decode(std::next(packet.begin(), 2), packet.end());
                     BufferReader packetReader(std::next(packet.cbegin(), 2), packet.cend());
 
                     const int8_t opcode = packetReader.Read<int8_t>();
@@ -167,42 +177,42 @@ namespace zerosugar::sl
         catch (const std::exception& e)
         {
             ZEROSUGAR_LOG_WAN(_locator, std::format("[sl_client] login packet process exception. exception: {}, session: {}",
-                e.what(), *_loginSession));
+                e.what(), *_session));
         }
 
         co_return;
     }
 
-    void Client::SendLoginPacket(int8_t opcode, Buffer buffer, bool encode)
+    void LoginClient::SendLoginPacket(int8_t opcode, Buffer buffer, bool encode)
     {
         assert(ExecutionContext::GetExecutor() == _strand.get());
 
         if (encode)
         {
-            _loginPacketEncoder->Encode(buffer.begin(), buffer.end());
+            _encoder->Encode(buffer.begin(), buffer.end());
         }
 
         Buffer packet = MakePacketHeader(opcode, buffer.GetSize());
         packet.MergeBack(std::move(buffer));
 
-        _loginSession->Send(std::move(packet));
+        _session->Send(std::move(packet));
     }
 
-    auto Client::MakePacketHeader(int8_t opcode, int64_t bufferSize) -> Buffer
+    auto LoginClient::MakePacketHeader(int8_t opcode, int64_t bufferSize) -> Buffer
     {
         assert(ExecutionContext::GetExecutor() == _strand.get());
 
-        if (_loginSendPacketHeaderPool.GetSize() < 3)
+        if (_sendPacketHeaderPool.GetSize() < 3)
         {
             constexpr int64_t expandSize = 64;
             auto ptr = std::make_shared<char[]>(expandSize);
 
-            _loginSendPacketHeaderPool.Add(buffer::Fragment(std::move(ptr), 0, expandSize));
+            _sendPacketHeaderPool.Add(buffer::Fragment(std::move(ptr), 0, expandSize));
         }
 
         Buffer header;
 
-        [[maybe_unused]] const bool result = _loginSendPacketHeaderPool.SliceFront(header, 3);
+        [[maybe_unused]] const bool result = _sendPacketHeaderPool.SliceFront(header, 3);
         assert(result);
 
         BufferWriter writer(header);

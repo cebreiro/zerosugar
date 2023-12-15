@@ -7,7 +7,7 @@
 #include "zerosugar/sl/protocol/security/login_packet_decoder.h"
 #include "zerosugar/sl/protocol/security/login_packet_encoder.h"
 #include "zerosugar/sl/protocol/security/secret_key.h"
-#include "zerosugar/sl/server/client/client.h"
+#include "zerosugar/sl/server/login/login_client.h"
 
 namespace zerosugar::sl
 {
@@ -36,7 +36,7 @@ namespace zerosugar::sl
         ZEROSUGAR_LOG_INFO(_locator, std::format("[{}] accept session. session: {}",
             GetName(), session));
 
-        auto client = std::make_shared<Client>(_locator, client::id_type(++_nextClientId),
+        auto client = std::make_shared<LoginClient>(_locator, login_client_id_type(++_nextClientId),
             std::make_shared<Strand>(GetExecutor().SharedFromThis()));
         {
             decltype(_clients)::accessor accessor;
@@ -75,7 +75,7 @@ namespace zerosugar::sl
         decltype(_clients)::const_accessor accessor;
         if (_clients.find(accessor, session.GetId()))
         {
-            Client& client = *accessor->second;
+            LoginClient& client = *accessor->second;
 
             client.ReceiveLoginPacket(std::move(buffer));
         }

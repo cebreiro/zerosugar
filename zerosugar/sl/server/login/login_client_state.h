@@ -2,7 +2,7 @@
 
 namespace zerosugar::sl
 {
-    ENUM_CLASS(LoginServerClientState, int32_t,
+    ENUM_CLASS(LoginClientState, int32_t,
         (Connected)
         (Authenticated)
         (WorldEntranced)

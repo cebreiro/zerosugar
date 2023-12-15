@@ -2,7 +2,7 @@
 #include "zerosugar/shared/log/log_service_interface.h"
 #include "zerosugar/shared/service/service_locator.h"
 #include "zerosugar/shared/network/server/server.h"
-#include "zerosugar/sl/server/client/id.h"
+#include "zerosugar/sl/server/login/login_client_id.h"
 #include "zerosugar/sl/service/generated/login_service_generated_interface.h"
 
 namespace zerosugar::sl
@@ -36,7 +36,7 @@ namespace zerosugar::sl
 
     private:
         locator_type _locator;
-        tbb::concurrent_hash_map<session::id_type, SharedPtrNotNull<class Client>> _clients;
-        std::atomic<client::id_type::value_type> _nextClientId = 0;
+        tbb::concurrent_hash_map<session::id_type, SharedPtrNotNull<class LoginClient>> _clients;
+        std::atomic<login_client_id_type::value_type> _nextClientId = 0;
     };
 }

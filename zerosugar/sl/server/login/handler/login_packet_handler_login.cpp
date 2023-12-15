@@ -1,10 +1,10 @@
 #include "login_packet_handler_login.h"
 
-#include "zerosugar/sl/server/client/client.h"
+#include "zerosugar/sl/server/login/login_client.h"
 
 namespace zerosugar::sl
 {
-    auto LoginPacketHandler_Login::HandlePacket(Client& client, const login::cs::Login& packet) const
+    auto LoginPacketHandler_Login::HandlePacket(LoginClient& client, const login::cs::Login& packet) const
         -> Future<void>
     {
         auto* loginService = client.GetLocator().Find<service::ILoginService>();
