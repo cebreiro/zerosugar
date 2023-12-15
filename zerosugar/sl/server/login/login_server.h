@@ -7,6 +7,8 @@
 
 namespace zerosugar::sl
 {
+    class ServerConfig;
+
     class LoginServer final : public Server
     {
         using Server::StartUp;
@@ -23,11 +25,13 @@ namespace zerosugar::sl
         LoginServer& operator=(const LoginServer& other) = delete;
         LoginServer& operator=(LoginServer&& other) noexcept = delete;
 
-        LoginServer(execution::AsioExecutor& executor, locator_type locator);
+        LoginServer(execution::AsioExecutor& executor, locator_type locator, const ServerConfig& config);
         ~LoginServer();
 
-        bool StartUp();
+        void StartUp();
         void Shutdown() override;
+
+        auto GetConfig() const -> const ServerConfig&;
 
     private:
         void OnAccept(Session& session) override;
@@ -36,6 +40,7 @@ namespace zerosugar::sl
 
     private:
         locator_type _locator;
+        const ServerConfig& _config;
         tbb::concurrent_hash_map<session::id_type, SharedPtrNotNull<class LoginClient>> _clients;
         std::atomic<login_client_id_type::value_type> _nextClientId = 0;
     };

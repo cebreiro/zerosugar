@@ -11,16 +11,9 @@ namespace zerosugar::sl
         LoginPacketHandlerContainer();
 
     public:
-        template <typename T>
-        struct Registry
-        {
-            Registry();
-        };
+        static auto GetInstance() -> const LoginPacketHandlerContainer&;
 
-    public:
-        static auto GetInstance() -> LoginPacketHandlerContainer&;
-
-        auto Find(int8_t value) -> const ILoginPacketHandler*;
+        auto Find(int8_t value) const -> const ILoginPacketHandler*;
 
     private:
         template <typename T>
@@ -31,15 +24,6 @@ namespace zerosugar::sl
     private:
         std::unordered_map<int8_t, const ILoginPacketHandler*> _handlers;
     };
-
-    template <typename T>
-    LoginPacketHandlerContainer::Registry<T>::Registry()
-    {
-        static const T handler;
-        [[maybe_unused]] const bool result = GetInstance().Register(handler.GetOpcode(), &handler);
-
-        assert(result);
-    }
 
     template <typename T>
     void LoginPacketHandlerContainer::Register()

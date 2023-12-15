@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+import "shared.proto";
+
+package zerosugar.sl.service;
+
+
+service WorldService
+{
+}
+
+enum WorldServiceErrorCode
+{
+    world_error_none = 0;
+}

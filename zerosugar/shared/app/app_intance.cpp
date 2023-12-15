@@ -1,6 +1,8 @@
 #include "app_intance.h"
 
 #include <cassert>
+#include <iostream>
+#include <format>
 
 #include "zerosugar/shared/app/app.h"
 
@@ -18,7 +20,16 @@ namespace zerosugar
 
     auto AppInstance::Run(std::span<char*> args) -> int32_t
     {
-        this->OnStartUp(args);
+        try
+        {
+            this->OnStartUp(args);
+        }
+        catch (const std::exception& e)
+        {
+            std::cout << std::format("fail to start application. exception: {}", e.what());
+
+            return EXIT_FAILURE;
+        }
 
         _running.store(true);
         _running.wait(true);

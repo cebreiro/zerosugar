@@ -18,7 +18,7 @@ namespace zerosugar::sl
     class ServiceModule : public IModule
     {
     public:
-        void Initialize(AppInstance& app, ServerConfig& config) override;
+        void Initialize(AppInstance& app, AppConfig& config) override;
         void Finalize() noexcept override;
         void GetFinalizeError(std::vector<boost::system::error_code>& errors) override;
 

@@ -45,9 +45,9 @@ namespace zerosugar::sl::login::cs
         _account = reader.ReadString(account_max_size);
         _password = reader.ReadString(password_max_size);
 
-        auto isSpace = [](char c) { return c == '\0'; };
-        boost::algorithm::trim_right_if(_account, isSpace);
-        boost::algorithm::trim_right_if(_password, isSpace);
+        constexpr auto space = [](char c) { return c == '\0'; };
+        boost::algorithm::trim_right_if(_account, space);
+        boost::algorithm::trim_right_if(_password, space);
 
         return LoginPacketDeserializeResult{
             .errorCode = LoginPacketDeserializeResult::ErrorCode::None,
@@ -77,7 +77,7 @@ namespace zerosugar::sl::login::cs
 
         for (int64_t i = 0; i < std::ssize(characters); ++i)
         {
-            char c = characters[i];
+            const char c = characters[i];
             if (c == 0)
             {
                 break;

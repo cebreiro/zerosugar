@@ -22,15 +22,13 @@ namespace zerosugar::sl
 			++iter;
 			++i;
 
-			for (; iter != end; ++iter)
+			for (; iter != end; ++iter, ++i)
 			{
 				char& c = *iter;
 
 				char BL = CL ^ (c ^ key[i & 7]);
 				c = BL;
 				CL = c;
-
-				++i;
 			}
 
 			UpdateKey(i);

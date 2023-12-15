@@ -8,7 +8,7 @@ namespace zerosugar
 
 namespace zerosugar::sl
 {
-    class ServerConfig;
+    class AppConfig;
 
     class IModule
     {
@@ -22,7 +22,7 @@ namespace zerosugar::sl
     public:
         virtual ~IModule() = default;
 
-        virtual void Initialize(AppInstance& app, ServerConfig& config) = 0;
+        virtual void Initialize(AppInstance& app, AppConfig& config) = 0;
         virtual void Finalize() noexcept = 0;
         virtual void GetFinalizeError(std::vector<boost::system::error_code>& errors) = 0;
     };

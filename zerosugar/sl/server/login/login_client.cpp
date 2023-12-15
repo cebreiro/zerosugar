@@ -32,9 +32,11 @@ namespace zerosugar::sl
         }
     }
 
-    void LoginClient::StartLoginPacketProcess(std::shared_ptr<Session> session,
-        std::unique_ptr<Decoder> decoder, std::unique_ptr<Encoder> encoder)
+    void LoginClient::StartPacketProcess(
+        SharedPtrNotNull<LoginServer> loginServer, SharedPtrNotNull<Session> session,
+        UniquePtrNotNull<Decoder> decoder, UniquePtrNotNull<Encoder> encoder)
     {
+        _loginServer = std::move(loginServer);
         _session = std::move(session);
         _decoder = std::move(decoder);
         _encoder = std::move(encoder);
@@ -42,11 +44,11 @@ namespace zerosugar::sl
 
         Post(*_strand, [self = shared_from_this()]()
             {
-                self->RunLoginPacketProcess();
+                self->RunPacketProcess();
             });
     }
 
-    void LoginClient::StopLoginPacketProcess()
+    void LoginClient::StopPacketProcess()
     {
         assert(_bufferChannel);
         _bufferChannel->Close();
@@ -93,7 +95,7 @@ namespace zerosugar::sl
         _state = state;
     }
 
-    auto LoginClient::RunLoginPacketProcess() -> Future<void>
+    auto LoginClient::RunPacketProcess() -> Future<void>
     {
         assert(_session);
         assert(_decoder);
@@ -149,7 +151,7 @@ namespace zerosugar::sl
                     Buffer header;
                     (void)packet.SliceFront(header, 3);
 
-                    LoginPacketDeserializeResult result = co_await handler->Handle(*this, packet);
+                    const LoginPacketDeserializeResult result = co_await handler->Handle(*_loginServer, *this, packet);
                     if (result.errorCode == LoginPacketDeserializeResult::ErrorCode::None)
                     {
                         Buffer _;
@@ -183,17 +185,17 @@ namespace zerosugar::sl
         co_return;
     }
 
-    void LoginClient::SendLoginPacket(int8_t opcode, Buffer buffer, bool encode)
+    void LoginClient::SendPacket(int8_t opcode, Buffer buffer, bool encode)
     {
         assert(ExecutionContext::GetExecutor() == _strand.get());
 
-        if (encode)
-        {
-            _encoder->Encode(buffer.begin(), buffer.end());
-        }
-
         Buffer packet = MakePacketHeader(opcode, buffer.GetSize());
         packet.MergeBack(std::move(buffer));
+
+        if (encode)
+        {
+            _encoder->Encode(std::next(packet.begin(), 2), packet.end());
+        }
 
         _session->Send(std::move(packet));
     }

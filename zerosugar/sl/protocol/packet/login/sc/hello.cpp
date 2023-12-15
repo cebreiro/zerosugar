@@ -1,7 +1,5 @@
 #include "hello.h"
 
-#include "zerosugar/shared/network/buffer/buffer_reader.h"
-#include "zerosugar/shared/network/buffer/buffer_writer.h"
 #include "zerosugar/sl/protocol/packet/login/sc/opcode.h"
 
 namespace zerosugar::sl::login::sc

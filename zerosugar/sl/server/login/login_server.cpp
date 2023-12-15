@@ -11,9 +11,10 @@
 
 namespace zerosugar::sl
 {
-    LoginServer::LoginServer(execution::AsioExecutor& executor, locator_type locator)
+    LoginServer::LoginServer(execution::AsioExecutor& executor, locator_type locator, const ServerConfig& config)
         : Server("sl_login", locator, executor)
         , _locator(std::move(locator))
+        , _config(config)
     {
     }
 
@@ -21,14 +22,24 @@ namespace zerosugar::sl
     {
     }
 
-    bool LoginServer::StartUp()
+    void LoginServer::StartUp()
     {
-        return StartUp(PORT);
+        if (!StartUp(PORT))
+        {
+            throw std::runtime_error(std::format("[{}] fail to start up", GetName()));
+        }
     }
 
     void LoginServer::Shutdown()
     {
         Server::Shutdown();
+
+        _clients.clear();
+    }
+
+    auto LoginServer::GetConfig() const -> const ServerConfig&
+    {
+        return _config;
     }
 
     void LoginServer::OnAccept(Session& session)
@@ -59,7 +70,8 @@ namespace zerosugar::sl
         const uint32_t key1 = PacketSecretKey::LOGIN_KEY_FIRST;
         const uint32_t key2 = PacketSecretKey::LOGIN_KEY_SECOND;
 
-        client->StartLoginPacketProcess(
+        client->StartPacketProcess(
+            std::static_pointer_cast<LoginServer>(shared_from_this()),
             session.shared_from_this(),
             std::make_unique<LoginPacketDecoder>(key1, key2),
             std::make_unique<LoginPacketEncoder>(key1, key2));

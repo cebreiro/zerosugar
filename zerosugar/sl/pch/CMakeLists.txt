@@ -57,6 +57,8 @@ target_precompile_headers(zerosugar_sl_pch PUBLIC
     <expected>
     <stacktrace>
 
+    <nlohmann/json.hpp>
+
     ${PROJECT_SOURCE_DIR}/zerosugar/shared/app/app_log.h
     ${PROJECT_SOURCE_DIR}/zerosugar/shared/execution/channel/channel.h
     ${PROJECT_SOURCE_DIR}/zerosugar/shared/execution/channel/async_enumerable.h

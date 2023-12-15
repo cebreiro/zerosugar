@@ -23,6 +23,7 @@ namespace zerosugar::sl
     {
         (void)args;
 
+
         InitializeConfig();
         InitializeLogService();
         InitializeModules();
@@ -75,7 +76,7 @@ namespace zerosugar::sl
             }
 
             nlohmann::json json = nlohmann::json::parse(ifs);
-            json.get_to<ServerConfig>(_config);
+            json.get_to<AppConfig>(_config);
 
             return;
         }

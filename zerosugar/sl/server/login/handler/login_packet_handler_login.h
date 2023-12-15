@@ -7,7 +7,7 @@ namespace zerosugar::sl
     class LoginPacketHandler_Login final : public LoginPacketHandlerT<login::cs::Login>
     {
     public:
-        auto HandlePacket(LoginClient& client, const login::cs::Login& packet) const
+        auto HandlePacket(const LoginServer& server, LoginClient& client, const login::cs::Login& packet) const
             -> Future<void> override;
     };
 }

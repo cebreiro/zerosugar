@@ -27,5 +27,6 @@ add_custom_target(zerosugar_sl_generate_service_code
         config.proto
         login_service.proto
         repository_service.proto
+        world_service.proto
     WORKING_DIRECTORY ${ZEROSUGAR_SERVICE_GENERATE_SOURCE_DIR}
 )

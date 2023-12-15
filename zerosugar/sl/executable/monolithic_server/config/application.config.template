@@ -15,5 +15,19 @@
         "password": "",
         "database": "",
         "connection_count": 1
+    },
+    "server": {
+        "address": "",
+        "world": [
+            {
+                "world_id": 0,
+                "zone": [
+                    {
+                        "zone_id": 0,
+                        "port": 0
+                    }
+                ]
+            }
+        ]
     }
 }

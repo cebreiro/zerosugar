@@ -26,7 +26,7 @@ namespace zerosugar::sl
         void InitializeModules();
 
     private:
-        ServerConfig _config = {};
+        AppConfig _config = {};
         std::vector<std::unique_ptr<IModule>> _modules;
     };
 }

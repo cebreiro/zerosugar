@@ -9,14 +9,14 @@ namespace zerosugar::sl
         Register<LoginPacketHandler_Login>();
     }
 
-    auto LoginPacketHandlerContainer::GetInstance() -> LoginPacketHandlerContainer&
+    auto LoginPacketHandlerContainer::GetInstance() -> const LoginPacketHandlerContainer&
     {
         static LoginPacketHandlerContainer instance;
 
         return instance;
     }
 
-    auto LoginPacketHandlerContainer::Find(int8_t value) -> const ILoginPacketHandler*
+    auto LoginPacketHandlerContainer::Find(int8_t value) const -> const ILoginPacketHandler*
     {
         auto iter = _handlers.find(value);
         return iter != _handlers.end() ? iter->second : nullptr;

@@ -15,6 +15,7 @@ namespace zerosugar::sl
 {
     class Encoder;
     class Decoder;
+    class LoginServer;
 
     class LoginClient final : public std::enable_shared_from_this<LoginClient>
     {
@@ -35,9 +36,10 @@ namespace zerosugar::sl
 
         void Close();
 
-        void StartLoginPacketProcess(std::shared_ptr<Session> session,
-            std::unique_ptr<Decoder> decoder, std::unique_ptr<Encoder> encoder);
-        void StopLoginPacketProcess();
+        void StartPacketProcess(
+            SharedPtrNotNull<LoginServer> loginServer, SharedPtrNotNull<Session> session,
+            UniquePtrNotNull<Decoder> decoder, UniquePtrNotNull<Encoder> encoder);
+        void StopPacketProcess();
         void ReceiveLoginPacket(Buffer buffer);
 
         template <login_packet_concept T>
@@ -52,9 +54,9 @@ namespace zerosugar::sl
         void SetState(LoginClientState state);
 
     private:
-        auto RunLoginPacketProcess() -> Future<void>;
+        auto RunPacketProcess() -> Future<void>;
 
-        void SendLoginPacket(int8_t opcode, Buffer buffer, bool encode);
+        void SendPacket(int8_t opcode, Buffer buffer, bool encode);
         auto MakePacketHeader(int8_t opcode, int64_t bufferSize) -> Buffer;
 
     private:
@@ -64,10 +66,11 @@ namespace zerosugar::sl
         SharedPtrNotNull<Strand> _strand;
 
         LoginClientState _state = LoginClientState::Connected;
-        std::shared_ptr<Session> _session;
-        std::unique_ptr<Decoder> _decoder;
-        std::unique_ptr<Encoder> _encoder;
-        std::shared_ptr<Channel<Buffer>> _bufferChannel;
+        SharedPtrNotNull<LoginServer> _loginServer;
+        SharedPtrNotNull<Session> _session;
+        UniquePtrNotNull<Decoder> _decoder;
+        UniquePtrNotNull<Encoder> _encoder;
+        SharedPtrNotNull<Channel<Buffer>> _bufferChannel;
         Buffer _receiveBuffer;
         Buffer _sendPacketHeaderPool;
         std::queue<Buffer> _sendPackets;
@@ -81,7 +84,7 @@ namespace zerosugar::sl
 
         Post(*_strand, [self = shared_from_this(), opcode, buffer = std::move(buffer), encode]() mutable
             {
-                self->SendLoginPacket(opcode, std::move(buffer), encode);
+                self->SendPacket(opcode, std::move(buffer), encode);
             });
     }
 }

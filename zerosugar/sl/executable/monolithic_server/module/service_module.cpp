@@ -11,7 +11,7 @@
 
 namespace zerosugar::sl
 {
-    void ServiceModule::Initialize(AppInstance& app, ServerConfig& config)
+    void ServiceModule::Initialize(AppInstance& app, AppConfig& config)
     {
         const DatabaseConfig& dbConfig = config.GetDatabaseConfig();
 
