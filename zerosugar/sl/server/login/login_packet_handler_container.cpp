@@ -1,17 +1,18 @@
 #include "login_packet_handler_container.h"
 
-#include "zerosugar/sl/server/login/handler/login_packet_handler_login.h"
+#include "zerosugar/sl/server/login/handler/login_packet_handler.h"
 
 namespace zerosugar::sl
 {
     LoginPacketHandlerContainer::LoginPacketHandlerContainer()
     {
-        Register<LoginPacketHandler_Login>();
+        Register<detail::LoginPacketHandler_Login>();
+        Register<detail::LoginPacketHandler_WorldSelect>();
     }
 
     auto LoginPacketHandlerContainer::GetInstance() -> const LoginPacketHandlerContainer&
     {
-        static LoginPacketHandlerContainer instance;
+        static const LoginPacketHandlerContainer instance;
 
         return instance;
     }

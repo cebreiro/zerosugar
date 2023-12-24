@@ -70,10 +70,11 @@ namespace zerosugar
     class ServiceLocatorRef
     {
     public:
-        template <typename T, typename... TServices>
-        using is_one_of = std::disjunction<std::is_same<T, TServices>...>;
+        template <typename T, typename... TArgs>
+        using is_one_of = std::disjunction<std::is_same<T, TArgs>...>;
 
     public:
+        ServiceLocatorRef() = default;
         explicit(false) ServiceLocatorRef(ServiceLocator& serviceLocator)
             : _tuple({ serviceLocator.Find<TServices>()... })
         {
@@ -86,6 +87,22 @@ namespace zerosugar
         {
         }
 
+        bool ContainsAll() const
+        {
+            constexpr auto contains = []<typename T, size_t... I>(const T& tuple, std::index_sequence<I...>)
+            {
+                return (... & (std::get<I>(tuple) != nullptr));
+            };
+
+            return contains(_tuple, std::make_index_sequence<std::tuple_size_v<decltype(_tuple)>>{});
+        }
+
+        template <typename U> requires is_one_of<U, TServices...>::value
+        bool Contains() const
+        {
+            return std::get<U*>(_tuple) != nullptr;
+        }
+
         template <typename U> requires is_one_of<U, TServices...>::value
         auto Find() -> U*
         {
@@ -96,6 +113,24 @@ namespace zerosugar
         auto Find() const -> const U*
         {
             return std::get<U*>(_tuple);
+        }
+
+        template <typename U> requires is_one_of<U, TServices...>::value
+        auto Get() -> U*
+        {
+            U* ptr = std::get<U*>(_tuple);
+            assert(ptr);
+
+            return *ptr;
+        }
+
+        template <typename U> requires is_one_of<U, TServices...>::value
+        auto Get() const -> const U*
+        {
+            const U* ptr = std::get<U*>(_tuple);
+            assert(ptr);
+
+            return *ptr;
         }
 
     private:

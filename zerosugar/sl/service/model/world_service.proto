@@ -4,12 +4,87 @@ import "shared.proto";
 
 package zerosugar.sl.service;
 
+message World
+{
+    int32 world_id = 1;
+    string address = 2;
+}
 
 service WorldService
 {
+    rpc CreateWorld (CreateWorldParam) returns (CreateWorldResult);
+    rpc CreateZone (CreateZoneParam) returns (CreateZoneResult);
+
+    rpc GetWorldList (GetWorldListParam) returns (GetWorldListResult);
+    rpc EnterWorld (EnterWorldParam) returns (EnterWorldResult);
+
+    rpc KickPlayer (KickPlayerParam) returns (KickPlayerResult);
 }
 
 enum WorldServiceErrorCode
 {
     world_error_none = 0;
+
+    world_error_world_not_found = 1;
+
+    world_error_world_already_exists = 1000;
+    world_error_zone_already_exists = 10001;
+}
+
+message CreateWorldParam
+{
+    int32 world_id = 1;
+    string address = 2;
+}
+
+message CreateWorldResult
+{
+    WorldServiceErrorCode error_code = 1;
+}
+
+message CreateZoneParam
+{
+    int32 world_id = 1;
+    int32 zone_id = 2;
+    string address = 3;
+    int32 port = 4;
+}
+
+message CreateZoneResult
+{
+    WorldServiceErrorCode error_code = 1;
+}
+
+message GetWorldListParam
+{
+}
+
+message GetWorldListResult
+{
+    WorldServiceErrorCode error_code = 1;
+    repeated World worlds = 2;
+}
+
+message EnterWorldParam
+{
+    int32 world_id = 1;
+    AuthToken token = 2;
+    int64 account_id = 3;
+    string account = 4;
+}
+
+message EnterWorldResult
+{
+    WorldServiceErrorCode error_code = 1;
+}
+
+message KickPlayerParam
+{
+    AuthToken token = 1;
+    optional string display_reason = 2;
+}
+
+message KickPlayerResult
+{
+    WorldServiceErrorCode error_code = 1;
 }

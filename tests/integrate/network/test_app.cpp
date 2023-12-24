@@ -35,6 +35,7 @@ void TestApp::OnStartUp(std::span<char*> args)
 
     _executor->Run();
 
+    _server->Initialize(GetServiceLocator());
     if (!_server->StartUp(PORT))
     {
         throw std::runtime_error("fail to start server");

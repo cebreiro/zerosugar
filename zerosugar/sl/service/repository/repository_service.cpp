@@ -17,10 +17,8 @@ namespace zerosugar::sl
         };
     }
 
-    RepositoryService::RepositoryService(locator_type locator, execution::IExecutor& executor,
-        SharedPtrNotNull<db::ConnectionPool> connectionPool)
-        : _locator(std::move(locator))
-        , _connectionPool(std::move(connectionPool))
+    RepositoryService::RepositoryService(execution::IExecutor& executor, SharedPtrNotNull<db::ConnectionPool> connectionPool)
+        : _connectionPool(std::move(connectionPool))
     {
         auto e = executor.SharedFromThis();
 
@@ -29,6 +27,15 @@ namespace zerosugar::sl
         for (int64_t i = 0; i < std::ssize(_worker); ++i)
         {
             _worker[i] = std::make_shared<Strand>(e);
+        }
+    }
+
+    void RepositoryService::Initialize(ServiceLocator& dependencyLocator)
+    {
+        _locator = dependencyLocator;
+        if (!_locator.ContainsAll())
+        {
+            throw std::runtime_error("[sl_repository_service] dependency is not satisfied");
         }
     }
 

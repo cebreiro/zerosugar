@@ -2,10 +2,8 @@
 
 namespace zerosugar::sl
 {
-    ZoneServer::ZoneServer(execution::AsioExecutor& executor, locator_type locator,
-        int8_t worldId, int32_t zoneId, uint16_t port)
-        : Server(std::format("sl_zone_{}", zoneId), locator, executor)
-        , _locator(std::move(locator))
+    ZoneServer::ZoneServer(execution::AsioExecutor& executor, int8_t worldId, int32_t zoneId, uint16_t port)
+        : Server(std::format("sl_zone_{}", zoneId), executor)
         , _worldId(worldId)
         , _zoneId(zoneId)
         , _port(port)
@@ -14,6 +12,13 @@ namespace zerosugar::sl
 
     ZoneServer::~ZoneServer()
     {
+    }
+
+    void ZoneServer::Initialize(ServiceLocator& dependencyLocator)
+    {
+        Server::Initialize(dependencyLocator);
+
+        _locator = dependencyLocator;
     }
 
     void ZoneServer::StartUp()

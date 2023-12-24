@@ -1,5 +1,7 @@
 #pragma once
+#include <boost/container/flat_set.hpp>
 #include "zerosugar/sl/protocol/packet/login/login_packet_concept.h"
+#include "zerosugar/sl/server/login/login_client_state.h"
 #include "zerosugar/sl/service/generated/login_service_generated_interface.h"
 
 namespace zerosugar
@@ -20,23 +22,45 @@ namespace zerosugar::sl
     public:
         virtual ~ILoginPacketHandler() = default;
 
+        virtual bool CanHandle(const LoginClient& client) const = 0;
         virtual auto Handle(const LoginServer& server, LoginClient& client, Buffer& buffer) const -> Future<LoginPacketDeserializeResult> = 0;
         virtual auto GetOpcode() const -> int8_t = 0;
         virtual auto GetName() const -> std::string_view = 0;
     };
+}
 
-    template <login_packet_concept T>
-    class LoginPacketHandlerT : public ILoginPacketHandler
+namespace zerosugar::sl::detail
+{
+    class LoginPacketHandlerAbstract : public ILoginPacketHandler
     {
     public:
-        auto GetOpcode() const -> int8_t final;
-        auto GetName() const -> std::string_view final;
+        bool CanHandle(const LoginClient& client) const final;
+
+    protected:
+        void AddAllowedState(LoginClientState state);
+        void AddAllowedStateRange(std::initializer_list<LoginClientState> states);
 
     private:
-        auto Handle(const LoginServer& server, LoginClient& client, Buffer& buffer) const -> Future<LoginPacketDeserializeResult> final;
+        boost::container::flat_set<LoginClientState> _allowedStates;
+    };
+
+    template <login_packet_concept T>
+    class LoginPacketHandlerT : public LoginPacketHandlerAbstract
+    {
+    public:
+        LoginPacketHandlerT() = default;
+
+        auto GetOpcode() const->int8_t final;
+        auto GetName() const->std::string_view final;
 
     private:
-        virtual auto HandlePacket(const LoginServer& server, LoginClient& client, const T& packet) const -> Future<void> = 0;
+        auto Handle(const LoginServer& server, LoginClient& client, Buffer& buffer) const->Future<LoginPacketDeserializeResult> final;
+
+    private:
+        virtual auto HandlePacket(const LoginServer& server, LoginClient& client, const T& packet) const->Future<void> = 0;
+
+    private:
+        boost::container::flat_set<LoginClientState> _allowedStates;
     };
 
     template <login_packet_concept T>

@@ -3,8 +3,8 @@
 #include "zerosugar/shared/network/buffer/buffer_reader.h"
 #include "zerosugar/shared/network/buffer/buffer_writer.h"
 #include "zerosugar/shared/network/session/session.h"
-#include "zerosugar/sl/protocol/security/encoder.h"
 #include "zerosugar/sl/protocol/security/decoder.h"
+#include "zerosugar/sl/protocol/security/encoder.h"
 #include "zerosugar/sl/server/login/login_packet_handler_container.h"
 #include "zerosugar/sl/server/login/handler/login_packet_handler_interface.h"
 
@@ -32,11 +32,22 @@ namespace zerosugar::sl
         }
     }
 
+    void LoginClient::Close(std::chrono::milliseconds delay)
+    {
+        Delay(delay).Then(*_strand, [weak = weak_from_this()]()
+            {
+                if (const std::shared_ptr<LoginClient> instance = weak.lock(); instance)
+                {
+                    instance->Close();
+                }
+            });
+    }
+
     void LoginClient::StartPacketProcess(
-        SharedPtrNotNull<LoginServer> loginServer, SharedPtrNotNull<Session> session,
+        SharedPtrNotNull<LoginServer> server, SharedPtrNotNull<Session> session,
         UniquePtrNotNull<Decoder> decoder, UniquePtrNotNull<Encoder> encoder)
     {
-        _loginServer = std::move(loginServer);
+        _loginServer = std::move(server);
         _session = std::move(session);
         _decoder = std::move(decoder);
         _encoder = std::move(encoder);
@@ -90,9 +101,39 @@ namespace zerosugar::sl
         return _state;
     }
 
+    auto LoginClient::GetAuthToken() const -> const std::string&
+    {
+        return _authToken;
+    }
+
+    auto LoginClient::GetAccountId() const -> int64_t
+    {
+        return _accountId;
+    }
+
+    auto LoginClient::GetAccount() const -> const std::string&
+    {
+        return _account;
+    }
+
     void LoginClient::SetState(LoginClientState state)
     {
         _state = state;
+    }
+
+    void LoginClient::SetAuthToken(std::string token)
+    {
+        _authToken = std::move(token);
+    }
+
+    void LoginClient::SetAccountId(int64_t accountId)
+    {
+        _accountId = accountId;
+    }
+
+    void LoginClient::SetAccount(std::string account)
+    {
+        _account = std::move(account);
     }
 
     auto LoginClient::RunPacketProcess() -> Future<void>
@@ -150,12 +191,23 @@ namespace zerosugar::sl
 
                     Buffer header;
                     (void)packet.SliceFront(header, 3);
+                    assert(header.GetSize() == 3);
+
+                    if (!handler->CanHandle(*this))
+                    {
+                        ZEROSUGAR_LOG_WAN(_locator, std::format("[sl_client] handler deny execution. close client. client: {}, packet: {}, handler: {}",
+                            ToString(), packet.ToString(), handler->GetName()));
+
+                        Close();
+                        break;
+                    }
 
                     const LoginPacketDeserializeResult result = co_await handler->Handle(*_loginServer, *this, packet);
                     if (result.errorCode == LoginPacketDeserializeResult::ErrorCode::None)
                     {
-                        Buffer _;
-                        packet.SliceFront(_, result.readSize);
+                        Buffer read;
+                        (void)packet.SliceFront(read, result.readSize);
+                        assert(read.GetSize() == result.readSize);
                     }
                     else
                     {
@@ -190,7 +242,11 @@ namespace zerosugar::sl
         assert(ExecutionContext::GetExecutor() == _strand.get());
 
         Buffer packet = MakePacketHeader(opcode, buffer.GetSize());
-        packet.MergeBack(std::move(buffer));
+
+        if (buffer.GetSize() > 0)
+        {
+            packet.MergeBack(std::move(buffer));
+        }
 
         if (encode)
         {

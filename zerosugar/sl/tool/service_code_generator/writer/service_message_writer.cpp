@@ -105,20 +105,28 @@ namespace zerosugar::sl
                 _cxxPrinter.AddLine(messageIndent, "void from_json(const nlohmann::json& j, {}& item)", message.name);
                 BraceGuard braceGuard(_cxxPrinter, messageIndent, false);
 
-                for (const Field& field : message.fields)
+                const int64_t fieldIndent = messageIndent + 1;
+
+                if (message.fields.empty())
                 {
-                    const int64_t fieldIndent = messageIndent + 1;
-
-                    if (field.optional)
+                    _cxxPrinter.AddLine(fieldIndent, "(void)j;");
+                    _cxxPrinter.AddLine(fieldIndent, "(void)item;");
+                }
+                else
+                {
+                    for (const Field& field : message.fields)
                     {
-                        _cxxPrinter.AddLine(fieldIndent, "if (const auto iter = j.find(\"{}\"); iter != j.end())", field.name);
-                        BraceGuard ifBraceGuard(_cxxPrinter, fieldIndent, false);
+                        if (field.optional)
+                        {
+                            _cxxPrinter.AddLine(fieldIndent, "if (const auto iter = j.find(\"{}\"); iter != j.end())", field.name);
+                            BraceGuard ifBraceGuard(_cxxPrinter, fieldIndent, false);
 
-                        _cxxPrinter.AddLine(fieldIndent + 1, "item.{}.emplace(*iter);", field.name);
-                    }
-                    else
-                    {
-                        _cxxPrinter.AddLine(fieldIndent, "j.at(\"{0}\").get_to(item.{0});", field.name);
+                            _cxxPrinter.AddLine(fieldIndent + 1, "item.{}.emplace(*iter);", field.name);
+                        }
+                        else
+                        {
+                            _cxxPrinter.AddLine(fieldIndent, "j.at(\"{0}\").get_to(item.{0});", field.name);
+                        }
                     }
                 }
             }
@@ -129,44 +137,52 @@ namespace zerosugar::sl
                 BraceGuard braceGuard(_cxxPrinter, messageIndent, false);
 
                 const int64_t fieldIndent = messageIndent + 1;
-                _cxxPrinter.AddLine(fieldIndent, "j = nlohmann::json");
-
-                const int64_t jsonIndent = fieldIndent + 1;
-                std::optional<BraceGuard> jsonBraceGuard;
-                jsonBraceGuard.emplace(_cxxPrinter, jsonIndent);
-
-                bool hasOptionalField = false;
-
-                for (const Field& field : message.fields)
+                if (message.fields.empty())
                 {
-                    const int64_t jsonFieldIndent = jsonIndent + 1;
-
-                    if (field.optional)
-                    {
-                        hasOptionalField = true;
-                        continue;
-                    }
-
-                    _cxxPrinter.AddLine(jsonFieldIndent, "{{ \"{0}\", item.{0} }},", field.name);
+                    _cxxPrinter.AddLine(fieldIndent, "(void)j;");
+                    _cxxPrinter.AddLine(fieldIndent, "(void)item;");
                 }
-
-                jsonBraceGuard.reset();
-
-                if (hasOptionalField)
+                else
                 {
-                    _cxxPrinter.BreakLine();
+                    _cxxPrinter.AddLine(fieldIndent, "j = nlohmann::json");
+
+                    const int64_t jsonIndent = fieldIndent + 1;
+                    std::optional<BraceGuard> jsonBraceGuard;
+                    jsonBraceGuard.emplace(_cxxPrinter, jsonIndent);
+
+                    bool hasOptionalField = false;
 
                     for (const Field& field : message.fields)
                     {
-                        if (!field.optional)
+                        const int64_t jsonFieldIndent = jsonIndent + 1;
+
+                        if (field.optional)
                         {
+                            hasOptionalField = true;
                             continue;
                         }
 
-                        _cxxPrinter.AddLine(fieldIndent, "if (item.{}.has_value())", field.name);
-                        BraceGuard ifBraceGuard(_cxxPrinter, fieldIndent, false);
+                        _cxxPrinter.AddLine(jsonFieldIndent, "{{ \"{0}\", item.{0} }},", field.name);
+                    }
 
-                        _cxxPrinter.AddLine(fieldIndent + 1, "j.push_back(nlohmann::json{{ \"{0}\", *item.{0} }});", field.name);
+                    jsonBraceGuard.reset();
+
+                    if (hasOptionalField)
+                    {
+                        _cxxPrinter.BreakLine();
+
+                        for (const Field& field : message.fields)
+                        {
+                            if (!field.optional)
+                            {
+                                continue;
+                            }
+
+                            _cxxPrinter.AddLine(fieldIndent, "if (item.{}.has_value())", field.name);
+                            BraceGuard ifBraceGuard(_cxxPrinter, fieldIndent, false);
+
+                            _cxxPrinter.AddLine(fieldIndent + 1, "j.push_back(nlohmann::json{{ \"{0}\", *item.{0} }});", field.name);
+                        }
                     }
                 }
             }

@@ -1,10 +1,9 @@
 #pragma once
-#include <memory>
-#include "zerosugar/shared/network/buffer/buffer.h"
 #include "zerosugar/sl/server/login/login_client_id.h"
 #include "zerosugar/sl/server/login/login_client_state.h"
 #include "zerosugar/sl/protocol/packet/login/login_packet_concept.h"
 #include "zerosugar/sl/service/generated/login_service_generated_interface.h"
+#include "zerosugar/sl/service/generated/world_service_generated_interface.h"
 
 namespace zerosugar
 {
@@ -13,8 +12,8 @@ namespace zerosugar
 
 namespace zerosugar::sl
 {
-    class Encoder;
     class Decoder;
+    class Encoder;
     class LoginServer;
 
     class LoginClient final : public std::enable_shared_from_this<LoginClient>
@@ -22,7 +21,7 @@ namespace zerosugar::sl
     public:
         using id_type = login_client_id_type;
 
-        using locator_type = ServiceLocatorRef<ILogService, service::ILoginService>;
+        using locator_type = ServiceLocatorRef<ILogService, service::ILoginService, service::IWorldService>;
 
     public:
         LoginClient() = delete;
@@ -35,9 +34,10 @@ namespace zerosugar::sl
         ~LoginClient();
 
         void Close();
+        void Close(std::chrono::milliseconds delay);
 
         void StartPacketProcess(
-            SharedPtrNotNull<LoginServer> loginServer, SharedPtrNotNull<Session> session,
+            SharedPtrNotNull<LoginServer> server, SharedPtrNotNull<Session> session,
             UniquePtrNotNull<Decoder> decoder, UniquePtrNotNull<Encoder> encoder);
         void StopPacketProcess();
         void ReceiveLoginPacket(Buffer buffer);
@@ -50,8 +50,14 @@ namespace zerosugar::sl
         auto GetLocator() -> locator_type&;
         auto GetId() const -> const id_type&;
         auto GetState() const -> LoginClientState;
+        auto GetAuthToken() const -> const std::string&;
+        auto GetAccountId() const -> int64_t;
+        auto GetAccount() const -> const std::string&;
 
         void SetState(LoginClientState state);
+        void SetAuthToken(std::string token);
+        void SetAccountId(int64_t accountId);
+        void SetAccount(std::string account);
 
     private:
         auto RunPacketProcess() -> Future<void>;
@@ -74,6 +80,10 @@ namespace zerosugar::sl
         Buffer _receiveBuffer;
         Buffer _sendPacketHeaderPool;
         std::queue<Buffer> _sendPackets;
+
+        std::string _authToken;
+        int64_t _accountId = 0;
+        std::string _account;
     };
 
     template <login_packet_concept T>

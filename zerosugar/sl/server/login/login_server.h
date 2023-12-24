@@ -4,11 +4,10 @@
 #include "zerosugar/shared/network/server/server.h"
 #include "zerosugar/sl/server/login/login_client_id.h"
 #include "zerosugar/sl/service/generated/login_service_generated_interface.h"
+#include "zerosugar/sl/service/generated/world_service_generated_interface.h"
 
 namespace zerosugar::sl
 {
-    class ServerConfig;
-
     class LoginServer final : public Server
     {
         using Server::StartUp;
@@ -16,7 +15,7 @@ namespace zerosugar::sl
     public:
         static constexpr uint16_t PORT = 2106;
 
-        using locator_type = ServiceLocatorRef<ILogService, service::ILoginService>;
+        using locator_type = ServiceLocatorRef<ILogService, service::ILoginService, service::IWorldService>;
 
     public:
         LoginServer() = delete;
@@ -25,13 +24,14 @@ namespace zerosugar::sl
         LoginServer& operator=(const LoginServer& other) = delete;
         LoginServer& operator=(LoginServer&& other) noexcept = delete;
 
-        LoginServer(execution::AsioExecutor& executor, locator_type locator, const ServerConfig& config);
+        explicit LoginServer(execution::AsioExecutor& executor);
         ~LoginServer();
 
+        void Initialize(ServiceLocator& dependencyLocator) override;
         void StartUp();
         void Shutdown() override;
 
-        auto GetConfig() const -> const ServerConfig&;
+        auto GetPublicAddress() const -> const std::string&;
 
     private:
         void OnAccept(Session& session) override;
@@ -40,7 +40,7 @@ namespace zerosugar::sl
 
     private:
         locator_type _locator;
-        const ServerConfig& _config;
+        std::string _publicAddress;
         tbb::concurrent_hash_map<session::id_type, SharedPtrNotNull<class LoginClient>> _clients;
         std::atomic<login_client_id_type::value_type> _nextClientId = 0;
     };

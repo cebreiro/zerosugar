@@ -11,15 +11,21 @@
 
 namespace zerosugar::sl
 {
-    LoginServer::LoginServer(execution::AsioExecutor& executor, locator_type locator, const ServerConfig& config)
-        : Server("sl_login", locator, executor)
-        , _locator(std::move(locator))
-        , _config(config)
+    LoginServer::LoginServer(execution::AsioExecutor& executor)
+        : Server("sl_login", executor)
+        , _publicAddress("127.0.0.1") // TODO: fix
     {
     }
 
     LoginServer::~LoginServer()
     {
+    }
+
+    void LoginServer::Initialize(ServiceLocator& dependencyLocator)
+    {
+        Server::Initialize(dependencyLocator);
+
+        _locator = dependencyLocator;
     }
 
     void LoginServer::StartUp()
@@ -37,9 +43,9 @@ namespace zerosugar::sl
         _clients.clear();
     }
 
-    auto LoginServer::GetConfig() const -> const ServerConfig&
+    auto LoginServer::GetPublicAddress() const -> const std::string&
     {
-        return _config;
+        return _publicAddress;
     }
 
     void LoginServer::OnAccept(Session& session)
@@ -81,9 +87,6 @@ namespace zerosugar::sl
 
     void LoginServer::OnReceive(Session& session, Buffer buffer)
     {
-        (void)session;
-        (void)buffer;
-
         decltype(_clients)::const_accessor accessor;
         if (_clients.find(accessor, session.GetId()))
         {

@@ -22,8 +22,9 @@ namespace zerosugar::sl
         using locator_type = ServiceLocatorRef<ILogService>;
 
     public:
-        RepositoryService(locator_type locator, execution::IExecutor& executor,
-            SharedPtrNotNull<db::ConnectionPool> connectionPool);
+        RepositoryService(execution::IExecutor& executor, SharedPtrNotNull<db::ConnectionPool> connectionPool);
+
+        void Initialize(ServiceLocator& dependencyLocator) override;
 
         auto FindAccountAsync(service::FindAccountParam param) -> Future<service::FindAccountResult> override;
         auto UpdateAccountAsync(service::UpdateAccountParam param) -> Future<service::UpdateAccountResult> override;

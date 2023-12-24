@@ -4,6 +4,8 @@
 
 namespace zerosugar
 {
+    class ServiceLocator;
+
     class IService
     {
     public:
@@ -15,7 +17,8 @@ namespace zerosugar
         IService() = default;
         virtual ~IService() = default;
 
+        virtual void Initialize([[maybe_unused]] ServiceLocator& dependencyLocator) {}
         virtual void Shutdown() {}
-        virtual void Join(std::vector<boost::system::error_code>&) {}
+        virtual void Join([[maybe_unused]] std::vector<boost::system::error_code>& errors) {}
     };
 }

@@ -12,11 +12,15 @@
 
 namespace zerosugar
 {
-    Server::Server(std::string name, locator_type locator, execution::AsioExecutor& executor)
+    Server::Server(std::string name, execution::AsioExecutor& executor)
         : _name(std::format("{}_server", std::move(name)))
-        , _locator(std::move(locator))
         , _executor(executor)
     {
+    }
+
+    void Server::Initialize(ServiceLocator& dependencyLocator)
+    {
+        _locator = dependencyLocator;
     }
 
     bool Server::StartUp(uint16_t listenPort)

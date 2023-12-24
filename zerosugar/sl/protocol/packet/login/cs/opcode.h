@@ -7,7 +7,7 @@ namespace zerosugar::sl::login::cs
     ENUM_CLASS(Opcode, int8_t,
         (LoginRequest, 0)
         (LoginBypassRequest, 1)
-        (WorldEnterRequest, 2)
+        (WorldSelectRequest, 2)
         (LogoutRequest, 3)
         (UnknownOpcode04, 4)
         (UnknownOpcode05, 5)

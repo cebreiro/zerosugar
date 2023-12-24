@@ -2,12 +2,22 @@
 #include "zerosugar/sl/protocol/packet/login/cs/login.h"
 #include "zerosugar/sl/server/login/handler/login_packet_handler_interface.h"
 
-namespace zerosugar::sl
+namespace zerosugar::sl::login::sc
+{
+    enum class LoginFailReason;
+}
+
+namespace zerosugar::sl::detail
 {
     class LoginPacketHandler_Login final : public LoginPacketHandlerT<login::cs::Login>
     {
     public:
+        LoginPacketHandler_Login();
+
         auto HandlePacket(const LoginServer& server, LoginClient& client, const login::cs::Login& packet) const
             -> Future<void> override;
+
+    private:
+        static void ProcessFailure(LoginClient& client, login::sc::LoginFailReason reason);
     };
 }

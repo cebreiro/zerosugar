@@ -8,6 +8,7 @@
 #include "zerosugar/sl/executable/monolithic_server/config/application_config.h"
 #include "zerosugar/sl/service/login/login_service.h"
 #include "zerosugar/sl/service/repository/repository_service.h"
+#include "zerosugar/sl/service/world/world_service.h"
 
 namespace zerosugar::sl
 {
@@ -38,11 +39,28 @@ namespace zerosugar::sl
         _executor = std::make_shared<execution::AsioExecutor>(concurrency);
         _executor->Run();
 
-        _repositoryService = std::make_shared<RepositoryService>(app.GetServiceLocator(), *_executor, _connectionPool);
-        app.GetServiceLocator().Add<service::IRepositoryService>(_repositoryService);
+        ServiceLocator& serviceLocator = app.GetServiceLocator();
+        {
+            auto repositoryService = std::make_shared<RepositoryService>(*_executor, _connectionPool);
+            repositoryService->Initialize(serviceLocator);
 
-        _loginService = std::make_shared<LoginService>(app.GetServiceLocator(), *_executor);
-        app.GetServiceLocator().Add<service::ILoginService>(_loginService);
+            _repositoryService = std::move(repositoryService);
+            serviceLocator.Add<service::IRepositoryService>(_repositoryService);
+        }
+        {
+            auto worldService = std::make_shared<WorldService>(*_executor);
+            worldService->Initialize(serviceLocator);
+
+            _worldService = std::move(worldService);
+            serviceLocator.Add<service::IWorldService>(_worldService);
+        }
+        {
+            auto loginService = std::make_shared<LoginService>(*_executor);
+            loginService->Initialize(serviceLocator);
+
+            _loginService = std::move(loginService);
+            serviceLocator.Add<service::ILoginService>(_loginService);
+        }
     }
 
     void ServiceModule::Finalize() noexcept
@@ -50,6 +68,11 @@ namespace zerosugar::sl
         if (_loginService)
         {
             _loginService->Shutdown();
+        }
+
+        if (_worldService)
+        {
+            _worldService->Shutdown();
         }
 
         if (_repositoryService)
@@ -78,6 +101,11 @@ namespace zerosugar::sl
         if (_loginService)
         {
             _loginService->Join(errors);
+        }
+
+        if (_worldService)
+        {
+            _worldService->Join(errors);
         }
 
         if (_repositoryService)

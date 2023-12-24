@@ -1,6 +1,4 @@
 #pragma once
-#include <cstdint>
-#include <array>
 #include "zerosugar/sl/protocol/packet/login/login_packet_concept.h"
 
 namespace zerosugar::sl::login::cs

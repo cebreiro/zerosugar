@@ -60,7 +60,7 @@ namespace zerosugar::sl
 
                         const bool streaming = type->second;
 
-                        return streaming ? std::format("Channel<{}>", type->first) : type->first;
+                        return streaming ? std::format("SharedPtrNotNull<Channel<{}>>", type->first) : type->first;
                     }(method.input);
                 const std::optional<std::string> returnType = [](const Method::inout_type& type) -> std::optional<std::string>
                     {
@@ -72,7 +72,7 @@ namespace zerosugar::sl
                         const bool streaming = type->second;
                         if (streaming)
                         {
-                            return std::format("Channel<{}>", type->first);
+                            return std::format("SharedPtrNotNull<Channel<{}>>", type->first);
                         }
 
                         return std::format("Future<{}>", type->first);;

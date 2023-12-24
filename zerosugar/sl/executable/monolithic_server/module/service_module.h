@@ -10,6 +10,7 @@ namespace zerosugar::sl::db
 namespace zerosugar::sl::service
 {
     class ILoginService;
+    class IWorldService;
     class IRepositoryService;
 }
 
@@ -25,9 +26,10 @@ namespace zerosugar::sl
     private:
         SharedPtrNotNull<execution::AsioExecutor> _dbExecutor;
         SharedPtrNotNull<db::ConnectionPool> _connectionPool;
-        SharedPtrNotNull<service::IRepositoryService> _repositoryService;
-
         SharedPtrNotNull<execution::AsioExecutor> _executor;
+
+        SharedPtrNotNull<service::IRepositoryService> _repositoryService;
+        SharedPtrNotNull<service::IWorldService> _worldService;
         SharedPtrNotNull<service::ILoginService> _loginService;
     };
 }

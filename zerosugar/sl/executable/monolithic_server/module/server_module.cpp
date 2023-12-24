@@ -10,58 +10,26 @@ namespace zerosugar::sl
 {
     void ServerModule::Initialize(AppInstance& app, AppConfig& config)
     {
-        (void)config;
-
         const auto concurrency = static_cast<int64_t>(std::thread::hardware_concurrency());
         _executor = std::make_shared<execution::AsioExecutor>(concurrency);
         _executor->Run();
 
-        const ServerConfig& serverConfig = config.GetServerConfig();
-
-        auto loginServer = std::make_shared<LoginServer>(*_executor, app.GetServiceLocator(), serverConfig);
-        auto gatewayServer = std::make_shared<GatewayServer>(*_executor, app.GetServiceLocator(), serverConfig);
-        std::map<int8_t, std::vector<SharedPtrNotNull<ZoneServer>>> worldServers;
-
-        for (const WorldConfig& worldConfig : config.GetServerConfig().GetWorldConfigs())
-        {
-            const int8_t worldId = worldConfig.GetWorldId();
-            auto& zoneServers = worldServers[worldId];
-
-            for (const ZoneServerConfig& zoneConfig : worldConfig.GetZoneServerConfigs())
-            {
-                zoneServers.push_back(std::make_shared<ZoneServer>(*_executor, app.GetServiceLocator(),
-                    worldId, zoneConfig.GetZoneId(), zoneConfig.GetPort()));
-            }
-        }
-
-        for (auto& [worldId, servers] : worldServers)
-        {
-            auto& dest = _worldServers[worldId];
-
-            for (SharedPtrNotNull<ZoneServer>& zoneServer : servers)
-            {
-                zoneServer->StartUp();
-                dest.emplace_back(std::move(zoneServer));
-            }
-        }
-
-        gatewayServer->StartUp();
-        _gatewayServer = std::move(gatewayServer);
-
-        loginServer->StartUp();
-        _loginServer = std::move(loginServer);
+        InitializeServerExecutor();
+        InitializeGatewayServers(app, config);
+        InitializeZoneServers(app, config);
+        InitializeLoginServers(app, config);
     }
 
     void ServerModule::Finalize() noexcept
     {
-        for (const SharedPtrNotNull<Server>& server : _worldServers | std::views::values | std::views::join)
+        for (const SharedPtrNotNull<Server>& server : _gatewayServers | std::views::values)
         {
             server->Shutdown();
         }
 
-        if (_gatewayServer)
+        for (const SharedPtrNotNull<Server>& server : _worldZoneServers | std::views::values | std::views::join)
         {
-            _gatewayServer->Shutdown();
+            server->Shutdown();
         }
 
         if (_loginServer)
@@ -81,5 +49,83 @@ namespace zerosugar::sl
         {
             _executor->Join(&errors);
         }
+    }
+
+    void ServerModule::InitializeServerExecutor()
+    {
+        const auto concurrency = static_cast<int64_t>(std::thread::hardware_concurrency());
+        _executor = std::make_shared<execution::AsioExecutor>(concurrency);
+        _executor->Run();
+    }
+
+    void ServerModule::InitializeGatewayServers(AppInstance& app, AppConfig& config)
+    {
+        auto gateways = [this, &config]() -> std::map<int8_t, SharedPtrNotNull<GatewayServer>>
+            {
+                std::map<int8_t, SharedPtrNotNull<GatewayServer>> result;
+
+                for (const WorldConfig& worldConfig : config.GetServerConfig().GetWorldConfigs())
+                {
+                    const int8_t worldId = worldConfig.GetWorldId();
+
+                    result[worldId] = std::make_shared<GatewayServer>(*_executor, worldId);
+                }
+
+                return result;
+            }();
+
+        for (auto& [worldId, gateway] : gateways)
+        {
+            gateway->Initialize(app.GetServiceLocator());
+            gateway->StartUp();
+
+            _gatewayServers[worldId] = std::move(gateway);
+        }
+    }
+
+    void ServerModule::InitializeZoneServers(AppInstance& app, AppConfig& config)
+    {
+        auto worldZones = [&]() -> std::map<int8_t, std::vector<SharedPtrNotNull<ZoneServer>>>
+            {
+                std::map<int8_t, std::vector<SharedPtrNotNull<ZoneServer>>> result;
+
+                for (const WorldConfig& worldConfig : config.GetServerConfig().GetWorldConfigs())
+                {
+                    const int8_t worldId = worldConfig.GetWorldId();
+                    std::vector<SharedPtrNotNull<ZoneServer>>& servers = result[worldId];
+
+                    for (const ZoneServerConfig& zoneConfig : worldConfig.GetZoneServerConfigs())
+                    {
+                        servers.push_back(std::make_shared<ZoneServer>(
+                            *_executor, worldId, zoneConfig.GetZoneId(), zoneConfig.GetPort()));
+                    }
+                }
+
+                return result;
+            }();
+
+        for (auto& [worldId, zones] : worldZones)
+        {
+            std::vector<SharedPtrNotNull<Server>>& zoneServers = _worldZoneServers[worldId];
+
+            for (SharedPtrNotNull<ZoneServer>& zoneServer : zones)
+            {
+                zoneServer->Initialize(app.GetServiceLocator());
+                zoneServer->StartUp();
+
+                zoneServers.emplace_back(std::move(zoneServer));
+            }
+        }
+    }
+
+    void ServerModule::InitializeLoginServers(AppInstance& app, AppConfig& config)
+    {
+        (void)config;
+
+        auto loginServer = std::make_shared<LoginServer>(*_executor);
+        loginServer->Initialize(app.GetServiceLocator());
+        loginServer->StartUp();
+
+        _loginServer = std::move(loginServer);
     }
 }

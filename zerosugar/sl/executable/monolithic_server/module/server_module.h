@@ -17,9 +17,15 @@ namespace zerosugar::sl
         void GetFinalizeError(std::vector<boost::system::error_code>& errors) override;
 
     private:
+        void InitializeServerExecutor();
+        void InitializeGatewayServers(AppInstance& app, AppConfig& config);
+        void InitializeZoneServers(AppInstance& app, AppConfig& config);
+        void InitializeLoginServers(AppInstance& app, AppConfig& config);
+
+    private:
         SharedPtrNotNull<execution::AsioExecutor> _executor;
-        std::map<int8_t, std::vector<SharedPtrNotNull<Server>>> _worldServers;
-        SharedPtrNotNull<Server> _gatewayServer;
+        std::map<int8_t, std::vector<SharedPtrNotNull<Server>>> _worldZoneServers;
+        std::map<int8_t, SharedPtrNotNull<Server>> _gatewayServers;
         SharedPtrNotNull<Server> _loginServer;
     };
 }

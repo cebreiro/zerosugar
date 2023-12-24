@@ -1,8 +1,6 @@
 #include "login.h"
 
 #include <boost/algorithm/string.hpp>
-#include "zerosugar/shared/network/buffer/buffer_reader.h"
-#include "zerosugar/shared/network/buffer/buffer_writer.h"
 #include "zerosugar/sl/protocol/packet/login/cs/opcode.h"
 
 namespace zerosugar::sl::login::cs

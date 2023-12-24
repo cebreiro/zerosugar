@@ -27,8 +27,9 @@ namespace zerosugar
         using locator_type = ServiceLocatorRef<ILogService>;
 
     public:
-        Server(std::string name, locator_type locator, execution::AsioExecutor& executor);
+        Server(std::string name, execution::AsioExecutor& executor);
 
+        virtual void Initialize(ServiceLocator& dependencyLocator);
         virtual bool StartUp(uint16_t listenPort);
         virtual void Shutdown();
 

@@ -7,14 +7,20 @@ package zerosugar.sl.service;
 
 service LoginService
 {
-    rpc Login (LoginParam) returns (LoginResult) {}
-    rpc Logout (LogoutParam) returns (LogoutResult) {}
+    rpc Login (LoginParam) returns (LoginResult);
+    rpc Logout (LogoutParam) returns (LogoutResult);
+    rpc Authorize (AuthorizeParam) returns (AuthorizeResult);
+
+    rpc Kick (KickParam) returns (KickResult);
 }
 
 enum LoginServiceErrorCode
 {
     login_error_none = 0;
     login_error_fail_invalid = 1;
+    login_error_fail_duplicate_login = 2;
+
+    login_error_fail_access_denied = 10000;
 }
 
 message LoginParam
@@ -38,6 +44,38 @@ message LogoutParam
 }
 
 message LogoutResult
+{
+    LoginServiceErrorCode error_code = 1;
+}
+
+enum AuthorizedAccessType
+{
+    authorized_access_none = 0;
+    authorized_access_character_create = 1;
+    authorized_access_character_delete = 2;
+    authorized_access_character_enter_zone = 3;
+}
+
+message AuthorizeParam
+{
+    AuthToken token = 1;
+    AuthorizedAccessType type = 2;
+    int32 type_value_1 = 3;
+    int32 type_value_2 = 4;
+}
+
+message AuthorizeResult
+{
+    LoginServiceErrorCode error_code = 1;
+}
+
+message KickParam
+{
+    string account = 1;
+    string context = 2;
+}
+
+message KickResult
 {
     LoginServiceErrorCode error_code = 1;
 }
