@@ -1,6 +1,6 @@
 #pragma once
-#include "zerosugar/sl/tool/service_code_generator/printer.h"
-#include "zerosugar/sl/tool/service_code_generator/writer/input/writer_input.h"
+#include "zerosugar/sl/tool/proto_code_generator/printer.h"
+#include "zerosugar/sl/tool/proto_code_generator/writer/input/writer_input.h"
 
 namespace zerosugar::sl
 {

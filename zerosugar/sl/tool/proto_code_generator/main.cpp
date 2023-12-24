@@ -12,9 +12,9 @@
 #include "zerosugar/shared/type/not_null_pointer.h"
 #include <Windows.h>
 
-#include "zerosugar/sl/tool/service_code_generator/writer/service_interface_writer.h"
-#include "zerosugar/sl/tool/service_code_generator/writer/service_message_writer.h"
-#include "zerosugar/sl/tool/service_code_generator/writer/input/converter/writer_input_proto_converter.h"
+#include "zerosugar/sl/tool/proto_code_generator/writer/service_interface_writer.h"
+#include "zerosugar/sl/tool/proto_code_generator/writer/service_message_writer.h"
+#include "zerosugar/sl/tool/proto_code_generator/writer/input/converter/writer_input_proto_converter.h"
 
 using namespace google::protobuf;
 using namespace google::protobuf::compiler;

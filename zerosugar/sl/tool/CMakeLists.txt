@@ -1,1 +1,1 @@
-add_subdirectory(service_code_generator)
+add_subdirectory(proto_code_generator)
