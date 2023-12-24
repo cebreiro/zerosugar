@@ -8,6 +8,7 @@
 #include "zerosugar/sl/protocol/security/login_packet_encoder.h"
 #include "zerosugar/sl/protocol/security/secret_key.h"
 #include "zerosugar/sl/server/login/login_client.h"
+#include "zerosugar/sl/server/login/login_packet_handler_container.h"
 
 namespace zerosugar::sl
 {
@@ -25,6 +26,8 @@ namespace zerosugar::sl
     {
         Server::Initialize(dependencyLocator);
 
+        _packetHandlers = std::make_shared<LoginPacketHandlerContainer>(*this);
+
         _locator = dependencyLocator;
     }
 
@@ -41,6 +44,11 @@ namespace zerosugar::sl
         Server::Shutdown();
 
         _clients.clear();
+    }
+
+    auto LoginServer::GetLocator() -> locator_type&
+    {
+        return _locator;
     }
 
     auto LoginServer::GetPublicAddress() const -> const std::string&
@@ -76,11 +84,10 @@ namespace zerosugar::sl
         const uint32_t key1 = PacketSecretKey::LOGIN_KEY_FIRST;
         const uint32_t key2 = PacketSecretKey::LOGIN_KEY_SECOND;
 
-        client->StartPacketProcess(
-            std::static_pointer_cast<LoginServer>(shared_from_this()),
-            session.shared_from_this(),
+        client->StartReceiveHandler(session.shared_from_this(),
             std::make_unique<LoginPacketDecoder>(key1, key2),
-            std::make_unique<LoginPacketEncoder>(key1, key2));
+            std::make_unique<LoginPacketEncoder>(key1, key2),
+            _packetHandlers);
 
         client->SendPacket(login::sc::Hello(key1, key2), false);
     }
@@ -92,7 +99,7 @@ namespace zerosugar::sl
         {
             LoginClient& client = *accessor->second;
 
-            client.ReceiveLoginPacket(std::move(buffer));
+            client.Receive(std::move(buffer));
         }
         else
         {

@@ -8,17 +8,18 @@
 
 namespace zerosugar::sl::detail
 {
-    LoginPacketHandler_Login::LoginPacketHandler_Login()
+    LoginPacketHandler_Login::LoginPacketHandler_Login(WeakPtrNotNull<LoginServer> server)
+        : LoginPacketHandlerT(std::move(server))
     {
         AddAllowedState(LoginClientState::Connected);
     }
 
-    auto LoginPacketHandler_Login::HandlePacket(const LoginServer& server, LoginClient& client, const login::cs::Login& packet) const
+    auto LoginPacketHandler_Login::HandlePacket(LoginServer& server, LoginClient& client, const login::cs::Login& packet) const
         -> Future<void>
     {
         using namespace service;
 
-        auto& serviceLocator = client.GetLocator();
+        auto& serviceLocator = server.GetLocator();
 
         auto* loginService = serviceLocator.Find<ILoginService>();
         auto* worldService = serviceLocator.Find<IWorldService>();

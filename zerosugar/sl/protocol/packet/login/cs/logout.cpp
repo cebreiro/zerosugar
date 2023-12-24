@@ -14,7 +14,7 @@ namespace zerosugar::sl::login::cs
         (void)buffer;
 
         return LoginPacketDeserializeResult{
-            .errorCode = LoginPacketDeserializeResult::ErrorCode::None,
+            .errorCode = LoginPacketHandlerErrorCode::None,
             .readSize = 0,
         };
     }

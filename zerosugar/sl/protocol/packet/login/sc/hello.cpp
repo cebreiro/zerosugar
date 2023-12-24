@@ -27,7 +27,7 @@ namespace zerosugar::sl::login::sc
         if (buffer.GetSize() < 8)
         {
             return LoginPacketDeserializeResult{
-                .errorCode = LoginPacketDeserializeResult::ErrorCode::Fail_ShortLength
+                .errorCode = LoginPacketHandlerErrorCode::Fail_ShortLength
             };
         }
 
@@ -36,7 +36,7 @@ namespace zerosugar::sl::login::sc
         _key2 = reader.Read<uint32_t>();
 
         return LoginPacketDeserializeResult{
-            .errorCode = LoginPacketDeserializeResult::ErrorCode::None,
+            .errorCode = LoginPacketHandlerErrorCode::None,
             .readSize = reader.GetReadSize(),
         };
     }

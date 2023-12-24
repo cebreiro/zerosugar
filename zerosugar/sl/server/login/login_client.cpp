@@ -15,7 +15,7 @@ namespace zerosugar::sl
         , _id(id)
         , _strand(std::move(strand))
     {
-        assert(locator.Find<service::ILoginService>());
+        assert(locator.ContainsAll());
     }
 
     LoginClient::~LoginClient()
@@ -43,15 +43,15 @@ namespace zerosugar::sl
             });
     }
 
-    void LoginClient::StartPacketProcess(
-        SharedPtrNotNull<LoginServer> server, SharedPtrNotNull<Session> session,
-        UniquePtrNotNull<Decoder> decoder, UniquePtrNotNull<Encoder> encoder)
+    void LoginClient::StartReceiveHandler(SharedPtrNotNull<Session> session,
+        UniquePtrNotNull<Decoder> decoder, UniquePtrNotNull<Encoder> encoder,
+        SharedPtrNotNull<LoginPacketHandlerContainer> handlers)
     {
-        _loginServer = std::move(server);
         _session = std::move(session);
         _decoder = std::move(decoder);
         _encoder = std::move(encoder);
         _bufferChannel = std::make_shared<Channel<Buffer>>();
+        _handlers = std::move(handlers);
 
         Post(*_strand, [self = shared_from_this()]()
             {
@@ -59,13 +59,13 @@ namespace zerosugar::sl
             });
     }
 
-    void LoginClient::StopPacketProcess()
+    void LoginClient::StopReceiveHandler()
     {
         assert(_bufferChannel);
         _bufferChannel->Close();
     }
 
-    void LoginClient::ReceiveLoginPacket(Buffer buffer)
+    void LoginClient::Receive(Buffer buffer)
     {
         assert(_bufferChannel);
         _bufferChannel->Send(std::move(buffer), channel::ChannelSignal::NotifyOne);
@@ -84,11 +84,6 @@ namespace zerosugar::sl
         oss << " }";
 
         return oss.str();
-    }
-
-    auto LoginClient::GetLocator() -> locator_type&
-    {
-        return _locator;
     }
 
     auto LoginClient::GetId() const -> const id_type&
@@ -141,6 +136,7 @@ namespace zerosugar::sl
         assert(_session);
         assert(_decoder);
         assert(_encoder);
+        assert(_handlers);
         assert(_bufferChannel);
         assert(ExecutionContext::GetExecutor() == _strand.get());
 
@@ -179,7 +175,7 @@ namespace zerosugar::sl
                     BufferReader packetReader(std::next(packet.cbegin(), 2), packet.cend());
 
                     const int8_t opcode = packetReader.Read<int8_t>();
-                    const ILoginPacketHandler* handler = LoginPacketHandlerContainer::GetInstance().Find(opcode);
+                    const ILoginPacketHandler* handler = _handlers->Find(opcode);
                     if (!handler)
                     {
                         ZEROSUGAR_LOG_WAN(_locator, std::format("[sl_client] handler not found. close client. client: {}, packet: {}",
@@ -202,28 +198,26 @@ namespace zerosugar::sl
                         break;
                     }
 
-                    const LoginPacketDeserializeResult result = co_await handler->Handle(*_loginServer, *this, packet);
-                    if (result.errorCode == LoginPacketDeserializeResult::ErrorCode::None)
+                    const LoginPacketDeserializeResult result = co_await handler->Handle(*this, packet);
+                    switch (result.errorCode)
+                    {
+                    case LoginPacketHandlerErrorCode::None:
                     {
                         Buffer read;
                         (void)packet.SliceFront(read, result.readSize);
                         assert(read.GetSize() == result.readSize);
                     }
-                    else
+                    break;
+                    case LoginPacketHandlerErrorCode::Fail_ShortLength:
+                        break;
+                    default:
                     {
-                        if (result.errorCode == LoginPacketDeserializeResult::ErrorCode::Fail_InvalidFormat)
-                        {
-                            ZEROSUGAR_LOG_ERROR(_locator, std::format("[sl_client] invalid packet. client: {}, packet: {}",
-                                ToString(), packet.ToString()));
-                        }
-                        else if (result.errorCode == LoginPacketDeserializeResult::ErrorCode::Fail_ShortLength)
-                        {
-                            ZEROSUGAR_LOG_ERROR(_locator, std::format("[sl_client] packet header length is invalid. client: {}, packet: {}",
-                                ToString(), packet.ToString()));
-                        }
+                        ZEROSUGAR_LOG_ERROR(_locator, std::format("[sl_client] fail to handle packet. client: {}, error: {}, packet: {}",
+                            ToString(), zerosugar::sl::ToString(result.errorCode), packet.ToString()));
 
                         Close();
-                        break;
+                        co_return;
+                    }
                     }
                 }
             }

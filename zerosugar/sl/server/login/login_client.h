@@ -2,8 +2,6 @@
 #include "zerosugar/sl/server/login/login_client_id.h"
 #include "zerosugar/sl/server/login/login_client_state.h"
 #include "zerosugar/sl/protocol/packet/login/login_packet_concept.h"
-#include "zerosugar/sl/service/generated/login_service_generated_interface.h"
-#include "zerosugar/sl/service/generated/world_service_generated_interface.h"
 
 namespace zerosugar
 {
@@ -14,14 +12,14 @@ namespace zerosugar::sl
 {
     class Decoder;
     class Encoder;
-    class LoginServer;
+    class LoginPacketHandlerContainer;
 
     class LoginClient final : public std::enable_shared_from_this<LoginClient>
     {
     public:
         using id_type = login_client_id_type;
 
-        using locator_type = ServiceLocatorRef<ILogService, service::ILoginService, service::IWorldService>;
+        using locator_type = ServiceLocatorRef<ILogService>;
 
     public:
         LoginClient() = delete;
@@ -36,18 +34,17 @@ namespace zerosugar::sl
         void Close();
         void Close(std::chrono::milliseconds delay);
 
-        void StartPacketProcess(
-            SharedPtrNotNull<LoginServer> server, SharedPtrNotNull<Session> session,
-            UniquePtrNotNull<Decoder> decoder, UniquePtrNotNull<Encoder> encoder);
-        void StopPacketProcess();
-        void ReceiveLoginPacket(Buffer buffer);
+        void StartReceiveHandler(SharedPtrNotNull<Session> session,
+            UniquePtrNotNull<Decoder> decoder, UniquePtrNotNull<Encoder> encoder,
+            SharedPtrNotNull<LoginPacketHandlerContainer> handlers);
+        void StopReceiveHandler();
+        void Receive(Buffer buffer);
 
         template <login_packet_concept T>
         void SendPacket(const T& packet, bool encode = true);
 
         auto ToString() const -> std::string;
 
-        auto GetLocator() -> locator_type&;
         auto GetId() const -> const id_type&;
         auto GetState() const -> LoginClientState;
         auto GetAuthToken() const -> const std::string&;
@@ -72,10 +69,10 @@ namespace zerosugar::sl
         SharedPtrNotNull<Strand> _strand;
 
         LoginClientState _state = LoginClientState::Connected;
-        SharedPtrNotNull<LoginServer> _loginServer;
         SharedPtrNotNull<Session> _session;
         UniquePtrNotNull<Decoder> _decoder;
         UniquePtrNotNull<Encoder> _encoder;
+        SharedPtrNotNull<LoginPacketHandlerContainer> _handlers;
         SharedPtrNotNull<Channel<Buffer>> _bufferChannel;
         Buffer _receiveBuffer;
         Buffer _sendPacketHeaderPool;

@@ -5,16 +5,16 @@
 
 namespace zerosugar::sl
 {
+    ENUM_CLASS(LoginPacketHandlerErrorCode, int32_t,
+        (None, 0)
+        (Fail_ServerShutdown, 1)
+        (Fail_InvalidFormat, 2)
+        (Fail_ShortLength, 3)
+    )
+
     struct LoginPacketDeserializeResult
     {
-        enum class ErrorCode
-        {
-            None = 0,
-            Fail_InvalidFormat,
-            Fail_ShortLength,
-        };
-
-        ErrorCode errorCode = ErrorCode::None;
+        LoginPacketHandlerErrorCode errorCode = LoginPacketHandlerErrorCode::None;
         int64_t readSize = 0;
     };
 

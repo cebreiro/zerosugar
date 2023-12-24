@@ -14,6 +14,9 @@ namespace zerosugar
     template <typename T>
     using SharedPtrNotNull = std::shared_ptr<T>;
 
+    template <typename T>
+    using WeakPtrNotNull = std::weak_ptr<T>;
+
     namespace notnull
     {
         static constexpr auto reference = std::views::transform([]<typename T>(const T& ptr)

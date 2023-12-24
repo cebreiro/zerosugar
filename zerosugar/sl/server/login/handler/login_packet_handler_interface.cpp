@@ -4,6 +4,11 @@
 
 namespace zerosugar::sl::detail
 {
+    LoginPacketHandlerAbstract::LoginPacketHandlerAbstract(WeakPtrNotNull<LoginServer> server)
+        : _server(std::move(server))
+    {
+    }
+
     bool LoginPacketHandlerAbstract::CanHandle(const LoginClient& client) const
     {
         if (_allowedStates.empty())

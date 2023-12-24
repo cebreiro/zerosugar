@@ -1,28 +1,24 @@
 #include "login_packet_handler_world_select.h"
 
-#include "zerosugar/sl/protocol/packet/login/sc/world_list.h"
 #include "zerosugar/sl/server/login/login_client.h"
 #include "zerosugar/sl/server/login/login_server.h"
 
 namespace zerosugar::sl::detail
 {
-    LoginPacketHandler_WorldSelect::LoginPacketHandler_WorldSelect()
+    LoginPacketHandler_WorldSelect::LoginPacketHandler_WorldSelect(WeakPtrNotNull<LoginServer> server)
+        : LoginPacketHandlerT(std::move(server))
     {
         AddAllowedState(LoginClientState::Authenticated);
     }
 
-    auto LoginPacketHandler_WorldSelect::HandlePacket(const LoginServer& server, LoginClient& client,
-        const login::cs::WorldSelect& packet) const -> Future<void>
+    auto LoginPacketHandler_WorldSelect::HandlePacket(LoginServer& server,
+        LoginClient& client, const login::cs::WorldSelect& packet) const -> Future<void>
     {
-        (void)server;
         (void)packet;
 
         using namespace service;
 
-        auto& serviceLocator = client.GetLocator();
-        (void)serviceLocator;
-
-        auto* worldService = serviceLocator.Find<IWorldService>();
+        auto* worldService = server.GetLocator().Find<IWorldService>();
         if (!worldService)
         {
             co_return;

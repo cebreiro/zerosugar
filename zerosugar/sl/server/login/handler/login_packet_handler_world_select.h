@@ -7,9 +7,9 @@ namespace zerosugar::sl::detail
     class LoginPacketHandler_WorldSelect : public LoginPacketHandlerT<login::cs::WorldSelect>
     {
     public:
-        LoginPacketHandler_WorldSelect();
+        explicit  LoginPacketHandler_WorldSelect(WeakPtrNotNull<LoginServer> server);
 
-        auto HandlePacket(const LoginServer& server, LoginClient& client, const login::cs::WorldSelect& packet) const
+        auto HandlePacket(LoginServer& server, LoginClient& client, const login::cs::WorldSelect& packet) const
             -> Future<void> override;
     };
 }

@@ -8,6 +8,8 @@
 
 namespace zerosugar::sl
 {
+    class LoginPacketHandlerContainer;
+
     class LoginServer final : public Server
     {
         using Server::StartUp;
@@ -31,6 +33,7 @@ namespace zerosugar::sl
         void StartUp();
         void Shutdown() override;
 
+        auto GetLocator() -> locator_type&;
         auto GetPublicAddress() const -> const std::string&;
 
     private:
@@ -41,6 +44,7 @@ namespace zerosugar::sl
     private:
         locator_type _locator;
         std::string _publicAddress;
+        SharedPtrNotNull<LoginPacketHandlerContainer> _packetHandlers;
         tbb::concurrent_hash_map<session::id_type, SharedPtrNotNull<class LoginClient>> _clients;
         std::atomic<login_client_id_type::value_type> _nextClientId = 0;
     };

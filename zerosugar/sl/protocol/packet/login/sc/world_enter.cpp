@@ -29,7 +29,7 @@ namespace zerosugar::sl::login::sc
         if (buffer.GetSize() < fixed_buffer_size)
         {
             return LoginPacketDeserializeResult{
-                .errorCode = LoginPacketDeserializeResult::ErrorCode::Fail_ShortLength
+                .errorCode = LoginPacketHandlerErrorCode::Fail_ShortLength
             };
         }
 
@@ -41,7 +41,7 @@ namespace zerosugar::sl::login::sc
         assert(reader.GetReadSize() == fixed_buffer_size);
 
         return LoginPacketDeserializeResult{
-            .errorCode = LoginPacketDeserializeResult::ErrorCode::None,
+            .errorCode = LoginPacketHandlerErrorCode::None,
             .readSize = reader.GetReadSize(),
         };
     }
