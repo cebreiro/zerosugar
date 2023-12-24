@@ -1,47 +1,47 @@
-#include "application.h"
+#include "monolithic_server.h"
 
 #include <nlohmann/json.hpp>
 #include "zerosugar/shared/service/service_locator_log.h"
 #include "zerosugar/shared/log/spdlog/spdlog_logger.h"
 #include "zerosugar/shared/log/spdlog/spdlog_logger_builder.h"
-#include "zerosugar/sl/executable/monolithic_server/module/server_module.h"
-#include "zerosugar/sl/executable/monolithic_server/module/service_module.h"
+#include "zerosugar/sl/executable/monolithic_server/assembler/server_assembler.h"
+#include "zerosugar/sl/executable/monolithic_server/assembler/service_assembler.h"
 
 namespace zerosugar::sl
 {
-    ServerApplication::ServerApplication()
+    MonolithicServerApplication::MonolithicServerApplication()
     {
-        _modules.emplace_back(std::make_unique<ServiceModule>());
-        _modules.emplace_back(std::make_unique<ServerModule>());
+        _assemblers.emplace_back(std::make_unique<ServiceAssembler>());
+        _assemblers.emplace_back(std::make_unique<ServerAssembler>());
     }
 
-    ServerApplication::~ServerApplication()
+    MonolithicServerApplication::~MonolithicServerApplication()
     {
     }
 
-    void ServerApplication::OnStartUp(std::span<char*> args)
+    void MonolithicServerApplication::OnStartUp(std::span<char*> args)
     {
         (void)args;
 
 
         InitializeConfig();
         InitializeLogService();
-        InitializeModules();
+        InitializeService();
     }
 
-    void ServerApplication::OnShutdown()
+    void MonolithicServerApplication::OnShutdown()
     {
-        for (IModule& module : _modules | notnull::reference)
+        for (IAssembler& assembler : _assemblers | notnull::reference)
         {
-            module.Finalize();
+            assembler.Finalize();
         }
     }
 
-    void ServerApplication::OnExit(std::vector<boost::system::error_code>& errors)
+    void MonolithicServerApplication::OnExit(std::vector<boost::system::error_code>& errors)
     {
-        for (IModule& module : _modules | notnull::reference)
+        for (IAssembler& assembler : _assemblers | notnull::reference)
         {
-            module.GetFinalizeError(errors);
+            assembler.GetFinalizeError(errors);
         }
 
         for (const boost::system::error_code& error : errors)
@@ -52,12 +52,12 @@ namespace zerosugar::sl
         }
     }
 
-    auto ServerApplication::GetName() const -> std::string_view
+    auto MonolithicServerApplication::GetName() const -> std::string_view
     {
         return "sl_monolithic_server";
     }
 
-    void ServerApplication::InitializeConfig()
+    void MonolithicServerApplication::InitializeConfig()
     {
         for (auto path = std::filesystem::current_path();
             exists(path) && path != path.parent_path();
@@ -84,7 +84,7 @@ namespace zerosugar::sl
         throw std::runtime_error("fail to initialize config");
     }
 
-    void ServerApplication::InitializeLogService()
+    void MonolithicServerApplication::InitializeLogService()
     {
         const LogConfig& config = _config.GetLogConfig();
         const LogConfig::Console& console = config.GetConsole();
@@ -107,11 +107,11 @@ namespace zerosugar::sl
         ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("file log path: {}", dailyFileConfig.GetPath().string()));
     }
 
-    void ServerApplication::InitializeModules()
+    void MonolithicServerApplication::InitializeService()
     {
-        for (IModule& module : _modules | notnull::reference)
+        for (IAssembler& assembler : _assemblers | notnull::reference)
         {
-            module.Initialize(*this, _config);
+            assembler.Initialize(*this, _config);
         }
     }
 }

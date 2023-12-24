@@ -1,4 +1,4 @@
-#include "server_module.h"
+#include "server_assembler.h"
 
 #include "zerosugar/shared/app/app_intance.h"
 #include "zerosugar/sl/executable/monolithic_server/config/application_config.h"
@@ -8,7 +8,7 @@
 
 namespace zerosugar::sl
 {
-    void ServerModule::Initialize(AppInstance& app, AppConfig& config)
+    void ServerAssembler::Initialize(AppInstance& app, AppConfig& config)
     {
         const auto concurrency = static_cast<int64_t>(std::thread::hardware_concurrency());
         _executor = std::make_shared<execution::AsioExecutor>(concurrency);
@@ -20,7 +20,7 @@ namespace zerosugar::sl
         InitializeLoginServers(app, config);
     }
 
-    void ServerModule::Finalize() noexcept
+    void ServerAssembler::Finalize() noexcept
     {
         for (const SharedPtrNotNull<Server>& server : _gatewayServers | std::views::values)
         {
@@ -43,7 +43,7 @@ namespace zerosugar::sl
         }
     }
 
-    void ServerModule::GetFinalizeError(std::vector<boost::system::error_code>& errors)
+    void ServerAssembler::GetFinalizeError(std::vector<boost::system::error_code>& errors)
     {
         if (_executor)
         {
@@ -51,14 +51,14 @@ namespace zerosugar::sl
         }
     }
 
-    void ServerModule::InitializeServerExecutor()
+    void ServerAssembler::InitializeServerExecutor()
     {
         const auto concurrency = static_cast<int64_t>(std::thread::hardware_concurrency());
         _executor = std::make_shared<execution::AsioExecutor>(concurrency);
         _executor->Run();
     }
 
-    void ServerModule::InitializeGatewayServers(AppInstance& app, AppConfig& config)
+    void ServerAssembler::InitializeGatewayServers(AppInstance& app, AppConfig& config)
     {
         auto gateways = [this, &config]() -> std::map<int8_t, SharedPtrNotNull<GatewayServer>>
             {
@@ -83,7 +83,7 @@ namespace zerosugar::sl
         }
     }
 
-    void ServerModule::InitializeZoneServers(AppInstance& app, AppConfig& config)
+    void ServerAssembler::InitializeZoneServers(AppInstance& app, AppConfig& config)
     {
         auto worldZones = [&]() -> std::map<int8_t, std::vector<SharedPtrNotNull<ZoneServer>>>
             {
@@ -118,7 +118,7 @@ namespace zerosugar::sl
         }
     }
 
-    void ServerModule::InitializeLoginServers(AppInstance& app, AppConfig& config)
+    void ServerAssembler::InitializeLoginServers(AppInstance& app, AppConfig& config)
     {
         (void)config;
 

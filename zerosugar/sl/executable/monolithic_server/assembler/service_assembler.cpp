@@ -1,4 +1,4 @@
-#include "service_module.h"
+#include "service_assembler.h"
 
 #include <boost/mysql.hpp>
 
@@ -12,7 +12,7 @@
 
 namespace zerosugar::sl
 {
-    void ServiceModule::Initialize(AppInstance& app, AppConfig& config)
+    void ServiceAssembler::Initialize(AppInstance& app, AppConfig& config)
     {
         const DatabaseConfig& dbConfig = config.GetDatabaseConfig();
 
@@ -63,7 +63,7 @@ namespace zerosugar::sl
         }
     }
 
-    void ServiceModule::Finalize() noexcept
+    void ServiceAssembler::Finalize() noexcept
     {
         if (_loginService)
         {
@@ -96,7 +96,7 @@ namespace zerosugar::sl
         }
     }
 
-    void ServiceModule::GetFinalizeError(std::vector<boost::system::error_code>& errors)
+    void ServiceAssembler::GetFinalizeError(std::vector<boost::system::error_code>& errors)
     {
         if (_loginService)
         {

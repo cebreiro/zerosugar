@@ -33,10 +33,7 @@ namespace zerosugar::sl
 
     void LoginServer::StartUp()
     {
-        if (!StartUp(PORT))
-        {
-            throw std::runtime_error(std::format("[{}] fail to start up", GetName()));
-        }
+        StartUp(PORT);
     }
 
     void LoginServer::Shutdown()

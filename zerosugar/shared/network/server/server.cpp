@@ -23,9 +23,13 @@ namespace zerosugar
         _locator = dependencyLocator;
     }
 
-    bool Server::StartUp(uint16_t listenPort)
+    void Server::StartUp(uint16_t listenPort)
     {
-        assert(!_acceptor.has_value());
+        if (_acceptor.has_value())
+        {
+            assert(false);
+            return;
+        }
 
         _listenPort = listenPort;
 
@@ -44,17 +48,19 @@ namespace zerosugar
 
         if (!_acceptor.has_value() || !_acceptor->is_open())
         {
-            return false;
+            return;
         }
 
         AcceptAsync();
-
-        return true;
     }
 
     void Server::Shutdown()
     {
-        assert(_acceptor.has_value());
+        if (!_acceptor.has_value())
+        {
+            assert(false);
+            return;
+        }
 
         boost::system::error_code ec;
         _acceptor->cancel(ec);
@@ -69,7 +75,7 @@ namespace zerosugar
 
         if (ec)
         {
-            ZEROSUGAR_LOG_CRITICAL(_locator, std::format("[{}] fail to shutdown. errorCode: [{}, {}]",
+            ZEROSUGAR_LOG_CRITICAL(_locator, std::format("[{}] has a error on shutdown process. errorCode: [{}, {}]",
                 GetName(), ec.value(), ec.message()));
         }
     }

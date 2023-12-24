@@ -1,6 +1,6 @@
 #pragma once
 #include "zerosugar/shared/execution/executor/impl/asio_executor.h"
-#include "zerosugar/sl/executable/monolithic_server/module/module_interface.h"
+#include "zerosugar/sl/executable/monolithic_server/assembler/assembler_interface.h"
 
 namespace zerosugar::sl::db
 {
@@ -16,7 +16,7 @@ namespace zerosugar::sl::service
 
 namespace zerosugar::sl
 {
-    class ServiceModule : public IModule
+    class ServiceAssembler : public IAssembler
     {
     public:
         void Initialize(AppInstance& app, AppConfig& config) override;

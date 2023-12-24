@@ -30,7 +30,7 @@ namespace zerosugar
         Server(std::string name, execution::AsioExecutor& executor);
 
         virtual void Initialize(ServiceLocator& dependencyLocator);
-        virtual bool StartUp(uint16_t listenPort);
+        virtual void StartUp(uint16_t listenPort);
         virtual void Shutdown();
 
         bool IsOpen() const;

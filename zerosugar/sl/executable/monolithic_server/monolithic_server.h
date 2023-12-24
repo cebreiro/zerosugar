@@ -4,13 +4,13 @@
 
 namespace zerosugar::sl
 {
-    class IModule;
+    class IAssembler;
 
-    class ServerApplication final : public AppInstance
+    class MonolithicServerApplication final : public AppInstance
     {
     public:
-        ServerApplication();
-        ~ServerApplication() override;
+        MonolithicServerApplication();
+        ~MonolithicServerApplication() override;
 
     private:
         void OnStartUp(std::span<char*> args) override;
@@ -23,10 +23,10 @@ namespace zerosugar::sl
     private:
         void InitializeConfig();
         void InitializeLogService();
-        void InitializeModules();
+        void InitializeService();
 
     private:
         AppConfig _config = {};
-        std::vector<std::unique_ptr<IModule>> _modules;
+        std::vector<std::unique_ptr<IAssembler>> _assemblers;
     };
 }

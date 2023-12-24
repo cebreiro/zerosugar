@@ -36,10 +36,7 @@ void TestApp::OnStartUp(std::span<char*> args)
     _executor->Run();
 
     _server->Initialize(GetServiceLocator());
-    if (!_server->StartUp(PORT))
-    {
-        throw std::runtime_error("fail to start server");
-    }
+    _server->StartUp(PORT);
 
     for (int64_t i = 0; i < static_cast<int64_t>(std::thread::hardware_concurrency()); ++i)
     {

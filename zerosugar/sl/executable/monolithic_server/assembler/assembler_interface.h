@@ -10,17 +10,17 @@ namespace zerosugar::sl
 {
     class AppConfig;
 
-    class IModule
+    class IAssembler
     {
     public:
-        IModule() = default;
-        IModule(const IModule& other) = delete;
-        IModule(IModule&& other) noexcept = delete;
-        IModule& operator=(const IModule& other) = delete;
-        IModule& operator=(IModule&& other) noexcept = delete;
+        IAssembler() = default;
+        IAssembler(const IAssembler& other) = delete;
+        IAssembler(IAssembler&& other) noexcept = delete;
+        IAssembler& operator=(const IAssembler& other) = delete;
+        IAssembler& operator=(IAssembler&& other) noexcept = delete;
 
     public:
-        virtual ~IModule() = default;
+        virtual ~IAssembler() = default;
 
         virtual void Initialize(AppInstance& app, AppConfig& config) = 0;
         virtual void Finalize() noexcept = 0;

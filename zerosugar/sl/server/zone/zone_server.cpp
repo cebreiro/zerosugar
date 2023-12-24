@@ -23,10 +23,7 @@ namespace zerosugar::sl
 
     void ZoneServer::StartUp()
     {
-        if (!StartUp(_port))
-        {
-            throw std::runtime_error(std::format("[{}] fail to start up", GetName()));
-        }
+        StartUp(_port);
     }
 
     void ZoneServer::Shutdown()
