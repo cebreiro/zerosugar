@@ -1,8 +1,8 @@
-#include "service_message_writer.h"
+#include "message_json_serialize_writer.h"
 
 namespace zerosugar::sl
 {
-    auto ServiceMessageWriter::Write(const Param& param) -> std::pair<std::string, std::string>
+    auto MessageJsonSerializeWriter::Write(const Param& param) -> std::pair<std::string, std::string>
     {
         WriteHeader(param);
         WriteCxx(param);
@@ -10,7 +10,7 @@ namespace zerosugar::sl
         return std::make_pair(_headerPrinter.Print(), _cxxPrinter.Print());
     }
 
-    void ServiceMessageWriter::WriteHeader(const Param& param)
+    void MessageJsonSerializeWriter::WriteHeader(const Param& param)
     {
         const int64_t indent = 0;
         const WriterInput& input = param.input;
@@ -40,46 +40,17 @@ namespace zerosugar::sl
 
         BraceGuard packageBraceGuard(_headerPrinter, hasPackage ? indent : -1, false);
 
-        for (const Enum& e : input.enums)
-        {
-            const int64_t enumIndent = classIndent;
-
-            _headerPrinter.AddLine(enumIndent, "enum class {} : int64_t", e.name);
-            BraceGuard enumBraceGuard(_headerPrinter, enumIndent);
-
-            for (const EnumValue& value : e.values)
-            {
-                const int64_t enumElementIndent = enumIndent + 1;
-
-                _headerPrinter.AddLine(enumElementIndent, "{} = {},", value.name, value.number);
-            }
-        }
-
         for (const Message& message : input.messages)
         {
             const int64_t messageIndent = classIndent;
 
-            _headerPrinter.AddLine(messageIndent, "struct {}", message.name);
-
-            std::optional<BraceGuard> messageBraceGuard;
-            messageBraceGuard.emplace(_headerPrinter, messageIndent);
-
-            for (const Field& field : message.fields)
-            {
-                const int64_t fieldIndent = messageIndent + 1;
-
-                _headerPrinter.AddLine(fieldIndent, "{} {} = {{}};", ResolveType(field), field.name);
-            }
-
-            messageBraceGuard.reset();
             _headerPrinter.AddLine(messageIndent, "void from_json(const nlohmann::json& j, {}& item);", message.name);
             _headerPrinter.AddLine(messageIndent, "void to_json(nlohmann::json& j, const {}& item);", message.name);
-
             _headerPrinter.BreakLine();
         }
     }
 
-    void ServiceMessageWriter::WriteCxx(const Param& param)
+    void MessageJsonSerializeWriter::WriteCxx(const Param& param)
     {
         const int64_t indent = 0;
         const WriterInput& input = param.input;
@@ -190,7 +161,7 @@ namespace zerosugar::sl
         }
     }
 
-    auto ServiceMessageWriter::ResolveType(const Field& field) -> std::string
+    auto MessageJsonSerializeWriter::ResolveType(const Field& field) -> std::string
     {
         if (field.optional)
         {

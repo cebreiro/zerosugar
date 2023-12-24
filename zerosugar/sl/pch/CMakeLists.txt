@@ -1,7 +1,11 @@
 add_library(zerosugar_sl_pch)
 
+ find_package(nlohmann_json CONFIG REQUIRED)
+
 target_link_libraries(zerosugar_sl_pch PUBLIC
     zerosugar_shared
+    nlohmann_json
+    nlohmann_json::nlohmann_json
 )
 
 target_precompile_headers(zerosugar_sl_pch PUBLIC

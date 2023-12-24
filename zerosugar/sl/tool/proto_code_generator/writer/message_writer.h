@@ -4,7 +4,7 @@
 
 namespace zerosugar::sl
 {
-    class ServiceMessageWriter
+    class MessageWriter
     {
     public:
         struct Param
@@ -15,11 +15,10 @@ namespace zerosugar::sl
         };
 
     public:
-        auto Write(const Param& param) -> std::pair<std::string, std::string>;
+        auto Write(const Param& param) -> std::string;
 
     private:
         void WriteHeader(const Param& param);
-        void WriteCxx(const Param& param);
 
     private:
         static auto ResolveType(const Field& field) -> std::string;
