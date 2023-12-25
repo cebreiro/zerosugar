@@ -23,12 +23,13 @@ namespace zerosugar
         using value_type = std::decay_t<T>;
 
     public:
-        StreamReader() = delete;
-        StreamReader(const StreamReader&) = delete;
-        StreamReader(StreamReader&&) noexcept = delete;
-        StreamReader& operator=(const StreamReader&) = delete;
-        StreamReader& operator=(StreamReader&&) noexcept = delete;
+        StreamReader() = default;
+        StreamReader(const StreamReader& other);
+        StreamReader(StreamReader&& other) noexcept;
+        StreamReader& operator=(const StreamReader& other);
+        auto operator=(StreamReader&& other) noexcept -> StreamReader&;
 
+    public:
         StreamReader(T begin, T end);
         ~StreamReader() = default;
 
@@ -45,8 +46,11 @@ namespace zerosugar
         auto ReadString(int64_t size) -> std::string;
         void ReadBuffer(char* buffer, int64_t size);
 
+        void Skip(int64_t size);
+
         auto begin() const -> T;
         auto end() const -> T;
+        auto current() const -> T;
 
         auto GetReadSize() const -> int64_t;
 
@@ -57,6 +61,50 @@ namespace zerosugar
         int64_t _readSize = 0;
         int64_t _remainSize = 0;
     };
+
+    template <stream_readable_concept T>
+    StreamReader<T>::StreamReader(const StreamReader& other)
+        : _begin(other._begin)
+        , _iter(other._iter)
+        , _end(other._end)
+        , _readSize(other._readSize)
+        , _remainSize(other._remainSize)
+    {
+    }
+
+    template <stream_readable_concept T>
+    StreamReader<T>::StreamReader(StreamReader&& other) noexcept
+        : _begin(std::move(other._begin))
+        , _iter(std::move(other._iter))
+        , _end(std::move(other._end))
+        , _readSize(std::exchange(other._readSize, 0))
+        , _remainSize(std::exchange(other._remainSize, 0))
+    {
+    }
+
+    template <stream_readable_concept T>
+    StreamReader<T>& StreamReader<T>::operator=(const StreamReader& other)
+    {
+        _begin = other._begin;
+        _iter = other._iter;
+        _end = other._end;
+        _readSize = other._readSize;
+        _remainSize = other._remainSize;
+
+        return *this;
+    }
+
+    template <stream_readable_concept T>
+    StreamReader<T>& StreamReader<T>::operator=(StreamReader&& other) noexcept
+    {
+        _begin = std::move(other._begin);
+        _iter = std::move(other._iter);
+        _end = std::move(other._end);
+        _readSize = std::exchange(other._readSize, 0);
+        _remainSize = std::exchange(other._remainSize, 0);
+
+        return *this;
+    }
 
     template <stream_readable_concept T>
     StreamReader<T>::StreamReader(T begin, T end)
@@ -143,6 +191,7 @@ namespace zerosugar
         {
             if (*iter == '\0')
             {
+                ++size;
                 return ReadString(size);
             }
 
@@ -163,15 +212,20 @@ namespace zerosugar
 
         if (!CanRead(size))
         {
-            throw std::runtime_error("fail to reader stream");
+            throw std::runtime_error("fail to read stream");
         }
 
-        std::string result(size + 1, 0);
+        std::string result(size, 0);
 
         for (int64_t i = 0; i < size; ++i)
         {
             result[i] = *_iter;
             ++_iter;
+        }
+
+        if (!result.empty() && result.back() == '\0')
+        {
+            result.pop_back();
         }
 
         _readSize += size;
@@ -202,6 +256,26 @@ namespace zerosugar
     }
 
     template <stream_readable_concept T>
+    void StreamReader<T>::Skip(int64_t size)
+    {
+        if (size <= 0)
+        {
+            assert(false);
+            return;
+        }
+
+        if (!CanRead(size))
+        {
+            throw std::runtime_error("fail to skip stream");
+        }
+
+        std::advance(_iter, size);
+        _readSize += size;
+        _remainSize -= size;
+        assert(_remainSize == std::distance(_iter, _end));
+    }
+
+    template <stream_readable_concept T>
     auto StreamReader<T>::begin() const -> T
     {
         return _begin;
@@ -211,6 +285,12 @@ namespace zerosugar
     auto StreamReader<T>::end() const -> T
     {
         return _end;
+    }
+
+    template <stream_readable_concept T>
+    auto StreamReader<T>::current() const -> T
+    {
+        return _iter;
     }
 
     template <stream_readable_concept T>

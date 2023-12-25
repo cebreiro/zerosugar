@@ -1,14 +1,19 @@
 #pragma once
+#include <memory>
 #include <google/protobuf/compiler/code_generator.h>
 
 namespace zerosugar::sl
 {
     struct ProtoCodeGeneratorOption;
     struct WriterInput;
+    class CodeGeneratorFactory;
 
     class ProtoCodeGenerator : public google::protobuf::compiler::CodeGenerator
     {
     public:
+        ProtoCodeGenerator();
+        ~ProtoCodeGenerator();
+
         bool Generate(const google::protobuf::FileDescriptor* file,
             const std::string& parameter,
             google::protobuf::compiler::GeneratorContext* generator_context,
@@ -18,18 +23,9 @@ namespace zerosugar::sl
         auto GetSupportedFeatures() const -> uint64_t override;
 
     private:
-        void GenerateServiceInterface(
-            const google::protobuf::FileDescriptor& file,
-            google::protobuf::compiler::GeneratorContext& generator_context,
-            const ProtoCodeGeneratorOption& option, const WriterInput& input) const;
-        void GenerateMessage(const google::protobuf::FileDescriptor& file,
-            google::protobuf::compiler::GeneratorContext& generator_context,
-            const ProtoCodeGeneratorOption& option, const WriterInput& input) const;
-        void GenerateMessageJsonSerialize(const google::protobuf::FileDescriptor& file,
-            google::protobuf::compiler::GeneratorContext& generator_context,
-            const ProtoCodeGeneratorOption& option, const WriterInput& input) const;
+        static auto GetMessageFileName(const std::string& protoFileName) -> std::string;
 
     private:
-        static auto GetMessageFileName(const std::string& protoFileName) -> std::string;
+        std::unique_ptr<CodeGeneratorFactory> _generatorFactory;
     };
 }

@@ -1,5 +1,8 @@
 #include "message_json_serialize_writer.h"
 
+#include "zerosugar/sl/tool/proto_code_generator/proto_code_generator_option.h"
+#include "zerosugar/sl/tool/proto_code_generator/writer/input/writer_input.h"
+
 namespace zerosugar::sl
 {
     auto MessageJsonSerializeWriter::Write(const Param& param) -> std::pair<std::string, std::string>

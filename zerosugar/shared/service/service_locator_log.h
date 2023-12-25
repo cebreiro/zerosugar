@@ -13,6 +13,6 @@ if (ILogService* logService = locator.Find<ILogService>(); logService != nullptr
 
 #define ZEROSUGAR_LOG_DEBUG(locator, message)  ZEROSUGAR_APP_LOG(locator, zerosugar::LogLevel::Debug, message)
 #define ZEROSUGAR_LOG_INFO(locator, message)  ZEROSUGAR_APP_LOG(locator, zerosugar::LogLevel::Info, message)
-#define ZEROSUGAR_LOG_WAN(locator, message)  ZEROSUGAR_APP_LOG(locator, zerosugar::LogLevel::Warn, message)
+#define ZEROSUGAR_LOG_WARN(locator, message)  ZEROSUGAR_APP_LOG(locator, zerosugar::LogLevel::Warn, message)
 #define ZEROSUGAR_LOG_ERROR(locator, message)  ZEROSUGAR_APP_LOG(locator, zerosugar::LogLevel::Error, message)
 #define ZEROSUGAR_LOG_CRITICAL(locator, message)  ZEROSUGAR_APP_LOG(locator, zerosugar::LogLevel::Critical, message)

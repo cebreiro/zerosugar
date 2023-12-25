@@ -36,12 +36,14 @@ namespace zerosugar::sl
         auto LoginAsync(service::LoginParam param) -> Future<service::LoginResult> override;
         auto LogoutAsync(service::LogoutParam param) -> Future<service::LogoutResult> override;
 
+        auto AuthenticateAsync(service::AuthenticateParam param) -> Future<service::AuthenticateResult> override;
         auto AuthorizeAsync(service::AuthorizeParam param) -> Future<service::AuthorizeResult> override;
+
         auto KickAsync(service::KickParam param) -> Future<service::KickResult> override;
 
     private:
-        void StartTokenExpireTimer(std::string token, AuthTokenState& state);
-        void HandleTokenExpireTimer(std::string token);
+        void StartTokenExpireTimer(AuthTokenState& state, std::chrono::system_clock::time_point createTime, std::string token);
+        void HandleTokenExpireTimer(std::string token, std::chrono::system_clock::time_point createTime);
 
         auto MakeAuthToken() -> std::string;
         static auto MakeExpireTimePoint() -> std::chrono::system_clock::time_point;

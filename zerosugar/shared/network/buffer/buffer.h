@@ -68,7 +68,7 @@ namespace zerosugar
         using reference = value_type&;
 
     public:
-        iterator() = delete;
+        iterator() = default;
         iterator(const iterator& other) = default;
         iterator& operator=(const iterator& other) = default;
 
@@ -99,7 +99,7 @@ namespace zerosugar
         using reference = value_type&;
 
     public:
-        const_iterator() = delete;
+        const_iterator() = default;
         const_iterator(const const_iterator& other) = default;
         const_iterator& operator=(const const_iterator& other) = default;
 

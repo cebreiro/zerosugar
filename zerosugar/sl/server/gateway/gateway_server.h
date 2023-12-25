@@ -6,6 +6,8 @@
 
 namespace zerosugar::sl
 {
+    class GatewayPacketHandlerContainer;
+
     class GatewayServer final : public Server
     {
         using Server::StartUp;
@@ -28,6 +30,7 @@ namespace zerosugar::sl
         void StartUp();
         void Shutdown() override;
 
+        auto GetLocator() -> locator_type&;
         auto GetPublicAddress() const -> const std::string&;
         auto GetWorldId() const -> int8_t;
 
@@ -40,6 +43,7 @@ namespace zerosugar::sl
         locator_type _locator;
         int8_t _worldId = 0;
         std::string _publicAddress;
+        SharedPtrNotNull<GatewayPacketHandlerContainer> _packetHandlers;
         tbb::concurrent_hash_map<session::id_type, SharedPtrNotNull<class GatewayClient>> _clients;
         std::atomic<gateway_client_id_type::value_type> _nextClientId = 0;
     };

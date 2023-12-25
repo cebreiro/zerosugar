@@ -1,5 +1,7 @@
 #include "buffer_writer.h"
 
+#include "zerosugar/shared/network/buffer/buffer_serializable.h"
+
 namespace zerosugar
 {
     namespace detail
@@ -41,7 +43,7 @@ namespace zerosugar
 
     void BufferWriter::WriteString(const std::string& str)
     {
-        ExpandIfNoSpace(str.size());
+        ExpandIfNoSpace(std::ssize(str));
 
         _streamWriter.WriteString(str);
     }
@@ -51,6 +53,11 @@ namespace zerosugar
         ExpandIfNoSpace(std::ssize(buffer));
 
         _streamWriter.WriteBuffer(buffer);
+    }
+
+    void BufferWriter::Write(const IBufferSerializable& serializable)
+    {
+        serializable.Serialize(*this);
     }
 
     void BufferWriter::ExpandIfNoSpace(int64_t requiredSize)

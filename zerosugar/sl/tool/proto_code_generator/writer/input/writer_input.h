@@ -20,6 +20,12 @@ namespace zerosugar::sl
         std::vector<EnumValue> values;
     };
 
+    struct FieldOption
+    {
+        std::optional<int32_t> length = std::nullopt;
+        std::optional<std::string> sizeElement = std::nullopt;
+    };
+
     struct Field
     {
         using map_type = std::optional<std::pair<std::string, std::string>>;
@@ -30,12 +36,19 @@ namespace zerosugar::sl
         bool repeated = false;
         bool required = false;
         map_type map = std::nullopt;
+        FieldOption option;
+    };
+
+    struct MessageOption
+    {
+        std::optional<int32_t> opcode = std::nullopt;
     };
 
     struct Message
     {
         std::string name;
         std::vector<Field> fields;
+        MessageOption option;
     };
 
     struct Method

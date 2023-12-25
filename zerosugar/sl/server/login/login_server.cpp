@@ -100,7 +100,7 @@ namespace zerosugar::sl
         }
         else
         {
-            ZEROSUGAR_LOG_WAN(_locator, std::format("[{}] receive buffer but client is not found. session: {}",
+            ZEROSUGAR_LOG_WARN(_locator, std::format("[{}] receive buffer but client is not found. session: {}",
                 GetName(), session));
 
             session.Close();
@@ -109,7 +109,7 @@ namespace zerosugar::sl
 
     void LoginServer::OnError(Session& session, const boost::system::error_code& error)
     {
-        ZEROSUGAR_LOG_WAN(_locator, std::format("[{}] io error. session: {}, error: {}",
+        ZEROSUGAR_LOG_WARN(_locator, std::format("[{}] io error. session: {}, error: {}",
             GetName(), session, error.message()));
     }
 }

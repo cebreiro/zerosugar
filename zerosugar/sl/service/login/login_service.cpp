@@ -79,12 +79,12 @@ namespace zerosugar::sl
                 param.context, param.account));
 
             co_return LoginResult{
-                .errorCode = LoginServiceErrorCode::LoginErrorFailDuplicateLogin,
+                .errorCode = LoginServiceErrorCode::LoginErrorFailLoginDuplicate,
             };
         }
 
         std::string token;
-        auto* state = new AuthTokenState(account->id, account->account, MakeExpireTimePoint());
+        auto* state = new AuthTokenState(account->id, account->account, param.address, MakeExpireTimePoint());
         do
         {
             const auto& [iter, inserted] = _states.try_emplace(
@@ -102,7 +102,7 @@ namespace zerosugar::sl
             param.account, token));
 
         loginAccountIter->second.values = token;
-        StartTokenExpireTimer(token, *state);
+        StartTokenExpireTimer(*state, state->GetCreateTime(), token);
 
         co_return LoginResult{
             .errorCode = LoginServiceErrorCode::LoginErrorNone,
@@ -137,6 +137,28 @@ namespace zerosugar::sl
 
         co_return LogoutResult{
              .errorCode = LoginServiceErrorCode::LoginErrorNone,
+        };
+    }
+
+    auto LoginService::AuthenticateAsync(AuthenticateParam param) -> Future<AuthenticateResult>
+    {
+        co_await *_strand;
+        assert(ExecutionContext::GetExecutor() == _strand.get());
+
+        auto iter = _states.find(param.token.values);
+        if (iter == _states.end() || iter->second->GetAddress() != param.address)
+        {
+            ZEROSUGAR_LOG_INFO(_locator, std::format("[sl_login_service] fail to authenticate reqeust. address: {}",
+                param.address));
+
+            co_return AuthenticateResult{
+                .errorCode = LoginServiceErrorCode::LoginErrorFailAuthenticateFailure,
+            };
+        }
+
+        co_return AuthenticateResult{
+            .errorCode = LoginServiceErrorCode::LoginErrorNone,
+            .accountId = iter->second->GetAccountId(),
         };
     }
 
@@ -179,22 +201,22 @@ namespace zerosugar::sl
         };
     }
 
-    void LoginService::StartTokenExpireTimer(std::string token, AuthTokenState& state)
+    void LoginService::StartTokenExpireTimer(AuthTokenState& state, std::chrono::system_clock::time_point createTime, std::string token)
     {
         assert(ExecutionContext::GetExecutor() == _strand.get());
 
         const auto now =  std::chrono::system_clock::now();
         const auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(state.GetExpireTime() - now);
 
-        Future<void> handle = Delay(delay).Then(*_strand, [self = shared_from_this(), token = std::move(token)]() mutable
+        Future<void> handle = Delay(delay).Then(*_strand, [self = shared_from_this(), token = std::move(token), createTime]() mutable
             {
-                self->HandleTokenExpireTimer(std::move(token));
+                self->HandleTokenExpireTimer(std::move(token), createTime);
             });
 
         state.SetExpireTimerHandle(std::move(handle));
     }
 
-    void LoginService::HandleTokenExpireTimer(std::string token)
+    void LoginService::HandleTokenExpireTimer(std::string token, std::chrono::system_clock::time_point createTime)
     {
         assert(ExecutionContext::GetExecutor() == _strand.get());
 
@@ -205,6 +227,11 @@ namespace zerosugar::sl
 
         auto iter = _states.find(token);
         if (iter == _states.end())
+        {
+            return;
+        }
+
+        if (iter->second->GetCreateTime() != createTime)
         {
             return;
         }
@@ -222,7 +249,7 @@ namespace zerosugar::sl
             return;
         }
 
-        StartTokenExpireTimer(std::move(token), *iter->second);
+        StartTokenExpireTimer(*iter->second, createTime, std::move(token));
     }
 
     auto LoginService::MakeAuthToken() -> std::string

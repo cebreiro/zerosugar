@@ -5,16 +5,10 @@
 
 namespace zerosugar::sl
 {
-    enum class ProtoGenerateType
-    {
-        Service = 1,
-        StructOnly = 2,
-    };
-
     struct ProtoCodeGeneratorOption
     {
         std::string includePath;
-        ProtoGenerateType generateType;
+        std::string generator;
     };
 
     void from_json(const nlohmann::json& j, ProtoCodeGeneratorOption& item);

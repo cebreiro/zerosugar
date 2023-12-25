@@ -1,0 +1,129 @@
+syntax = "proto3";
+
+import "option.proto";
+package zerosugar.sl.gateway;
+
+message UnknownObject
+{
+}
+
+message EndPoint
+{
+    int32 port = 1;
+    string address = 2;
+}
+
+message CharacterAppearance
+{
+    int32 hat_model_id = 1;
+    int32 hair_color = 2;
+    int32 skin_color = 3;
+    int32 face = 4;
+    int32 unk01 = 5;
+    int32 unk02 = 6;
+
+    int32 hair_model_id = 7;
+    int32 unk03 = 8;
+    int32 unk04 = 9;
+
+    int32 jacket_item_id = 10;
+    int32 unk05 = 11;
+    int32 unk06 = 12;
+
+    int32 gloves_model_id = 13;
+    int32 unk07 = 14;
+    int32 unk08 = 15;
+
+    int32 pants_id = 16;
+    int32 unk09 = 17;
+    int32 unk10 = 18;
+
+    int32 shoes_id = 19;
+    int32 unk11 = 20;
+    int32 unk12 = 21;
+
+    int32 unk13 = 22;
+    int32 unk14 = 23;
+    int32 unk15 = 24;
+}
+
+message CharacterInformation
+{
+    bytes name = 1 [(length) = 20];
+    bytes unk01 = 2 [(length) = 12];
+
+    bytes unk02 = 3 [(length) = 32];
+
+    bytes zone = 4 [(length) = 4];
+    bytes unk03 = 5 [(length) = 28];
+
+    bytes unk04 = 6 [(length) = 32];
+
+    bytes unk05 = 7 [(length) = 28];
+    bytes job = 8 [(length) = 4];
+
+    bool arms = 9; // weapon
+    int32 unk06 = 10;
+    int32 slot = 11 [(length) = 8];
+    int32 unk07 = 12; // gm_level
+    bool appearance_if_true_item_id_else_model_id = 13;
+    bytes unk08 = 14 [(length) = 5];
+
+    int32 job1 = 15; // can see only if you patch client memory
+    int32 job2 = 16; // can see only if you patch client memory
+
+    bytes unk09 = 17 [(length) = 20];
+    bytes unk10 = 18 [(length) = 20];
+    bytes unk11 = 19 [(length) = 24];
+
+    int32 gender = 20;
+    int32 character_level = 21;
+}
+
+message Character
+{
+    CharacterAppearance appearance = 1;
+    CharacterInformation information = 2;
+}
+
+message CharacterCreate
+{
+    bytes name = 1 [(length) = 32];
+    int32 gender = 2;
+    int32 str = 3;
+    int32 dex = 4;
+    int32 accr = 5;
+    int32 health = 6;
+    int32 intell = 7;
+    int32 wis = 8;
+    int32 will = 9;
+    int32 elemental_water = 10;
+    int32 elemental_fire = 11;
+    int32 elemental_lightning = 12;
+    int32 unk01 = 13;
+    int32 hair_color = 14;
+    int32 skin_color = 15;
+    int32 face = 16;
+    int32 hair = 17;
+    int32 jacket_id = 18;
+    int32 gloves_model_id = 19;
+    int32 pants_id = 20;
+    int32 shoes_id = 21;
+    int32 unk02 = 22;
+    int32 unk03 = 23;
+    int32 unk04 = 24;
+    int32 unk05 = 25;
+    int32 unk06 = 26;
+    int32 unk07 = 27;
+    int32 unk08 = 28;
+    int32 unk09 = 29;
+    int32 unk10 = 30;
+    int32 unk11 = 31;
+    int32 unk12 = 32;
+    int32 unk13 = 33;
+    int32 unk14 = 34;
+    int32 unk15 = 35;
+    int32 unk16 = 36;
+    int32 unk17 = 37;
+    int32 job = 38;
+}

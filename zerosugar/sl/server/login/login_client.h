@@ -45,6 +45,7 @@ namespace zerosugar::sl
 
         auto ToString() const -> std::string;
 
+        auto GetSession() const -> const Session&;
         auto GetId() const -> const id_type&;
         auto GetState() const -> LoginClientState;
         auto GetAuthToken() const -> const std::string&;
@@ -57,7 +58,7 @@ namespace zerosugar::sl
         void SetAccount(std::string account);
 
     private:
-        auto RunPacketProcess() -> Future<void>;
+        auto RunReceiveHandler() -> Future<void>;
 
         void SendPacket(int8_t opcode, Buffer buffer, bool encode);
         auto MakePacketHeader(int8_t opcode, int64_t bufferSize) -> Buffer;

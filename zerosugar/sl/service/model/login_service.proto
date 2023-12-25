@@ -9,6 +9,7 @@ service LoginService
 {
     rpc Login (LoginParam) returns (LoginResult);
     rpc Logout (LogoutParam) returns (LogoutResult);
+    rpc Authenticate (AuthenticateParam) returns (AuthenticateResult);
     rpc Authorize (AuthorizeParam) returns (AuthorizeResult);
 
     rpc Kick (KickParam) returns (KickResult);
@@ -18,16 +19,20 @@ enum LoginServiceErrorCode
 {
     login_error_none = 0;
     login_error_fail_invalid = 1;
-    login_error_fail_duplicate_login = 2;
 
-    login_error_fail_access_denied = 10000;
+    login_error_fail_login_duplicate = 10000;
+
+    login_error_fail_authenticate_failure = 20000;
+
+    login_error_fail_authorize_access_denied = 30000;
 }
 
 message LoginParam
 {
     string account = 1;
     string password = 2;
-    string context = 3;
+    string address = 3;
+    string context = 4;
 }
 
 message LoginResult
@@ -46,6 +51,18 @@ message LogoutParam
 message LogoutResult
 {
     LoginServiceErrorCode error_code = 1;
+}
+
+message AuthenticateParam
+{
+    AuthToken token = 1;
+    string address = 2;
+}
+
+message AuthenticateResult
+{
+    LoginServiceErrorCode error_code = 1;
+    int64 account_id = 2;
 }
 
 enum AuthorizedAccessType

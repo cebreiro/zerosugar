@@ -12,7 +12,7 @@ namespace zerosugar::sl
 		char temp2 = _lastValue;
 		char lastValue = 0;
 
-		for (auto iter = begin; iter != end; ++iter)
+		for (auto iter = begin; iter != end; ++iter, ++i)
 		{
 			char& c = *iter;
 
@@ -21,7 +21,6 @@ namespace zerosugar::sl
 			temp2 = temp1;
 
 			lastValue = c;
-			++i;
 		}
 
 		_sn += i & 0xFF;

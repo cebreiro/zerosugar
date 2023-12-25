@@ -63,6 +63,7 @@ namespace zerosugar
     void StreamWriter<T>::WriteString(const std::string& str)
     {
         std::copy(str.begin(), str.end(), std::back_inserter(_container));
+        _container.push_back('\0');
     }
 
     template <stream_writable_concept T>

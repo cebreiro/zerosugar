@@ -1,9 +1,12 @@
 #pragma once
+#include <vector>
+#include <string>
 #include "zerosugar/sl/tool/proto_code_generator/printer.h"
-#include "zerosugar/sl/tool/proto_code_generator/writer/input/writer_input.h"
 
 namespace zerosugar::sl
 {
+    struct WriterInput;
+
     class ServiceInterfaceWriter
     {
     public:

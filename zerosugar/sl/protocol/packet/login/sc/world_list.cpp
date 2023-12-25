@@ -68,7 +68,7 @@ namespace zerosugar::sl::login::sc
         if (buffer.GetSize() < 1)
         {
             return LoginPacketDeserializeResult{
-                .errorCode = LoginPacketHandlerErrorCode::Fail_ShortLength
+                .errorCode = LoginPacketDeserializeErrorCode::Fail_ShortLength
             };
         }
 
@@ -78,14 +78,14 @@ namespace zerosugar::sl::login::sc
         if (worldCount <= 0)
         {
             return LoginPacketDeserializeResult{
-                .errorCode = LoginPacketHandlerErrorCode::Fail_InvalidFormat
+                .errorCode = LoginPacketDeserializeErrorCode::Fail_InvalidFormat
             };
         }
 
         if (buffer.GetSize() < 1 + (worldCount * (1 + 4 + 4)))
         {
             return LoginPacketDeserializeResult{
-                .errorCode = LoginPacketHandlerErrorCode::Fail_ShortLength
+                .errorCode = LoginPacketDeserializeErrorCode::Fail_ShortLength
             };
         }
 
@@ -103,7 +103,7 @@ namespace zerosugar::sl::login::sc
         }
 
         return LoginPacketDeserializeResult{
-            .errorCode = LoginPacketHandlerErrorCode::None,
+            .errorCode = LoginPacketDeserializeErrorCode::None,
             .readSize = reader.GetReadSize(),
         };
     }

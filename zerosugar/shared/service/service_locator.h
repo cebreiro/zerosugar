@@ -116,7 +116,7 @@ namespace zerosugar
         }
 
         template <typename U> requires is_one_of<U, TServices...>::value
-        auto Get() -> U*
+        auto Get() -> U&
         {
             U* ptr = std::get<U*>(_tuple);
             assert(ptr);
@@ -125,7 +125,7 @@ namespace zerosugar
         }
 
         template <typename U> requires is_one_of<U, TServices...>::value
-        auto Get() const -> const U*
+        auto Get() const -> const U&
         {
             const U* ptr = std::get<U*>(_tuple);
             assert(ptr);

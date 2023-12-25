@@ -206,7 +206,7 @@ namespace zerosugar
             }
             catch (const std::exception& e)
             {
-                ZEROSUGAR_LOG_CRITICAL(_locator, std::format("[{}] session event handler throw an exception. exception: {}",
+                ZEROSUGAR_LOG_WARN(_locator, std::format("[{}] session event handler throw an exception. exception: {}",
                     GetName(), e.what()));
                 co_return;
             }

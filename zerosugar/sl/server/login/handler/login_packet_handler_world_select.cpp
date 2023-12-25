@@ -1,5 +1,8 @@
 #include "login_packet_handler_world_select.h"
 
+#include <boost/lexical_cast.hpp>
+
+#include "zerosugar/sl/protocol/packet/login/sc/world_enter.h"
 #include "zerosugar/sl/server/login/login_client.h"
 #include "zerosugar/sl/server/login/login_server.h"
 
@@ -36,8 +39,13 @@ namespace zerosugar::sl::detail
             co_return;
         }
 
+        const uint64_t key = boost::lexical_cast<uint64_t>(client.GetAuthToken());
+        const int32_t key1 = static_cast<int32_t>((key & 0x00000000FFFFFFFF));
+        const int32_t key2 = static_cast<int32_t>((key & 0xFFFFFFFF00000000) >> 32);
+
         client.SetState(LoginClientState::WorldEntranced);
-        client.Close(std::chrono::seconds(3));
+        client.SendPacket(login::sc::WorldEnter(key1, key2, packet.GetWorldId()));
+        //client.Close(std::chrono::seconds(3));
 
         co_return;
     }

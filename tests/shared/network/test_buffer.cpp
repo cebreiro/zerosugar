@@ -244,3 +244,38 @@ TEST(Buffer, BufferRead)
     EXPECT_EQ(result4, expected4);
     EXPECT_ANY_THROW(reader.Read<int8_t>());
 }
+
+TEST(Buffer, BufferReadWriteString)
+{
+    const std::string input1 = "fians1234";
+    const std::string input2 = "gj24tnsdf";
+    constexpr int64_t input3 = 0x832751912385134;
+
+    // arrange
+    Buffer buffer = [&]()
+        {
+            std::vector<char> buffer;
+            zerosugar::StreamWriter bufferWriter(buffer);
+
+            bufferWriter.WriteString(input1);
+            bufferWriter.WriteString(input2);
+            bufferWriter.Write(input3);
+
+            Buffer result;
+            result.Add(Fragment::CreateFrom(buffer));
+
+            return result;
+        }();
+
+    BufferReader reader(buffer.cbegin(), buffer.cend());
+
+    // act
+    const std::string& result1 = reader.ReadString();
+    const std::string& result2 = reader.ReadString();
+    const int64_t result3 = reader.Read<int64_t>();
+
+    // assert
+    EXPECT_EQ(result1, input1);
+    EXPECT_EQ(result2, input2);
+    EXPECT_EQ(result3, input3);
+}

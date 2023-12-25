@@ -1,5 +1,6 @@
 #include "login_packet_handler_login.h"
 
+#include "zerosugar/shared/network/session/session.h"
 #include "zerosugar/sl/protocol/packet/login/sc/login_fail.h"
 #include "zerosugar/sl/protocol/packet/login/sc/world_list.h"
 #include "zerosugar/sl/server/login/login_client.h"
@@ -37,12 +38,13 @@ namespace zerosugar::sl::detail
         const LoginResult loginResult = co_await loginService->LoginAsync(LoginParam{
             .account = packet.GetAccount(),
             .password = packet.GetPassword(),
+            .address = client.GetSession().GetRemoteAddress(),
             .context = std::format("[{}] client: {}", GetName(), client),
         });
 
         if (loginResult.errorCode != LoginServiceErrorCode::LoginErrorNone)
         {
-            if (loginResult.errorCode == LoginServiceErrorCode::LoginErrorFailDuplicateLogin)
+            if (loginResult.errorCode == LoginServiceErrorCode::LoginErrorFailLoginDuplicate)
             {
                 (void)loginService->KickAsync(KickParam{
                     .account = packet.GetAccount(),
@@ -59,16 +61,12 @@ namespace zerosugar::sl::detail
             co_return;
         }
 
-        client.SetState(LoginClientState::Authenticated);
-        client.SetAuthToken(loginResult.token.values);
-        client.SetAccountId(loginResult.accountId);
-        client.SetAccount(packet.GetAccount());
-
         GetWorldListResult getWorldResult =
             co_await serviceLocator.Find<IWorldService>()->GetWorldListAsync({});
 
         if (getWorldResult.errorCode != WorldServiceErrorCode::WorldErrorNone)
         {
+            ProcessFailure(client, login::sc::LoginFailReason::CantConnectServer);
             co_return;
         }
 
@@ -81,6 +79,10 @@ namespace zerosugar::sl::detail
                 return login::sc::WorldList(getWorldResult.worlds | std::views::transform(transform) | std::ranges::to<std::vector>());
             }();
 
+        client.SetState(LoginClientState::Authenticated);
+        client.SetAuthToken(loginResult.token.values);
+        client.SetAccountId(loginResult.accountId);
+        client.SetAccount(packet.GetAccount());
         client.SendPacket(worldList);
     }
 

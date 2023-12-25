@@ -2,10 +2,12 @@
 
 namespace zerosugar::sl
 {
-    AuthTokenState::AuthTokenState(int64_t accountId, std::string account,
+    AuthTokenState::AuthTokenState(int64_t accountId, std::string account, std::string address,
         std::chrono::system_clock::time_point expireTimePoint)
         : _accountId(accountId)
         , _account(std::move(account))
+        , _address(std::move(address))
+        , _createTimePoint(std::chrono::system_clock::now())
         , _expireTimePoint(expireTimePoint)
     {
     }
@@ -43,7 +45,17 @@ namespace zerosugar::sl
         return _account;
     }
 
-    auto AuthTokenState::GetExpireTime() const -> const std::chrono::system_clock::time_point&
+    auto AuthTokenState::GetAddress() const -> const std::string&
+    {
+        return _address;
+    }
+
+    auto AuthTokenState::GetCreateTime() const -> std::chrono::system_clock::time_point
+    {
+        return _createTimePoint;
+    }
+
+    auto AuthTokenState::GetExpireTime() const -> std::chrono::system_clock::time_point
     {
         return _expireTimePoint;
     }

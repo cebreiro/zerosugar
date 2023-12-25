@@ -13,8 +13,10 @@ namespace zerosugar::sl
 
 		*iter = BL ^ static_cast<char>(PacketSecretKey::GATE_ZONE_KEY[0 + (_sn & 0xFF)]);
 
+        ++iter;
 		int32_t i = 1;
-		for (; iter != end; ++iter)
+
+		for (; iter != end; ++iter, ++i)
 		{
 			char& c = *iter;
 

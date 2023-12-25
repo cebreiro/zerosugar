@@ -25,7 +25,7 @@ add_custom_target(zerosugar_sl_generate_service_code
         --proto_path=${ZEROSUGAR_PROTOBUF_INCLUDE}
         --proto_path=./
         --plugin=protoc-gen-zerosugar_sl_proto_code_generator=$<TARGET_FILE_DIR:zerosugar_sl_proto_code_generator>/zerosugar_sl_proto_code_generator.exe
-        --zerosugar_sl_proto_code_generator_opt="{ \"\"include_path\"\" : \"\"zerosugar/sl/service/generated\"\", \"\"generate_type\"\" : 1}"
+        --zerosugar_sl_proto_code_generator_opt="{ \"\"include_path\"\" : \"\"zerosugar/sl/service/generated\"\", \"\"generator\"\" : \"\"service_code_generator\"\" }"
         --zerosugar_sl_proto_code_generator_out=../generated
         shared.proto
         config.proto
@@ -33,5 +33,21 @@ add_custom_target(zerosugar_sl_generate_service_code
         repository_service.proto
         world_service.proto
     WORKING_DIRECTORY ${ZEROSUGAR_GENERATE_SERVICE_MODEL_DIR}
+    DEPENDS zerosugar_sl_proto_code_generator
+)
+
+set(ZEROSUGAR_GENERATE_PACKET_MODEL_DIR ${PROJECT_SOURCE_DIR}/zerosugar/sl/protocol/packet/model/)
+
+add_custom_target(zerosugar_sl_generate_sl_packet_code
+    COMMAND ${ZEROSUGAR_PROTOBUF_PATH}
+        --proto_path=${ZEROSUGAR_PROTOBUF_INCLUDE}
+        --proto_path=./
+        --plugin=protoc-gen-zerosugar_sl_proto_code_generator=$<TARGET_FILE_DIR:zerosugar_sl_proto_code_generator>/zerosugar_sl_proto_code_generator.exe
+        --zerosugar_sl_proto_code_generator_opt="{ \"\"include_path\"\" : \"\"zerosugar/sl/protocol/packet/generated\"\", \"\"generator\"\" : \"\"sl_packet_code_generator\"\" }"
+        --zerosugar_sl_proto_code_generator_out=../generated
+        gateway_object.proto
+        gateway_sc.proto
+        gateway_cs.proto
+    WORKING_DIRECTORY ${ZEROSUGAR_GENERATE_PACKET_MODEL_DIR}
     DEPENDS zerosugar_sl_proto_code_generator
 )

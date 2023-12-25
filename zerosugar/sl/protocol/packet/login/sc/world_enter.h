@@ -6,6 +6,7 @@ namespace zerosugar::sl::login::sc
     class WorldEnter
     {
     public:
+        WorldEnter() = default;
         WorldEnter(uint32_t key1, uint32_t key2, int8_t worldId);
 
         auto Serialize() const -> Buffer;

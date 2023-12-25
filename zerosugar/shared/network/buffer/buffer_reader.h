@@ -4,10 +4,7 @@
 
 namespace zerosugar
 {
-    namespace buffer
-    {
-        class IBufferReadable;
-    }
+    class IBufferDeserializable;
 
     class BufferReader : public StreamReader<Buffer::const_iterator>
     {
@@ -15,8 +12,9 @@ namespace zerosugar
         using StreamReader::Read;
 
     public:
-        BufferReader(value_type begin, value_type end);
+        BufferReader() = default;
+        BufferReader(const value_type& begin, const value_type& end);
 
-        void Read(buffer::IBufferReadable& readable);
+        void Read(IBufferDeserializable& deserializable);
     };
 }

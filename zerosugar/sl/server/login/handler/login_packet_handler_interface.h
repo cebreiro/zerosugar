@@ -1,9 +1,6 @@
 #pragma once
-#include <boost/container/flat_set.hpp>
 #include "zerosugar/sl/protocol/packet/login/login_packet_concept.h"
-#include "zerosugar/sl/protocol/packet/login/cs/world_select.h"
 #include "zerosugar/sl/server/login/login_client_state.h"
-#include "zerosugar/sl/service/generated/login_service_generated_interface.h"
 
 namespace zerosugar
 {
@@ -15,16 +12,20 @@ namespace zerosugar::sl
     class LoginServer;
     class LoginClient;
 
+    ENUM_CLASS(LoginPacketHandleResult, int32_t,
+        (Success, 0)
+        (Fail_Close, 1)
+        (Fail_Continue, 2)
+    )
+
     class ILoginPacketHandler
     {
-    public:
-        using Locator = ServiceLocatorRef<ILogService, service::ILoginService>;
-
     public:
         virtual ~ILoginPacketHandler() = default;
 
         virtual bool CanHandle(const LoginClient& client) const = 0;
-        virtual auto Handle(LoginClient& client, Buffer& buffer) const -> Future<LoginPacketDeserializeResult> = 0;
+        virtual auto Handle(LoginClient& client, Buffer& buffer) const -> Future<LoginPacketHandleResult> = 0;
+
         virtual auto GetOpcode() const -> int8_t = 0;
         virtual auto GetName() const -> std::string_view = 0;
     };
@@ -35,7 +36,7 @@ namespace zerosugar::sl::detail
     class LoginPacketHandlerAbstract : public ILoginPacketHandler
     {
     public:
-        LoginPacketHandlerAbstract() = delete;
+        LoginPacketHandlerAbstract() = default;
         explicit LoginPacketHandlerAbstract(WeakPtrNotNull<LoginServer> server);
 
         bool CanHandle(const LoginClient& client) const final;
@@ -45,7 +46,7 @@ namespace zerosugar::sl::detail
         void AddAllowedStateRange(std::initializer_list<LoginClientState> states);
 
     private:
-        boost::container::flat_set<LoginClientState> _allowedStates;
+        std::set<LoginClientState> _allowedStates;
 
     protected:
         WeakPtrNotNull<LoginServer> _server;
@@ -57,40 +58,48 @@ namespace zerosugar::sl::detail
     public:
         explicit LoginPacketHandlerT(WeakPtrNotNull<LoginServer> server);
 
-        auto GetOpcode() const->int8_t final;
-        auto GetName() const->std::string_view final;
+        auto GetOpcode() const -> int8_t final;
+        auto GetName() const -> std::string_view final;
 
     private:
-        auto Handle(LoginClient& client, Buffer& buffer) const->Future<LoginPacketDeserializeResult> final;
+        auto Handle(LoginClient& client, Buffer& buffer) const->Future<LoginPacketHandleResult> final;
 
     private:
-        virtual auto HandlePacket(LoginServer& server, LoginClient& client, const T& packet) const->Future<void> = 0;
-
-    private:
-        boost::container::flat_set<LoginClientState> _allowedStates;
+        virtual auto HandlePacket(LoginServer& server, LoginClient& client, const T& packet) const -> Future<void> = 0;
     };
 
     template <login_packet_concept T>
     auto LoginPacketHandlerT<T>::Handle(LoginClient& client, Buffer& buffer) const
-        -> Future<LoginPacketDeserializeResult>
+        -> Future<LoginPacketHandleResult>
     {
         const std::shared_ptr<LoginServer> loginServer = _server.lock();
         if (!loginServer)
         {
-            co_return LoginPacketDeserializeResult{
-                .errorCode = LoginPacketHandlerErrorCode::Fail_ServerShutdown,
-            };
+            co_return LoginPacketHandleResult::Fail_Close;
         }
 
         T packet = {};
         const LoginPacketDeserializeResult result = packet.Deserialize(buffer);
 
-        if (result.errorCode == LoginPacketHandlerErrorCode::None)
+        switch (result.errorCode)
         {
+        case LoginPacketDeserializeErrorCode::None:
+        {
+            Buffer read;
+            (void)buffer.SliceFront(read, result.readSize);
+            assert(read.GetSize() == result.readSize);
+
             co_await this->HandlePacket(*loginServer, client, packet);
+            co_return LoginPacketHandleResult::Success;
+        }
+        break;
+        case LoginPacketDeserializeErrorCode::Fail_ShortLength:
+            co_return LoginPacketHandleResult::Fail_Continue;
+        case LoginPacketDeserializeErrorCode::Fail_InvalidFormat:
+        default:;
         }
 
-        co_return result;
+        co_return LoginPacketHandleResult::Fail_Close;
     }
 
     template <login_packet_concept T>

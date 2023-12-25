@@ -5,6 +5,7 @@
 #include "zerosugar/sl/protocol/security/gateway_packet_decoder.h"
 #include "zerosugar/sl/protocol/security/gateway_packet_encoder.h"
 #include "zerosugar/sl/server/gateway/gateway_client.h"
+#include "zerosugar/sl/server/gateway/gateway_packet_handler_container.h"
 
 namespace zerosugar::sl
 {
@@ -23,15 +24,20 @@ namespace zerosugar::sl
     {
         Server::Initialize(dependencyLocator);
 
+        _packetHandlers = std::make_shared<GatewayPacketHandlerContainer>(*this);
         _locator = dependencyLocator;
 
         using namespace service;
 
-        auto worldService = _locator.Find<IWorldService>();
-
-        if (!_locator.Contains<ILoginService>() || !worldService)
+        if (!_locator.Contains<ILoginService>())
         {
-            throw std::runtime_error(std::format("[{}] service not found", GetName()));
+            throw std::runtime_error(std::format("[{}] login service not found", GetName()));
+        }
+
+        auto* worldService = _locator.Find<IWorldService>();
+        if (!worldService)
+        {
+            throw std::runtime_error(std::format("[{}] world service not found", GetName()));
         }
 
         const CreateWorldParam param{
@@ -54,6 +60,11 @@ namespace zerosugar::sl
     void GatewayServer::Shutdown()
     {
         Server::Shutdown();
+    }
+
+    auto GatewayServer::GetLocator() -> locator_type&
+    {
+        return _locator;
     }
 
     auto GatewayServer::GetPublicAddress() const -> const std::string&
@@ -91,11 +102,11 @@ namespace zerosugar::sl
             }
         }
 
-        client->StartPacketProcess(
-            std::static_pointer_cast<GatewayServer>(shared_from_this()),
+        client->StartReceiveHandler(
             session.shared_from_this(),
             std::make_unique<GatewayPacketDecoder>(),
-            std::make_unique<GatewayPacketEncoder>()
+            std::make_unique<GatewayPacketEncoder>(),
+            _packetHandlers
         );
     }
 
@@ -106,11 +117,11 @@ namespace zerosugar::sl
         {
             GatewayClient& client = *accessor->second;
 
-            client.ReceiveLoginPacket(std::move(buffer));
+            client.Receive(std::move(buffer));
         }
         else
         {
-            ZEROSUGAR_LOG_WAN(_locator, std::format("[{}] receive buffer but client is not found. session: {}",
+            ZEROSUGAR_LOG_WARN(_locator, std::format("[{}] receive buffer but client is not found. session: {}",
                 GetName(), session));
 
             session.Close();
@@ -119,7 +130,7 @@ namespace zerosugar::sl
 
     void GatewayServer::OnError(Session& session, const boost::system::error_code& error)
     {
-        ZEROSUGAR_LOG_WAN(_locator, std::format("[{}] io error. session: {}, error: {}",
+        ZEROSUGAR_LOG_WARN(_locator, std::format("[{}] io error. session: {}, error: {}",
             GetName(), session, error.message()));
     }
 }

@@ -27,6 +27,8 @@ namespace zerosugar
         };
     }
 
+    class IBufferSerializable;
+
     // TODO: make test
     class BufferWriter
     {
@@ -46,6 +48,8 @@ namespace zerosugar
 
         template <std::integral U>
         void Write(U value, int64_t offset);
+
+        void Write(const IBufferSerializable& serializable);
 
     private:
         void ExpandIfNoSpace(int64_t requiredSize);

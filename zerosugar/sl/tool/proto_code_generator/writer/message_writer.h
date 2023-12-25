@@ -1,16 +1,19 @@
 #pragma once
+#include <vector>
+#include <string>
 #include "zerosugar/sl/tool/proto_code_generator/printer.h"
-#include "zerosugar/sl/tool/proto_code_generator/writer/input/writer_input.h"
 
 namespace zerosugar::sl
 {
+    struct WriterInput;
+    struct Field;
+
     class MessageWriter
     {
     public:
         struct Param
         {
             const WriterInput& input;
-            std::string headerName;
             std::vector<std::string> includes;
         };
 
@@ -18,6 +21,7 @@ namespace zerosugar::sl
         auto Write(const Param& param) -> std::string;
 
     private:
+        
         void WriteHeader(const Param& param);
 
     private:

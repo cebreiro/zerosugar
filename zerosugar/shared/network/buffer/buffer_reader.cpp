@@ -1,16 +1,16 @@
 #include "buffer_reader.h"
 
-#include "zerosugar/shared/network/buffer/buffer_readable.h"
+#include "zerosugar/shared/network/buffer/buffer_deserializable.h"
 
 namespace zerosugar
 {
-    BufferReader::BufferReader(value_type begin, value_type end)
-        : StreamReader(std::move(begin), std::move(end))
+    BufferReader::BufferReader(const value_type& begin, const value_type& end)
+        : StreamReader(begin, end)
     {
     }
 
-    void BufferReader::Read(buffer::IBufferReadable& readable)
+    void BufferReader::Read(IBufferDeserializable& deserializable)
     {
-        readable.Read(*this);
+        deserializable.Deserialize(*this);
     }
 }

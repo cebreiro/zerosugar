@@ -1,4 +1,4 @@
-#include "writer_input_proto_converter.h"
+#include "proto_input_converter.h"
 
 #include <google/protobuf/compiler/plugin.h>
 #include <google/protobuf/descriptor.h>
@@ -9,6 +9,9 @@
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <boost/algorithm/string.hpp>
 #include <ranges>
+#include <Windows.h>
+
+#include "zerosugar/sl/tool/proto_code_generator/writer/input/converter/proto_custom_option.h"
 
 
 using namespace google::protobuf;
@@ -251,6 +254,18 @@ namespace zerosugar::sl
             };
         }
 
+        static auto CreateFieldOption(const FieldOptions& options) -> FieldOption
+        {
+            const auto& lengthId = ProtoCustomOption::LengthId();
+            const auto& sizeElementId = ProtoCustomOption::SizeElementId();
+
+            return FieldOption{
+                .length = options.HasExtension(lengthId) ? options.GetExtension(lengthId) : std::optional<int32_t>(),
+                .sizeElement = options.HasExtension(sizeElementId) ?
+                    ConvertSnakeToCamel(options.GetExtension(sizeElementId)) : std::optional<std::string>(),
+            };
+        }
+
         static auto CreateField(const FieldDescriptor& fieldDescriptor) -> Field
         {
             constexpr auto getTypeName = [](const FieldDescriptor& fieldDescriptor) -> std::string
@@ -280,6 +295,16 @@ namespace zerosugar::sl
                     ConvertProtoTypeToCppType(fieldDescriptor.message_type()->map_key()->type_name()),
                     ConvertProtoTypeToCppType(fieldDescriptor.message_type()->map_value()->type_name()))
                 : Field::map_type(std::nullopt),
+                .option = CreateFieldOption(fieldDescriptor.options())
+            };
+        }
+
+        static auto CreateMessageOption(const MessageOptions& options) -> MessageOption
+        {
+            const auto& opcodeId = ProtoCustomOption::OpcodeId();
+
+            return MessageOption{
+                .opcode = options.HasExtension(opcodeId) ? options.GetExtension(opcodeId) : std::optional<int32_t>(),
             };
         }
 
@@ -289,6 +314,7 @@ namespace zerosugar::sl
             {
                 .name = descriptor.name(),
                 .fields = GetFieldRange(descriptor) | std::views::transform(CreateField) | std::ranges::to<std::vector>(),
+                .option = CreateMessageOption(descriptor.options()),
             };
         }
 

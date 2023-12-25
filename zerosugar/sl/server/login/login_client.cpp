@@ -55,7 +55,7 @@ namespace zerosugar::sl
 
         Post(*_strand, [self = shared_from_this()]()
             {
-                self->RunPacketProcess();
+                self->RunReceiveHandler();
             });
     }
 
@@ -84,6 +84,13 @@ namespace zerosugar::sl
         oss << " }";
 
         return oss.str();
+    }
+
+    auto LoginClient::GetSession() const -> const Session&
+    {
+        assert(_session);
+
+        return *_session;
     }
 
     auto LoginClient::GetId() const -> const id_type&
@@ -131,7 +138,7 @@ namespace zerosugar::sl
         _account = std::move(account);
     }
 
-    auto LoginClient::RunPacketProcess() -> Future<void>
+    auto LoginClient::RunReceiveHandler() -> Future<void>
     {
         assert(_session);
         assert(_decoder);
@@ -178,7 +185,7 @@ namespace zerosugar::sl
                     const ILoginPacketHandler* handler = _handlers->Find(opcode);
                     if (!handler)
                     {
-                        ZEROSUGAR_LOG_WAN(_locator, std::format("[sl_client] handler not found. close client. client: {}, packet: {}",
+                        ZEROSUGAR_LOG_WARN(_locator, std::format("[sl_client] handler not found. close client. client: {}, packet: {}",
                             ToString(), packet.ToString()));
 
                         Close();
@@ -191,40 +198,28 @@ namespace zerosugar::sl
 
                     if (!handler->CanHandle(*this))
                     {
-                        ZEROSUGAR_LOG_WAN(_locator, std::format("[sl_client] handler deny execution. close client. client: {}, packet: {}, handler: {}",
+                        ZEROSUGAR_LOG_WARN(_locator, std::format("[sl_client] handler deny execution. close client. client: {}, packet: {}, handler: {}",
                             ToString(), packet.ToString(), handler->GetName()));
 
                         Close();
                         break;
                     }
 
-                    const LoginPacketDeserializeResult result = co_await handler->Handle(*this, packet);
-                    switch (result.errorCode)
+                    const LoginPacketHandleResult result = co_await handler->Handle(*this, packet);
+                    if (result == LoginPacketHandleResult::Fail_Close)
                     {
-                    case LoginPacketHandlerErrorCode::None:
-                    {
-                        Buffer read;
-                        (void)packet.SliceFront(read, result.readSize);
-                        assert(read.GetSize() == result.readSize);
-                    }
-                    break;
-                    case LoginPacketHandlerErrorCode::Fail_ShortLength:
-                        break;
-                    default:
-                    {
-                        ZEROSUGAR_LOG_ERROR(_locator, std::format("[sl_client] fail to handle packet. client: {}, error: {}, packet: {}",
-                            ToString(), zerosugar::sl::ToString(result.errorCode), packet.ToString()));
+                        ZEROSUGAR_LOG_ERROR(_locator, std::format("[sl_client] fail to handle packet. client: {}, packet: {}",
+                            ToString(), packet.ToString()));
 
                         Close();
-                        co_return;
-                    }
+                        break;
                     }
                 }
             }
         }
         catch (const std::exception& e)
         {
-            ZEROSUGAR_LOG_WAN(_locator, std::format("[sl_client] login packet process exception. exception: {}, session: {}",
+            ZEROSUGAR_LOG_WARN(_locator, std::format("[sl_client] login packet process exception. exception: {}, session: {}",
                 e.what(), *_session));
         }
 

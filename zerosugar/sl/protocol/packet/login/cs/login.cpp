@@ -35,7 +35,7 @@ namespace zerosugar::sl::login::cs
         if (buffer.GetSize() < account_max_size + password_max_size)
         {
             return LoginPacketDeserializeResult{
-                .errorCode = LoginPacketHandlerErrorCode::Fail_ShortLength
+                .errorCode = LoginPacketDeserializeErrorCode::Fail_ShortLength
             };
         }
 
@@ -48,7 +48,7 @@ namespace zerosugar::sl::login::cs
         boost::algorithm::trim_right_if(_password, space);
 
         return LoginPacketDeserializeResult{
-            .errorCode = LoginPacketHandlerErrorCode::None,
+            .errorCode = LoginPacketDeserializeErrorCode::None,
             .readSize = reader.GetReadSize(),
         };
     }

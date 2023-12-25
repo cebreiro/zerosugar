@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+import "option.proto";
+import "gateway_object.proto";
+
+package zerosugar.sl.gateway.cs;
+
+// search
+// push : 68
+// value: XX 70 00 00 (example)
+
+message VersionCheckRequest
+{
+    option (opcode) = 28672; // 0x7000, sub_5961B0
+
+    int32 version = 1;
+}
+
+message AuthenticationRequest
+{
+    option (opcode) = 28674; // 0x7002, sub_596230
+
+    int32 key1 = 1;
+    int32 key2 = 2;
+    UnknownObject unk01 = 3;
+}
+
+message CharacterListRequest
+{
+    option (opcode) = 28676; // 0x7004
+}
+
+message CharacterSelectRequest
+{
+    option (opcode) = 28677; // 0x7005
+
+    int32 slot = 1;
+}
+
+message CharacterCreateRequest
+{
+    option (opcode) = 28679; // 0x7007
+
+    CharacterCreate create = 1;
+    int32 slot = 2;
+}
+
+message CharacterDeleteRequest
+{
+    option (opcode) = 28680; // 0x7008
+
+    int32 slot = 1;
+}
+
+message CharacterNameCheckRequest
+{
+    option (opcode) = 28682; // 0x700A
+
+    string name = 1;
+}
+
+message UnknownRequest0x7040
+{
+    option (opcode) = 28736; // 0x7040, sub_596320
+}
