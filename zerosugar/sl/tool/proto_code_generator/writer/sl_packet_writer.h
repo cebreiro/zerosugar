@@ -2,7 +2,7 @@
 #include <vector>
 #include <string>
 #include <functional>
-#include "zerosugar/sl/tool/proto_code_generator/printer.h"
+#include "zerosugar/shared/code_gen/printer.h"
 
 namespace zerosugar::sl
 {

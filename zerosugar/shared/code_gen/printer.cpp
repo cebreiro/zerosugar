@@ -1,6 +1,6 @@
 #include "printer.h"
 
-namespace zerosugar::sl
+namespace zerosugar
 {
     void Printer::BreakLine()
     {

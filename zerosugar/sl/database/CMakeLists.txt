@@ -6,6 +6,7 @@ target_link_libraries(zerosugar_sl_database PRIVATE
     OpenSSL::Crypto
 	OpenSSL::SSL
     zerosugar_shared
+    zerosugar_sl_pch
 )
 
 target_precompile_headers(zerosugar_sl_database REUSE_FROM zerosugar_sl_pch)

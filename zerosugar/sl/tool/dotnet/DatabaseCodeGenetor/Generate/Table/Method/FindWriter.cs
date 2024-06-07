@@ -17,6 +17,8 @@ namespace DatabaseCodeGenerator.Generate.Table.Method
             Write_FindByUnique(udt, header, cxx);
             Write_FindByFk(udt, header, cxx);
             Write_FindRangeByFk(udt, header, cxx);
+            Write_FindByIndex(udt, header, cxx);
+            Write_FindRangeByIndex(udt, header, cxx);
         }
 
         private void Write_FindByPk(Struct udt, Text header, Text cxx)
@@ -54,6 +56,24 @@ namespace DatabaseCodeGenerator.Generate.Table.Method
         private void Write_FindRangeByFk(Struct udt, Text header, Text cxx)
         {
             foreach (var column in udt.GetForeignKeyColumns())
+            {
+                string methodName = $"FindRangeBy{column.FieldName.ToUpper()}";
+                WriteFindRangeMethod(udt, header, cxx, column, methodName);
+            }
+        }
+
+        private void Write_FindByIndex(Struct udt, Text header, Text cxx)
+        {
+            foreach (var column in udt.GetIndexColumns())
+            {
+                string methodName = $"FindBy{column.FieldName.ToUpper()}";
+                WriteFindMethod( udt, header, cxx, column, methodName);
+            }
+        }
+
+        private void Write_FindRangeByIndex(Struct udt, Text header, Text cxx)
+        {
+            foreach (var column in udt.GetIndexColumns())
             {
                 string methodName = $"FindRangeBy{column.FieldName.ToUpper()}";
                 WriteFindRangeMethod(udt, header, cxx, column, methodName);

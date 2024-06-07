@@ -52,6 +52,8 @@ namespace zerosugar
         auto end() const -> T;
         auto current() const -> T;
 
+        void SetOffset(int64_t offset);
+
         auto GetReadSize() const -> int64_t;
 
     private:
@@ -291,6 +293,24 @@ namespace zerosugar
     auto StreamReader<T>::current() const -> T
     {
         return _iter;
+    }
+
+    template <stream_readable_concept T>
+    void StreamReader<T>::SetOffset(int64_t offset)
+    {
+        const int64_t distance = std::distance(_iter, _end);
+
+        if (offset < 0 || offset > distance)
+        {
+            assert(false);
+            throw std::runtime_error("stream reader invalid offset");
+        }
+
+        _iter = std::next(_begin, offset);
+        _readSize = offset;
+        _remainSize = std::distance(_iter, _end) - offset;
+
+        assert(_remainSize == std::distance(_iter, _end));
     }
 
     template <stream_readable_concept T>

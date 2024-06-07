@@ -1,1 +1,2 @@
 add_subdirectory(proto_code_generator)
+add_subdirectory(sox_code_generator)

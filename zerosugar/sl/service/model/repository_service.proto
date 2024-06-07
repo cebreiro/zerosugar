@@ -9,6 +9,13 @@ service RepositoryService
 {
     rpc FindAccount (FindAccountParam) returns (FindAccountResult);
     rpc UpdateAccount (UpdateAccountParam) returns (UpdateAccountResult);
+
+    rpc GetCharacterList (GetCharacterListParam) returns (GetCharacterListResult);
+    rpc CreateCharacter (CreateCharacterParam) returns (CreateCharacterResult);
+    rpc DeleteCharacter (DeleteCharacterParam) returns (DeleteCharacterResult);
+    rpc NameCheckCharacter (NameCheckCharacterParam) returns (NameCheckCharacterResult);
+
+    rpc LoadCharacter (LoadCharacterParam) returns (LoadCharacterResult);
 }
 
 enum RepositoryServiceErrorCode
@@ -20,6 +27,8 @@ enum RepositoryServiceErrorCode
 
     repository_account_error = 20000;
     repository_account_fail_to_find_key = 20001;
+
+    repository_character_error = 30000;
 }
 
 message FindAccountParam
@@ -41,4 +50,58 @@ message UpdateAccountParam
 message UpdateAccountResult
 {
     RepositoryServiceErrorCode error_code = 1;
+}
+
+message GetCharacterListParam
+{
+    int64 account_id = 1;
+}
+
+message GetCharacterListResult
+{
+    RepositoryServiceErrorCode error_code = 1;
+
+    repeated Character character = 2;
+}
+
+message CreateCharacterParam
+{
+    int64 account_id = 1;
+    Character character = 2;
+}
+
+message CreateCharacterResult
+{
+    RepositoryServiceErrorCode error_code = 1;
+}
+
+message DeleteCharacterParam
+{
+    int64 character_id = 1;
+}
+
+message DeleteCharacterResult
+{
+    RepositoryServiceErrorCode error_code = 1;
+}
+
+message NameCheckCharacterParam
+{
+    string name = 1;
+}
+
+message NameCheckCharacterResult
+{
+    RepositoryServiceErrorCode error_code = 1;
+}
+
+message LoadCharacterParam
+{
+    int64 character_id = 1;
+}
+
+message LoadCharacterResult
+{
+    RepositoryServiceErrorCode error_code = 1;
+    Character character = 2;
 }

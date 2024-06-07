@@ -15,9 +15,9 @@ namespace zerosugar::sl::detail
     auto GatewayPacketHandler_VersionCheck::HandlePacket(GatewayServer& server, GatewayClient& client,
         const gateway::cs::VersionCheckRequest& packet) const -> Future<void>
     {
-        constexpr int32_t gameVersion = 2;
+        constexpr int32_t version = 2;
 
-        if (packet.version != gameVersion)
+        if (packet.version != version)
         {
             ZEROSUGAR_LOG_CRITICAL(server.GetLocator(),
                 std::format("[{}] invalid client game version. client: {}", GetName(), client.ToString()));

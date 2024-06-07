@@ -2,6 +2,7 @@
 #include "zerosugar/shared/network/server/server.h"
 #include "zerosugar/sl/server/gateway/gateway_client_id.h"
 #include "zerosugar/sl/service/generated/login_service_generated_interface.h"
+#include "zerosugar/sl/service/generated/repository_service_generated_interface.h"
 #include "zerosugar/sl/service/generated/world_service_generated_interface.h"
 
 namespace zerosugar::sl
@@ -15,7 +16,8 @@ namespace zerosugar::sl
     public:
         static constexpr uint16_t PORT = 2000;
 
-        using locator_type = ServiceLocatorRef<ILogService, service::ILoginService, service::IWorldService>;
+        using locator_type = ServiceLocatorRef<ILogService, service::ILoginService,
+            service::IRepositoryService, service::IWorldService>;
 
     public:
         GatewayServer(const GatewayServer& other) = delete;

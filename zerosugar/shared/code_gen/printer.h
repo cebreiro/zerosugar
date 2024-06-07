@@ -1,8 +1,9 @@
 #pragma once
+#include <string>
 #include <sstream>
 #include <format>
 
-namespace zerosugar::sl
+namespace zerosugar
 {
     class Printer
     {

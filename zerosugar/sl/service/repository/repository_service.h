@@ -14,7 +14,7 @@ namespace zerosugar::sl::db
 
 namespace zerosugar::sl
 {
-    class RepositoryService
+    class RepositoryService final
         : public service::IRepositoryService
         , public std::enable_shared_from_this<RepositoryService>
     {
@@ -29,8 +29,16 @@ namespace zerosugar::sl
         auto FindAccountAsync(service::FindAccountParam param) -> Future<service::FindAccountResult> override;
         auto UpdateAccountAsync(service::UpdateAccountParam param) -> Future<service::UpdateAccountResult> override;
 
+        auto GetCharacterListAsync(service::GetCharacterListParam param) -> Future<service::GetCharacterListResult> override;
+        auto CreateCharacterAsync(service::CreateCharacterParam param) -> Future<service::CreateCharacterResult> override;
+        auto DeleteCharacterAsync(service::DeleteCharacterParam param) -> Future<service::DeleteCharacterResult> override;
+        auto NameCheckCharacterAsync(service::NameCheckCharacterParam param) -> Future<service::NameCheckCharacterResult> override;
+
+        auto LoadCharacterAsync(service::LoadCharacterParam param) -> Future<service::LoadCharacterResult> override;
+
     private:
         auto SelectWorker(const std::string& account) const -> execution::IExecutor&;
+        auto SelectWorker(int64_t hash) const -> execution::IExecutor&;
 
         void LogDatabaseError(std::string_view diagnosticMessage);
         void LogException(std::string_view message);
