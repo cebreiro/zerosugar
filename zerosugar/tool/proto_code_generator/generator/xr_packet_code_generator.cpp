@@ -1,4 +1,4 @@
-#include "sl_packet_code_generator.h"
+#include "xr_packet_code_generator.h"
 
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/compiler/code_generator.h>
@@ -15,7 +15,7 @@ using namespace google::protobuf::compiler;
 
 namespace zerosugar
 {
-    void SLPacketCodeGenerator::Generate(const FileDescriptor& file,
+    void XRPacketCodeGenerator::Generate(const FileDescriptor& file,
         GeneratorContext& context, const ProtoCodeGeneratorOption& option,
         const WriterInput& input)
     {
@@ -23,12 +23,12 @@ namespace zerosugar
         GeneratePacket(file, context, option, input);
     }
 
-    auto SLPacketCodeGenerator::GetName() const -> std::string
+    auto XRPacketCodeGenerator::GetName() const -> std::string
     {
-        return "sl_packet_code_generator";
+        return "xr_packet_code_generator";
     }
 
-    void SLPacketCodeGenerator::GenerateMessage(const FileDescriptor& file,
+    void XRPacketCodeGenerator::GenerateMessage(const FileDescriptor& file,
         GeneratorContext& context, const ProtoCodeGeneratorOption& option,
         const WriterInput& input) const
     {
@@ -79,7 +79,7 @@ namespace zerosugar
         }
     }
 
-    void SLPacketCodeGenerator::GeneratePacket(const FileDescriptor& file,
+    void XRPacketCodeGenerator::GeneratePacket(const FileDescriptor& file,
         GeneratorContext& context, const ProtoCodeGeneratorOption& option,
         const WriterInput& input) const
     {

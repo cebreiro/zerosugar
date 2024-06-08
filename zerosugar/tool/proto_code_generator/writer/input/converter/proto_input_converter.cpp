@@ -232,7 +232,7 @@ namespace
     }
 }
 
-namespace zerosugar::sl
+namespace zerosugar
 {
     struct Factory
     {

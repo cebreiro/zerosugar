@@ -1,4 +1,4 @@
-add_subdirectory(coordinator)
+add_subdirectory(orchestrator)
 add_subdirectory(login)
 add_subdirectory(lobby)
 add_subdirectory(zone)

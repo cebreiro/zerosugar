@@ -6,7 +6,7 @@ namespace google::protobuf
     class FileDescriptor;
 }
 
-namespace zerosugar::sl
+namespace zerosugar
 {
     class WriterInputProtoConverter
     {

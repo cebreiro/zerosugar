@@ -2,7 +2,7 @@
 #include <memory>
 #include <google/protobuf/compiler/code_generator.h>
 
-namespace zerosugar::sl
+namespace zerosugar
 {
     struct ProtoCodeGeneratorOption;
     struct WriterInput;

@@ -14,7 +14,7 @@
 using namespace google::protobuf;
 using namespace google::protobuf::compiler;
 
-namespace zerosugar::sl
+namespace zerosugar
 {
     void ServiceCodeGenerator::Generate(const FileDescriptor& file,
         GeneratorContext& context, const ProtoCodeGeneratorOption& option,

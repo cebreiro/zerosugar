@@ -6,7 +6,7 @@
 #include <utility>
 #include <optional>
 
-namespace zerosugar::sl
+namespace zerosugar
 {
     struct EnumValue
     {

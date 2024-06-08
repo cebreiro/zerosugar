@@ -3,23 +3,21 @@
 
 namespace zerosugar
 {
-    class ServiceCodeGenerator : public ICodeGenerator
+    class XRPacketCodeGenerator : public ICodeGenerator
     {
     public:
         void Generate(const google::protobuf::FileDescriptor& file,
             google::protobuf::compiler::GeneratorContext& context, const ProtoCodeGeneratorOption& option,
             const WriterInput& input) override;
-        auto GetName() const -> std::string override;
+        auto GetName() const->std::string override;
 
     private:
-        void GenerateServiceInterface(
+        void GenerateMessage(
             const google::protobuf::FileDescriptor& file,
             google::protobuf::compiler::GeneratorContext& context,
             const ProtoCodeGeneratorOption& option, const WriterInput& input) const;
-        void GenerateMessage(const google::protobuf::FileDescriptor& file,
-            google::protobuf::compiler::GeneratorContext& context,
-            const ProtoCodeGeneratorOption& option, const WriterInput& input) const;
-        void GenerateMessageJsonSerialize(const google::protobuf::FileDescriptor& file,
+        void GeneratePacket(
+            const google::protobuf::FileDescriptor& file,
             google::protobuf::compiler::GeneratorContext& context,
             const ProtoCodeGeneratorOption& option, const WriterInput& input) const;
     };

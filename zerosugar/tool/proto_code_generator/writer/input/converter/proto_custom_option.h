@@ -3,7 +3,7 @@
 #include "google/protobuf/descriptor.pb.h"
 #include "google/protobuf/wire_format.h"
 
-namespace zerosugar::sl
+namespace zerosugar
 {
     class ProtoCustomOption
     {

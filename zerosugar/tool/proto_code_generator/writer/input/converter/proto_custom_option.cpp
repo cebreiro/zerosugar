@@ -1,6 +1,6 @@
 #include "proto_custom_option.h"
 
-namespace zerosugar::sl
+namespace zerosugar
 {
     const ProtoCustomOption ProtoCustomOption::_instance;
 

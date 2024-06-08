@@ -1,7 +1,7 @@
 #pragma once
 #include "zerosugar/tool/proto_code_generator/generator/code_generator_interface.h"
 
-namespace zerosugar::sl
+namespace zerosugar
 {
     class SLPacketCodeGenerator : public ICodeGenerator
     {

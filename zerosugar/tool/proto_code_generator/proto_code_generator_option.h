@@ -1,9 +1,8 @@
 #pragma once
 #include <string>
-#include <vector>
 #include <nlohmann/json.hpp>
 
-namespace zerosugar::sl
+namespace zerosugar
 {
     struct ProtoCodeGeneratorOption
     {

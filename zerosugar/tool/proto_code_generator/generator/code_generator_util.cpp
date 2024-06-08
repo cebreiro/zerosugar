@@ -3,7 +3,7 @@
 #include <format>
 #include <Windows.h>
 
-namespace zerosugar::sl
+namespace zerosugar
 {
     auto GetMessageFileName(const std::string& protoFileName) -> std::string
     {

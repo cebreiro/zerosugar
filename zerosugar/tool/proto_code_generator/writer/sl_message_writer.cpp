@@ -3,7 +3,7 @@
 #include "zerosugar/tool/proto_code_generator/proto_code_generator_option.h"
 #include "zerosugar/tool/proto_code_generator/writer/input/writer_input.h"
 
-namespace zerosugar::sl
+namespace zerosugar
 {
     bool SlMessageWriter::CanWrite(const Param& param) const
     {

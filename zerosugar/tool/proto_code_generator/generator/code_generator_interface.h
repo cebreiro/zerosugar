@@ -12,7 +12,7 @@ namespace google::protobuf::compiler
     class GeneratorContext;
 }
 
-namespace zerosugar::sl
+namespace zerosugar
 {
     struct ProtoCodeGeneratorOption;
     struct WriterInput;

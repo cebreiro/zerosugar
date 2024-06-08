@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+import "option.proto";
+
+package zerosugar.xr.network.login.sc;
+
+message CreateAccountResult
+{
+    option (opcode) = 0;
+
+    string account = 1;
+    string password = 2;
+}
+
+message LoginResult
+{
+    option (opcode) = 1;
+
+    string account = 1;
+    string password = 2;
+}

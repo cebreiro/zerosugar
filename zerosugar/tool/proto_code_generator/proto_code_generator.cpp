@@ -13,7 +13,7 @@
 using namespace google::protobuf;
 using namespace google::protobuf::compiler;
 
-namespace zerosugar::sl
+namespace zerosugar
 {
     ProtoCodeGenerator::ProtoCodeGenerator()
         : _generatorFactory(std::make_unique<CodeGeneratorFactory>())

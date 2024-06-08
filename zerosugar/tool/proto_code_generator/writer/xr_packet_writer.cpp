@@ -1,17 +1,17 @@
-#include "sl_packet_writer.h"
+#include "xr_packet_writer.h"
 
 #include "zerosugar/tool/proto_code_generator/proto_code_generator_option.h"
 #include "zerosugar/tool/proto_code_generator/writer/input/writer_input.h"
 
 namespace zerosugar
 {
-    bool SlPacketWriter::CanWrite(const Param& param) const
+    bool XRPacketWriter::CanWrite(const Param& param) const
     {
         auto range = param.input.messages | std::views::filter(MessageFilter());
         return range.begin() != range.end();
     }
 
-    auto SlPacketWriter::Write(const Param& param) -> std::pair<std::string, std::string>
+    auto XRPacketWriter::Write(const Param& param) -> std::pair<std::string, std::string>
     {
         WriteHeader(param);
         WriteCxx(param);
@@ -19,7 +19,7 @@ namespace zerosugar
         return std::make_pair(_headerPrinter.Print(), _cxxPrinter.Print());
     }
 
-    void SlPacketWriter::WriteHeader(const Param& param)
+    void XRPacketWriter::WriteHeader(const Param& param)
     {
         const int64_t indent = 0;
         const WriterInput& input = param.input;
@@ -28,8 +28,8 @@ namespace zerosugar
         _headerPrinter.AddLine(indent, "#include <cstdint>");
         _headerPrinter.AddLine(indent, "#include <string>");
         _headerPrinter.AddLine(indent, "#include <vector>");
-        _headerPrinter.AddLine(indent, "#include \"zerosugar/sl/protocol/packet/packet_deserializable.h\"");
-        _headerPrinter.AddLine(indent, "#include \"zerosugar/sl/protocol/packet/packet_serializable.h\"");
+        _headerPrinter.AddLine(indent, "#include \"zerosugar/xr/application/network/packet_deserializable.h\"");
+        _headerPrinter.AddLine(indent, "#include \"zerosugar/xr/application/network/packet_serializable.h\"");
         for (const std::string& include : param.includes)
         {
             _headerPrinter.AddLine(indent, "#include \"{}\"", include);
@@ -93,15 +93,15 @@ namespace zerosugar
         }
     }
 
-    void SlPacketWriter::WriteCxx(const Param& param)
+    void XRPacketWriter::WriteCxx(const Param& param)
     {
         const int64_t indent = 0;
         const WriterInput& input = param.input;
 
         _cxxPrinter.AddLine(indent, "#include \"{}.h\"", param.headerName);
         _cxxPrinter.BreakLine();
-        _cxxPrinter.AddLine(indent, "#include \"zerosugar/sl/protocol/packet/packet_reader.h\"");
-        _cxxPrinter.AddLine(indent, "#include \"zerosugar/sl/protocol/packet/packet_writer.h\"");
+        _cxxPrinter.AddLine(indent, "#include \"zerosugar/xr/application/network/packet_reader.h\"");
+        _cxxPrinter.AddLine(indent, "#include \"zerosugar/xr/application/network/packet_writer.h\"");
         _cxxPrinter.BreakLine();
 
         const bool hasPackage = !input.package.empty();
@@ -202,7 +202,7 @@ namespace zerosugar
         }
     }
 
-    auto SlPacketWriter::GetValueType(const std::string& type) -> std::string
+    auto XRPacketWriter::GetValueType(const std::string& type) -> std::string
     {
         auto begin = type.find_first_of('<');
         auto end = type.find_last_of('>');
@@ -210,7 +210,7 @@ namespace zerosugar
         return type.substr(begin + 1, end - begin - 1);
     }
 
-    auto SlPacketWriter::ResolveType(const Field& field) -> std::string
+    auto XRPacketWriter::ResolveType(const Field& field) -> std::string
     {
         if (field.repeated)
         {
@@ -238,7 +238,7 @@ namespace zerosugar
         return field.type;
     }
 
-    auto SlPacketWriter::MessageFilter() -> std::function<bool(const Message&)>
+    auto XRPacketWriter::MessageFilter() -> std::function<bool(const Message&)>
     {
         return [](const Message& message)
             {

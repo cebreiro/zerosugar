@@ -4,13 +4,15 @@
 
 #include "zerosugar/tool/proto_code_generator/generator/service_code_generator.h"
 #include "zerosugar/tool/proto_code_generator/generator/sl_packet_code_generator.h"
+#include "zerosugar/tool/proto_code_generator/generator/xr_packet_code_generator.h"
 
-namespace zerosugar::sl
+namespace zerosugar
 {
     CodeGeneratorFactory::CodeGeneratorFactory()
     {
         Register<ServiceCodeGenerator>();
         Register<SLPacketCodeGenerator>();
+        Register<XRPacketCodeGenerator>();
     }
 
     auto CodeGeneratorFactory::Create(const std::string& writerName) -> std::unique_ptr<ICodeGenerator>

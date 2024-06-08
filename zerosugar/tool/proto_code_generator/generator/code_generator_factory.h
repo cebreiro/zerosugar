@@ -4,7 +4,7 @@
 #include <functional>
 #include <unordered_map>
 
-namespace zerosugar::sl
+namespace zerosugar
 {
     class ICodeGenerator;
 

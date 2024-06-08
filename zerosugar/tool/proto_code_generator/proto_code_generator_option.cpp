@@ -1,6 +1,6 @@
 #include "proto_code_generator_option.h"
 
-namespace zerosugar::sl
+namespace zerosugar
 {
     void from_json(const nlohmann::json& j, ProtoCodeGeneratorOption& item)
     {

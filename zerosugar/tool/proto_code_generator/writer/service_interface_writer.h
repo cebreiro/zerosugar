@@ -3,7 +3,7 @@
 #include <string>
 #include "zerosugar/tool/proto_code_generator/printer.h"
 
-namespace zerosugar::sl
+namespace zerosugar
 {
     struct WriterInput;
 

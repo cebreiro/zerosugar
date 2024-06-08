@@ -4,6 +4,6 @@
 
 int main(int argc, char* argv[])
 {
-    zerosugar::sl::ProtoCodeGenerator generator;
+    zerosugar::ProtoCodeGenerator generator;
     return PluginMain(argc, argv, &generator);
 }
