@@ -1,13 +1,14 @@
 #pragma once
 #include <vector>
 #include <string>
-#include "zerosugar/shared/code_gen/printer.h"
+#include "zerosugar/tool/proto_code_generator/printer.h"
 
 namespace zerosugar::sl
 {
     struct WriterInput;
+    struct Field;
 
-    class ServiceInterfaceWriter
+    class MessageWriter
     {
     public:
         struct Param
@@ -20,9 +21,14 @@ namespace zerosugar::sl
         auto Write(const Param& param) -> std::string;
 
     private:
-        void WriteContents(const Param& param);
+        
+        void WriteHeader(const Param& param);
 
     private:
-        Printer _printer;
+        static auto ResolveType(const Field& field) -> std::string;
+
+    private:
+        Printer _headerPrinter;
+        Printer _cxxPrinter;
     };
 }

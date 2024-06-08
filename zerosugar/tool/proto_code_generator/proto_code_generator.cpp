@@ -4,10 +4,10 @@
 #include <nlohmann/json.hpp>
 #include <format>
 
-#include "zerosugar/sl/tool/proto_code_generator/proto_code_generator_option.h"
-#include "zerosugar/sl/tool/proto_code_generator/generator/code_generator_factory.h"
-#include "zerosugar/sl/tool/proto_code_generator/generator/code_generator_interface.h"
-#include "zerosugar/sl/tool/proto_code_generator/writer/input/converter/proto_input_converter.h"
+#include "zerosugar/tool/proto_code_generator/proto_code_generator_option.h"
+#include "zerosugar/tool/proto_code_generator/generator/code_generator_factory.h"
+#include "zerosugar/tool/proto_code_generator/generator/code_generator_interface.h"
+#include "zerosugar/tool/proto_code_generator/writer/input/converter/proto_input_converter.h"
 
 
 using namespace google::protobuf;

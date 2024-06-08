@@ -47,7 +47,7 @@ namespace zerosugar
             }
             else
             {
-                auto formatStr = std::vformat(str, std::make_format_args(std::forward<Args>(args)...));
+                auto formatStr = std::vformat(str, std::make_format_args(args...));
 
                 _oss << std::format("{}\r\n", std::move(formatStr));
             }
@@ -67,7 +67,7 @@ namespace zerosugar
         }
         else
         {
-            auto formatStr = std::vformat(str, std::make_format_args(std::forward<Args>(args)...));
+            auto formatStr = std::vformat(str, std::make_format_args(args...));
 
             _oss << std::format("{}{}{}", oss.str(), std::move(formatStr), line_feed);
         }

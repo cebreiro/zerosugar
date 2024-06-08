@@ -2,8 +2,8 @@
 
 #include <cassert>
 
-#include "zerosugar/sl/tool/proto_code_generator/generator/service_code_generator.h"
-#include "zerosugar/sl/tool/proto_code_generator/generator/sl_packet_code_generator.h"
+#include "zerosugar/tool/proto_code_generator/generator/service_code_generator.h"
+#include "zerosugar/tool/proto_code_generator/generator/sl_packet_code_generator.h"
 
 namespace zerosugar::sl
 {

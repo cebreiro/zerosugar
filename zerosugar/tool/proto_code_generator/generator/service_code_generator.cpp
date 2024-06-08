@@ -5,11 +5,11 @@
 #include <google/protobuf/io/printer.h>
 #include <google/protobuf/io/zero_copy_stream.h>
 
-#include "zerosugar/sl/tool/proto_code_generator/proto_code_generator_option.h"
-#include "zerosugar/sl/tool/proto_code_generator/writer/message_json_serialize_writer.h"
-#include "zerosugar/sl/tool/proto_code_generator/writer/message_writer.h"
-#include "zerosugar/sl/tool/proto_code_generator/writer/service_interface_writer.h"
-#include "zerosugar/sl/tool/proto_code_generator/writer/input/writer_input.h"
+#include "zerosugar/tool/proto_code_generator/proto_code_generator_option.h"
+#include "zerosugar/tool/proto_code_generator/writer/message_json_serialize_writer.h"
+#include "zerosugar/tool/proto_code_generator/writer/message_writer.h"
+#include "zerosugar/tool/proto_code_generator/writer/service_interface_writer.h"
+#include "zerosugar/tool/proto_code_generator/writer/input/writer_input.h"
 
 using namespace google::protobuf;
 using namespace google::protobuf::compiler;

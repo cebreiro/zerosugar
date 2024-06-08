@@ -2,7 +2,7 @@
 #include <vector>
 #include <string>
 #include <functional>
-#include "zerosugar/shared/code_gen/printer.h"
+#include "zerosugar/tool/proto_code_generator/printer.h"
 
 namespace zerosugar::sl
 {
@@ -10,7 +10,7 @@ namespace zerosugar::sl
     struct Message;
     struct Field;
 
-    class SlMessageWriter
+    class SlPacketWriter
     {
     public:
         struct Param
@@ -29,7 +29,8 @@ namespace zerosugar::sl
         void WriteCxx(const Param& param);
 
     private:
-        auto ResolveType(const Field& field) -> std::string;
+        static auto GetValueType(const std::string& type) -> std::string;
+        static auto ResolveType(const Field& field) -> std::string;
         static auto MessageFilter() -> std::function<bool(const Message&)>;
 
     private:

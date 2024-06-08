@@ -1,5 +1,5 @@
 #pragma once
-#include "zerosugar/sl/tool/proto_code_generator/generator/code_generator_interface.h"
+#include "zerosugar/tool/proto_code_generator/generator/code_generator_interface.h"
 
 namespace zerosugar::sl
 {

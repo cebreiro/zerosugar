@@ -11,7 +11,7 @@
 #include <ranges>
 #include <Windows.h>
 
-#include "zerosugar/sl/tool/proto_code_generator/writer/input/converter/proto_custom_option.h"
+#include "zerosugar/tool/proto_code_generator/writer/input/converter/proto_custom_option.h"
 
 
 using namespace google::protobuf;

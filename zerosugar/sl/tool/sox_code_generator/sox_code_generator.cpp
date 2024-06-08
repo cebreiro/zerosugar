@@ -8,8 +8,6 @@
 #include <vector>
 #include <ranges>
 
-#include "zerosugar/shared/code_gen/printer.h"
-
 namespace
 {
     using namespace zerosugar::sl;

@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-#include "zerosugar/sl/tool/proto_code_generator/generator/code_generator_util.h"
+#include "zerosugar/tool/proto_code_generator/generator/code_generator_util.h"
 
 namespace google::protobuf
 {
