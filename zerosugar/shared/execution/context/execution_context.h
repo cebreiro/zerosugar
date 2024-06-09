@@ -24,6 +24,8 @@ namespace zerosugar
         static void PopCancelable(std::thread::id id = std::this_thread::get_id());
 
     public:
+        static bool IsEqualTo(const execution::IExecutor& e);
+
         static auto GetExecutor() -> execution::IExecutor*;
         static auto GetCancelable() -> execution::ICancelable&;
 

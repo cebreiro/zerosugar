@@ -45,12 +45,12 @@ namespace zerosugar::execution
         return shared_from_this();
     }
 
-    auto AsioStrand::GetStrand() -> boost::asio::strand<boost::asio::io_context::executor_type>&
+    auto AsioStrand::GetImpl() -> boost::asio::strand<boost::asio::io_context::executor_type>&
     {
         return _strand;
     }
 
-    auto AsioStrand::GetStrand() const -> const boost::asio::strand<boost::asio::io_context::executor_type>&
+    auto AsioStrand::GetImpl() const -> const boost::asio::strand<boost::asio::io_context::executor_type>&
     {
         return _strand;
     }

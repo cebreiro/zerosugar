@@ -15,15 +15,16 @@ file(GLOB_RECURSE ZEROSUGAR_XR_APPLICATION_NETWORK_SRC_FILES CONFIGURE_DEPENDS
 target_sources(zerosugar_xr_application_network PRIVATE ${ZEROSUGAR_XR_APPLICATION_NETWORK_SRC_FILES})
 
 
-set(ZEROSUGAR_XR_NETWORK_MODEL_DIR ${PROJECT_SOURCE_DIR}/zerosugar/xr/application/network/model/)
+set(ZEROSUGAR_XR_NETWORK_MODEL_DIR ${PROJECT_SOURCE_DIR}/zerosugar/xr/network/model/)
 
 add_custom_target(zerosugar_xr_generate_netcode
     COMMAND ${ZEROSUGAR_PROTOBUF_PATH}
         --proto_path=${ZEROSUGAR_PROTOBUF_INCLUDE}
         --proto_path=./
         --plugin=protoc-gen-zerosugar_proto_code_generator=$<TARGET_FILE_DIR:zerosugar_proto_code_generator>/zerosugar_proto_code_generator.exe
-        --zerosugar_proto_code_generator_opt="{ \"\"include_path\"\" : \"\"zerosugar/xr/application/network/generated\"\",\"\"generator\"\" : \"\"xr_packet_code_generator\"\" }"
-        --zerosugar_proto_code_generator_out=../generated
+        --zerosugar_proto_code_generator_opt="{ \"\"include_path\"\" : \"\"zerosugar/xr/network/generated\"\",\"\"generator\"\" : \"\"xr_packet_code_generator\"\" }"
+        --zerosugar_proto_code_generator_out=./generated
+        service_to_service.proto
         login_cs.proto
         login_sc.proto
     WORKING_DIRECTORY ${ZEROSUGAR_XR_NETWORK_MODEL_DIR}

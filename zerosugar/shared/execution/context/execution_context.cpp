@@ -35,6 +35,11 @@ namespace zerosugar
         _cancelables.pop_back();
     }
 
+    bool ExecutionContext::IsEqualTo(const execution::IExecutor& e)
+    {
+        return GetExecutor() == &e;
+    }
+
     auto ExecutionContext::GetExecutor() -> execution::IExecutor*
     {
         return _executors.back().first;

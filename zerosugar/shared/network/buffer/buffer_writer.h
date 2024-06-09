@@ -51,6 +51,11 @@ namespace zerosugar
 
         void Write(const IBufferSerializable& serializable);
 
+        template <typename T> requires std::is_enum_v<T>
+        void Write(T value);
+
+        auto GetWriteSize() const -> int64_t;
+
     private:
         void ExpandIfNoSpace(int64_t requiredSize);
         void Expand(int64_t minRequiredSize);
@@ -74,5 +79,11 @@ namespace zerosugar
     void BufferWriter::Write(U value, int64_t offset)
     {
         _streamWriter.Write(value, offset);
+    }
+
+    template <typename T> requires std::is_enum_v<T>
+    void BufferWriter::Write(T value)
+    {
+        Write<std::underlying_type_t<T>>(value);
     }
 }

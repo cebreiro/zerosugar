@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package zerosugar.xr.service;
+
+service OrchestratorService
+{
+    rpc Register (RegisterParam) returns (RegisterResult);
+    rpc Ping (PingParam) returns (PingResult);
+}
+
+enum OrchestratorServiceErrorCode
+{
+    orchestrator_error_none = 0;
+    orchestrator_error_fail = 1;
+}
+
+message RegisterParam
+{
+    string service_name = 1;
+}
+
+message RegisterResult
+{
+    OrchestratorServiceErrorCode error_code = 1;
+    int32 service_id = 2;
+}
+
+message PingParam
+{
+    int32 service_id = 1;
+}
+
+message PingResult
+{
+
+}

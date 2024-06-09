@@ -62,6 +62,12 @@ namespace zerosugar
             }
         }
 
+        for (const Enum& e : input.enums)
+        {
+            _headerPrinter.AddLine(classIndent, "auto GetEnumName({} e) -> std::string_view;", e.name);
+            _headerPrinter.BreakLine();
+        }
+
         for (const Message& message : input.messages | std::views::filter(MessageFilter()))
         {
             const int64_t messageIndent = classIndent;
@@ -104,6 +110,29 @@ namespace zerosugar
         }
 
         BraceGuard packageBraceGuard(_cxxPrinter, hasPackage ? indent : -1, false);
+
+        for (const Enum& e : input.enums)
+        {
+            _cxxPrinter.AddLine(classIndent, "auto GetEnumName({} e) -> std::string_view", e.name);
+            BraceGuard functionBraceGuard(_cxxPrinter, classIndent, false);
+
+            const int64_t innerIndent = classIndent + 1;
+
+            _cxxPrinter.AddLine(innerIndent, "switch (e)");
+            {
+                BraceGuard switchBraceGuard(_cxxPrinter, innerIndent, false);
+
+                const int64_t enumElementIndent = innerIndent + 1;
+
+                for (const EnumValue& value : e.values)
+                {
+                    _cxxPrinter.AddLine(enumElementIndent, "case {0}::{1}: return \"{1}\";", e.name, value.name);
+                }
+            }
+
+            _cxxPrinter.AddLine(innerIndent, "assert(false);");
+            _cxxPrinter.AddLine(innerIndent, "return \"unk\";");
+        }
 
         for (const Message& message : input.messages | std::views::filter(MessageFilter()))
         {

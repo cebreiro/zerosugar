@@ -28,8 +28,8 @@ namespace zerosugar
         _headerPrinter.AddLine(indent, "#include <cstdint>");
         _headerPrinter.AddLine(indent, "#include <string>");
         _headerPrinter.AddLine(indent, "#include <vector>");
-        _headerPrinter.AddLine(indent, "#include \"zerosugar/xr/application/network/packet_deserializable.h\"");
-        _headerPrinter.AddLine(indent, "#include \"zerosugar/xr/application/network/packet_serializable.h\"");
+        _headerPrinter.AddLine(indent, "#include \"zerosugar/xr/network/packet_deserializable.h\"");
+        _headerPrinter.AddLine(indent, "#include \"zerosugar/xr/network/packet_serializable.h\"");
         for (const std::string& include : param.includes)
         {
             _headerPrinter.AddLine(indent, "#include \"{}\"", include);
@@ -60,6 +60,12 @@ namespace zerosugar
 
                 _headerPrinter.AddLine(enumElementIndent, "{} = {},", value.name, value.number);
             }
+        }
+
+        for (const Enum& e : input.enums)
+        {
+            _headerPrinter.AddLine(classIndent, "auto GetEnumName({} e) -> std::string_view;", e.name);
+            _headerPrinter.BreakLine();
         }
 
         for (const Message& message : input.messages | std::views::filter(MessageFilter()))
@@ -100,8 +106,8 @@ namespace zerosugar
 
         _cxxPrinter.AddLine(indent, "#include \"{}.h\"", param.headerName);
         _cxxPrinter.BreakLine();
-        _cxxPrinter.AddLine(indent, "#include \"zerosugar/xr/application/network/packet_reader.h\"");
-        _cxxPrinter.AddLine(indent, "#include \"zerosugar/xr/application/network/packet_writer.h\"");
+        _cxxPrinter.AddLine(indent, "#include \"zerosugar/xr/network/packet_reader.h\"");
+        _cxxPrinter.AddLine(indent, "#include \"zerosugar/xr/network/packet_writer.h\"");
         _cxxPrinter.BreakLine();
 
         const bool hasPackage = !input.package.empty();
@@ -113,6 +119,29 @@ namespace zerosugar
         }
 
         BraceGuard packageBraceGuard(_cxxPrinter, hasPackage ? indent : -1, false);
+
+        for (const Enum& e : input.enums)
+        {
+            _cxxPrinter.AddLine(classIndent, "auto GetEnumName({} e) -> std::string_view", e.name);
+            BraceGuard functionBraceGuard(_cxxPrinter, classIndent, false);
+
+            const int64_t innerIndent = classIndent + 1;
+
+            _cxxPrinter.AddLine(innerIndent, "switch (e)");
+            {
+                BraceGuard switchBraceGuard(_cxxPrinter, innerIndent, false);
+
+                const int64_t enumElementIndent = innerIndent + 1;
+
+                for (const EnumValue& value : e.values)
+                {
+                    _cxxPrinter.AddLine(enumElementIndent, "case {0}::{1}: return \"{1}\";", e.name, value.name);
+                }
+            }
+
+            _cxxPrinter.AddLine(innerIndent, "assert(false);");
+            _cxxPrinter.AddLine(innerIndent, "return \"unk\";");
+        }
 
         for (const Message& message : input.messages | std::views::filter(MessageFilter()))
         {
@@ -183,7 +212,7 @@ namespace zerosugar
                     }
                     else if (type.starts_with("std::string"))
                     {
-                        _cxxPrinter.AddLine(fieldIndent, "writer.WriteString({});", field.name);
+                        _cxxPrinter.AddLine(fieldIndent, "writer.Write({});", field.name);
                     }
                     else if (type.starts_with("std::vector"))
                     {

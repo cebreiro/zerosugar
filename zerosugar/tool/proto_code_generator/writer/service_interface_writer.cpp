@@ -78,7 +78,7 @@ namespace zerosugar
                             return std::format("SharedPtrNotNull<Channel<{}>>", type->first);
                         }
 
-                        return std::format("Future<{}>", type->first);;
+                        return std::format("Future<{}>", type->first);
                     }(method.output);
 
                 std::ostringstream oss;

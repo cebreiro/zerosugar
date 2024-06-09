@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package zerosugar.xr.network.service;
+
+message RequestRemoteProcedureCall
+{
+    string rpc_name = 1;
+    int32 rpc_id = 2;
+    string parameter = 3;
+}
+
+enum RemoteProcedureCallErrorCode
+{
+    rpc_error_none = 0;
+
+    rpc_error_invalid_rpc_name = 1;
+    rpc_error_invalid_parameter = 2;
+    rpc_error_internal_error = 3;
+}
+
+message ResultRemoteProcedureCall
+{
+    RemoteProcedureCallErrorCode error_code = 1;
+    int32 rpc_id = 2;
+    string rpc_result = 3;
+}

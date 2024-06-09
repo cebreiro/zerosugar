@@ -5,11 +5,12 @@
 
 namespace zerosugar
 {
-    auto MessageWriter::Write(const Param& param) -> std::string
+    auto MessageWriter::Write(const Param& param) -> std::pair<std::string, std::string>
     {
         WriteHeader(param);
+        WriteCxx(param);
 
-        return _headerPrinter.Print();
+        return std::make_pair(_headerPrinter.Print(), _cxxPrinter.Print());
     }
 
     void MessageWriter::WriteHeader(const Param& param)
@@ -55,6 +56,14 @@ namespace zerosugar
 
                 _headerPrinter.AddLine(enumElementIndent, "{} = {},", value.name, value.number);
             }
+
+            _headerPrinter.BreakLine();
+        }
+
+        for (const Enum& e : input.enums)
+        {
+            _headerPrinter.AddLine(classIndent, "auto GetEnumName({} e) -> std::string_view;", e.name);
+            _headerPrinter.BreakLine();
         }
 
         for (const Message& message : input.messages)
@@ -75,6 +84,51 @@ namespace zerosugar
 
             messageBraceGuard.reset();
             _headerPrinter.BreakLine();
+        }
+    }
+
+    void MessageWriter::WriteCxx(const Param& param)
+    {
+        if (param.input.enums.empty())
+        {
+            return;
+        }
+
+        const int64_t indent = 0;
+        const WriterInput& input = param.input;
+
+        _cxxPrinter.AddLine(indent, "#include \"{}.h\"", param.headerName);
+        _cxxPrinter.BreakLine();
+
+        const bool hasPackage = !input.package.empty();
+        const int64_t classIndent = hasPackage ? indent + 1 : indent;
+
+        if (hasPackage)
+        {
+            _cxxPrinter.AddLine(indent, "namespace {}", input.package);
+        }
+
+        BraceGuard packageBraceGuard(_cxxPrinter, hasPackage ? indent : -1, false);
+
+        for (const Enum& e : input.enums)
+        {
+            _cxxPrinter.AddLine(classIndent, "auto GetEnumName({} e) -> std::string_view", e.name);
+            BraceGuard functionBraceGuard(_cxxPrinter, classIndent, false);
+
+            const int64_t innerIndent = classIndent + 1;
+
+            _cxxPrinter.AddLine(innerIndent, "switch (e)");
+            BraceGuard switchBraceGuard(_cxxPrinter, innerIndent, false);
+
+            const int64_t enumElementIndent = innerIndent + 1;
+
+            for (const EnumValue& value : e.values)
+            {
+                _cxxPrinter.AddLine(enumElementIndent, "case {0}::{1}: return \"{1}\";", e.name, value.name);
+            }
+
+            _cxxPrinter.AddLine(innerIndent, "assert(false);");
+            _cxxPrinter.AddLine(innerIndent, "return \"unk\";");
         }
     }
 

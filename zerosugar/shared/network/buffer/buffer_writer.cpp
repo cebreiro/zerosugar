@@ -60,6 +60,11 @@ namespace zerosugar
         serializable.Serialize(*this);
     }
 
+    auto BufferWriter::GetWriteSize() const -> int64_t
+    {
+        return _streamWriter.GetWriteSize();
+    }
+
     void BufferWriter::ExpandIfNoSpace(int64_t requiredSize)
     {
         if (_remainSize >= requiredSize)

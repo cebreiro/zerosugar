@@ -7,7 +7,7 @@
 
 #include "zerosugar/tool/proto_code_generator/proto_code_generator_option.h"
 #include "zerosugar/tool/proto_code_generator/writer/sl_message_writer.h"
-#include "zerosugar/tool/proto_code_generator/writer/sl_packet_writer.h"
+#include "zerosugar/tool/proto_code_generator/writer/xr_packet_writer.h"
 #include "zerosugar/tool/proto_code_generator/writer/input/writer_input.h"
 
 using namespace google::protobuf;
@@ -83,7 +83,7 @@ namespace zerosugar
         GeneratorContext& context, const ProtoCodeGeneratorOption& option,
         const WriterInput& input) const
     {
-        const SlPacketWriter::Param param = [&]()
+        const XRPacketWriter::Param param = [&]()
             {
                 std::vector<std::string> includes;
                 includes.reserve(input.imports.size());
@@ -99,14 +99,14 @@ namespace zerosugar
                         GetMessageFileName(imported.name)));
                 }
 
-                return SlPacketWriter::Param{
+                return XRPacketWriter::Param{
                     .input = input,
                     .headerName = GetMessageFileName(file.name()),
                     .includes = std::move(includes),
                 };
             }();
 
-        SlPacketWriter writer;
+        XRPacketWriter writer;
         if (!writer.CanWrite(param))
         {
             return;

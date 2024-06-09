@@ -1,5 +1,6 @@
-add_subdirectory(orchestrator)
+add_subdirectory(model)
 add_subdirectory(login)
 add_subdirectory(lobby)
 add_subdirectory(zone)
 add_subdirectory(repository)
+add_subdirectory(orchestrator)

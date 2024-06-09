@@ -24,8 +24,8 @@ namespace zerosugar::execution
         auto SharedFromThis() -> SharedPtrNotNull<IExecutor> override;
         auto SharedFromThis() const->SharedPtrNotNull<const IExecutor> override;
 
-        auto GetStrand() -> boost::asio::strand<boost::asio::io_context::executor_type>&;
-        auto GetStrand() const -> const boost::asio::strand<boost::asio::io_context::executor_type>&;
+        auto GetImpl() -> boost::asio::strand<boost::asio::io_context::executor_type>&;
+        auto GetImpl() const -> const boost::asio::strand<boost::asio::io_context::executor_type>&;
 
     private:
         boost::asio::strand<boost::asio::io_context::executor_type> _strand;

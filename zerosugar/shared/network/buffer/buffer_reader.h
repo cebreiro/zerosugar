@@ -16,5 +16,11 @@ namespace zerosugar
         BufferReader(const value_type& begin, const value_type& end);
 
         void Read(IBufferDeserializable& deserializable);
+
+        template <typename T> requires std::is_enum_v<T>
+        void Read(T& value)
+        {
+            value = Read<std::underlying_type_t<T>>();
+        }
     };
 }

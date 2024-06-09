@@ -85,16 +85,31 @@ namespace zerosugar
 
                 return MessageWriter::Param{
                     .input = input,
+                    .headerName = GetMessageFileName(file.name()),
                     .includes = std::move(includes),
                 };
             }();
 
-        std::unique_ptr<io::ZeroCopyOutputStream> stream(
-            context.OpenForInsert(std::format("{}.h", GetMessageFileName(file.name())), ""));
-        io::Printer printer(stream.get(), '$');
-
         MessageWriter writer;
-        printer.Print(writer.Write(param).c_str());
+        const auto& [header, cpp] = writer.Write(param);
+
+        {
+            std::unique_ptr<io::ZeroCopyOutputStream> stream(
+                context.OpenForInsert(std::format("{}.h", GetMessageFileName(file.name())), ""));
+
+            io::Printer printer(stream.get(), '$');
+            printer.Print(header.c_str());
+        }
+        {
+            if (!cpp.empty())
+            {
+                std::unique_ptr<io::ZeroCopyOutputStream> stream(
+                    context.OpenForInsert(std::format("{}.cpp", GetMessageFileName(file.name())), ""));
+
+                io::Printer printer(stream.get(), '$');
+                printer.Print(cpp.c_str());
+            }
+        }
     }
 
     void ServiceCodeGenerator::GenerateMessageJsonSerialize(const FileDescriptor& file,
