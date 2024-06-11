@@ -3,7 +3,11 @@
 
 namespace zerosugar::xr
 {
-    class LoginService : public service::ILoginService
+    class RPCClient;
+
+    class LoginService final
+        : public service::ILoginService
+        , public std::enable_shared_from_this<LoginService>
     {
     public:
         void Initialize(ServiceLocator& dependencyLocator) override;
@@ -12,5 +16,8 @@ namespace zerosugar::xr
 
         auto LoginAsync(service::LoginParam param) -> Future<service::LoginResult> override;
         auto CreateAccountAsync(service::CreateAccountParam param) -> Future<service::CreateAccountResult> override;
+
+    private:
+        void RegisterRPC(RPCClient& rpcServer);
     };
 }

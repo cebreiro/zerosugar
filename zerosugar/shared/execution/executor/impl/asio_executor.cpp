@@ -3,6 +3,8 @@
 #include <cassert>
 #include <future>
 
+#include "zerosugar/shared/execution/executor/impl/asio_strand.h"
+
 namespace zerosugar::execution
 {
     AsioExecutor::AsioExecutor(int64_t workerCount)
@@ -93,6 +95,11 @@ namespace zerosugar::execution
     auto AsioExecutor::GetConcurrency() const -> int64_t
     {
         return _workerCount;
+    }
+
+    auto AsioExecutor::MakeStrand() -> SharedPtrNotNull<AsioStrand>
+    {
+        return std::make_shared<AsioStrand>(make_strand(GetIoContext()));
     }
 
     void AsioExecutor::Run()

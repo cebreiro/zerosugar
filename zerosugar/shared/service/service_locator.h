@@ -28,6 +28,12 @@ namespace zerosugar
         template <std::derived_from<IService> T>
         auto Find() const -> const T*;
 
+        template <std::derived_from<IService> T>
+        auto Get() -> T&;
+
+        template <std::derived_from<IService> T>
+        auto Get() const -> const T&;
+
     private:
         boost::container::flat_map<int64_t, SharedPtrNotNull<IService>> _services;
     };
@@ -64,6 +70,24 @@ namespace zerosugar
         auto iter = _services.find(id);
 
         return iter != _services.end() ? static_cast<const T*>(iter->second.get()) : nullptr;
+    }
+
+    template <std::derived_from<IService> T>
+    auto ServiceLocator::Get() -> T&
+    {
+        T* service = Find<T>();
+        assert(service);
+
+        return *service;
+    }
+
+    template <std::derived_from<IService> T>
+    auto ServiceLocator::Get() const -> const T&
+    {
+        const T* service = Find<T>();
+        assert(service);
+
+        return *service;
     }
 
     template <typename... TServices> requires std::conjunction_v<std::is_base_of<IService, TServices>...>

@@ -154,12 +154,12 @@ namespace zerosugar
 
                 const int64_t fieldIndent = methodIndent + 1;
 
-                _cxxPrinter.AddLine(fieldIndent, "if (reader.Read<int32_t>() != {}::opcode)", message.name);
-                {
-                    BraceGuard ifBraceGuard(_cxxPrinter, fieldIndent, false);
-                    _cxxPrinter.AddLine(fieldIndent + 1, "throw std::runtime_error(\"{} invalid opcode\");", message.name);
-                }
-                _cxxPrinter.BreakLine();
+                //_cxxPrinter.AddLine(fieldIndent, "if (reader.Read<int32_t>() != {}::opcode)", message.name);
+                //{
+                //    BraceGuard ifBraceGuard(_cxxPrinter, fieldIndent, false);
+                //    _cxxPrinter.AddLine(fieldIndent + 1, "throw std::runtime_error(\"{} invalid opcode\");", message.name);
+                //}
+                //_cxxPrinter.BreakLine();
 
                 for (const Field& field : message.fields)
                 {
@@ -200,7 +200,7 @@ namespace zerosugar
 
                 const int64_t fieldIndent = methodIndent + 1;
 
-                _cxxPrinter.AddLine(fieldIndent, "writer.Write<int32_t>({}::opcode);", message.name);
+                //_cxxPrinter.AddLine(fieldIndent, "writer.Write<int32_t>({}::opcode);", message.name);
 
                 for (const Field& field : message.fields)
                 {

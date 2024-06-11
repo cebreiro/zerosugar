@@ -9,6 +9,8 @@
 
 namespace zerosugar::execution
 {
+    class AsioStrand;
+
     class AsioExecutor final : public IExecutor, public std::enable_shared_from_this<AsioExecutor>
     {
     public:
@@ -35,6 +37,8 @@ namespace zerosugar::execution
         auto GetIoContext() const -> const boost::asio::io_context&;
 
         auto GetConcurrency() const -> int64_t;
+
+        auto MakeStrand() -> SharedPtrNotNull<AsioStrand>;
 
     private:
         int64_t _workerCount = 0;

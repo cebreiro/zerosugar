@@ -11,6 +11,10 @@ namespace zerosugar::xr
         void Write(std::string_view str);
         void WriteBytes(std::span<const char> buffer);
 
+        auto GetWriteSize() const -> int64_t;
+
+        auto MakeBuffer() const -> Buffer;
+
     private:
         boost::container::small_vector<char, 256> _buffer;
         int64_t _size = 0;

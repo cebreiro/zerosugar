@@ -20,4 +20,9 @@ namespace zerosugar::xr
 
         _bufferReader.ReadBuffer(buffer.data(), size);
     }
+
+    auto PacketReader::GetReadSize() const -> int64_t
+    {
+        return _bufferReader.GetReadSize();
+    }
 }

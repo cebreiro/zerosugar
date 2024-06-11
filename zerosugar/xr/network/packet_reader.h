@@ -14,6 +14,8 @@ namespace zerosugar::xr
         auto ReadString() -> std::string;
         void ReadBytes(std::span<char> buffer, int64_t size);
 
+        auto GetReadSize() const -> int64_t;
+
     private:
         BufferReader& _bufferReader;
     };
