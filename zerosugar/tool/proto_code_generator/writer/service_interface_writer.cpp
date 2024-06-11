@@ -45,10 +45,15 @@ namespace zerosugar
         {
             _printer.AddLine(classIndent, "class I{} : public IService", service.name);
             BraceGuard serviceBraceGuard(_printer, classIndent);
-            _printer.AddLine(classIndent, "public:");
+            
 
             const int64_t fieldIndent = classIndent + 1;
 
+            _printer.AddLine(classIndent, "public:");
+            _printer.AddLine(fieldIndent, "static constexpr std::string name = \"{}\";", service.name);
+            _printer.BreakLine();
+
+            _printer.AddLine(classIndent, "public:");
             _printer.AddLine(fieldIndent, "virtual ~I{}() = default;", service.name);
             _printer.BreakLine();
 

@@ -1,6 +1,5 @@
 #pragma once
 #include <boost/asio.hpp>
-#include "zerosugar/shared/network/session/event.h"
 #include "zerosugar/xr/network/rpc_client.h"
 #include "zerosugar/xr/service/model/generated/login_service_generated_interface.h"
 

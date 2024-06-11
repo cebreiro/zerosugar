@@ -72,7 +72,7 @@ namespace zerosugar
         {
             const int64_t messageIndent = classIndent;
 
-            _headerPrinter.AddLine(messageIndent, "struct {} : IPacketDeserializable, IPacketSerializable", message.name);
+            _headerPrinter.AddLine(messageIndent, "struct {} final : IPacketDeserializable, IPacketSerializable", message.name);
 
             std::optional<BraceGuard> messageBraceGuard;
             messageBraceGuard.emplace(_headerPrinter, messageIndent);

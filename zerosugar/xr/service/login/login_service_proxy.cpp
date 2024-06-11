@@ -14,12 +14,12 @@ namespace zerosugar::xr
 
     auto LoginServiceProxy::LoginAsync(service::LoginParam param) -> Future<service::LoginResult>
     {
-        return _client->CallRemoteProcedure<service::LoginParam, service::LoginResult>("LoginAsync", param);
+        return _client->CallRemoteProcedure<ILoginService, service::LoginParam, service::LoginResult>("LoginAsync", param);
     }
 
     auto LoginServiceProxy::CreateAccountAsync(service::CreateAccountParam param)
         -> Future<service::CreateAccountResult>
     {
-        return _client->CallRemoteProcedure<service::CreateAccountParam, service::CreateAccountResult>("CreateAccountAsync", param);
+        return _client->CallRemoteProcedure<ILoginService, service::CreateAccountParam, service::CreateAccountResult>("CreateAccountAsync", param);
     }
 }

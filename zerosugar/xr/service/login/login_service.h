@@ -10,6 +10,10 @@ namespace zerosugar::xr
         , public std::enable_shared_from_this<LoginService>
     {
     public:
+        LoginService() = delete;
+
+        explicit LoginService(SharedPtrNotNull<execution::IExecutor> executor);
+
         void Initialize(ServiceLocator& dependencyLocator) override;
         void Shutdown() override;
         void Join(std::vector<boost::system::error_code>& errors) override;
@@ -18,6 +22,10 @@ namespace zerosugar::xr
         auto CreateAccountAsync(service::CreateAccountParam param) -> Future<service::CreateAccountResult> override;
 
     private:
-        void RegisterRPC(RPCClient& rpcServer);
+        void ConfigureRemoteProcedureClient(RPCClient& rpcClient);
+
+    private:
+        SharedPtrNotNull<execution::IExecutor> _executor;
+        SharedPtrNotNull<Strand> _strand;
     };
 }

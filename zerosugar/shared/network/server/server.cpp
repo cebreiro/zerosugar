@@ -90,6 +90,22 @@ namespace zerosugar
         return _acceptor->is_open();
     }
 
+    auto Server::FindSession(session::id_type id) -> std::shared_ptr<Session>
+    {
+        decltype(_sessions)::const_accessor accessor;
+        if (_sessions.find(accessor, id))
+        {
+            return accessor->second;
+        }
+
+        return nullptr;
+    }
+
+    auto Server::FindSession(session::id_type id) const -> std::shared_ptr<Session>
+    {
+        return const_cast<Server*>(this)->FindSession(id);
+    }
+
     auto Server::GetName() const -> const std::string&
     {
         return _name;
@@ -270,17 +286,6 @@ namespace zerosugar
     {
         _sessionIdRecycleQueue.push(event.id.Unwrap());
         --_sessionCount;
-    }
-
-    auto Server::FindSession(session::id_type id) const -> std::shared_ptr<Session>
-    {
-        decltype(_sessions)::const_accessor accessor;
-        if (_sessions.find(accessor, id))
-        {
-            return accessor->second;
-        }
-
-        return nullptr;
     }
 
     auto Server::PublishSessionId() -> session::id_type

@@ -8,21 +8,19 @@ namespace zerosugar::xr
     {
         ILoginService::Initialize(dependencyLocator);
 
-
-        RPCClient& client = dependencyLocator.Get<RPCClient>();
-        RegisterRPC(client);
+        ConfigureRemoteProcedureClient(dependencyLocator.Get<RPCClient>());
     }
 
-    void LoginService::RegisterRPC(RPCClient& client)
+    void LoginService::ConfigureRemoteProcedureClient(RPCClient& rpcClient)
     {
         // TODO: code-generation
-        client.RegisterProcedure("LoginAsync",
+        rpcClient.RegisterProcedure<LoginService>("LoginAsync",
             [self = shared_from_this()](service::LoginParam param) -> Future<service::LoginResult>
             {
                 return self->LoginAsync(std::move(param));
             });
 
-        client.RegisterProcedure("CreateAccountAsync",
+        rpcClient.RegisterProcedure<LoginService>("CreateAccountAsync",
             [self = shared_from_this()](service::CreateAccountParam param) -> Future<service::CreateAccountResult>
             {
                 return self->CreateAccountAsync(std::move(param));

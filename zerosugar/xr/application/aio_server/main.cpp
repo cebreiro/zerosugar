@@ -7,7 +7,7 @@ int main(int argc, char* argv[])
     using namespace zerosugar::xr;
 
     // TODO: remove hard code
-    AllInOneServer server(AllInOneServerConfig{
+    AIOServer server(AIOServerConfig{
         .workerCount = std::thread::hardware_concurrency(),
         });
 

@@ -1,7 +1,7 @@
 #pragma once
 #include <boost/callable_traits.hpp>
 #include "zerosugar/shared/service/service_interface.h"
-#include "zerosugar/xr/network/model/generated/service_to_service_generated.h"
+#include "zerosugar/xr/network/model/generated/rpc_generated.h"
 
 namespace zerosugar
 {
@@ -20,25 +20,30 @@ namespace zerosugar::xr
         : public IService
         , public std::enable_shared_from_this<RPCClient>
     {
-        using send_callback_type = std::function<void(network::service::RemoteProcedureCallErrorCode, const std::string&)>;
+        using send_callback_type = std::function<void(network::RemoteProcedureCallErrorCode, const std::string&)>;
 
     public:
         explicit RPCClient(SharedPtrNotNull<execution::AsioExecutor> executor);
 
         auto ConnectAsync(std::string address, uint16_t port) -> Future<void>;
 
-        template <typename Func>
-        bool RegisterProcedure(std::string name, const Func& function);
+        auto RegisterToServer(std::string serviceName, std::string ip, uint16_t port) -> Future<void>;
 
-        template <typename T, typename R>
-        auto CallRemoteProcedure(std::string rpcName, const T& param) -> Future<R>;
+        template <typename T, typename Func>
+        bool RegisterProcedure(const std::string& rpcName, const Func& function);
+
+        template <typename T, typename P, typename R>
+        auto CallRemoteProcedure(std::string rpcName, const P& param) -> Future<R>;
 
     private:
         auto Run() -> Future<void>;
-        void Send(int32_t rpcId, std::string rpcName, std::string param, const send_callback_type& callback);
+        void Send(int32_t rpcId, std::string serviceName, std::string rpcName, std::string param, const send_callback_type& callback);
 
-        auto HandleRPCRequest(network::service::RequestRemoteProcedureCall request) -> Future<void>;
-        void HandleRPCResult(const network::service::ResultRemoteProcedureCall& result);
+        auto HandleRequestRemoteProcedureCall(network::RequestRemoteProcedureCall request) -> Future<void>;
+        void HandleResultRemoteProcedureCall(const network::ResultRemoteProcedureCall& result);
+
+    private:
+        static auto MakeProcedureKey(const std::string& service, const std::string& rpc) -> std::string;
 
     private:
         SharedPtrNotNull<execution::AsioExecutor> _executor;
@@ -46,19 +51,20 @@ namespace zerosugar::xr
 
         SharedPtrNotNull<Socket> _socket;
 
+        std::unordered_map<std::string, Promise<void>> _registers;
         std::unordered_map<std::string, std::function<Future<std::string>(const std::string&)>> _procedures;
 
         std::unordered_map<std::string, int32_t> _nextRemoteProcedureIds;
-        std::unordered_map<int32_t, send_callback_type> _remoteProcedures;
+        std::unordered_map<std::string, std::unordered_map<int32_t, send_callback_type>> _remoteProcedures;
     };
 
-    template <typename Func>
-    bool RPCClient::RegisterProcedure(std::string name, const Func& function)
+    template <typename T, typename Func>
+    bool RPCClient::RegisterProcedure(const std::string& rpcName, const Func& function)
     {
         using T = std::tuple_element_t<0, boost::callable_traits::args_t<Func>>;
         using R = boost::callable_traits::return_type_t<Func>;
 
-        return _procedures.try_emplace(std::move(name), [function](const std::string& str) -> Future<std::string>
+        return _procedures.try_emplace(MakeProcedureKey(T::name, rpcName), [function](const std::string& str) -> Future<std::string>
             {
                 const nlohmann::json& input = nlohmann::json::parse(str);
 
@@ -74,8 +80,8 @@ namespace zerosugar::xr
             }).second;
     }
 
-    template <typename T, typename R>
-    auto RPCClient::CallRemoteProcedure(std::string rpcName, const T& param) -> Future<R>
+    template <typename T, typename P, typename R>
+    auto RPCClient::CallRemoteProcedure(std::string rpcName, const P& param) -> Future<R>
     {
         nlohmann::json input;
         to_json(input, param);
@@ -87,17 +93,17 @@ namespace zerosugar::xr
         Promise<R> promise;
         Future<R> future = promise.GetFuture();
 
-        const int32_t rpcId = ++_nextRemoteProcedureIds[rpcName];
+        const int32_t rpcId = ++_nextRemoteProcedureIds[T::name];
 
-        this->Send(rpcId, rpcName, std::move(str),
-            [p = std::move(promise), rpcId, rpcName](network::service::RemoteProcedureCallErrorCode ec, const std::string& param) mutable
+        this->Send(rpcId, T::name, rpcName, std::move(str),
+            [p = std::move(promise), rpcId, rpcName](network::RemoteProcedureCallErrorCode ec, const std::string& param) mutable
             {
-                if (ec != network::service::RemoteProcedureCallErrorCode::RpcErrorNone)
+                if (ec != network::RemoteProcedureCallErrorCode::RpcErrorNone)
                 {
                     try
                     {
-                        throw std::runtime_error(std::format("rpc error. rpc_id: {}, rpc_name: {}, error_code: {}",
-                            rpcId, rpcName, GetEnumName(ec)));
+                        throw std::runtime_error(std::format("rpc error. rpc_id: {}, rpc_name: {}::{}, error_code: {}",
+                            rpcId, T::name, rpcName, GetEnumName(ec)));
                     }
                     catch (...)
                     {

@@ -28,12 +28,16 @@ namespace zerosugar
 
     public:
         Server(std::string name, execution::AsioExecutor& executor);
+        virtual ~Server() = default;
 
         virtual void Initialize(ServiceLocator& dependencyLocator);
         virtual void StartUp(uint16_t listenPort);
         virtual void Shutdown();
 
         bool IsOpen() const;
+
+        auto FindSession(session::id_type id) -> std::shared_ptr<Session>;
+        auto FindSession(session::id_type id) const -> std::shared_ptr<Session>;
 
         auto GetName() const -> const std::string&;
         auto GetExecutor() -> execution::AsioExecutor&;
@@ -62,7 +66,6 @@ namespace zerosugar
         virtual void OnError(Session& session, const boost::system::error_code& error) = 0;
 
     private:
-        auto FindSession(session::id_type id) const -> std::shared_ptr<Session>;
         auto PublishSessionId() -> session::id_type;
 
     private:
