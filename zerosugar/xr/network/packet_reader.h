@@ -9,9 +9,9 @@ namespace zerosugar::xr
         explicit PacketReader(BufferReader& bufferReader);
 
         template <typename T> requires std::integral<T> || std::floating_point<T>
-        void Read() -> T;
+        auto Read() -> T;
 
-        void ReadString() -> std::string;
+        auto ReadString() -> std::string;
         void ReadBytes(std::span<char> buffer, int64_t size);
 
     private:

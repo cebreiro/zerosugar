@@ -37,31 +37,30 @@ namespace zerosugar::xr
         void HandleRPCResult(const network::service::ResultRemoteProcedureCall& result);
 
     private:
-        void ExpandReceiveBuffer(int64_t minSize);
-        void ExpandSendBuffer();
-
-    private:
         SharedPtrNotNull<execution::AsioStrand> _strand;
 
         SharedPtrNotNull<Socket> _socket;
-        Buffer _sendBuffer;
-        Buffer _receiveBuffer;
 
         int32_t _nextRPCIds = 0;
-        std::unordered_map<int64_t, send_callback_type> _rpcs;
+        std::unordered_map<int32_t, send_callback_type> _rpcs;
     };
 
     template <typename T, typename R>
     auto ServiceClient::CallRemoteProcedure(std::string rpcName, const T& param) -> Future<std::expected<R, network::service::RemoteProcedureCallErrorCode>>
     {
-        std::string str = to_json(param).dump();
+        nlohmann::json input;
+        to_json(input, param);
 
-        co_await _strand;
+        std::string str = input.dump();
 
-        Promise<R> promise;
-        Future<R> future = promise.GetFuture();
+        co_await *_strand;
 
-        int64_t rpcId = ++_nextRPCIds;
+        using return_type = std::expected<R, network::service::RemoteProcedureCallErrorCode>;
+
+        Promise<return_type> promise;
+        Future<return_type> future = promise.GetFuture();
+
+        int32_t rpcId = ++_nextRPCIds;
 
         this->Send(rpcId, std::move(rpcName), std::move(str),
             [p = std::move(promise)](network::service::RemoteProcedureCallErrorCode ec, const std::string& param) mutable

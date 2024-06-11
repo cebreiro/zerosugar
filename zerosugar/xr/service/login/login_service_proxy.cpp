@@ -1,6 +1,9 @@
 #include "login_service_proxy.h"
 
+#include "zerosugar/shared/execution/executor/executor_coroutine_traits.h"
+#include "zerosugar/shared/execution/executor/impl/asio_strand.h"
 #include "zerosugar/shared/network/session/session.h"
+#include "zerosugar/xr/service/model/generated/login_service_generated_json_serialize.h"
 
 namespace zerosugar::xr
 {

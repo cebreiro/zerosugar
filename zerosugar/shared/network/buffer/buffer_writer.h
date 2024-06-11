@@ -84,6 +84,8 @@ namespace zerosugar
     template <typename T> requires std::is_enum_v<T>
     void BufferWriter::Write(T value)
     {
-        Write<std::underlying_type_t<T>>(value);
+        using underlying_type = std::underlying_type_t<T>;
+
+        Write<underlying_type>(static_cast<underlying_type>(value));
     }
 }

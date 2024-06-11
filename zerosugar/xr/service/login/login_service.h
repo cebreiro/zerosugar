@@ -1,5 +1,5 @@
 #pragma once
-#include "zerosugar/xr/service/base/model/generated/login_service_generated_interface.h"
+#include "zerosugar/xr/service/model/generated/login_service_generated_interface.h"
 
 namespace zerosugar::xr
 {

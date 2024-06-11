@@ -2,6 +2,7 @@
 
 #include "zerosugar/shared/execution/executor/impl/asio_strand.h"
 #include "zerosugar/shared/network/socket.h"
+#include "zerosugar/xr/network/service_packet_builder.h"
 #include "zerosugar/xr/network/model/generated/service_to_service_generated.h"
 
 namespace zerosugar::xr
@@ -10,8 +11,6 @@ namespace zerosugar::xr
         : _strand(std::move(strand))
         , _socket(std::make_shared<Socket>(_strand))
     {
-        ExpandReceiveBuffer(1024);
-        ExpandSendBuffer();
     }
 
     auto ServiceClient::ConnectAsync(std::string address, uint16_t port) -> Future<void>
@@ -27,22 +26,25 @@ namespace zerosugar::xr
         assert(_socket->IsOpen());
         assert(ExecutionContext::IsEqualTo(*_strand));
 
+        Buffer receiveBuffer;
+        receiveBuffer.Add(buffer::Fragment::Create(1024));
+
         Buffer receivedBuffer;
 
         while (_socket->IsOpen())
         {
-            const std::expected<int64_t, IOError> result = co_await _socket->ReceiveAsync(_receiveBuffer);
+            const std::expected<int64_t, IOError> result = co_await _socket->ReceiveAsync(receiveBuffer);
 
             if (result.has_value())
             {
                 const int64_t receiveSize = result.value();
-                assert(receiveSize <= _receiveBuffer.GetSize());
+                assert(receiveSize <= receiveBuffer.GetSize());
 
                 receivedBuffer.MergeBack([&]() -> Buffer
                     {
                         Buffer temp;
 
-                        [[maybe_unused]] bool result = _receiveBuffer.SliceFront(temp, receiveSize);
+                        [[maybe_unused]] bool result = receiveBuffer.SliceFront(temp, receiveSize);
                         assert(result);
 
                         return temp;
@@ -58,9 +60,9 @@ namespace zerosugar::xr
                 const int32_t packetSize = reader.Read<int32_t>();
                 if (packetSize < receivedBuffer.GetSize())
                 {
-                    if (_receiveBuffer.GetSize() < packetSize - 4)
+                    if (receiveBuffer.GetSize() < packetSize - 4)
                     {
-                        ExpandReceiveBuffer(packetSize);
+                        receiveBuffer.Add(buffer::Fragment::Create(packetSize));
                     }
 
                     continue;
@@ -76,7 +78,7 @@ namespace zerosugar::xr
                 Buffer used;
                 receivedBuffer.SliceFront(used, packetSize);
 
-                _receiveBuffer.MergeBack(std::move(used));
+                receiveBuffer.MergeBack(std::move(used));
             }
             else
             {
@@ -98,44 +100,14 @@ namespace zerosugar::xr
             return;
         }
 
-        if (_sendBuffer.GetSize() < 3)
-        {
-            ExpandSendBuffer();
-        }
+        network::service::RequestRemoteProcedureCall request;
+        request.rpcId = rpcId;
+        request.rpcName = std::move(rpcName);
+        request.parameter = std::move(param);
 
-        Buffer head;
-        [[maybe_unused]] bool result = _sendBuffer.SliceFront(head, 4);
-        assert(result);
+        Buffer packet = ServicePacketBuilder::MakePacket(request);
 
-        const int64_t bodySize = [&]()
-            {
-                BufferWriter writer(_sendBuffer);
-                {
-                    network::service::RequestRemoteProcedureCall rpcCall;
-                    rpcCall.rpcName = std::move(rpcName);
-                    rpcCall.rpcId = rpcId;
-                    rpcCall.parameter = std::move(param);
-
-                    rpcCall.Serialize(writer);
-                }
-
-                return writer.GetWriteSize();
-            }();
-
-        Buffer body;
-        result = _sendBuffer.SliceFront(body, bodySize);
-        assert(result);
-
-        {
-            BufferWriter headWriter(head);
-            headWriter.Write<int32_t>(static_cast<int32_t>(body.GetSize()) + 4);
-
-            assert(body.GetSize() == bodySize);
-        }
-
-        head.MergeBack(std::move(body));
-
-        _socket->SendAsync(std::move(head));
+        _socket->SendAsync(std::move(packet));
     }
 
     void ServiceClient::HandleRPCResult(const network::service::ResultRemoteProcedureCall& result)
@@ -154,15 +126,5 @@ namespace zerosugar::xr
         _rpcs.erase(iter);
 
         callback(result.errorCode, result.rpcResult);
-    }
-
-    void ServiceClient::ExpandReceiveBuffer(int64_t minSize)
-    {
-        _receiveBuffer.Add(buffer::Fragment::Create(std::min<int64_t>(minSize, 1024)));
-    }
-
-    void ServiceClient::ExpandSendBuffer()
-    {
-        _sendBuffer.Add(buffer::Fragment::Create(1024));
     }
 }

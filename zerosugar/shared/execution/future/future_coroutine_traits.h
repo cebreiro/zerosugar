@@ -132,7 +132,13 @@ namespace zerosugar::future
 namespace zerosugar
 {
     template <typename T>
-    auto operator co_await(Future<T> future) -> future::FutureAwaiter<T>
+    auto operator co_await(Future<T>& future) -> future::FutureAwaiter<T>
+    {
+        return future::FutureAwaiter<T>(std::move(future));
+    }
+
+    template <typename T>
+    auto operator co_await(Future<T>&& future) -> future::FutureAwaiter<T>
     {
         return future::FutureAwaiter<T>(std::move(future));
     }

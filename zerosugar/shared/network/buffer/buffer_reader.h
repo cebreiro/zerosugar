@@ -20,7 +20,7 @@ namespace zerosugar
         template <typename T> requires std::is_enum_v<T>
         void Read(T& value)
         {
-            value = Read<std::underlying_type_t<T>>();
+            value = static_cast<T>(Read<std::underlying_type_t<T>>());
         }
     };
 }

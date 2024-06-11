@@ -1,18 +1,18 @@
-add_library(zerosugar_xr_application_network)
+add_library(zerosugar_xr_network)
 
-target_link_libraries(zerosugar_xr_application_network PRIVATE
+target_link_libraries(zerosugar_xr_network PRIVATE
     zerosugar_xr_pch
 )
 
-target_precompile_headers(zerosugar_xr_application_network REUSE_FROM zerosugar_xr_pch)
+target_precompile_headers(zerosugar_xr_network REUSE_FROM zerosugar_xr_pch)
 
-file(GLOB_RECURSE ZEROSUGAR_XR_APPLICATION_NETWORK_SRC_FILES CONFIGURE_DEPENDS
+file(GLOB_RECURSE ZEROSUGAR_XR_NETWORK_SRC_FILES CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/*.h
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp
 )
 
-target_sources(zerosugar_xr_application_network PRIVATE ${ZEROSUGAR_XR_APPLICATION_NETWORK_SRC_FILES})
+target_sources(zerosugar_xr_network PRIVATE ${ZEROSUGAR_XR_NETWORK_SRC_FILES})
 
 
 set(ZEROSUGAR_XR_NETWORK_MODEL_DIR ${PROJECT_SOURCE_DIR}/zerosugar/xr/network/model/)

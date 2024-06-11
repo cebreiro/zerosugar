@@ -37,10 +37,11 @@ namespace zerosugar
             _socket.async_connect(endpoint,
                 [this, p = std::move(promise)](const boost::system::error_code& ec) mutable
                 {
-                    p.Set(ec ? false : true);
+                    p.Set(ec ? true : false);
                 });
 
-            if (co_await future)
+            const bool error = co_await future;
+            if (!error)
             {
                 assert(ExecutionContext::GetExecutor() == _strand.get());
 
