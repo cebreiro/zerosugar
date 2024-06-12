@@ -8,14 +8,15 @@ message CreateAccountResult
 {
     option (opcode) = 0;
 
-    string account = 1;
-    string password = 2;
+    bool success = 1;
 }
 
 message LoginResult
 {
     option (opcode) = 1;
 
-    string account = 1;
-    string password = 2;
+    int32 error_code = 1;
+    string authentication_token = 2;
+    string lobby_ip = 3;
+    int32 lobby_port = 4;
 }

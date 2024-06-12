@@ -20,6 +20,7 @@ namespace zerosugar::xr::service
     void from_json(const nlohmann::json& j, LoginResult& item)
     {
         j.at("errorCode").get_to(item.errorCode);
+        j.at("authenticationToken").get_to(item.authenticationToken);
     }
 
     void to_json(nlohmann::json& j, const LoginResult& item)
@@ -27,6 +28,7 @@ namespace zerosugar::xr::service
         j = nlohmann::json
             {
                 { "errorCode", item.errorCode },
+                { "authenticationToken", item.authenticationToken },
             };
     }
 

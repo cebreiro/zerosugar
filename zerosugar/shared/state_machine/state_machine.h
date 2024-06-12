@@ -77,13 +77,19 @@ namespace zerosugar
         };
 
     public:
+        StateMachine() = default;
+        StateMachine(const StateMachine& other) = delete;
+        StateMachine(StateMachine&& other) noexcept = delete;
+        StateMachine& operator=(const StateMachine& other) = delete;
+        StateMachine& operator=(StateMachine&& other) noexcept = delete;
+
         template <typename T, typename... Args>
         auto AddState(EState state, bool setCurrent, Args&&... args) -> StateTransition&
         {
             assert(!_transitions.contains(state));
 
-            state_type* instance = _states.emplace_back(std::make_shared<T>(state, std::forward<Args>(args)...)).get();
-            auto iter = _transitions.try_emplace(state, {}).first;
+            state_type* instance = _states.emplace_back(std::make_shared<T>(std::forward<Args>(args)...)).get();
+            auto iter = _transitions.try_emplace(state, StateTransition{}).first;
 
             if (setCurrent)
             {
@@ -91,7 +97,7 @@ namespace zerosugar
                 _currentTransition = &iter->second;
             }
 
-            return *iter->second;
+            return iter->second;
         }
 
         bool Transition(EState state)
@@ -136,9 +142,9 @@ namespace zerosugar
     private:
         auto Find(EState state) -> std::pair<state_type*, StateTransition*>
         {
-            std::pair<IState*, StateTransition*> result = {};
+            std::pair<state_type*, StateTransition*> result = {};
 
-            constexpr auto finder = [state](const SharedPtrNotNull<state_type>& instance)
+            const auto finder = [state](const SharedPtrNotNull<state_type>& instance)
                 {
                     return instance->GetState() == state;
                 };
@@ -153,7 +159,7 @@ namespace zerosugar
                 result.second = &iter->second;
             }
 
-            assert(static_cast<bool>(result.first) ^ static_cast<bool>(result.second) == false);
+            assert((static_cast<bool>(result.first) ^ static_cast<bool>(result.second)) == false);
 
             return result;
         }

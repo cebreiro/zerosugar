@@ -223,7 +223,7 @@ namespace zerosugar
                     }
                     else
                     {
-                        _cxxPrinter.AddLine(fieldIndent, "writer.WriteObject({});", field.name);
+                        _cxxPrinter.AddLine(fieldIndent, "writer.Write({});", field.name);
                     }
                 }
             }

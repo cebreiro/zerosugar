@@ -14,8 +14,7 @@ namespace zerosugar::xr::network::login::sc
         void Serialize(PacketWriter& writer) const final;
         auto GetOpcode() const -> int32_t final { return opcode; }
 
-        std::string account = {};
-        std::string password = {};
+        bool success = {};
     };
 
     struct LoginResult final : IPacket
@@ -26,8 +25,10 @@ namespace zerosugar::xr::network::login::sc
         void Serialize(PacketWriter& writer) const final;
         auto GetOpcode() const -> int32_t final { return opcode; }
 
-        std::string account = {};
-        std::string password = {};
+        int32_t errorCode = {};
+        std::string authenticationToken = {};
+        std::string lobbyIp = {};
+        int32_t lobbyPort = {};
     };
 
 }

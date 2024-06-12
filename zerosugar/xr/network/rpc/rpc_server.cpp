@@ -113,8 +113,7 @@ namespace zerosugar::xr
             return;
         }
 
-        BufferReader bufferReader(receiveBuffer->cbegin(), receiveBuffer->cend());
-        PacketReader packetReader(bufferReader);
+        PacketReader packetReader(receiveBuffer->cbegin(), receiveBuffer->cend());
 
         const int32_t packetSize = packetReader.Read<int32_t>();
         if (receivedSize < packetSize)

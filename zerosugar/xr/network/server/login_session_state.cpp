@@ -2,76 +2,158 @@
 
 #include "zerosugar/shared/execution/executor/impl/asio_strand.h"
 #include "zerosugar/shared/network/session/session.h"
+#include "zerosugar/xr/network/packet_builder.h"
 #include "zerosugar/xr/network/model/generated/login_cs_generated.h"
+#include "zerosugar/xr/network/model/generated/login_sc_generated.h"
 #include "zerosugar/xr/service/model/generated/login_service_generated_interface.h"
 
 namespace zerosugar::xr
 {
+    class TransitionGuard
+    {
+    public:
+        TransitionGuard() = delete;
+        TransitionGuard(const TransitionGuard&) = delete;
+        TransitionGuard& operator=(const TransitionGuard&) = delete;
+        TransitionGuard(TransitionGuard&&) noexcept = delete;
+        TransitionGuard& operator=(TransitionGuard&&) noexcept = delete;
+
+    public:
+        TransitionGuard(LoginServerSessionStateMachine& stateMachine, LoginSessionState state)
+            : _stateMachine(stateMachine)
+            , _state(state)
+        {
+        }
+
+        ~TransitionGuard()
+        {
+            [[maybe_unused]] bool transition = _stateMachine.Transition(_state);
+            assert(transition);
+        }
+
+    private:
+        LoginServerSessionStateMachine& _stateMachine;
+        LoginSessionState _state = {};
+    };
+
+    LoginServerSessionStateMachine::LoginServerSessionStateMachine(ServiceLocator& serviceLocator, Session& session)
+    {
+        AddState<ConnectedState>(LoginSessionState::Connected, true, *this, serviceLocator, session)
+            .Add(LoginSessionState::Authenticated);
+
+        AddState<AuthenticatedState>(LoginSessionState::Authenticated, false, *this, serviceLocator, session)
+            .Add(LoginSessionState::TransitionToLobby);
+
+        AddState<TransitionToLobbyState>(LoginSessionState::TransitionToLobby, false, session);
+    }
+
     ConnectedState::ConnectedState(LoginServerSessionStateMachine& stateMachine, ServiceLocator& serviceLocator, Session& session)
         : LoginServerSessionStateMachine::state_type(LoginSessionState::Connected)
         , _stateMachine(stateMachine)
         , _serviceLocator(serviceLocator)
-        , _session(session)
+        , _session(session.weak_from_this())
     {
     }
 
-    auto ConnectedState::OnEvent(const IPacket& iPacket) -> Future<void>
+    auto ConnectedState::OnEvent(const IPacket& inPacket) -> Future<void>
     {
-        assert(ExecutionContext::IsEqualTo(_session.GetStrand()));
-
         using namespace service;
-        using namespace network::login::cs;
+        using namespace network::login;
 
-        switch (iPacket.GetOpcode())
+        std::optional<TransitionGuard> transitionGuard = std::nullopt;
+
+        assert(ExecutionContext::IsEqualTo(_session.lock()->GetStrand()));
+
+        switch (inPacket.GetOpcode())
         {
-        case Login::opcode:
+        case cs::Login::opcode:
         {
-            const Login* packet = iPacket.Cast<Login>();
+            const cs::Login* packet = inPacket.Cast<cs::Login>();
             assert(packet);
 
             ILoginService& service = _serviceLocator.Get<ILoginService>();
 
-            LoginParam param{
+            LoginParam serviceParam{
                 .account = packet->account,
                 .password = packet->password,
             };
 
-            const LoginResult& result = co_await service.LoginAsync(std::move(param));
-            assert(ExecutionContext::IsEqualTo(_session.GetStrand()));
+            const LoginResult& serviceResult = co_await service.LoginAsync(std::move(serviceParam));
 
-            if (result.errorCode == LoginServiceErrorCode::LoginErrorNone)
+            std::shared_ptr<Session> session = _session.lock();
+            if (!session)
             {
-                
+                co_return;
             }
-            else
+
+            assert(ExecutionContext::IsEqualTo(session->GetStrand()));
+
+            sc::LoginResult result;
+            result.errorCode = static_cast<int32_t>(serviceResult.errorCode);
+
+            if (serviceResult.errorCode == LoginServiceErrorCode::LoginErrorNone)
             {
-                
+                result.authenticationToken = serviceResult.authenticationToken;
+
+                // TODO: remove hardcoding
+                result.lobbyIp = "127.0.0.1";
+                result.lobbyPort = 8182;
+
+                transitionGuard.emplace(_stateMachine, LoginSessionState::Authenticated);
             }
+
+            session->Send(PacketBuilder::MakePacket(result));
         }
         break;
-        case CreateAccount::opcode:
+        case cs::CreateAccount::opcode:
         {
-            const CreateAccount* packet = iPacket.Cast<CreateAccount>();
+            const cs::CreateAccount* packet = inPacket.Cast<cs::CreateAccount>();
             assert(packet);
 
-            
+            ILoginService& service = _serviceLocator.Get<ILoginService>();
+
+            CreateAccountParam serviceParam{
+                .account = packet->account,
+                .password = packet->password,
+            };
+
+            const CreateAccountResult& serviceResult = co_await service.CreateAccountAsync(std::move(serviceParam));
+
+            std::shared_ptr<Session> session = _session.lock();
+            if (!session)
+            {
+                co_return;
+            }
+
+            assert(ExecutionContext::IsEqualTo(session->GetStrand()));
+
+            sc::CreateAccountResult result;
+            result.success = serviceResult.errorCode == LoginServiceErrorCode::LoginErrorNone;
+
+            session->Send(PacketBuilder::MakePacket(result));
+
+            co_return;
         }
-        break;
         default:;
         }
 
-        throw std::runtime_error(std::format("unhandled packet. opcode: {}", iPacket.GetOpcode()));
+        if (transitionGuard.has_value())
+        {
+            co_return;
+        }
+
+        throw std::runtime_error(std::format("unhandled packet. opcode: {}", inPacket.GetOpcode()));
     }
 
     AuthenticatedState::AuthenticatedState(LoginServerSessionStateMachine& stateMachine, ServiceLocator& serviceLocator, Session& session)
         : LoginServerSessionStateMachine::state_type(LoginSessionState::Authenticated)
         , _stateMachine(stateMachine)
         , _serviceLocator(serviceLocator)
-        , _session(session)
+        , _session(session.weak_from_this())
     {
     }
 
-    auto AuthenticatedState::OnEvent(const IPacket& iPacket) -> Future<void>
+    auto AuthenticatedState::OnEvent(const IPacket& inPacket) -> Future<void>
     {
         co_return;
     }
@@ -98,9 +180,9 @@ namespace zerosugar::xr
                 });
     }
 
-    auto TransitionToLobbyState::OnEvent(const IPacket& iPacket) -> Future<void>
+    auto TransitionToLobbyState::OnEvent(const IPacket& inPacket) -> Future<void>
     {
-        (void)iPacket;
+        (void)inPacket;
 
         co_return;
     }

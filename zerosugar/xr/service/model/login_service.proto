@@ -12,6 +12,8 @@ enum LoginServiceErrorCode
 {
     login_error_none = 0;
     login_error_fail_invalid = 1;
+
+    create_account_error_duplicated = 10001;
 }
 
 message LoginParam
@@ -23,6 +25,7 @@ message LoginParam
 message LoginResult
 {
     LoginServiceErrorCode error_code = 1;
+    string authentication_token = 2;
 }
 
 message CreateAccountParam

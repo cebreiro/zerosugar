@@ -88,8 +88,7 @@ namespace zerosugar::xr
                     continue;
                 }
 
-                BufferReader bufferReader(receivedBuffer.cbegin(), receivedBuffer.cend());
-                PacketReader reader(bufferReader);
+                PacketReader reader(receivedBuffer.cbegin(), receivedBuffer.cend());
 
                 const int32_t packetSize = reader.Read<int32_t>();
                 if (packetSize < receivedBuffer.GetSize())
@@ -236,7 +235,7 @@ namespace zerosugar::xr
     {
         assert(ExecutionContext::IsEqualTo(*_strand));
 
-        auto* remoteProcedures = [this, &]()
+        auto* remoteProcedures = [this, &result]() -> std::unordered_map<int32_t, send_callback_type>*
             {
                 auto iter = _remoteProcedures.find(result.serviceName);
                 return iter != _remoteProcedures.end() ? &iter->second : nullptr;
@@ -257,7 +256,7 @@ namespace zerosugar::xr
             return;
         }
 
-        const auto callback = std::exchange(iter->second, {});
+        auto callback = std::exchange(iter->second, {});
         remoteProcedures->erase(iter);
 
         assert(callback);

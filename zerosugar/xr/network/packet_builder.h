@@ -4,10 +4,10 @@ namespace zerosugar::xr
 {
     class IPacket;
 
-    class RPCPacketBuilder
+    class PacketBuilder
     {
     public:
-        RPCPacketBuilder() = delete;
+        PacketBuilder() = delete;
 
         static auto MakePacket(const IPacket& packet) -> Buffer;
     };

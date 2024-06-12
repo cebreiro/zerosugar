@@ -7,26 +7,28 @@ namespace zerosugar::xr::network::login::sc
 {
     void CreateAccountResult::Deserialize(PacketReader& reader)
     {
-        account = reader.ReadString();
-        password = reader.ReadString();
+        success = reader.Read<bool>();
     }
 
     void CreateAccountResult::Serialize(PacketWriter& writer) const
     {
-        writer.Write(account);
-        writer.Write(password);
+        writer.Write<bool>(success);
     }
 
     void LoginResult::Deserialize(PacketReader& reader)
     {
-        account = reader.ReadString();
-        password = reader.ReadString();
+        errorCode = reader.Read<int32_t>();
+        authenticationToken = reader.ReadString();
+        lobbyIp = reader.ReadString();
+        lobbyPort = reader.Read<int32_t>();
     }
 
     void LoginResult::Serialize(PacketWriter& writer) const
     {
-        writer.Write(account);
-        writer.Write(password);
+        writer.Write<int32_t>(errorCode);
+        writer.Write(authenticationToken);
+        writer.Write(lobbyIp);
+        writer.Write<int32_t>(lobbyPort);
     }
 
 }

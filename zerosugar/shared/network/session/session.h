@@ -44,6 +44,9 @@ namespace zerosugar
         auto GetRemoteAddress() const -> const std::string&;
         auto GetRemotePort() const -> uint16_t;
 
+        auto GetStrand() -> execution::AsioStrand&;
+        auto GetStrand() const -> const execution::AsioStrand&;
+
     private:
         void ReceiveAsync();
         void HandleReceive(int64_t bytes);

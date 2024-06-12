@@ -12,6 +12,7 @@ namespace zerosugar::xr::service
     {
         LoginErrorNone = 0,
         LoginErrorFailInvalid = 1,
+        CreateAccountErrorDuplicated = 10001,
 
     };
     auto GetEnumName(LoginServiceErrorCode e) -> std::string_view;
@@ -25,6 +26,7 @@ namespace zerosugar::xr::service
     struct LoginResult
     {
         LoginServiceErrorCode errorCode = {};
+        std::string authenticationToken = {};
     };
 
     struct CreateAccountParam

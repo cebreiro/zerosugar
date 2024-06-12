@@ -41,7 +41,7 @@ namespace zerosugar::xr::network
 
     void ResultRegisterRPCClient::Serialize(PacketWriter& writer) const
     {
-        writer.WriteObject(errorCode);
+        writer.Write(errorCode);
         writer.Write(serviceName);
     }
 
@@ -71,7 +71,7 @@ namespace zerosugar::xr::network
 
     void ResultRemoteProcedureCall::Serialize(PacketWriter& writer) const
     {
-        writer.WriteObject(errorCode);
+        writer.Write(errorCode);
         writer.Write<int32_t>(rpcId);
         writer.Write(serviceName);
         writer.Write(rpcResult);
