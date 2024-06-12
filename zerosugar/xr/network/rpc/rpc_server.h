@@ -1,6 +1,7 @@
 #pragma once
 #include "zerosugar/shared/service/service_interface.h"
 #include "zerosugar/shared/network/server/server.h"
+#include "zerosugar/xr/network/model/generated/rpc_generated.h"
 
 namespace zerosugar::execution
 {
@@ -27,6 +28,13 @@ namespace zerosugar::xr
 
         void StartUp(uint16_t port);
 
+    public:
+        using request_handler_type = std::function<Future<network::RemoteProcedureCallErrorCode>(const network::RequestRemoteProcedureCall&)>;
+        using result_handler_type = std::function<Future<void>(const network::ResultRemoteProcedureCall&)>;
+
+        void SetRequestHandler(const request_handler_type& handler);
+        void SetResultHandler(const result_handler_type& handler);
+
     private:
         void HandleAccept(Session& session);
         void HandleReceive(Session& session, Buffer buffer);
@@ -39,7 +47,8 @@ namespace zerosugar::xr
         SharedPtrNotNull<execution::AsioExecutor> _executor;
         SharedPtrNotNull<ServerImpl> _server;
 
-        SharedPtrNotNull<OrchestratorService> _orchestrator;
+        request_handler_type _requestHandler;
+        result_handler_type _resultHandler;
 
         using service_name_type = std::string;
         std::mutex _serviceSessionIdMutex;

@@ -49,8 +49,6 @@ namespace zerosugar::xr
         IService::Initialize(dependencyLocator);
 
         _server->Initialize(dependencyLocator);
-
-        _orchestrator = dependencyLocator.Get<OrchestratorService>().shared_from_this();
     }
 
     void RPCServer::Shutdown()
@@ -66,6 +64,16 @@ namespace zerosugar::xr
     void RPCServer::StartUp(uint16_t port)
     {
         _server->StartUp(port);
+    }
+
+    void RPCServer::SetRequestHandler(const request_handler_type& handler)
+    {
+        _requestHandler = handler;
+    }
+
+    void RPCServer::SetResultHandler(const result_handler_type& handler)
+    {
+        _resultHandler = handler;
     }
 
     void RPCServer::HandleAccept(Session& session)
@@ -163,7 +171,9 @@ namespace zerosugar::xr
             RequestRemoteProcedureCall request;
             request.Deserialize(packetReader);
 
-            _orchestrator->HandleCallRemoteProcedure(request)
+            assert(_requestHandler);
+
+            _requestHandler(request)
                 .Then(*_executor,
                     [self = shared_from_this(), sessionId = session.GetId(), request = request]
                     (RemoteProcedureCallErrorCode ec) mutable
@@ -205,7 +215,9 @@ namespace zerosugar::xr
             ResultRemoteProcedureCall result;
             result.Deserialize(packetReader);
 
-            _orchestrator->HandleResultRemoteProcedure(result)
+            assert(_resultHandler);
+
+            _resultHandler(result)
                 .Then(*_executor, [self = shared_from_this(), result = result]()
                     {
                         std::shared_ptr<Session> session = self->FindSession(result.serviceName);

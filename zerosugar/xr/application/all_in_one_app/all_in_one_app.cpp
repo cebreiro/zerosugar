@@ -19,6 +19,9 @@ namespace zerosugar::xr
         , _loginService(std::make_shared<LoginService>(_executor))
         , _loginServiceProxy(std::make_shared<LoginServiceProxy>(_rpcClient))
     {
+        ExecutionContext::PushExecutor(_executor.get());
+        _executor->Run();
+
         ServiceLocator& serviceLocator = GetServiceLocator();
 
         serviceLocator.Add<RPCServer>(_rpcServer);
@@ -26,6 +29,10 @@ namespace zerosugar::xr
 
         serviceLocator.Add<service::IOrchestratorService>(_orchestratorService);
         serviceLocator.Add<service::ILoginService>(_loginServiceProxy);
+    }
+
+    AllInOneApp::~AllInOneApp()
+    {
     }
 
     void AllInOneApp::OnStartUp(std::span<char*> args)

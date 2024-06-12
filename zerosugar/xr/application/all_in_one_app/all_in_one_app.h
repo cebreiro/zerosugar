@@ -26,6 +26,7 @@ namespace zerosugar::xr
     public:
         AllInOneApp() = delete;
         explicit AllInOneApp(const AllInOneAppConfig& config);
+        ~AllInOneApp();
 
     private:
         void OnStartUp(std::span<char*> args) override;

@@ -16,7 +16,7 @@ namespace zerosugar
     public:
         ExecutionContext() = delete;
 
-    private:
+    public:
         static void PushExecutor(PtrNotNull<execution::IExecutor> executor, std::thread::id id = std::this_thread::get_id());
         static void PopExecutor(std::thread::id id = std::this_thread::get_id());
 

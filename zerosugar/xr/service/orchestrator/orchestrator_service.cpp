@@ -55,6 +55,18 @@ namespace zerosugar::xr
 
     void OrchestratorService::ConfigureRemoteProcedureServer(RPCServer& rpcServer)
     {
+        rpcServer.SetRequestHandler([self = shared_from_this()](const network::RequestRemoteProcedureCall& request)
+            -> Future<network::RemoteProcedureCallErrorCode>
+            {
+                return self->HandleCallRemoteProcedure(request);
+            });
+
+        rpcServer.SetResultHandler([self = shared_from_this()](const network::ResultRemoteProcedureCall& result)
+            -> Future<void>
+            {
+                return self->HandleResultRemoteProcedure(result);
+            });
+
         _rpcServer = rpcServer.weak_from_this().lock();
     }
 
