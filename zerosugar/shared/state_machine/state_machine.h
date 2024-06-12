@@ -34,7 +34,7 @@ namespace zerosugar
         virtual void OnEnter() {}
         virtual void OnExit() {}
 
-        virtual auto OnEvent(const event_param_type& event) -> event_result_type = 0;
+        virtual auto OnEvent(event_param_type event) -> event_result_type = 0;
 
         auto GetState() const -> EState
         {
@@ -77,11 +77,13 @@ namespace zerosugar
         };
 
     public:
-        StateMachine() = default;
         StateMachine(const StateMachine& other) = delete;
         StateMachine(StateMachine&& other) noexcept = delete;
         StateMachine& operator=(const StateMachine& other) = delete;
         StateMachine& operator=(StateMachine&& other) noexcept = delete;
+
+        StateMachine() = default;
+        virtual ~StateMachine() = default;
 
         template <typename T, typename... Args>
         auto AddState(EState state, bool setCurrent, Args&&... args) -> StateTransition&
@@ -125,11 +127,11 @@ namespace zerosugar
             return true;
         }
 
-        auto OnEvent(const event_param_type& event) -> event_result_type
+        virtual auto OnEvent(event_param_type event) -> event_result_type
         {
             assert(_currentState);
 
-            return _currentState->OnEvent(event);
+            return _currentState->OnEvent(std::move(event));
         }
 
         auto GetCurrentState() const -> EState

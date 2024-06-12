@@ -66,6 +66,11 @@ namespace zerosugar::xr
         _server->StartUp(port);
     }
 
+    bool RPCServer::IsOpen() const
+    {
+        return _server->IsOpen();
+    }
+
     void RPCServer::SetRequestHandler(const request_handler_type& handler)
     {
         _requestHandler = handler;

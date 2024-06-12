@@ -28,6 +28,8 @@ namespace zerosugar::xr
 
         void StartUp(uint16_t port);
 
+        bool IsOpen() const;
+
     public:
         using request_handler_type = std::function<Future<network::RemoteProcedureCallErrorCode>(const network::RequestRemoteProcedureCall&)>;
         using result_handler_type = std::function<Future<void>(const network::ResultRemoteProcedureCall&)>;

@@ -32,6 +32,13 @@ namespace zerosugar::xr
         void OnStartUp(std::span<char*> args) override;
         void OnShutdown() override;
 
+    private:
+        void InitializeExecutor();
+        void InitializeLogger();
+        void InitializeServiceLocator();
+        void InitializeService(ServiceLocator& serviceLocator);
+        void InitializeNetwork(ServiceLocator& serviceLocator);
+
     public:
         auto GetName() const -> std::string_view override;
 
@@ -39,6 +46,7 @@ namespace zerosugar::xr
         std::unique_ptr<AllInOneAppConfig> _config;
 
         SharedPtrNotNull<execution::AsioExecutor> _executor;
+        SharedPtrNotNull<LogService> _logService;
 
         // network
         SharedPtrNotNull<RPCServer> _rpcServer;

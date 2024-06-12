@@ -31,4 +31,5 @@ namespace zerosugar::xr::network::login::sc
         int32_t lobbyPort = {};
     };
 
+    auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>;
 }

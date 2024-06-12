@@ -70,4 +70,5 @@ namespace zerosugar::xr::network
         std::string rpcResult = {};
     };
 
+    auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>;
 }

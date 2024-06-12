@@ -106,7 +106,6 @@ namespace zerosugar::execution
     {
         assert(_workers.empty());
 
-        std::vector<std::future<void>> waiters;
         _workErrors.reserve(_workerCount);
 
         for (int64_t i = 0; i < _workerCount; ++i)

@@ -41,10 +41,58 @@ namespace zerosugar::xr
         AddState<ConnectedState>(LoginSessionState::Connected, true, *this, serviceLocator, session)
             .Add(LoginSessionState::Authenticated);
 
-        AddState<AuthenticatedState>(LoginSessionState::Authenticated, false, *this, serviceLocator, session)
-            .Add(LoginSessionState::TransitionToLobby);
+        AddState<AuthenticatedState>(LoginSessionState::Authenticated, false, session);
 
-        AddState<TransitionToLobbyState>(LoginSessionState::TransitionToLobby, false, session);
+        Post(session.GetStrand(), [self = shared_from_this()]()
+            {
+                self->Run();
+            });
+    }
+
+    void LoginServerSessionStateMachine::Shutdown()
+    {
+        _shutdown.store(true);
+
+        _channel->Close();
+    }
+
+    auto LoginServerSessionStateMachine::OnEvent(std::unique_ptr<IPacket> event) -> Future<void>
+    {
+        Promise<void> promise;
+        Future<void> future = promise.GetFuture();
+
+        _channel->Send(std::make_pair(std::move(promise), std::move(event)), channel::ChannelSignal::NotifyOne);
+
+        return future;
+    }
+
+    auto LoginServerSessionStateMachine::Run() -> Future<void>
+    {
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
+        AsyncEnumerable<decltype(_channel)::element_type::value_type> enumerable(_channel);
+
+        while (enumerable.HasNext())
+        {
+            auto [promise, packet] = co_await enumerable;
+
+            if (_shutdown.load())
+            {
+                co_return;
+            }
+
+            try
+            {
+                co_await StateMachine::OnEvent(std::move(packet));
+
+                promise.Set();
+            }
+            catch (...)
+            {
+                promise.SetException(std::current_exception());
+            }
+        }
     }
 
     ConnectedState::ConnectedState(LoginServerSessionStateMachine& stateMachine, ServiceLocator& serviceLocator, Session& session)
@@ -55,20 +103,26 @@ namespace zerosugar::xr
     {
     }
 
-    auto ConnectedState::OnEvent(const IPacket& inPacket) -> Future<void>
+    auto ConnectedState::OnEvent(UniquePtrNotNull<IPacket> inPacket) -> Future<void>
     {
         using namespace service;
         using namespace network::login;
 
+        std::shared_ptr<Session> session = _session.lock();
+        if (!session)
+        {
+            co_return;
+        }
+
+        assert(ExecutionContext::IsEqualTo(session->GetStrand()));
+
         std::optional<TransitionGuard> transitionGuard = std::nullopt;
 
-        assert(ExecutionContext::IsEqualTo(_session.lock()->GetStrand()));
-
-        switch (inPacket.GetOpcode())
+        switch (inPacket->GetOpcode())
         {
         case cs::Login::opcode:
         {
-            const cs::Login* packet = inPacket.Cast<cs::Login>();
+            const cs::Login* packet = inPacket->Cast<cs::Login>();
             assert(packet);
 
             ILoginService& service = _serviceLocator.Get<ILoginService>();
@@ -79,12 +133,6 @@ namespace zerosugar::xr
             };
 
             const LoginResult& serviceResult = co_await service.LoginAsync(std::move(serviceParam));
-
-            std::shared_ptr<Session> session = _session.lock();
-            if (!session)
-            {
-                co_return;
-            }
 
             assert(ExecutionContext::IsEqualTo(session->GetStrand()));
 
@@ -107,7 +155,7 @@ namespace zerosugar::xr
         break;
         case cs::CreateAccount::opcode:
         {
-            const cs::CreateAccount* packet = inPacket.Cast<cs::CreateAccount>();
+            const cs::CreateAccount* packet = inPacket->Cast<cs::CreateAccount>();
             assert(packet);
 
             ILoginService& service = _serviceLocator.Get<ILoginService>();
@@ -118,12 +166,6 @@ namespace zerosugar::xr
             };
 
             const CreateAccountResult& serviceResult = co_await service.CreateAccountAsync(std::move(serviceParam));
-
-            std::shared_ptr<Session> session = _session.lock();
-            if (!session)
-            {
-                co_return;
-            }
 
             assert(ExecutionContext::IsEqualTo(session->GetStrand()));
 
@@ -142,29 +184,16 @@ namespace zerosugar::xr
             co_return;
         }
 
-        throw std::runtime_error(std::format("unhandled packet. opcode: {}", inPacket.GetOpcode()));
+        throw std::runtime_error(std::format("unhandled packet. opcode: {}", inPacket->GetOpcode()));
     }
 
-    AuthenticatedState::AuthenticatedState(LoginServerSessionStateMachine& stateMachine, ServiceLocator& serviceLocator, Session& session)
+    AuthenticatedState::AuthenticatedState(Session& session)
         : LoginServerSessionStateMachine::state_type(LoginSessionState::Authenticated)
-        , _stateMachine(stateMachine)
-        , _serviceLocator(serviceLocator)
-        , _session(session.weak_from_this())
-    {
-    }
-
-    auto AuthenticatedState::OnEvent(const IPacket& inPacket) -> Future<void>
-    {
-        co_return;
-    }
-
-    TransitionToLobbyState::TransitionToLobbyState(Session& session)
-        : LoginServerSessionStateMachine::state_type(LoginSessionState::TransitionToLobby)
         , _session(session)
     {
     }
 
-    void TransitionToLobbyState::OnEnter()
+    void AuthenticatedState::OnEnter()
     {
         execution::IExecutor* executor = ExecutionContext::GetExecutor();
         assert(executor);
@@ -180,7 +209,7 @@ namespace zerosugar::xr
                 });
     }
 
-    auto TransitionToLobbyState::OnEvent(const IPacket& inPacket) -> Future<void>
+    auto AuthenticatedState::OnEvent(UniquePtrNotNull<IPacket> inPacket) -> Future<void>
     {
         (void)inPacket;
 

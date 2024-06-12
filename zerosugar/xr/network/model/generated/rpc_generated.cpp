@@ -77,4 +77,40 @@ namespace zerosugar::xr::network
         writer.Write(rpcResult);
     }
 
+    auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>
+    {
+        const int16_t opcode = reader.Read<int16_t>();
+        switch(opcode)
+        {
+            case RequestRegisterRPCClient::opcode:
+            {
+                auto item = std::make_unique<RequestRegisterRPCClient>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case ResultRegisterRPCClient::opcode:
+            {
+                auto item = std::make_unique<ResultRegisterRPCClient>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case RequestRemoteProcedureCall::opcode:
+            {
+                auto item = std::make_unique<RequestRemoteProcedureCall>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case ResultRemoteProcedureCall::opcode:
+            {
+                auto item = std::make_unique<ResultRemoteProcedureCall>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+        }
+        return {};
+    }
 }

@@ -12,13 +12,26 @@ namespace zerosugar::xr
     ENUM_CLASS(LoginSessionState, int32_t,
         (Connected)
         (Authenticated)
-        (TransitionToLobby)
     )
 
-    class LoginServerSessionStateMachine : public StateMachine<LoginSessionState, StateEvent<IPacket, Future<void>>>
+    class LoginServerSessionStateMachine
+        : public StateMachine<LoginSessionState, StateEvent<UniquePtrNotNull<IPacket>, Future<void>>>
+        , public std::enable_shared_from_this<LoginServerSessionStateMachine>
     {
     public:
         LoginServerSessionStateMachine(ServiceLocator& serviceLocator, Session& session);
+
+        void Shutdown();
+
+        auto OnEvent(std::unique_ptr<IPacket> event) -> Future<void> override;
+
+    private:
+        auto Run() -> Future<void>;
+
+    private:
+        std::atomic<bool> _shutdown = false;
+
+        SharedPtrNotNull<Channel<std::pair<Promise<void>, std::unique_ptr<IPacket>>>> _channel;
     };
 
     class ConnectedState final : public LoginServerSessionStateMachine::state_type
@@ -26,7 +39,7 @@ namespace zerosugar::xr
     public:
         ConnectedState(LoginServerSessionStateMachine& stateMachine, ServiceLocator& serviceLocator, Session& session);
 
-        auto OnEvent(const IPacket& inPacket) -> Future<void> override;
+        auto OnEvent(UniquePtrNotNull<IPacket> inPacket) -> Future<void> override;
 
     private:
         LoginServerSessionStateMachine& _stateMachine;
@@ -37,23 +50,10 @@ namespace zerosugar::xr
     class AuthenticatedState final : public LoginServerSessionStateMachine::state_type
     {
     public:
-        AuthenticatedState(LoginServerSessionStateMachine& stateMachine, ServiceLocator& serviceLocator, Session& session);
-
-        auto OnEvent(const IPacket& inPacket) -> Future<void> override;
-
-    private:
-        LoginServerSessionStateMachine& _stateMachine;
-        ServiceLocator& _serviceLocator;
-        WeakPtrNotNull<Session> _session;
-    };
-
-    class TransitionToLobbyState final : public LoginServerSessionStateMachine::state_type
-    {
-    public:
-        explicit TransitionToLobbyState(Session& session);
+        explicit AuthenticatedState(Session& session);
 
         void OnEnter() override;
-        auto OnEvent(const IPacket& inPacket) -> Future<void> override;
+        auto OnEvent(UniquePtrNotNull<IPacket> inPacket) -> Future<void> override;
 
     private:
         Session& _session;

@@ -31,4 +31,26 @@ namespace zerosugar::xr::network::login::sc
         writer.Write<int32_t>(lobbyPort);
     }
 
+    auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>
+    {
+        const int16_t opcode = reader.Read<int16_t>();
+        switch(opcode)
+        {
+            case CreateAccountResult::opcode:
+            {
+                auto item = std::make_unique<CreateAccountResult>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case LoginResult::opcode:
+            {
+                auto item = std::make_unique<LoginResult>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+        }
+        return {};
+    }
 }

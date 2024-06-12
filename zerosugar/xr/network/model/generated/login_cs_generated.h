@@ -30,4 +30,5 @@ namespace zerosugar::xr::network::login::cs
         std::string password = {};
     };
 
+    auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>;
 }
