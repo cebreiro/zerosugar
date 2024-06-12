@@ -19,6 +19,16 @@ namespace zerosugar::xr
         ConfigureRemoteProcedureClient(dependencyLocator.Get<RPCClient>());
     }
 
+    void OrchestratorService::Shutdown()
+    {
+        IOrchestratorService::Shutdown();
+    }
+
+    void OrchestratorService::Join(std::vector<boost::system::error_code>& errors)
+    {
+        IOrchestratorService::Join(errors);
+    }
+
     void OrchestratorService::StartUp()
     {
     }

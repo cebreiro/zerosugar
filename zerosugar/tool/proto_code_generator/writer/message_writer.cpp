@@ -118,13 +118,15 @@ namespace zerosugar
             const int64_t innerIndent = classIndent + 1;
 
             _cxxPrinter.AddLine(innerIndent, "switch (e)");
-            BraceGuard switchBraceGuard(_cxxPrinter, innerIndent, false);
-
-            const int64_t enumElementIndent = innerIndent + 1;
-
-            for (const EnumValue& value : e.values)
             {
-                _cxxPrinter.AddLine(enumElementIndent, "case {0}::{1}: return \"{1}\";", e.name, value.name);
+                BraceGuard switchBraceGuard(_cxxPrinter, innerIndent, false);
+
+                const int64_t enumElementIndent = innerIndent + 1;
+
+                for (const EnumValue& value : e.values)
+                {
+                    _cxxPrinter.AddLine(enumElementIndent, "case {0}::{1}: return \"{1}\";", e.name, value.name);
+                }
             }
 
             _cxxPrinter.AddLine(innerIndent, "assert(false);");

@@ -8,7 +8,7 @@ namespace zerosugar
     bool XRPacketWriter::CanWrite(const Param& param) const
     {
         auto range = param.input.messages | std::views::filter(MessageFilter());
-        return range.begin() != range.end();
+        return range.begin() != range.end() || !param.input.enums.empty();
     }
 
     auto XRPacketWriter::Write(const Param& param) -> std::pair<std::string, std::string>

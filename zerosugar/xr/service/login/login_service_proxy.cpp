@@ -14,6 +14,8 @@ namespace zerosugar::xr
 
     auto LoginServiceProxy::LoginAsync(service::LoginParam param) -> Future<service::LoginResult>
     {
+        nlohmann::json input;
+        to_json(input, param);
         return _client->CallRemoteProcedure<ILoginService, service::LoginParam, service::LoginResult>("LoginAsync", param);
     }
 

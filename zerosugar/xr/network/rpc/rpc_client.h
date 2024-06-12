@@ -14,6 +14,10 @@ namespace zerosugar::execution
     class AsioStrand;
 }
 
+namespace zerosugar::xr::service
+{
+}
+
 namespace zerosugar::xr
 {
     class RPCClient final
@@ -61,20 +65,16 @@ namespace zerosugar::xr
     template <typename T, typename Func>
     bool RPCClient::RegisterProcedure(const std::string& rpcName, const Func& function)
     {
-        using T = std::tuple_element_t<0, boost::callable_traits::args_t<Func>>;
-        using R = boost::callable_traits::return_type_t<Func>;
+        using TParam = std::tuple_element_t<0, boost::callable_traits::args_t<Func>>;
+        using TResult = boost::callable_traits::return_type_t<Func>;
 
         return _procedures.try_emplace(MakeProcedureKey(T::name, rpcName), [function](const std::string& str) -> Future<std::string>
             {
                 const nlohmann::json& input = nlohmann::json::parse(str);
+                TParam param = input.get<TParam>();
 
-                T param;
-                from_json(input, param);
-
-                const typename R::value_type result = co_await function(std::move(param));
-
-                nlohmann::json output;
-                to_json(output, result);
+                const typename TResult::value_type result = co_await function(std::move(param));
+                nlohmann::json output = result;
 
                 co_return output.dump();
             }).second;
@@ -83,9 +83,7 @@ namespace zerosugar::xr
     template <typename T, typename P, typename R>
     auto RPCClient::CallRemoteProcedure(std::string rpcName, const P& param) -> Future<R>
     {
-        nlohmann::json input;
-        to_json(input, param);
-
+        const nlohmann::json input = param;
         std::string str = input.dump();
 
         co_await *_strand;
@@ -114,13 +112,12 @@ namespace zerosugar::xr
                 {
                     nlohmann::json j = nlohmann::json::parse(param);
 
-                    R result = {};
-                    from_json(j, result);
+                    R result = j.get<R>();
 
-                    p.Set(result);
+                    p.Set(std::move(result));
                 }
             });
 
-        co_return future;
+        co_return co_await future;
     }
 }
