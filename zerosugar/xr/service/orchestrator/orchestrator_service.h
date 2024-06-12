@@ -29,6 +29,8 @@ namespace zerosugar::xr
         void Shutdown() override;
         void Join(std::vector<boost::system::error_code>& errors) override;
 
+        void StartUp();
+
         auto HandleCallRemoteProcedure(const network::RequestRemoteProcedureCall& request) -> Future<network::RemoteProcedureCallErrorCode>;
         auto HandleResultRemoteProcedure(const network::ResultRemoteProcedureCall& result) -> Future<void>;
 

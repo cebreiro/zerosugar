@@ -1,7 +1,7 @@
 #include "orchestrator_service.h"
 
-#include "zerosugar/xr/network/rpc_client.h"
-#include "zerosugar/xr/network/rpc_server.h"
+#include "zerosugar/xr/network/rpc/rpc_client.h"
+#include "zerosugar/xr/network/rpc/rpc_server.h"
 
 namespace zerosugar::xr
 {
@@ -17,6 +17,10 @@ namespace zerosugar::xr
 
         ConfigureRemoteProcedureServer(dependencyLocator.Get<RPCServer>());
         ConfigureRemoteProcedureClient(dependencyLocator.Get<RPCClient>());
+    }
+
+    void OrchestratorService::StartUp()
+    {
     }
 
     auto OrchestratorService::HandleCallRemoteProcedure(const network::RequestRemoteProcedureCall& request) -> Future<network::RemoteProcedureCallErrorCode>

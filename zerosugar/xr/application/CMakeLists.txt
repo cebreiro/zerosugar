@@ -1,1 +1,1 @@
-add_subdirectory(aio_server)
+add_subdirectory(all_in_one_app)

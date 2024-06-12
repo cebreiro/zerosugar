@@ -14,17 +14,18 @@ namespace zerosugar::xr
 
 namespace zerosugar::xr
 {
-    struct AIOServerConfig;
+    struct AllInOneAppConfig;
 
     class OrchestratorService;
+    class OrchestratorServiceProxy;
     class LoginService;
     class LoginServiceProxy;
 
-    class AIOServer final : public AppInstance
+    class AllInOneApp final : public AppInstance
     {
     public:
-        AIOServer() = delete;
-        explicit AIOServer(const AIOServerConfig& config);
+        AllInOneApp() = delete;
+        explicit AllInOneApp(const AllInOneAppConfig& config);
 
     private:
         void OnStartUp(std::span<char*> args) override;
@@ -34,16 +35,18 @@ namespace zerosugar::xr
         auto GetName() const -> std::string_view override;
 
     private:
-        std::unique_ptr<AIOServerConfig> _config;
+        std::unique_ptr<AllInOneAppConfig> _config;
 
         SharedPtrNotNull<execution::AsioExecutor> _executor;
 
         // network
         SharedPtrNotNull<RPCServer> _rpcServer;
         SharedPtrNotNull<RPCClient> _rpcClient;
+        // SharedPtrNotNull<GameServer> _gameServer;
 
         // service
         SharedPtrNotNull<OrchestratorService> _orchestratorService;
+        SharedPtrNotNull<OrchestratorServiceProxy> _orchestratorServiceProxy;
 
         SharedPtrNotNull<LoginService> _loginService;
         SharedPtrNotNull<LoginServiceProxy> _loginServiceProxy;

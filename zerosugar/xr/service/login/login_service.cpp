@@ -1,6 +1,6 @@
 #include "login_service.h"
 
-#include "zerosugar/xr/network/rpc_client.h"
+#include "zerosugar/xr/network/rpc/rpc_client.h"
 
 namespace zerosugar::xr
 {

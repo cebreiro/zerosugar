@@ -1,6 +1,5 @@
 #pragma once
 #include <boost/asio.hpp>
-#include "zerosugar/xr/network/rpc_client.h"
 #include "zerosugar/xr/service/model/generated/login_service_generated_interface.h"
 
 namespace zerosugar
@@ -10,6 +9,8 @@ namespace zerosugar
 
 namespace zerosugar::xr
 {
+    class RPCClient;
+
     // TODO: code-generation
     class LoginServiceProxy
         : public service::ILoginService

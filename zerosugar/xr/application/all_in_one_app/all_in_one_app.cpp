@@ -1,17 +1,17 @@
-#include "aio_server.h"
+#include "all_in_one_app.h"
 
 #include "zerosugar/shared/execution/executor/impl/asio_executor.h"
-#include "zerosugar/xr/application/aio_server/aio_server_config.h"
-#include "zerosugar/xr/network/rpc_client.h"
-#include "zerosugar/xr/network/rpc_server.h"
+#include "zerosugar/xr/application/all_in_one_app/all_in_one_app_config.h"
+#include "zerosugar/xr/network/rpc/rpc_client.h"
+#include "zerosugar/xr/network/rpc/rpc_server.h"
 #include "zerosugar/xr/service/orchestrator/orchestrator_service.h"
 #include "zerosugar/xr/service/login/login_service.h"
 #include "zerosugar/xr/service/login/login_service_proxy.h"
 
 namespace zerosugar::xr
 {
-    AIOServer::AIOServer(const AIOServerConfig& config)
-        : _config(std::make_unique<AIOServerConfig>(config))
+    AllInOneApp::AllInOneApp(const AllInOneAppConfig& config)
+        : _config(std::make_unique<AllInOneAppConfig>(config))
         , _executor(std::make_shared<execution::AsioExecutor>(_config->workerCount))
         , _rpcServer(std::make_shared<RPCServer>(_executor))
         , _rpcClient(std::make_shared<RPCClient>(_executor))
@@ -28,7 +28,7 @@ namespace zerosugar::xr
         serviceLocator.Add<service::ILoginService>(_loginServiceProxy);
     }
 
-    void AIOServer::OnStartUp(std::span<char*> args)
+    void AllInOneApp::OnStartUp(std::span<char*> args)
     {
         (void)args;
 
@@ -51,16 +51,14 @@ namespace zerosugar::xr
         }
 
         future.Get();
-
-        //_orchestratorService->StartUp();
     }
 
-    void AIOServer::OnShutdown()
+    void AllInOneApp::OnShutdown()
     {
     }
 
-    auto AIOServer::GetName() const -> std::string_view
+    auto AllInOneApp::GetName() const -> std::string_view
     {
-        return "AllInOneServer";
+        return "all_in_one_application";
     }
 }

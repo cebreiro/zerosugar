@@ -37,8 +37,5 @@ build/
 bin/
 obj/
 
-# Generated
-generated/
-
 # Config
 *.config

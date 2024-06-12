@@ -28,8 +28,7 @@ namespace zerosugar
         _headerPrinter.AddLine(indent, "#include <cstdint>");
         _headerPrinter.AddLine(indent, "#include <string>");
         _headerPrinter.AddLine(indent, "#include <vector>");
-        _headerPrinter.AddLine(indent, "#include \"zerosugar/xr/network/packet_deserializable.h\"");
-        _headerPrinter.AddLine(indent, "#include \"zerosugar/xr/network/packet_serializable.h\"");
+        _headerPrinter.AddLine(indent, "#include \"zerosugar/xr/network/packet_interface.h\"");
         for (const std::string& include : param.includes)
         {
             _headerPrinter.AddLine(indent, "#include \"{}\"", include);
@@ -72,7 +71,7 @@ namespace zerosugar
         {
             const int64_t messageIndent = classIndent;
 
-            _headerPrinter.AddLine(messageIndent, "struct {} final : IPacketDeserializable, IPacketSerializable", message.name);
+            _headerPrinter.AddLine(messageIndent, "struct {} final : IPacket", message.name);
 
             std::optional<BraceGuard> messageBraceGuard;
             messageBraceGuard.emplace(_headerPrinter, messageIndent);
@@ -83,6 +82,7 @@ namespace zerosugar
             _headerPrinter.BreakLine();
             _headerPrinter.AddLine(fieldIndent, "void Deserialize(PacketReader& reader) final;");
             _headerPrinter.AddLine(fieldIndent, "void Serialize(PacketWriter& writer) const final;");
+            _headerPrinter.AddLine(fieldIndent, "auto GetOpcode() const -> int32_t final { return opcode; }");
 
             if (!message.fields.empty())
             {

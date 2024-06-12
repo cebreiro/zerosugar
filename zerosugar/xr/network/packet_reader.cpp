@@ -2,8 +2,8 @@
 
 namespace zerosugar::xr
 {
-    PacketReader::PacketReader(BufferReader& bufferReader)
-        : _bufferReader(bufferReader)
+    PacketReader::PacketReader(Buffer::const_iterator begin, Buffer::const_iterator end)
+        : _bufferReader(begin, end)
     {
     }
 

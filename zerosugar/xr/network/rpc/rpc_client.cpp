@@ -4,7 +4,7 @@
 #include "zerosugar/shared/execution/executor/impl/asio_strand.h"
 #include "zerosugar/shared/network/socket.h"
 #include "zerosugar/xr/network/packet_reader.h"
-#include "zerosugar/xr/network/rpc_packet_builder.h"
+#include "zerosugar/xr/network/rpc/rpc_packet_builder.h"
 #include "zerosugar/xr/network/model/generated/rpc_generated.h"
 
 namespace zerosugar::xr

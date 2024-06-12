@@ -3,7 +3,7 @@
 #include "zerosugar/shared/execution/executor/impl/asio_executor.h"
 #include "zerosugar/shared/network/session/session.h"
 #include "zerosugar/xr/network/packet_reader.h"
-#include "zerosugar/xr/network/rpc_packet_builder.h"
+#include "zerosugar/xr/network/rpc/rpc_packet_builder.h"
 #include "zerosugar/xr/network/model/generated/rpc_generated.h"
 #include "zerosugar/xr/service/orchestrator/orchestrator_service.h"
 

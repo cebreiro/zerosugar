@@ -6,7 +6,7 @@ namespace zerosugar::xr
     {
     public:
         PacketReader() = delete;
-        explicit PacketReader(BufferReader& bufferReader);
+        PacketReader(Buffer::const_iterator begin, Buffer::const_iterator end);
 
         template <typename T> requires std::integral<T> || std::floating_point<T>
         auto Read() -> T;
@@ -17,7 +17,7 @@ namespace zerosugar::xr
         auto GetReadSize() const -> int64_t;
 
     private:
-        BufferReader& _bufferReader;
+        BufferReader _bufferReader;
     };
 
     template <typename T> requires std::integral<T> || std::floating_point<T>

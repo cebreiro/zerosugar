@@ -85,6 +85,16 @@ namespace zerosugar
         return _remotePort;
     }
 
+    auto Session::GetStrand() -> execution::AsioStrand&
+    {
+        return *_strand;
+    }
+
+    auto Session::GetStrand() const -> const execution::AsioStrand&
+    {
+        return *_strand;
+    }
+
     void Session::ReceiveAsync()
     {
         assert(_mutableBuffers.empty());
