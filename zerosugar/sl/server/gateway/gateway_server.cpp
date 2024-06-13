@@ -20,12 +20,12 @@ namespace zerosugar::sl
     {
     }
 
-    void GatewayServer::Initialize(ServiceLocator& dependencyLocator)
+    void GatewayServer::Initialize(ServiceLocator& serviceLocator)
     {
-        Server::Initialize(dependencyLocator);
+        Server::Initialize(serviceLocator);
 
         _packetHandlers = std::make_shared<GatewayPacketHandlerContainer>(*this);
-        _locator = dependencyLocator;
+        _locator = serviceLocator;
 
         using namespace service;
 

@@ -10,6 +10,7 @@ namespace zerosugar::xr
 {
     class RPCServer;
     class RPCClient;
+    class LoginServer;
 }
 
 namespace zerosugar::xr
@@ -51,7 +52,7 @@ namespace zerosugar::xr
         // network
         SharedPtrNotNull<RPCServer> _rpcServer;
         SharedPtrNotNull<RPCClient> _rpcClient;
-        // SharedPtrNotNull<GameServer> _gameServer;
+        SharedPtrNotNull<LoginServer> _loginServer;
 
         // service
         SharedPtrNotNull<OrchestratorService> _orchestratorService;

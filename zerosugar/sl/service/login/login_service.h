@@ -24,13 +24,13 @@ namespace zerosugar::sl
         , public std::enable_shared_from_this<LoginService>
     {
     public:
-        using Locator = ServiceLocatorRef<ILogService, service::IRepositoryService, service::IWorldService>;
+        using Locator = ServiceLocatorT<ILogService, service::IRepositoryService, service::IWorldService>;
 
     public:
         LoginService() = delete;
         explicit LoginService(execution::IExecutor& executor);
 
-        void Initialize(ServiceLocator& dependencyLocator) override;
+        void Initialize(ServiceLocator& serviceLocator) override;
         void Shutdown() override;
 
         auto LoginAsync(service::LoginParam param) -> Future<service::LoginResult> override;

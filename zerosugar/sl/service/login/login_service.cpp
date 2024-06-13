@@ -16,9 +16,9 @@ namespace zerosugar::sl
     {
     }
 
-    void LoginService::Initialize(ServiceLocator& dependencyLocator)
+    void LoginService::Initialize(ServiceLocator& serviceLocator)
     {
-        _locator = dependencyLocator;
+        _locator = serviceLocator;
         if (!_locator.ContainsAll())
         {
             throw std::runtime_error("[sl_login_service] dependency is not satisfied");

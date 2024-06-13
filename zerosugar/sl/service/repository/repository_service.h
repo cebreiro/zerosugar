@@ -19,12 +19,12 @@ namespace zerosugar::sl
         , public std::enable_shared_from_this<RepositoryService>
     {
     public:
-        using locator_type = ServiceLocatorRef<ILogService>;
+        using locator_type = ServiceLocatorT<ILogService>;
 
     public:
         RepositoryService(execution::IExecutor& executor, SharedPtrNotNull<db::ConnectionPool> connectionPool);
 
-        void Initialize(ServiceLocator& dependencyLocator) override;
+        void Initialize(ServiceLocator& serviceLocator) override;
 
         auto FindAccountAsync(service::FindAccountParam param) -> Future<service::FindAccountResult> override;
         auto UpdateAccountAsync(service::UpdateAccountParam param) -> Future<service::UpdateAccountResult> override;

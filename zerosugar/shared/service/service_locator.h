@@ -34,6 +34,9 @@ namespace zerosugar
         template <std::derived_from<IService> T>
         auto Get() const -> const T&;
 
+        template <std::derived_from<IService> T>
+        auto FindShared() -> SharedPtrNotNull<T>;
+
     private:
         boost::container::flat_map<int64_t, SharedPtrNotNull<IService>> _services;
     };
@@ -60,7 +63,15 @@ namespace zerosugar
         const int64_t id = service_id_type::Get<T>();
         auto iter = _services.find(id);
 
-        return iter != _services.end() ? static_cast<T*>(iter->second.get()) : nullptr;
+        if (iter != _services.end())
+        {
+            auto result = static_cast<T*>(iter->second.get());
+            assert(result == dynamic_cast<T*>(iter->second.get()));
+
+            return result;
+        }
+
+        return nullptr;
     }
 
     template <std::derived_from<IService> T>
@@ -69,7 +80,15 @@ namespace zerosugar
         const int64_t id = service_id_type::Get<T>();
         auto iter = _services.find(id);
 
-        return iter != _services.end() ? static_cast<const T*>(iter->second.get()) : nullptr;
+        if (iter != _services.end())
+        {
+            auto result = static_cast<const T*>(iter->second.get());
+            assert(result == dynamic_cast<const T*>(iter->second.get()));
+
+            return result;
+        }
+
+        return nullptr;
     }
 
     template <std::derived_from<IService> T>
@@ -90,24 +109,41 @@ namespace zerosugar
         return *service;
     }
 
+    template <std::derived_from<IService> T>
+    auto ServiceLocator::FindShared() -> SharedPtrNotNull<T>
+    {
+        const int64_t id = service_id_type::Get<T>();
+        auto iter = _services.find(id);
+
+        if (iter != _services.end())
+        {
+            auto result = std::static_pointer_cast<T>(iter->second);
+            assert(result == std::dynamic_pointer_cast<T>(iter->second));
+
+            return result;
+        }
+
+        return nullptr;
+    }
+
     template <typename... TServices> requires std::conjunction_v<std::is_base_of<IService, TServices>...>
-    class ServiceLocatorRef
+    class ServiceLocatorT
     {
     public:
         template <typename T, typename... TArgs>
         using is_one_of = std::disjunction<std::is_same<T, TArgs>...>;
 
     public:
-        ServiceLocatorRef() = default;
-        explicit(false) ServiceLocatorRef(ServiceLocator& serviceLocator)
-            : _tuple({ serviceLocator.Find<TServices>()... })
+        ServiceLocatorT() = default;
+        explicit(false) ServiceLocatorT(ServiceLocator& serviceLocator)
+            : _tuple({ serviceLocator.FindShared<TServices>()... })
         {
         }
 
         template <typename ...UServices>
             requires std::conjunction_v<is_one_of<TServices, UServices...>...>
-        explicit(false) ServiceLocatorRef(ServiceLocatorRef<UServices...>& serviceLocator)
-            : _tuple({ serviceLocator.template Find<TServices>()... })
+        explicit(false) ServiceLocatorT(ServiceLocatorT<UServices...>& serviceLocator)
+            : _tuple({ serviceLocator.template FindShared<TServices>()... })
         {
         }
 
@@ -124,25 +160,25 @@ namespace zerosugar
         template <typename U> requires is_one_of<U, TServices...>::value
         bool Contains() const
         {
-            return std::get<U*>(_tuple) != nullptr;
+            return std::get<std::shared_ptr<U>>(_tuple) != nullptr;
         }
 
         template <typename U> requires is_one_of<U, TServices...>::value
         auto Find() -> U*
         {
-            return std::get<U*>(_tuple);
+            return std::get<std::shared_ptr<U>>(_tuple).get();
         }
 
         template <typename U> requires is_one_of<U, TServices...>::value
         auto Find() const -> const U*
         {
-            return std::get<U*>(_tuple);
+            return std::get<std::shared_ptr<U>>(_tuple).get();
         }
 
         template <typename U> requires is_one_of<U, TServices...>::value
         auto Get() -> U&
         {
-            U* ptr = std::get<U*>(_tuple);
+            auto ptr = std::get<std::shared_ptr<U>>(_tuple);
             assert(ptr);
 
             return *ptr;
@@ -151,13 +187,19 @@ namespace zerosugar
         template <typename U> requires is_one_of<U, TServices...>::value
         auto Get() const -> const U&
         {
-            const U* ptr = std::get<U*>(_tuple);
+            auto ptr = std::get<std::shared_ptr<U>>(_tuple);
             assert(ptr);
 
             return *ptr;
         }
 
+        template <typename U> requires is_one_of<U, TServices...>::value
+        auto FindShared() -> std::shared_ptr<U>
+        {
+            return std::get<std::shared_ptr<U>>(_tuple);
+        }
+
     private:
-        std::tuple<TServices*...> _tuple;
+        std::tuple<std::shared_ptr<TServices>...> _tuple;
     };
 }

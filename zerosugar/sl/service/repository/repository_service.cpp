@@ -35,9 +35,9 @@ namespace zerosugar::sl
         }
     }
 
-    void RepositoryService::Initialize(ServiceLocator& dependencyLocator)
+    void RepositoryService::Initialize(ServiceLocator& serviceLocator)
     {
-        _locator = dependencyLocator;
+        _locator = serviceLocator;
         if (!_locator.ContainsAll())
         {
             throw std::runtime_error("[sl_repository_service] dependency is not satisfied");

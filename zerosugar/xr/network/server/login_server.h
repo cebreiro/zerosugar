@@ -12,7 +12,9 @@ namespace zerosugar::xr
     class LoginServer : public Server
     {
     public:
-        LoginServer(execution::AsioExecutor& executor, ServiceLocator& serviceLocator);
+        explicit LoginServer(execution::AsioExecutor& executor);
+
+        void Initialize(ServiceLocator& serviceLocator) override;
 
     private:
         void OnAccept(Session& session) override;
@@ -24,7 +26,7 @@ namespace zerosugar::xr
         auto SharedFromThis() -> SharedPtrNotNull<LoginServer>;
 
     private:
-        ServiceLocator& _serviceLocator;
+        ServiceLocator _serviceLocator;
 
         tbb::concurrent_hash_map<session::id_type, std::pair<Buffer, SharedPtrNotNull<LoginServerSessionStateMachine>>> _stateMachines;
     };

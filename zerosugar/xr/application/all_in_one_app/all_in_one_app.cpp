@@ -6,6 +6,7 @@
 #include "zerosugar/xr/application/all_in_one_app/all_in_one_app_config.h"
 #include "zerosugar/xr/network/rpc/rpc_client.h"
 #include "zerosugar/xr/network/rpc/rpc_server.h"
+#include "zerosugar/xr/network/server/login_server.h"
 #include "zerosugar/xr/service/orchestrator/orchestrator_service.h"
 #include "zerosugar/xr/service/login/login_service.h"
 #include "zerosugar/xr/service/login/login_service_proxy.h"
@@ -18,6 +19,7 @@ namespace zerosugar::xr
         , _logService(std::make_shared<LogService>())
         , _rpcServer(std::make_shared<RPCServer>(_executor))
         , _rpcClient(std::make_shared<RPCClient>(_executor))
+        , _loginServer(std::make_shared<LoginServer>(*_executor))
         , _orchestratorService(std::make_shared<OrchestratorService>(_executor))
         , _loginService(std::make_shared<LoginService>(_executor))
         , _loginServiceProxy(std::make_shared<LoginServiceProxy>(_rpcClient))
@@ -90,6 +92,7 @@ namespace zerosugar::xr
     {
         _rpcServer->Initialize(serviceLocator);
         _rpcClient->Initialize(serviceLocator);
+        _loginServer->Initialize(serviceLocator);
 
         _rpcServer->StartUp(_config->rpcServerPort);
         assert(_rpcServer->IsOpen());

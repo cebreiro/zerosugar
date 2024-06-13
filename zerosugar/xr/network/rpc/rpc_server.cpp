@@ -44,11 +44,11 @@ namespace zerosugar::xr
     {
     }
 
-    void RPCServer::Initialize(ServiceLocator& dependencyLocator)
+    void RPCServer::Initialize(ServiceLocator& serviceLocator)
     {
-        IService::Initialize(dependencyLocator);
+        IService::Initialize(serviceLocator);
 
-        _server->Initialize(dependencyLocator);
+        _server->Initialize(serviceLocator);
     }
 
     void RPCServer::Shutdown()

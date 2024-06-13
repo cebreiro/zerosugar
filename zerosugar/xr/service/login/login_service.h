@@ -14,7 +14,7 @@ namespace zerosugar::xr
 
         explicit LoginService(SharedPtrNotNull<execution::IExecutor> executor);
 
-        void Initialize(ServiceLocator& dependencyLocator) override;
+        void Initialize(ServiceLocator& serviceLocator) override;
         void Shutdown() override;
         void Join(std::vector<boost::system::error_code>& errors) override;
 

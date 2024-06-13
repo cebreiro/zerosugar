@@ -22,13 +22,13 @@ namespace zerosugar::sl
     {
     }
 
-    void LoginServer::Initialize(ServiceLocator& dependencyLocator)
+    void LoginServer::Initialize(ServiceLocator& serviceLocator)
     {
-        Server::Initialize(dependencyLocator);
+        Server::Initialize(serviceLocator);
 
         _packetHandlers = std::make_shared<LoginPacketHandlerContainer>(*this);
 
-        _locator = dependencyLocator;
+        _locator = serviceLocator;
     }
 
     void LoginServer::StartUp()

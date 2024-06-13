@@ -17,7 +17,7 @@ namespace zerosugar::sl
     public:
         static constexpr uint16_t PORT = 2106;
 
-        using locator_type = ServiceLocatorRef<ILogService, service::ILoginService, service::IWorldService>;
+        using locator_type = ServiceLocatorT<ILogService, service::ILoginService, service::IWorldService>;
 
     public:
         LoginServer() = delete;
@@ -29,7 +29,7 @@ namespace zerosugar::sl
         explicit LoginServer(execution::AsioExecutor& executor);
         ~LoginServer();
 
-        void Initialize(ServiceLocator& dependencyLocator) override;
+        void Initialize(ServiceLocator& serviceLocator) override;
         void StartUp();
         void Shutdown() override;
 

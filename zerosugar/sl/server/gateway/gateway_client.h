@@ -20,7 +20,7 @@ namespace zerosugar::sl
     public:
         using id_type = gateway_client_id_type;
 
-        using locator_type = ServiceLocatorRef<ILogService>;
+        using locator_type = ServiceLocatorT<ILogService>;
 
     public:
         GatewayClient() = delete;

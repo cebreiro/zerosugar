@@ -13,9 +13,9 @@ namespace zerosugar::sl
     {
     }
 
-    void WorldService::Initialize(ServiceLocator& dependencyLocator)
+    void WorldService::Initialize(ServiceLocator& serviceLocator)
     {
-        _locator = dependencyLocator;
+        _locator = serviceLocator;
     }
 
     auto WorldService::CreateWorldAsync(service::CreateWorldParam param) -> Future<service::CreateWorldResult>

@@ -22,7 +22,7 @@ namespace zerosugar::xr
         RPCServer() = delete;
         explicit RPCServer(SharedPtrNotNull<execution::AsioExecutor> executor);
 
-        void Initialize(ServiceLocator& dependencyLocator) override;
+        void Initialize(ServiceLocator& serviceLocator) override;
         void Shutdown() override;
         void Join(std::vector<boost::system::error_code>& errors) override;
 

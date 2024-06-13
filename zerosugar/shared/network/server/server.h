@@ -24,13 +24,13 @@ namespace zerosugar
     class Server : public std::enable_shared_from_this<Server>
     {
     public:
-        using locator_type = ServiceLocatorRef<ILogService>;
+        using locator_type = ServiceLocatorT<ILogService>;
 
     public:
         Server(std::string name, execution::AsioExecutor& executor);
         virtual ~Server() = default;
 
-        virtual void Initialize(ServiceLocator& dependencyLocator);
+        virtual void Initialize(ServiceLocator& serviceLocator);
         virtual void StartUp(uint16_t listenPort);
         virtual void Shutdown();
 

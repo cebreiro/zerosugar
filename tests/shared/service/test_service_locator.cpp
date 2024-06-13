@@ -2,7 +2,7 @@
 
 using zerosugar::IService;
 using zerosugar::ServiceLocator;
-using zerosugar::ServiceLocatorRef;
+using zerosugar::ServiceLocatorT;
 
 class FooService : public IService {};
 class BarService : public IService {};
@@ -79,7 +79,7 @@ TEST(ServiceLocatorRef, ConstructAndFind)
     (void)serviceLocator.Add<BarService>(bar);
 
     // act
-    using service_locator_type = ServiceLocatorRef<FooService, BarService, BazService>;
+    using service_locator_type = ServiceLocatorT<FooService, BarService, BazService>;
     service_locator_type serviceLocatorT(serviceLocator);
 
     const FooService* fooService = serviceLocatorT.Find<FooService>();
@@ -103,14 +103,14 @@ TEST(ServiceLocatorRef, ConstructFromOther)
     (void)serviceLocator.Add<BarService>(bar);
 
     // act
-    ServiceLocatorRef<FooService, BarService, BazService> superset(serviceLocator);
-    ServiceLocatorRef<FooService> subset1(superset);
-    ServiceLocatorRef<BarService> subset2(superset);
-    ServiceLocatorRef<BazService> subset3(superset);
-    ServiceLocatorRef<FooService, BarService> subset4(superset);
-    ServiceLocatorRef<FooService, BazService> subset5(superset);
-    ServiceLocatorRef<BarService, BazService> subset6(superset);
-    ServiceLocatorRef<FooService, BarService, BazService> subset7(superset);
+    ServiceLocatorT<FooService, BarService, BazService> superset(serviceLocator);
+    ServiceLocatorT<FooService> subset1(superset);
+    ServiceLocatorT<BarService> subset2(superset);
+    ServiceLocatorT<BazService> subset3(superset);
+    ServiceLocatorT<FooService, BarService> subset4(superset);
+    ServiceLocatorT<FooService, BazService> subset5(superset);
+    ServiceLocatorT<BarService, BazService> subset6(superset);
+    ServiceLocatorT<FooService, BarService, BazService> subset7(superset);
 
     // assert
     EXPECT_EQ(subset1.Find<FooService>(), foo.get());

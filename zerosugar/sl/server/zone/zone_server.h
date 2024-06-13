@@ -11,7 +11,7 @@ namespace zerosugar::sl
         using Server::StartUp;
 
     public:
-        using locator_type = ServiceLocatorRef<ILogService, service::IWorldService>;
+        using locator_type = ServiceLocatorT<ILogService, service::IWorldService>;
 
     public:
         ZoneServer(const ZoneServer& other) = delete;
@@ -22,7 +22,7 @@ namespace zerosugar::sl
         ZoneServer(execution::AsioExecutor& executor, int8_t worldId, int32_t zoneId, uint16_t port);
         ~ZoneServer();
 
-        void Initialize(ServiceLocator& dependencyLocator) override;
+        void Initialize(ServiceLocator& serviceLocator) override;
         void StartUp();
         void Shutdown() override;
 

@@ -7,10 +7,16 @@
 
 namespace zerosugar::xr
 {
-    LoginServer::LoginServer(execution::AsioExecutor& executor, ServiceLocator& serviceLocator)
+    LoginServer::LoginServer(execution::AsioExecutor& executor)
         : Server(std::string(GetName()), executor)
-        , _serviceLocator(serviceLocator)
     {
+    }
+
+    void LoginServer::Initialize(ServiceLocator& serviceLocator)
+    {
+        Server::Initialize(serviceLocator);
+
+        _serviceLocator = serviceLocator;
     }
 
     void LoginServer::OnAccept(Session& session)
@@ -22,7 +28,7 @@ namespace zerosugar::xr
 
             if (_stateMachines.insert(accessor, session.GetId()))
             {
-                accessor->second.second = std::move(stateMachine);
+                accessor->second.second = stateMachine;
             }
             else
             {
@@ -33,6 +39,8 @@ namespace zerosugar::xr
                 return;
             }
         }
+
+        stateMachine->Start();
 
         ZEROSUGAR_LOG_INFO(_serviceLocator,
             std::format("[{}] accept session. session: {}", GetName(), session));
@@ -78,6 +86,11 @@ namespace zerosugar::xr
         }
 
         std::unique_ptr<IPacket> packet = network::login::cs::CreateFrom(reader);
+
+        Buffer temp;
+        [[maybe_unused]] bool sliced = receivedBuffer->SliceFront(temp, packetSize);
+        assert(sliced);
+
         if (!packet)
         {
             ZEROSUGAR_LOG_WARN(_serviceLocator,
@@ -116,7 +129,22 @@ namespace zerosugar::xr
 
     void LoginServer::OnError(Session& session, const boost::system::error_code& error)
     {
-        _stateMachines.erase(session.GetId());
+        std::shared_ptr<LoginServerSessionStateMachine> stateMachine;
+        {
+            decltype(_stateMachines)::accessor accessor;
+
+            if (_stateMachines.find(accessor, session.GetId()))
+            {
+                stateMachine = std::move(accessor->second.second);
+            }
+
+            _stateMachines.erase(accessor);
+        }
+
+        if (stateMachine)
+        {
+            stateMachine->Shutdown();
+        }
 
         ZEROSUGAR_LOG_INFO(_serviceLocator,
             std::format("[{}] session io error. session: {}, error: {}", GetName(), session, error.message()));

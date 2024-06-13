@@ -12,7 +12,7 @@ namespace zerosugar::sl
         , public std::enable_shared_from_this<WorldService>
     {
     public:
-        using Locator = ServiceLocatorRef<ILogService, service::IRepositoryService>;
+        using Locator = ServiceLocatorT<ILogService, service::IRepositoryService>;
 
     public:
         WorldService() = delete;
@@ -20,7 +20,7 @@ namespace zerosugar::sl
         explicit WorldService(execution::IExecutor& executor);
         ~WorldService() override;
 
-        void Initialize(ServiceLocator& dependencyLocator) override;
+        void Initialize(ServiceLocator& serviceLocator) override;
 
         auto CreateWorldAsync(service::CreateWorldParam param) -> Future<service::CreateWorldResult> override;
         auto CreateZoneAsync(service::CreateZoneParam param) -> Future<service::CreateZoneResult> override;

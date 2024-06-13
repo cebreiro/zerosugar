@@ -37,13 +37,17 @@ namespace zerosugar::xr
     };
 
     LoginServerSessionStateMachine::LoginServerSessionStateMachine(ServiceLocator& serviceLocator, Session& session)
+        : _session(session)
     {
-        AddState<ConnectedState>(LoginSessionState::Connected, true, *this, serviceLocator, session)
+        AddState<ConnectedState>(LoginSessionState::Connected, true, *this, serviceLocator, _session)
             .Add(LoginSessionState::Authenticated);
 
-        AddState<AuthenticatedState>(LoginSessionState::Authenticated, false, session);
+        AddState<AuthenticatedState>(LoginSessionState::Authenticated, false, _session);
+    }
 
-        Post(session.GetStrand(), [self = shared_from_this()]()
+    void LoginServerSessionStateMachine::Start()
+    {
+        Post(_session.GetStrand(), [self = shared_from_this()]()
             {
                 self->Run();
             });
@@ -101,6 +105,7 @@ namespace zerosugar::xr
         , _serviceLocator(serviceLocator)
         , _session(session.weak_from_this())
     {
+        assert(_serviceLocator.Contains<service::ILoginService>());
     }
 
     auto ConnectedState::OnEvent(UniquePtrNotNull<IPacket> inPacket) -> Future<void>

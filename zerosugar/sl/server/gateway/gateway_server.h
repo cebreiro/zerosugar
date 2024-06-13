@@ -16,7 +16,7 @@ namespace zerosugar::sl
     public:
         static constexpr uint16_t PORT = 2000;
 
-        using locator_type = ServiceLocatorRef<ILogService, service::ILoginService,
+        using locator_type = ServiceLocatorT<ILogService, service::ILoginService,
             service::IRepositoryService, service::IWorldService>;
 
     public:
@@ -28,7 +28,7 @@ namespace zerosugar::sl
         GatewayServer(execution::AsioExecutor& executor, int8_t worldId);
         ~GatewayServer();
 
-        void Initialize(ServiceLocator& dependencyLocator) override;
+        void Initialize(ServiceLocator& serviceLocator) override;
         void StartUp();
         void Shutdown() override;
 

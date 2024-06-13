@@ -11,11 +11,11 @@ namespace zerosugar::xr
     {
     }
 
-    void LoginService::Initialize(ServiceLocator& dependencyLocator)
+    void LoginService::Initialize(ServiceLocator& serviceLocator)
     {
-        ILoginService::Initialize(dependencyLocator);
+        ILoginService::Initialize(serviceLocator);
 
-        ConfigureRemoteProcedureClient(dependencyLocator.Get<RPCClient>());
+        ConfigureRemoteProcedureClient(serviceLocator.Get<RPCClient>());
     }
 
     void LoginService::Shutdown()

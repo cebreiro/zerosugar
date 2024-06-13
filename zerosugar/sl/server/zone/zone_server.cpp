@@ -14,11 +14,11 @@ namespace zerosugar::sl
     {
     }
 
-    void ZoneServer::Initialize(ServiceLocator& dependencyLocator)
+    void ZoneServer::Initialize(ServiceLocator& serviceLocator)
     {
-        Server::Initialize(dependencyLocator);
+        Server::Initialize(serviceLocator);
 
-        _locator = dependencyLocator;
+        _locator = serviceLocator;
     }
 
     void ZoneServer::StartUp()

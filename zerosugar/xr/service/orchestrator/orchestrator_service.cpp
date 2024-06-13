@@ -11,12 +11,12 @@ namespace zerosugar::xr
     {
     }
 
-    void OrchestratorService::Initialize(ServiceLocator& dependencyLocator)
+    void OrchestratorService::Initialize(ServiceLocator& serviceLocator)
     {
-        IOrchestratorService::Initialize(dependencyLocator);
+        IOrchestratorService::Initialize(serviceLocator);
 
-        ConfigureRemoteProcedureServer(dependencyLocator.Get<RPCServer>());
-        ConfigureRemoteProcedureClient(dependencyLocator.Get<RPCClient>());
+        ConfigureRemoteProcedureServer(serviceLocator.Get<RPCServer>());
+        ConfigureRemoteProcedureClient(serviceLocator.Get<RPCClient>());
     }
 
     void OrchestratorService::Shutdown()

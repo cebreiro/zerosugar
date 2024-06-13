@@ -1,6 +1,7 @@
 #pragma once
 #include "zerosugar/shared/state_machine/state_machine.h"
 #include "zerosugar/xr/network/packet_interface.h"
+#include "zerosugar/xr/service/model/generated/login_service_generated_interface.h"
 
 namespace zerosugar
 {
@@ -21,6 +22,7 @@ namespace zerosugar::xr
     public:
         LoginServerSessionStateMachine(ServiceLocator& serviceLocator, Session& session);
 
+        void Start();
         void Shutdown();
 
         auto OnEvent(std::unique_ptr<IPacket> event) -> Future<void> override;
@@ -29,6 +31,7 @@ namespace zerosugar::xr
         auto Run() -> Future<void>;
 
     private:
+        Session& _session;
         std::atomic<bool> _shutdown = false;
 
         SharedPtrNotNull<Channel<std::pair<Promise<void>, std::unique_ptr<IPacket>>>> _channel;
@@ -43,7 +46,7 @@ namespace zerosugar::xr
 
     private:
         LoginServerSessionStateMachine& _stateMachine;
-        ServiceLocator& _serviceLocator;
+        ServiceLocatorT<service::ILoginService> _serviceLocator;
         WeakPtrNotNull<Session> _session;
     };
 

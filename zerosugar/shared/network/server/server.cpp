@@ -18,9 +18,9 @@ namespace zerosugar
     {
     }
 
-    void Server::Initialize(ServiceLocator& dependencyLocator)
+    void Server::Initialize(ServiceLocator& serviceLocator)
     {
-        _locator = dependencyLocator;
+        _locator = serviceLocator;
     }
 
     void Server::StartUp(uint16_t listenPort)
