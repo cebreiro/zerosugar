@@ -6,8 +6,8 @@
 #include <iostream>
 #include <boost/lexical_cast.hpp>
 
-#include "zerosugar/sl/database/connection/connection_pool.h"
-#include "zerosugar/sl/database/connection/connection_pool_option.h"
+#include "zerosugar/shared/database/connection/connection_pool.h"
+#include "zerosugar/shared/database/connection/connection_pool_option.h"
 #include "zerosugar/sl/database/helper/transaction.h"
 #include "zerosugar/sl/database/generated/account_table.h"
 #include "zerosugar/sl/database/generated/character_table.h"
@@ -20,6 +20,7 @@ int main(int argc, char* argv[])
 {
     using namespace zerosugar;
     using namespace zerosugar::sl;
+    using namespace zerosugar::db;
 
     std::span<char*> args(argv, argc);
     if (std::ssize(args) < 6)
@@ -59,11 +60,11 @@ int main(int argc, char* argv[])
     const boost::mysql::handshake_params params(user, password, database);
 
     execution::IExecutor& executor = StaticThreadPool::GetInstance();
-    auto connectionPool = std::make_shared<db::ConnectionPool>(executor.SharedFromThis(),
-        db::ConnectionPoolOption(std::move(endPoint), params, connectionCount));
+    auto connectionPool = std::make_shared<ConnectionPool>(executor.SharedFromThis(),
+        ConnectionPoolOption(std::move(endPoint), params, connectionCount));
     connectionPool->Start();
 
-    db::ConnectionPool::BorrowedConnection connection = connectionPool->Lend().Get();
+    ConnectionPool::BorrowedConnection connection = connectionPool->Lend().Get();
     if (!InitializeDatabase(*connection))
     {
         std::cout << "fail to initialize database\n";
@@ -158,15 +159,15 @@ bool InitializeDatabase(boost::mysql::tcp_ssl_connection& connection)
     using namespace zerosugar::sl;
 
     const std::array initializers{
-        MAKE_CRATE_TABLE(db::AccountTable),
-        MAKE_CRATE_TABLE(db::CharacterTable),
-        MAKE_CRATE_TABLE(db::CharacterStatTable),
-        MAKE_CRATE_TABLE(db::CharacterJobTable),
-        MAKE_CRATE_TABLE(db::ItemTable),
-        MAKE_CRATE_TABLE(db::SkillTable),
+        MAKE_CRATE_TABLE(sl::db::AccountTable),
+        MAKE_CRATE_TABLE(sl::db::CharacterTable),
+        MAKE_CRATE_TABLE(sl::db::CharacterStatTable),
+        MAKE_CRATE_TABLE(sl::db::CharacterJobTable),
+        MAKE_CRATE_TABLE(sl::db::ItemTable),
+        MAKE_CRATE_TABLE(sl::db::SkillTable),
     };
 
-    db::Transaction transaction(connection);
+    sl::db::Transaction transaction(connection);
     transaction.Start();
 
     for (const auto& [create, drop, tableName] : initializers | std::views::reverse)

@@ -3,7 +3,7 @@
 #include "zerosugar/shared/execution/executor/impl/asio_executor.h"
 #include "zerosugar/shared/network/session/session.h"
 #include "zerosugar/xr/network/packet_reader.h"
-#include "zerosugar/xr/network/model/generated/login_cs_generated.h"
+#include "zerosugar/xr/network/model/generated/login_cs_message.h"
 
 namespace zerosugar::xr
 {

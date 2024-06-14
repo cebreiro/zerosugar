@@ -1,7 +1,7 @@
 #pragma once
 #include "zerosugar/shared/state_machine/state_machine.h"
 #include "zerosugar/xr/network/packet_interface.h"
-#include "zerosugar/xr/service/model/generated/login_service_generated_interface.h"
+#include "zerosugar/xr/service/model/generated/login_service.h"
 
 namespace zerosugar
 {
@@ -32,9 +32,12 @@ namespace zerosugar::xr
 
     private:
         Session& _session;
+        ServiceLocatorT<ILogService> _locator;
         std::atomic<bool> _shutdown = false;
 
-        SharedPtrNotNull<Channel<std::pair<Promise<void>, std::unique_ptr<IPacket>>>> _channel;
+        using packet_serial_process_channel_type = Channel<std::pair<Promise<void>, std::unique_ptr<IPacket>>>;
+
+        SharedPtrNotNull<packet_serial_process_channel_type> _channel;
     };
 
     class ConnectedState final : public LoginServerSessionStateMachine::state_type

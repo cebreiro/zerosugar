@@ -7,7 +7,7 @@ namespace zerosugar::execution
     class IExecutor;
 }
 
-namespace zerosugar::sl::db
+namespace zerosugar::db
 {
     class ConnectionPool;
 }
@@ -22,7 +22,7 @@ namespace zerosugar::sl
         using locator_type = ServiceLocatorT<ILogService>;
 
     public:
-        RepositoryService(execution::IExecutor& executor, SharedPtrNotNull<db::ConnectionPool> connectionPool);
+        RepositoryService(execution::IExecutor& executor, SharedPtrNotNull<zerosugar::db::ConnectionPool> connectionPool);
 
         void Initialize(ServiceLocator& serviceLocator) override;
 
@@ -47,7 +47,7 @@ namespace zerosugar::sl
 
     private:
         locator_type _locator;
-        SharedPtrNotNull<db::ConnectionPool> _connectionPool;
+        SharedPtrNotNull<zerosugar::db::ConnectionPool> _connectionPool;
 
         SharedPtrNotNull<execution::IExecutor> _master;
         std::array<SharedPtrNotNull<execution::IExecutor>, 8> _worker;

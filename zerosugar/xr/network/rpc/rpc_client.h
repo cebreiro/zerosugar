@@ -1,7 +1,8 @@
 #pragma once
 #include <boost/callable_traits.hpp>
 #include "zerosugar/shared/service/service_interface.h"
-#include "zerosugar/xr/network/model/generated/rpc_generated.h"
+#include "zerosugar/shared/execution/executor/impl/asio_strand.h"
+#include "zerosugar/xr/network/model/generated/rpc_message.h"
 
 namespace zerosugar
 {
@@ -11,7 +12,6 @@ namespace zerosugar
 namespace zerosugar::execution
 {
     class AsioExecutor;
-    class AsioStrand;
 }
 
 namespace zerosugar::xr::service
@@ -29,6 +29,8 @@ namespace zerosugar::xr
     public:
         explicit RPCClient(SharedPtrNotNull<execution::AsioExecutor> executor);
 
+        void Initialize(ServiceLocator& serviceLocator) override;
+
         auto ConnectAsync(std::string address, uint16_t port) -> Future<void>;
 
         auto RegisterToServer(std::string serviceName, std::string ip, uint16_t port) -> Future<void>;
@@ -36,8 +38,8 @@ namespace zerosugar::xr
         template <typename T, typename Func>
         bool RegisterProcedure(const std::string& rpcName, const Func& function);
 
-        template <typename T, typename P, typename R>
-        auto CallRemoteProcedure(std::string rpcName, const P& param) -> Future<R>;
+        template <typename P, typename R>
+        auto CallRemoteProcedure(std::string serviceName, std::string rpcName, const P& param) -> Future<R>;
 
     private:
         auto Run() -> Future<void>;
@@ -52,6 +54,7 @@ namespace zerosugar::xr
     private:
         SharedPtrNotNull<execution::AsioExecutor> _executor;
         SharedPtrNotNull<execution::AsioStrand> _strand;
+        ServiceLocatorT<ILogService> _serviceLocator;
 
         SharedPtrNotNull<Socket> _socket;
 
@@ -80,9 +83,11 @@ namespace zerosugar::xr
             }).second;
     }
 
-    template <typename T, typename P, typename R>
-    auto RPCClient::CallRemoteProcedure(std::string rpcName, const P& param) -> Future<R>
+    template <typename P, typename R>
+    auto RPCClient::CallRemoteProcedure(std::string serviceName, std::string rpcName, const P& param) -> Future<R>
     {
+        assert(!serviceName.empty() && !rpcName.empty());
+
         const nlohmann::json input = param;
         std::string str = input.dump();
 
@@ -91,17 +96,17 @@ namespace zerosugar::xr
         Promise<R> promise;
         Future<R> future = promise.GetFuture();
 
-        const int32_t rpcId = ++_nextRemoteProcedureIds[T::name];
+        const int32_t rpcId = ++_nextRemoteProcedureIds[serviceName];
 
-        this->Send(rpcId, T::name, rpcName, std::move(str),
-            [p = std::move(promise), rpcId, rpcName](network::RemoteProcedureCallErrorCode ec, const std::string& param) mutable
+        this->Send(rpcId, serviceName, rpcName, std::move(str),
+            [p = std::move(promise), rpcId, serviceName, rpcName](network::RemoteProcedureCallErrorCode ec, const std::string& param) mutable
             {
                 if (ec != network::RemoteProcedureCallErrorCode::RpcErrorNone)
                 {
                     try
                     {
                         throw std::runtime_error(std::format("rpc error. rpc_id: {}, rpc_name: {}::{}, error_code: {}",
-                            rpcId, T::name, rpcName, GetEnumName(ec)));
+                            rpcId, serviceName, rpcName, GetEnumName(ec)));
                     }
                     catch (...)
                     {

@@ -2,12 +2,12 @@
 
 #include "zerosugar/shared/execution/executor/executor_coroutine_traits.h"
 #include "zerosugar/shared/execution/future/future.hpp"
-#include "zerosugar/sl/database/connection/connection_pool.h"
+#include "zerosugar/shared//database/connection/connection_pool.h"
 #include "zerosugar/sl/database/generated/account_table.h"
 
 namespace zerosugar::sl
 {
-    AccountRepository::AccountRepository(db::ConnectionPool& connectionPool,
+    AccountRepository::AccountRepository(zerosugar::db::ConnectionPool& connectionPool,
         SharedPtrNotNull<execution::IExecutor> executor)
         : _connectionPool(connectionPool)
         , _executor(std::move(executor))
@@ -18,7 +18,7 @@ namespace zerosugar::sl
     {
         co_await *_executor;
 
-        db::ConnectionPool::BorrowedConnection connection = co_await _connectionPool.Lend();
+        zerosugar::db::ConnectionPool::Borrowed connection = co_await _connectionPool.Pop();
         assert(ExecutionContext::GetExecutor() == _executor.get());
 
         db::AccountTable table(*connection);
@@ -46,7 +46,7 @@ namespace zerosugar::sl
     {
         co_await *_executor;
 
-        db::ConnectionPool::BorrowedConnection connection = co_await _connectionPool.Lend();
+        zerosugar::db::ConnectionPool::Borrowed connection = co_await _connectionPool.Pop();
         assert(ExecutionContext::GetExecutor() == _executor.get());
 
         db::AccountTable table(*connection);
@@ -73,7 +73,7 @@ namespace zerosugar::sl
     {
         co_await *_executor;
 
-        db::ConnectionPool::BorrowedConnection connection = co_await _connectionPool.Lend();
+        zerosugar::db::ConnectionPool::Borrowed connection = co_await _connectionPool.Pop();
         assert(ExecutionContext::GetExecutor() == _executor.get());
 
         db::AccountTable table(*connection);
@@ -101,7 +101,7 @@ namespace zerosugar::sl
     {
         co_await *_executor;
 
-        db::ConnectionPool::BorrowedConnection connection = co_await _connectionPool.Lend();
+        zerosugar::db::ConnectionPool::Borrowed connection = co_await _connectionPool.Pop();
         assert(ExecutionContext::GetExecutor() == _executor.get());
 
         db::AccountTable table(*connection);
@@ -128,7 +128,7 @@ namespace zerosugar::sl
     {
         co_await *_executor;
 
-        db::ConnectionPool::BorrowedConnection connection = co_await _connectionPool.Lend();
+        db::ConnectionPool::BorrowedConnection connection = co_await _connectionPool.Pop();
         assert(ExecutionContext::GetExecutor() == _executor.get());
 
         db::AccountTable table(*connection);

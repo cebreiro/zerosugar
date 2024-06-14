@@ -10,12 +10,23 @@ namespace zerosugar::xr
     auto PacketReader::ReadString() -> std::string
     {
         const auto size = Read<int16_t>();
+        if (size == 0)
+        {
+            return {};
+        }
 
         return _bufferReader.ReadString(size);
     }
 
     void PacketReader::ReadBytes(std::span<char> buffer, int64_t size)
     {
+        assert(size >= 0);
+
+        if (size == 0)
+        {
+            return;
+        }
+
         assert(std::ssize(buffer) >= size);
 
         _bufferReader.ReadBuffer(buffer.data(), size);

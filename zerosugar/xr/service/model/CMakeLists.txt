@@ -24,6 +24,7 @@ add_custom_target(zerosugar_xr_generate_service
         --zerosugar_proto_code_generator_opt="{ \"\"include_path\"\" : \"\"zerosugar/xr/service/model/generated\"\", \"\"generator\"\" : \"\"service_code_generator\"\" }"
         --zerosugar_proto_code_generator_out=./generated
         login_service.proto
+        database_service.proto
         orchestrator_service.proto
     WORKING_DIRECTORY ${ZEROSUGAR_XR_SERVICE_DIR}
     DEPENDS zerosugar_proto_code_generator

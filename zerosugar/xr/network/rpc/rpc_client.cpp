@@ -5,7 +5,7 @@
 #include "zerosugar/shared/network/socket.h"
 #include "zerosugar/xr/network/packet_reader.h"
 #include "zerosugar/xr/network/rpc/rpc_packet_builder.h"
-#include "zerosugar/xr/network/model/generated/rpc_generated.h"
+#include "zerosugar/xr/network/model/generated/rpc_message.h"
 
 namespace zerosugar::xr
 {
@@ -14,6 +14,11 @@ namespace zerosugar::xr
         , _strand(_executor->MakeStrand())
         , _socket(std::make_shared<Socket>(_strand))
     {
+    }
+
+    void RPCClient::Initialize(ServiceLocator& serviceLocator)
+    {
+        _serviceLocator = serviceLocator;
     }
 
     auto RPCClient::ConnectAsync(std::string address, uint16_t port) -> Future<void>
@@ -198,21 +203,19 @@ namespace zerosugar::xr
 
     auto RPCClient::HandleRequestRemoteProcedureCall(network::RequestRemoteProcedureCall request) -> Future<void>
     {
+        network::ResultRemoteProcedureCall resultRPC;
+        resultRPC.rpcId = request.rpcId;
+        resultRPC.serviceName = request.serviceName;
+
         auto iter = _procedures.find(MakeProcedureKey(request.serviceName, request.rpcName));
         if (iter == _procedures.end())
         {
-            network::ResultRemoteProcedureCall resultRPC;
             resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorInvalidRpcName;
-            resultRPC.rpcId = request.rpcId;
 
             _socket->SendAsync(RPCPacketBuilder::MakePacket(resultRPC));
 
             co_return;
         }
-
-        network::ResultRemoteProcedureCall resultRPC;
-        resultRPC.rpcId = request.rpcId;
-        resultRPC.serviceName = std::move(request.serviceName);
 
         try
         {
@@ -265,6 +268,8 @@ namespace zerosugar::xr
 
     auto RPCClient::MakeProcedureKey(const std::string& service, const std::string& rpc) -> std::string
     {
+        assert(!service.empty() && !rpc.empty());
+
         return service + rpc;
     }
 }

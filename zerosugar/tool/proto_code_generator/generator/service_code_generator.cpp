@@ -8,7 +8,7 @@
 #include "zerosugar/tool/proto_code_generator/proto_code_generator_option.h"
 #include "zerosugar/tool/proto_code_generator/writer/message_json_serialize_writer.h"
 #include "zerosugar/tool/proto_code_generator/writer/message_writer.h"
-#include "zerosugar/tool/proto_code_generator/writer/service_interface_writer.h"
+#include "zerosugar/tool/proto_code_generator/writer/service_writer.h"
 #include "zerosugar/tool/proto_code_generator/writer/input/writer_input.h"
 
 using namespace google::protobuf;
@@ -20,7 +20,11 @@ namespace zerosugar
         GeneratorContext& context, const ProtoCodeGeneratorOption& option,
         const WriterInput& input)
     {
-        GenerateServiceInterface(file, context, option, input);
+        _serviceFileName = GetServiceFileName(file.name());
+        _messageFileName = GetMessageFileName(file.name());
+        _messageJsonFileName = _messageFileName + "_json";
+
+        GenerateService(file, context, option, input);
         GenerateMessage(file, context, option, input);
         GenerateMessageJsonSerialize(file, context, option, input);
     }
@@ -30,23 +34,23 @@ namespace zerosugar
         return "service_code_generator";
     }
 
-    void ServiceCodeGenerator::GenerateServiceInterface(const FileDescriptor& file,
+    void ServiceCodeGenerator::GenerateService(const FileDescriptor& file,
         GeneratorContext& context, const ProtoCodeGeneratorOption& option,
         const WriterInput& input) const
     {
+        (void)file;
+
         if (input.services.empty())
         {
             return;
         }
 
-        const std::string& messageFileName = GetMessageFileName(file.name());
-        const std::string& serviceInterfaceFileName = messageFileName + "_interface";
-        const ServiceInterfaceWriter::Param param = [&]()
+        const ServiceWriter::Param param = [&]()
             {
                 std::vector<std::string> includes;
                 includes.reserve(input.imports.size() + 1);
 
-                includes.emplace_back(std::format("{}/{}.h", option.includePath, messageFileName));
+                includes.emplace_back(std::format("{}/{}.h", option.includePath, _messageFileName));
 
                 for (const Import& imported : input.imports)
                 {
@@ -54,24 +58,36 @@ namespace zerosugar
                         GetMessageFileName(imported.name)));
                 }
 
-                return ServiceInterfaceWriter::Param{
+                return ServiceWriter::Param{
                     .input = input,
+                    .headerName = _serviceFileName,
+                    .messageJsonFileName = _messageJsonFileName,
                     .includes = std::move(includes),
                 };
             }();
 
-        std::unique_ptr<io::ZeroCopyOutputStream> stream(
-            context.OpenForInsert(std::format("{}.h", serviceInterfaceFileName), ""));
-        io::Printer printer(stream.get(), '$');
-
-        ServiceInterfaceWriter writer;
-        printer.Print(writer.Write(param).c_str());
+        ServiceWriter writer;
+        const auto& [header, cpp] = writer.Write(param);
+        {
+            std::unique_ptr<io::ZeroCopyOutputStream> stream(
+                context.OpenForInsert(std::format("{}.h", _serviceFileName), ""));
+            io::Printer printer(stream.get(), '$');
+            printer.Print(header.c_str());
+        }
+        {
+            std::unique_ptr<io::ZeroCopyOutputStream> stream(
+                context.OpenForInsert(std::format("{}.cpp", _serviceFileName), ""));
+            io::Printer printer(stream.get(), '$');
+            printer.Print(cpp.c_str());
+        }
     }
 
     void ServiceCodeGenerator::GenerateMessage(const FileDescriptor& file,
         GeneratorContext& context, const ProtoCodeGeneratorOption& option,
         const WriterInput& input) const
     {
+        (void)file;
+
         const MessageWriter::Param param = [&]()
             {
                 std::vector<std::string> includes;
@@ -85,7 +101,7 @@ namespace zerosugar
 
                 return MessageWriter::Param{
                     .input = input,
-                    .headerName = GetMessageFileName(file.name()),
+                    .headerName = _messageFileName,
                     .includes = std::move(includes),
                 };
             }();
@@ -95,7 +111,7 @@ namespace zerosugar
 
         {
             std::unique_ptr<io::ZeroCopyOutputStream> stream(
-                context.OpenForInsert(std::format("{}.h", GetMessageFileName(file.name())), ""));
+                context.OpenForInsert(std::format("{}.h", _messageFileName), ""));
 
             io::Printer printer(stream.get(), '$');
             printer.Print(header.c_str());
@@ -104,7 +120,7 @@ namespace zerosugar
             if (!cpp.empty())
             {
                 std::unique_ptr<io::ZeroCopyOutputStream> stream(
-                    context.OpenForInsert(std::format("{}.cpp", GetMessageFileName(file.name())), ""));
+                    context.OpenForInsert(std::format("{}.cpp", _messageFileName), ""));
 
                 io::Printer printer(stream.get(), '$');
                 printer.Print(cpp.c_str());
@@ -116,27 +132,26 @@ namespace zerosugar
         GeneratorContext& context, const ProtoCodeGeneratorOption& option,
         const WriterInput& input) const
     {
-        const std::string& messageFileName = GetMessageFileName(file.name());
-        const std::string& jsonSerializeFileName = messageFileName + "_json_serialize";
+        (void)file;
 
         const MessageJsonSerializeWriter::Param param = [&]()
             {
                 std::vector<std::string> includes;
                 includes.reserve((input.imports.size() * 2) + 1);
 
-                includes.emplace_back(std::format("{}/{}.h", option.includePath, messageFileName));
+                includes.emplace_back(std::format("{}/{}.h", option.includePath, _messageFileName));
 
                 for (const Import& imported : input.imports)
                 {
                     includes.emplace_back(std::format("{}/{}.h", option.includePath,
                         GetMessageFileName(imported.name)));
                     includes.emplace_back(std::format("{}/{}.h", option.includePath,
-                        GetMessageFileName(imported.name) + "_json_serialize"));
+                        GetMessageFileName(imported.name) + "_json"));
                 }
 
                 return MessageJsonSerializeWriter::Param{
                     .input = input,
-                    .headerName = jsonSerializeFileName,
+                    .headerName = _messageJsonFileName,
                     .includes = std::move(includes),
                 };
             }();
@@ -146,14 +161,14 @@ namespace zerosugar
 
         {
             std::unique_ptr<io::ZeroCopyOutputStream> stream(
-                context.OpenForInsert(std::format("{}.h", jsonSerializeFileName), ""));
+                context.OpenForInsert(std::format("{}.h", _messageJsonFileName), ""));
 
             io::Printer printer(stream.get(), '$');
             printer.Print(header.c_str());
         }
         {
             std::unique_ptr<io::ZeroCopyOutputStream> stream(
-                context.OpenForInsert(std::format("{}.cpp", jsonSerializeFileName), ""));
+                context.OpenForInsert(std::format("{}.cpp", _messageJsonFileName), ""));
 
             io::Printer printer(stream.get(), '$');
             printer.Print(cpp.c_str());

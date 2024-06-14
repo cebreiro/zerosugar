@@ -1,5 +1,6 @@
 #pragma once
-#include "zerosugar/xr/service/model/generated/login_service_generated_interface.h"
+#include "zerosugar/xr/service/model/generated/login_service.h"
+#include "zerosugar/xr/service/model/generated/database_service.h"
 
 namespace zerosugar::xr
 {
@@ -13,6 +14,7 @@ namespace zerosugar::xr
         LoginService() = delete;
 
         explicit LoginService(SharedPtrNotNull<execution::IExecutor> executor);
+        ~LoginService();
 
         void Initialize(ServiceLocator& serviceLocator) override;
         void Shutdown() override;
@@ -24,8 +26,14 @@ namespace zerosugar::xr
     private:
         void ConfigureRemoteProcedureClient(RPCClient& rpcClient);
 
+        auto MakeSHA256(const std::string& str) -> std::string;
+
     private:
         SharedPtrNotNull<execution::IExecutor> _executor;
         SharedPtrNotNull<Strand> _strand;
+        void* evpContext = nullptr;
+
+
+        ServiceLocatorT<service::IDatabaseService> _serviceLocator;
     };
 }

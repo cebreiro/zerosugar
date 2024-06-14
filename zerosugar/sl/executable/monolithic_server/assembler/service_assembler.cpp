@@ -3,8 +3,8 @@
 #include <boost/mysql.hpp>
 
 #include "zerosugar/shared/app/app_intance.h"
-#include "zerosugar/sl/database/connection/connection_pool.h"
-#include "zerosugar/sl/database/connection/connection_pool_option.h"
+#include "zerosugar/shared/database/connection/connection_pool.h"
+#include "zerosugar/shared/database/connection/connection_pool_option.h"
 #include "zerosugar/sl/executable/monolithic_server/config/application_config.h"
 #include "zerosugar/sl/service/login/login_service.h"
 #include "zerosugar/sl/service/repository/repository_service.h"
@@ -30,7 +30,7 @@ namespace zerosugar::sl
                 );
 
                 return std::make_shared<db::ConnectionPool>(_dbExecutor,
-                    db::ConnectionPoolOption(std::move(endPoint), params, dbConfig.GetConnectionCount()));
+                    zerosugar::db::ConnectionPoolOption(std::move(endPoint), params, dbConfig.GetConnectionCount()));
             }();
         connectionPool->Start();
         _connectionPool = std::move(connectionPool);

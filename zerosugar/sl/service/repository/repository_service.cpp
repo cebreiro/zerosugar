@@ -1,6 +1,6 @@
 #include "repository_service.h"
 
-#include "zerosugar/sl/database/connection/connection_pool.h"
+#include "zerosugar/shared/database/connection/connection_pool.h"
 #include "zerosugar/sl/database/helper/transaction.h"
 #include "zerosugar/sl/database/generated/account_table.h"
 #include "zerosugar/sl/database/generated/character_table.h"
@@ -22,7 +22,7 @@ namespace zerosugar::sl
         };
     }
 
-    RepositoryService::RepositoryService(execution::IExecutor& executor, SharedPtrNotNull<db::ConnectionPool> connectionPool)
+    RepositoryService::RepositoryService(execution::IExecutor& executor, SharedPtrNotNull<zerosugar::db::ConnectionPool> connectionPool)
         : _connectionPool(std::move(connectionPool))
     {
         auto ex = executor.SharedFromThis();
@@ -62,7 +62,7 @@ namespace zerosugar::sl
         std::optional<db::Account> account = std::nullopt;
         try
         {
-            db::ConnectionPool::BorrowedConnection connection = co_await _connectionPool->Lend();
+            zerosugar::db::ConnectionPool::Borrowed connection = co_await _connectionPool->Pop();
             
             assert(connection.IsValid());
 
@@ -141,7 +141,7 @@ namespace zerosugar::sl
         bool success = false;
         try
         {
-            db::ConnectionPool::BorrowedConnection connection = co_await _connectionPool->Lend();
+            zerosugar::db::ConnectionPool::Borrowed connection = co_await _connectionPool->Pop();
             
             assert(connection.IsValid());
 
@@ -186,7 +186,7 @@ namespace zerosugar::sl
         std::vector<service::Character> result;
         try
         {
-            db::ConnectionPool::BorrowedConnection connection = co_await _connectionPool->Lend();
+            zerosugar::db::ConnectionPool::Borrowed connection = co_await _connectionPool->Pop();
             
             assert(connection.IsValid());
 
@@ -264,7 +264,7 @@ namespace zerosugar::sl
         bool success = false;
         try
         {
-            db::ConnectionPool::BorrowedConnection connection = co_await _connectionPool->Lend();
+            zerosugar::db::ConnectionPool::Borrowed connection = co_await _connectionPool->Pop();
             assert(connection.IsValid());
 
             db::Transaction transaction(*connection);
@@ -338,7 +338,7 @@ namespace zerosugar::sl
         bool success = false;
         try
         {
-            db::ConnectionPool::BorrowedConnection connection = co_await _connectionPool->Lend();
+            zerosugar::db::ConnectionPool::Borrowed connection = co_await _connectionPool->Pop();
             assert(connection.IsValid());
 
             db::CharacterTable characterTable(*connection);
@@ -382,7 +382,7 @@ namespace zerosugar::sl
 
         try
         {
-            db::ConnectionPool::BorrowedConnection connection = co_await _connectionPool->Lend();
+            zerosugar::db::ConnectionPool::Borrowed connection = co_await _connectionPool->Pop();
             assert(connection.IsValid());
 
             db::CharacterTable characterTable(*connection);
@@ -413,7 +413,7 @@ namespace zerosugar::sl
         std::optional<service::Character> result;
         try
         {
-            db::ConnectionPool::BorrowedConnection connection = co_await _connectionPool->Lend();
+            zerosugar::db::ConnectionPool::Borrowed connection = co_await _connectionPool->Pop();
             
             assert(connection.IsValid());
 

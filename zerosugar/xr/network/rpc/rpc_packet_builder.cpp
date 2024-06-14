@@ -2,27 +2,28 @@
 
 #include "zerosugar/xr/network/packet_writer.h"
 #include "zerosugar/xr/network/packet_interface.h"
-#include "zerosugar/xr/network/model/generated/rpc_generated.h"
+#include "zerosugar/xr/network/model/generated/rpc_message.h"
 
 namespace zerosugar::xr
 {
     auto RPCPacketBuilder::MakePacket(const IPacket& packet) -> Buffer
     {
-        PacketWriter packetWriter;
+        using length_type = int32_t;
+        using opcode_type = int32_t;
 
-        packetWriter.Write<int32_t>(packet.GetOpcode());
+        PacketWriter packetWriter;
         packet.Serialize(packetWriter);
 
-        const int64_t packetSize = packetWriter.GetWriteSize();
-        const int64_t size = packetSize + 4;
-        assert(size >= 8);
+        const int64_t writeSize = packetWriter.GetWriteSize();
+        const int64_t packetSize = sizeof(length_type) + sizeof(opcode_type) + writeSize;
 
         Buffer buffer;
-        buffer.Add(buffer::Fragment::Create(size));
+        buffer.Add(buffer::Fragment::Create(packetSize));
 
         BufferWriter bufferWriter(buffer);
-        bufferWriter.Write<int32_t>(static_cast<int32_t>(size));
-        bufferWriter.WriteBuffer(std::span(packetWriter.GetBuffer().data(), packetSize));
+        bufferWriter.Write<length_type>(static_cast<length_type>(packetSize));
+        bufferWriter.Write<opcode_type>(static_cast<opcode_type>(packet.GetOpcode()));
+        bufferWriter.WriteBuffer(std::span(packetWriter.GetBuffer().data(), writeSize));
 
         return buffer;
     }

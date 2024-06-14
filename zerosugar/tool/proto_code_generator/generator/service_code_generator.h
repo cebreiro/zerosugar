@@ -12,7 +12,7 @@ namespace zerosugar
         auto GetName() const -> std::string override;
 
     private:
-        void GenerateServiceInterface(
+        void GenerateService(
             const google::protobuf::FileDescriptor& file,
             google::protobuf::compiler::GeneratorContext& context,
             const ProtoCodeGeneratorOption& option, const WriterInput& input) const;
@@ -22,5 +22,10 @@ namespace zerosugar
         void GenerateMessageJsonSerialize(const google::protobuf::FileDescriptor& file,
             google::protobuf::compiler::GeneratorContext& context,
             const ProtoCodeGeneratorOption& option, const WriterInput& input) const;
+
+    private:
+        std::string _serviceFileName;
+        std::string _messageFileName;
+        std::string _messageJsonFileName;
     };
 }

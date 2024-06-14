@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package zerosugar.xr.service;
+
+service DatabaseService
+{
+    rpc AddAccount (AddAccountParam) returns (AddAccountResult);
+    rpc GetAccount (GetAccountParam) returns (GetAccountResult);
+}
+
+enum DatabaseServiceErrorCode
+{
+    database_error_none = 0;
+    database_error_internal_error = 1;
+
+    add_account_error_duplicated = 10001;
+
+    get_account_error_not_found = 20001;
+}
+
+message AddAccountParam
+{
+    string account = 1;
+    string password = 2;
+}
+
+message AddAccountResult
+{
+    DatabaseServiceErrorCode error_code = 1;
+}
+
+message GetAccountParam
+{
+    string account = 1;
+}
+
+message GetAccountResult
+{
+    DatabaseServiceErrorCode error_code = 1;
+
+    int64 account_id = 2;
+    string account = 3;
+    string password = 4;
+    bool banned = 5;
+    bool deleted = 6;
+}

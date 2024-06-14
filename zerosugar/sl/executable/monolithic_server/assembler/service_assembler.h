@@ -2,7 +2,7 @@
 #include "zerosugar/shared/execution/executor/impl/asio_executor.h"
 #include "zerosugar/sl/executable/monolithic_server/assembler/assembler_interface.h"
 
-namespace zerosugar::sl::db
+namespace zerosugar::db
 {
     class ConnectionPool;
 }

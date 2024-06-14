@@ -26,7 +26,11 @@ namespace zerosugar
 
         const boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::make_address(address), port);
 
-        co_await *_strand;
+        if (!ExecutionContext::IsEqualTo(*_strand))
+        {
+            co_await *_strand;
+        }
+
         assert(ExecutionContext::GetExecutor() == _strand.get());
 
         while (true)
@@ -43,7 +47,7 @@ namespace zerosugar
             const bool error = co_await future;
             if (!error)
             {
-                assert(ExecutionContext::GetExecutor() == _strand.get());
+                assert(ExecutionContext::IsEqualTo(*_strand));
 
                 _open.store(true);
 
@@ -56,7 +60,7 @@ namespace zerosugar
             }
 
             co_await Delay(retryInterval);
-            assert(ExecutionContext::GetExecutor() == _strand.get());
+            assert(ExecutionContext::IsEqualTo(*_strand));
         }
     }
 
@@ -75,12 +79,12 @@ namespace zerosugar
 
     auto Socket::SendAsync(Buffer buffer) -> Future<std::expected<int64_t, IOError>>
     {
-        if (ExecutionContext::IsEqualTo(*_strand))
+        if (!ExecutionContext::IsEqualTo(*_strand))
         {
             co_await *_strand;
         }
 
-        assert(ExecutionContext::GetExecutor() == _strand.get());
+        assert(ExecutionContext::IsEqualTo(*_strand));
 
         Promise<std::expected<int64_t, IOError>> promise;
         Future<std::expected<int64_t, IOError>> future = promise.GetFuture();
@@ -118,7 +122,7 @@ namespace zerosugar
             co_await *_strand;
         }
 
-        assert(ExecutionContext::GetExecutor() == _strand.get());
+        assert(ExecutionContext::IsEqualTo(*_strand));
 
         Promise<std::expected<int64_t, IOError>> promise;
         Future<std::expected<int64_t, IOError>> future = promise.GetFuture();

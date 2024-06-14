@@ -4,8 +4,6 @@
 #include "zerosugar/shared/network/session/session.h"
 #include "zerosugar/xr/network/packet_reader.h"
 #include "zerosugar/xr/network/rpc/rpc_packet_builder.h"
-#include "zerosugar/xr/network/model/generated/rpc_generated.h"
-#include "zerosugar/xr/service/orchestrator/orchestrator_service.h"
 
 namespace zerosugar::xr
 {
@@ -40,7 +38,7 @@ namespace zerosugar::xr
 
     RPCServer::RPCServer(SharedPtrNotNull<execution::AsioExecutor> executor)
         : _executor(std::move(executor))
-        , _server(std::make_shared<ServerImpl>("RPCServer", *_executor, *this))
+        , _server(std::make_shared<ServerImpl>(std::string(GetName()), *_executor, *this))
     {
     }
 
@@ -49,6 +47,8 @@ namespace zerosugar::xr
         IService::Initialize(serviceLocator);
 
         _server->Initialize(serviceLocator);
+
+        _serviceLocator = serviceLocator;
     }
 
     void RPCServer::Shutdown()
@@ -69,6 +69,11 @@ namespace zerosugar::xr
     bool RPCServer::IsOpen() const
     {
         return _server->IsOpen();
+    }
+
+    auto RPCServer::GetName() const -> std::string_view
+    {
+        return "rpc_server";
     }
 
     void RPCServer::SetRequestHandler(const request_handler_type& handler)
@@ -157,6 +162,8 @@ namespace zerosugar::xr
                     return false;
                 }();
 
+            assert(inserted);
+
             if (inserted)
             {
                 std::lock_guard lock(_serviceSessionIdMutex);
@@ -167,6 +174,7 @@ namespace zerosugar::xr
 
             ResultRegisterRPCClient result;
             result.errorCode = inserted ? RpcErrorNone : RpcErrorDuplicatedServiceName;
+            result.serviceName = request.serviceName;
 
             session.Send(RPCPacketBuilder::MakePacket(result));
         }
@@ -193,7 +201,8 @@ namespace zerosugar::xr
                             std::shared_ptr<Session> session = self->FindSession(request.serviceName);
                             if (!session)
                             {
-                                assert(false);
+                                ZEROSUGAR_LOG_ERROR(self->_serviceLocator,
+                                    std::format("[{}] fail to find service. service_name: {}", self->GetName(), request.serviceName));
 
                                 ec = RemoteProcedureCallErrorCode::RpcErrorInternalError;
 
@@ -228,6 +237,9 @@ namespace zerosugar::xr
                         std::shared_ptr<Session> session = self->FindSession(result.serviceName);
                         if (!session)
                         {
+                            ZEROSUGAR_LOG_ERROR(self->_serviceLocator,
+                                std::format("[{}] fail to find service. service_name: {}", self->GetName(), result.serviceName));
+
                             return;
                         }
 

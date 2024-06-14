@@ -310,6 +310,36 @@ TEST_F(FutureTest, Exception_StoreANDGetException)
     EXPECT_TRUE(future.IsComplete());
 }
 
+TEST_F(FutureTest, Exception_GetExceptionOnOtherThread)
+{
+    // arrange
+
+    // act
+    Future<void> future = StartAsync(executor, []()
+        {
+            throw std::runtime_error("test");
+        });
+
+    std::string message;
+
+    std::async([future = std::move(future), &message]() mutable
+        {
+            try
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                future.Get();
+                
+            }
+            catch (const std::exception& e)
+            {
+                message = e.what();
+            }
+        }).get();
+
+    // assert
+    EXPECT_EQ(message, "test");
+}
+
 TEST_F(FutureTest, Exception_DoubleGetException)
 {
     // arrange

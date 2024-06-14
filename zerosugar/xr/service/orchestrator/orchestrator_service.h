@@ -1,5 +1,5 @@
 #pragma once
-#include "zerosugar/xr/service/model/generated/orchestrator_service_generated_interface.h"
+#include "zerosugar/xr/service/model/generated/orchestrator_service.h"
 
 namespace zerosugar::xr
 {

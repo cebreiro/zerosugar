@@ -3,9 +3,9 @@
 #include "zerosugar/shared/execution/executor/impl/asio_strand.h"
 #include "zerosugar/shared/network/session/session.h"
 #include "zerosugar/xr/network/packet_builder.h"
-#include "zerosugar/xr/network/model/generated/login_cs_generated.h"
-#include "zerosugar/xr/network/model/generated/login_sc_generated.h"
-#include "zerosugar/xr/service/model/generated/login_service_generated_interface.h"
+#include "zerosugar/xr/network/model/generated/login_cs_message.h"
+#include "zerosugar/xr/network/model/generated/login_sc_message.h"
+#include "zerosugar/xr/service/model/generated/login_service.h"
 
 namespace zerosugar::xr
 {
@@ -38,6 +38,8 @@ namespace zerosugar::xr
 
     LoginServerSessionStateMachine::LoginServerSessionStateMachine(ServiceLocator& serviceLocator, Session& session)
         : _session(session)
+        , _locator(serviceLocator)
+        , _channel(std::make_shared<packet_serial_process_channel_type>())
     {
         AddState<ConnectedState>(LoginSessionState::Connected, true, *this, serviceLocator, _session)
             .Add(LoginSessionState::Authenticated);
@@ -47,10 +49,25 @@ namespace zerosugar::xr
 
     void LoginServerSessionStateMachine::Start()
     {
-        Post(_session.GetStrand(), [self = shared_from_this()]()
+        Post(_session.GetStrand(),
+            [](SharedPtrNotNull<LoginServerSessionStateMachine> self, session::id_type id, WeakPtrNotNull<Session> weak) -> Future<void>
             {
-                self->Run();
-            });
+                try
+                {
+                    co_await self->Run();
+                }
+                catch (const std::exception& e)
+                {
+                    ZEROSUGAR_LOG_DEBUG(self->_locator,
+                        std::format("[login_server_session_state_machine] session_id: {}, exception. e: {}", id, e.what()));
+                }
+
+                if (const std::shared_ptr<Session>& session = weak.lock())
+                {
+                    session->Close();
+                }
+
+            }, shared_from_this(), _session.GetId(), _session.weak_from_this());
     }
 
     void LoginServerSessionStateMachine::Shutdown()

@@ -7,21 +7,22 @@ namespace zerosugar::xr
 {
     auto PacketBuilder::MakePacket(const IPacket& packet) -> Buffer
     {
-        PacketWriter packetWriter;
+        using length_type = int16_t;
+        using opcode_type = int16_t;
 
-        packetWriter.Write<int16_t>(static_cast<int16_t>(packet.GetOpcode()));
+        PacketWriter packetWriter;
         packet.Serialize(packetWriter);
 
-        const int64_t packetSize = packetWriter.GetWriteSize();
-        const int64_t size = packetSize + 2;
-        assert(size >= 6);
+        const int64_t writeSize = packetWriter.GetWriteSize();
+        const int64_t packetSize = sizeof(length_type) + sizeof(opcode_type) + writeSize;
 
         Buffer buffer;
-        buffer.Add(buffer::Fragment::Create(size));
+        buffer.Add(buffer::Fragment::Create(packetSize));
 
         BufferWriter bufferWriter(buffer);
-        bufferWriter.Write<int16_t>(static_cast<int16_t>(size));
-        bufferWriter.WriteBuffer(std::span(packetWriter.GetBuffer().data(), packetSize));
+        bufferWriter.Write<length_type>(static_cast<length_type>(packetSize));
+        bufferWriter.Write<opcode_type>(static_cast<opcode_type>(packet.GetOpcode()));
+        bufferWriter.WriteBuffer(std::span(packetWriter.GetBuffer().data(), writeSize));
 
         return buffer;
     }

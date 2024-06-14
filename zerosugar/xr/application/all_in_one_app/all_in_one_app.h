@@ -1,6 +1,11 @@
 #pragma once
 #include "zerosugar/shared/app/app_intance.h"
 
+namespace zerosugar::db
+{
+    class ConnectionPool;
+}
+
 namespace zerosugar::execution
 {
     class AsioExecutor;
@@ -15,12 +20,21 @@ namespace zerosugar::xr
 
 namespace zerosugar::xr
 {
-    struct AllInOneAppConfig;
-
     class OrchestratorService;
-    class OrchestratorServiceProxy;
     class LoginService;
-    class LoginServiceProxy;
+    class DatabaseService;
+
+    namespace service
+    {
+        class OrchestratorServiceProxy;
+        class LoginServiceProxy;
+        class DatabaseServiceProxy;
+    }
+}
+
+namespace zerosugar::xr
+{
+    struct AllInOneAppConfig;
 
     class AllInOneApp final : public AppInstance
     {
@@ -34,9 +48,10 @@ namespace zerosugar::xr
         void OnShutdown() override;
 
     private:
-        void InitializeExecutor();
+        void InitializeConfig();
         void InitializeLogger();
-        void InitializeServiceLocator();
+        void InitializeExecutor();
+        void InitializeDatabaseConnection();
         void InitializeService(ServiceLocator& serviceLocator);
         void InitializeNetwork(ServiceLocator& serviceLocator);
 
@@ -48,6 +63,7 @@ namespace zerosugar::xr
 
         SharedPtrNotNull<execution::AsioExecutor> _executor;
         SharedPtrNotNull<LogService> _logService;
+        SharedPtrNotNull<db::ConnectionPool> _connectionPool;
 
         // network
         SharedPtrNotNull<RPCServer> _rpcServer;
@@ -56,9 +72,12 @@ namespace zerosugar::xr
 
         // service
         SharedPtrNotNull<OrchestratorService> _orchestratorService;
-        SharedPtrNotNull<OrchestratorServiceProxy> _orchestratorServiceProxy;
+        SharedPtrNotNull<service::OrchestratorServiceProxy> _orchestratorServiceProxy;
 
         SharedPtrNotNull<LoginService> _loginService;
-        SharedPtrNotNull<LoginServiceProxy> _loginServiceProxy;
+        SharedPtrNotNull<service::LoginServiceProxy> _loginServiceProxy;
+
+        SharedPtrNotNull<DatabaseService> _databaseService;
+        SharedPtrNotNull<service::DatabaseServiceProxy> _databaseServiceProxy;
     };
 }
