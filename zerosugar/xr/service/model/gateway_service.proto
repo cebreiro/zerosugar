@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package zerosugar.xr.service;
+
+service GatewayService
+{
+    rpc AddGameService (AddGameServiceParam) returns (AddGameServiceResult);
+    rpc GetGameServiceList (GetGameServiceListParam) returns (GetGameServiceListResult);
+}
+
+enum GatewayServiceErrorCode
+{
+    gateway_error_none = 0;
+
+    add_game_error_name_duplicated = 10001;
+}
+
+message GameServiceEndpoint
+{
+    string name = 1;
+    string ip = 2;
+    int32 port = 3;
+}
+
+message AddGameServiceParam
+{
+    GameServiceEndpoint address = 1;
+}
+
+message AddGameServiceResult
+{
+    GatewayServiceErrorCode error_code = 1;
+}
+
+message GetGameServiceListParam
+{
+}
+
+message GetGameServiceListResult
+{
+    GatewayServiceErrorCode error_code = 1;
+
+    repeated GameServiceEndpoint addresses = 2;
+}

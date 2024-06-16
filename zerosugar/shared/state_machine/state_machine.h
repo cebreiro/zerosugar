@@ -86,16 +86,19 @@ namespace zerosugar
         virtual ~StateMachine() = default;
 
         template <typename T, typename... Args>
-        auto AddState(EState state, bool setCurrent, Args&&... args) -> StateTransition&
+        auto AddState(bool setCurrent, Args&&... args) -> StateTransition&
         {
+            auto instance = std::make_shared<T>(std::forward<Args>(args)...);
+            EState state = instance->GetState();
+
             assert(!_transitions.contains(state));
 
-            state_type* instance = _states.emplace_back(std::make_shared<T>(std::forward<Args>(args)...)).get();
+            state_type* ptr = _states.emplace_back(std::move(instance)).get();
             auto iter = _transitions.try_emplace(state, StateTransition{}).first;
 
             if (setCurrent)
             {
-                _currentState = instance;
+                _currentState = ptr;
                 _currentTransition = &iter->second;
             }
 

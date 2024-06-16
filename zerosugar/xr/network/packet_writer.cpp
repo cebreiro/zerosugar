@@ -1,5 +1,7 @@
 #include "packet_writer.h"
 
+#include "zerosugar/shared/network/buffer/buffer_serializable.h"
+
 namespace zerosugar::xr
 {
     void PacketWriter::Write(std::string_view str)
@@ -22,6 +24,25 @@ namespace zerosugar::xr
         }
 
         std::copy_n(buffer.begin(), buffer.size(), std::back_inserter(_buffer));
+    }
+
+    void PacketWriter::Write(const IBufferSerializable& object)
+    {
+        WriteObject(object);
+    }
+
+    void PacketWriter::WriteObject(const IBufferSerializable& object)
+    {
+        // TODO: optimize
+        Buffer buffer;
+        buffer.Add(buffer::Fragment::Create(256));
+
+        BufferWriter writer(buffer);
+        object.Serialize(writer);
+
+        const int64_t size = writer.GetWriteSize();
+
+        std::copy_n(buffer.begin(), size, std::back_inserter(_buffer));
     }
 
     auto PacketWriter::GetBuffer() const -> std::span<const char>

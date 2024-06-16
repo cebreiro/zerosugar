@@ -7,10 +7,12 @@
 #include "zerosugar/xr/application/all_in_one_app/all_in_one_app_config.h"
 #include "zerosugar/xr/network/rpc/rpc_client.h"
 #include "zerosugar/xr/network/rpc/rpc_server.h"
+#include "zerosugar/xr/network/server/lobby_server.h"
 #include "zerosugar/xr/network/server/login_server.h"
 #include "zerosugar/xr/service/database/database_service.h"
-#include "zerosugar/xr/service/orchestrator/orchestrator_service.h"
+#include "zerosugar/xr/service/gateway/gateway_service.h"
 #include "zerosugar/xr/service/login/login_service.h"
+#include "zerosugar/xr/service/game/game_service.h"
 
 namespace zerosugar::xr
 {
@@ -22,9 +24,13 @@ namespace zerosugar::xr
         , _rpcServer(std::make_shared<RPCServer>(_executor))
         , _rpcClient(std::make_shared<RPCClient>(_executor))
         , _loginServer(std::make_shared<LoginServer>(*_executor))
-        , _orchestratorService(std::make_shared<OrchestratorService>(_executor))
+        , _lobbyServer(std::make_shared<LobbyServer>(*_executor))
         , _loginService(std::make_shared<LoginService>(_executor))
         , _loginServiceProxy(std::make_shared<service::LoginServiceProxy>(_rpcClient))
+        , _gatewayService(std::make_shared<GatewayService>(_executor))
+        , _gatewayServiceProxy(std::make_shared<service::GatewayServiceProxy>(_rpcClient))
+        , _gameService(std::make_shared<GameService>(_executor))
+        , _gameServiceProxy(std::make_shared<service::GameServiceProxy>(_rpcClient))
         , _databaseService(std::make_shared<DatabaseService>(_executor, _connectionPool))
         , _databaseServiceProxy(std::make_shared<service::DatabaseServiceProxy>(_rpcClient))
     {
@@ -35,9 +41,15 @@ namespace zerosugar::xr
         serviceLocator.Add<RPCServer>(_rpcServer);
         serviceLocator.Add<RPCClient>(_rpcClient);
 
-        serviceLocator.Add<service::IOrchestratorService>(_orchestratorService);
         serviceLocator.Add<service::ILoginService>(_loginServiceProxy);
+        serviceLocator.Add<service::IGatewayService>(_gatewayServiceProxy);
+        serviceLocator.Add<service::IGameService>(_gameService);
         serviceLocator.Add<service::IDatabaseService>(_databaseServiceProxy);
+
+        _services.emplace_back(_loginService);
+        _services.emplace_back(_gatewayService);
+        _services.emplace_back(_gameService);
+        _services.emplace_back(_databaseService);
     }
 
     AllInOneApp::~AllInOneApp()
@@ -56,7 +68,13 @@ namespace zerosugar::xr
         ServiceLocator& serviceLocator = GetServiceLocator();
 
         InitializeService(serviceLocator);
-        InitializeNetwork(serviceLocator);
+        InitializeServer(serviceLocator);
+
+        service::GetLobbyCharactersParam param;
+        param.accountId = 123123;
+
+        auto f = _databaseService->GetLobbyCharactersAsync(std::move(param));
+        f.Get();
     }
 
     void AllInOneApp::OnShutdown()
@@ -139,20 +157,25 @@ namespace zerosugar::xr
     {
         ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize service", GetName()));
 
-        _orchestratorService->Initialize(serviceLocator);
-        _loginService->Initialize(serviceLocator);
-        _databaseService->Initialize(serviceLocator);
+        for (const SharedPtrNotNull<IService>& service : _services)
+        {
+            service->Initialize(serviceLocator);
+        }
 
         ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize service --> Done", GetName()));
     }
 
-    void AllInOneApp::InitializeNetwork(ServiceLocator& serviceLocator)
+    void AllInOneApp::InitializeServer(ServiceLocator& serviceLocator)
     {
         ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize network", GetName()));
 
         _rpcServer->Initialize(serviceLocator);
         _rpcClient->Initialize(serviceLocator);
+
         _loginServer->Initialize(serviceLocator);
+
+        _lobbyServer->Initialize(serviceLocator);
+        _lobbyServer->SetPublicIP(_config->lobbyIP);
 
         _rpcServer->StartUp(_config->rpcServerPort);
         assert(_rpcServer->IsOpen());
@@ -169,21 +192,23 @@ namespace zerosugar::xr
             future.Get();
 
             ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[rpc_client] connecting to rpc server --> Done"));
+        }
+        {
+            for (const SharedPtrNotNull<IService>& service : _services)
+            {
+                std::string name(service->GetName());
 
+                Future<void> future = _rpcClient->RegisterToServer(name, _config->rpcServerIP, _config->rpcServerPort);
+                future.Get();
 
-            const char* loginService = decltype(_loginService)::element_type::name;
-            _rpcClient->RegisterToServer(loginService, _config->rpcServerIP, _config->rpcServerPort).Get();
-            ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[rpc_client] register {} to rpc server --> Done", loginService));
-
-            const char* databaseService = decltype(_databaseService)::element_type::name;
-            _rpcClient->RegisterToServer(databaseService, _config->rpcServerIP, _config->rpcServerPort).Get();
-            ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[rpc_client] register {} to rpc server --> Done", databaseService));
+                ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[rpc_client] register {} to rpc server --> Done", name));
+            }
         }
 
         // TODO: remove hardcoding
         _loginServer->StartUp(8181);
+        _lobbyServer->StartUp(_config->lobbyPort);
 
         ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize network --> Done", GetName()));
-        
     }
 }

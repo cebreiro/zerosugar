@@ -14,6 +14,9 @@ namespace zerosugar::xr
         template <typename T> requires std::is_enum_v<T>
         auto Read() -> T;
 
+        template <typename T> requires std::derived_from<T, IBufferDeserializable>
+        auto Read() -> T;
+
         auto ReadString() -> std::string;
         void ReadBytes(std::span<char> buffer, int64_t size);
 
@@ -33,5 +36,14 @@ namespace zerosugar::xr
     auto PacketReader::Read() -> T
     {
         return static_cast<T>(Read<std::underlying_type_t<T>>());
+    }
+
+    template <typename T> requires std::derived_from<T, IBufferDeserializable>
+    auto PacketReader::Read() -> T
+    {
+        T result;
+        _bufferReader.Read(result);
+
+        return result;
     }
 }

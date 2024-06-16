@@ -9,7 +9,8 @@ namespace zerosugar::execution
 
 namespace zerosugar::xr
 {
-    class LoginServer : public Server
+    class LoginServer final
+        : public Server
     {
     public:
         explicit LoginServer(execution::AsioExecutor& executor);
@@ -21,13 +22,11 @@ namespace zerosugar::xr
         void OnReceive(Session& session, Buffer buffer) override;
         void OnError(Session& session, const boost::system::error_code& error) override;
 
-        static auto GetName() -> std::string_view;
-
-        auto SharedFromThis() -> SharedPtrNotNull<LoginServer>;
+        static std::string_view GetName();
 
     private:
         ServiceLocator _serviceLocator;
 
-        tbb::concurrent_hash_map<session::id_type, std::pair<Buffer, SharedPtrNotNull<LoginServerSessionStateMachine>>> _stateMachines;
+        tbb::concurrent_hash_map<session::id_type, SharedPtrNotNull<LoginServerSessionStateMachine>> _stateMachines;
     };
 }

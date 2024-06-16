@@ -22,11 +22,14 @@ add_custom_target(zerosugar_xr_generate_netcode
         --proto_path=${ZEROSUGAR_PROTOBUF_INCLUDE}
         --proto_path=./
         --plugin=protoc-gen-zerosugar_proto_code_generator=$<TARGET_FILE_DIR:zerosugar_proto_code_generator>/zerosugar_proto_code_generator.exe
-        --zerosugar_proto_code_generator_opt="{ \"\"include_path\"\" : \"\"zerosugar/xr/network/generated\"\",\"\"generator\"\" : \"\"xr_packet_code_generator\"\" }"
+        --zerosugar_proto_code_generator_opt="{ \"\"include_path\"\" : \"\"zerosugar/xr/network/model/generated\"\",\"\"generator\"\" : \"\"xr_packet_code_generator\"\" }"
         --zerosugar_proto_code_generator_out=./generated
         rpc.proto
         login_cs.proto
         login_sc.proto
+        lobby.proto
+        lobby_cs.proto
+        lobby_sc.proto
     WORKING_DIRECTORY ${ZEROSUGAR_XR_NETWORK_MODEL_DIR}
     DEPENDS zerosugar_proto_code_generator
 )

@@ -4,8 +4,9 @@ target_link_libraries(zerosugar_xr_application_all_in_one_app PRIVATE
     zerosugar_xr_pch
     zerosugar_xr_network
     zerosugar_xr_service_login
+    zerosugar_xr_service_gateway
+    zerosugar_xr_service_game
     zerosugar_xr_service_database
-    zerosugar_xr_service_orchestrator
 )
 
 target_precompile_headers(zerosugar_xr_application_all_in_one_app REUSE_FROM zerosugar_xr_pch)

@@ -9,7 +9,7 @@ namespace zerosugar::xr
     auto RPCPacketBuilder::MakePacket(const IPacket& packet) -> Buffer
     {
         using length_type = int32_t;
-        using opcode_type = int32_t;
+        using opcode_type = int16_t;
 
         PacketWriter packetWriter;
         packet.Serialize(packetWriter);

@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+import "option.proto";
+import "lobby.proto";
+
+package zerosugar.xr.network.lobby.cs;
+
+message Authenticate
+{
+    option (opcode) = 100;
+
+    string authentication_token = 1;
+}
+
+message CreateCharacter
+{
+    option (opcode) = 102;
+
+    LobbyCharacter character = 1;
+}
+
+message DeleteCharacter
+{
+    option (opcode) = 103;
+
+    int32 slot = 1;
+}
+
+message SelectCharacter
+{
+    option (opcode) = 104;
+
+    int32 slot = 1;
+}

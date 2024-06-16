@@ -4,9 +4,25 @@ using zerosugar::IService;
 using zerosugar::ServiceLocator;
 using zerosugar::ServiceLocatorT;
 
-class FooService : public IService {};
-class BarService : public IService {};
-class BazService : public IService {};
+class FooService : public IService
+{
+public:
+    auto GetName() const -> std::string_view override { return "foo_service"; }
+};
+class BarService : public IService
+{
+public:
+    auto GetName() const -> std::string_view override {
+        return "bar_service";
+    }
+};
+class BazService : public IService
+{
+public:
+    auto GetName() const -> std::string_view override {
+        return "baz_service";
+    }
+};
 
 TEST(ServiceLocatorTest, Add)
 {

@@ -6,6 +6,8 @@
 #include <map>
 #include <nlohmann/json.hpp>
 #include "zerosugar/xr/service/model/generated/database_service_message.h"
+#include "zerosugar/xr/service/model/generated/data_transfer_object_message.h"
+#include "zerosugar/xr/service/model/generated/data_transfer_object_message_json.h"
 
 namespace zerosugar::xr::service
 {
@@ -20,5 +22,17 @@ namespace zerosugar::xr::service
 
     void from_json(const nlohmann::json& j, GetAccountResult& item);
     void to_json(nlohmann::json& j, const GetAccountResult& item);
+
+    void from_json(const nlohmann::json& j, AddCharacterParam& item);
+    void to_json(nlohmann::json& j, const AddCharacterParam& item);
+
+    void from_json(const nlohmann::json& j, AddCharacterResult& item);
+    void to_json(nlohmann::json& j, const AddCharacterResult& item);
+
+    void from_json(const nlohmann::json& j, GetLobbyCharactersParam& item);
+    void to_json(nlohmann::json& j, const GetLobbyCharactersParam& item);
+
+    void from_json(const nlohmann::json& j, GetLobbyCharactersResult& item);
+    void to_json(nlohmann::json& j, const GetLobbyCharactersResult& item);
 
 }

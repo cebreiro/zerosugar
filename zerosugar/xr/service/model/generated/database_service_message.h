@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <nlohmann/json.hpp>
+#include "zerosugar/xr/service/model/generated/data_transfer_object_message.h"
 
 namespace zerosugar::xr::service
 {
@@ -37,11 +38,31 @@ namespace zerosugar::xr::service
     struct GetAccountResult
     {
         DatabaseServiceErrorCode errorCode = {};
+        DTOAccount account = {};
+    };
+
+    struct AddCharacterParam
+    {
+        DTOCharacterAdd characterAdd = {};
+        std::vector<DTOEquipItem> equipItems = {};
+        std::vector<DTOItem> items = {};
+    };
+
+    struct AddCharacterResult
+    {
+        DatabaseServiceErrorCode errorCode = {};
+        int64_t addedCharacterId = {};
+    };
+
+    struct GetLobbyCharactersParam
+    {
         int64_t accountId = {};
-        std::string account = {};
-        std::string password = {};
-        bool banned = {};
-        bool deleted = {};
+    };
+
+    struct GetLobbyCharactersResult
+    {
+        DatabaseServiceErrorCode errorCode = {};
+        std::vector<DTOLobbyCharacter> lobbyCharacters = {};
     };
 
 }

@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package zerosugar.xr.network.lobby;
+
+message LobbyCharacter
+{
+    int32 slot = 1;
+    string name = 2;
+    int32 level = 3;
+    int32 str = 4;
+    int32 dex = 5;
+    int32 intell = 6;
+    int32 job = 7;
+    int32 face_id = 8;
+    int32 hair_id = 9;
+    int32 gold = 10;
+    int32 zone_id = 11;
+    float x = 12;
+    float y = 13;
+    float z = 14;
+    int32 armor_id = 15;
+    int32 gloves_id = 16;
+    int32 shoes_id = 17;
+    int32 weapon_id = 18;
+    int32 gender = 19;
+}

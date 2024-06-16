@@ -14,6 +14,8 @@ namespace zerosugar
         bool Add(int64_t key, SharedPtrNotNull<ILogger> logger) override;
         auto Find(int64_t key) -> ILogger* override;
 
+        auto GetName() const -> std::string_view override;
+
     private:
         tbb::concurrent_unordered_map<int64_t, SharedPtrNotNull<ILogger>> _loggers;
     };

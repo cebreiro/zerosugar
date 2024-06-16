@@ -39,6 +39,9 @@ namespace zerosugar
         template <std::integral U>
         void Write(U value, int64_t offset);
 
+        template <std::floating_point U>
+        void Write(U value);
+
         auto GetWriteSize() const ->int64_t;
 
     protected:
@@ -103,6 +106,17 @@ namespace zerosugar
         const char* end = begin + sizeof(value);
 
         std::copy(begin, end, std::next(_container.begin(), offset));
+    }
+
+    template <stream_writable_concept T>
+    template <std::floating_point U>
+    void StreamWriter<T>::Write(U value)
+    {
+        const char* begin = reinterpret_cast<const char*>(&value);
+        const char* end = begin + sizeof(value);
+
+        std::copy(begin, end, std::back_inserter(_container));
+        _writeSize += sizeof(value);
     }
 
     template <stream_writable_concept T>

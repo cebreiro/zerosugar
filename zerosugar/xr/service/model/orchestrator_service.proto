@@ -1,7 +1,0 @@
-syntax = "proto3";
-
-package zerosugar.xr.service;
-
-service OrchestratorService
-{
-}

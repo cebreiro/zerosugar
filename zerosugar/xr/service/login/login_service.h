@@ -22,18 +22,19 @@ namespace zerosugar::xr
 
         auto LoginAsync(service::LoginParam param) -> Future<service::LoginResult> override;
         auto CreateAccountAsync(service::CreateAccountParam param) -> Future<service::CreateAccountResult> override;
+        auto AuthenticateAsync(service::AuthenticateParam param) -> Future<service::AuthenticateResult> override;
 
     private:
-        void ConfigureRemoteProcedureClient(RPCClient& rpcClient);
-
-        auto MakeSHA256(const std::string& str) -> std::string;
+        auto Encode(const std::string& str) -> std::string;
 
     private:
         SharedPtrNotNull<execution::IExecutor> _executor;
         SharedPtrNotNull<Strand> _strand;
         void* evpContext = nullptr;
 
-
         ServiceLocatorT<service::IDatabaseService> _serviceLocator;
+
+        std::mt19937 _mt;
+        std::unordered_map<std::string, int64_t> _authenticationTokens;
     };
 }

@@ -13,7 +13,7 @@
 namespace zerosugar
 {
     Server::Server(std::string name, execution::AsioExecutor& executor)
-        : _name(std::format("{}_server", std::move(name)))
+        : _name(std::move(name))
         , _executor(executor)
     {
     }

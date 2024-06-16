@@ -15,7 +15,7 @@ message LoginResult
 {
     option (opcode) = 1;
 
-    int32 error_code = 1;
+    bool success = 1;
     string authentication_token = 2;
     string lobby_ip = 3;
     int32 lobby_port = 4;

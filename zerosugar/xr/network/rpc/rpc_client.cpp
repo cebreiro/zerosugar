@@ -23,14 +23,17 @@ namespace zerosugar::xr
 
     auto RPCClient::ConnectAsync(std::string address, uint16_t port) -> Future<void>
     {
-        return _socket->ConnectAsync(std::move(address), port).Then(*_strand, [this]()
+        return _socket->ConnectAsync(std::move(address), port).Then(*_strand, [self = shared_from_this()]()
             {
-                Run();
+                self->Run();
             });
     }
 
     auto RPCClient::RegisterToServer(std::string serviceName, std::string ip, uint16_t port) -> Future<void>
     {
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
         co_await *_strand;
 
         assert(_socket->IsOpen());
@@ -59,10 +62,18 @@ namespace zerosugar::xr
         }
     }
 
+    auto RPCClient::GetName() const -> std::string_view
+    {
+        return "rpc_client";
+    }
+
     auto RPCClient::Run() -> Future<void>
     {
         assert(_socket->IsOpen());
         assert(ExecutionContext::IsEqualTo(*_strand));
+
+        [[maybe_unused]]
+        auto self = shared_from_this();
 
         Buffer receiveBuffer;
         receiveBuffer.Add(buffer::Fragment::Create(1024));
@@ -106,14 +117,21 @@ namespace zerosugar::xr
                     continue;
                 }
 
-                const int32_t opcode = reader.Read<int32_t>();
+                std::unique_ptr<IPacket> packet = network::CreateFrom(reader);
 
-                switch (opcode)
+                assert(reader.GetReadSize() == packetSize);
+
+                Buffer used;
+                [[maybe_unused]] bool sliced = receivedBuffer.SliceFront(used, packetSize);
+                assert(sliced);
+
+                receiveBuffer.MergeBack(std::move(used));
+
+                switch (packet->GetOpcode())
                 {
                 case network::ResultRegisterRPCClient::opcode:
                 {
-                    network::ResultRegisterRPCClient result;
-                    result.Deserialize(reader);
+                    const network::ResultRegisterRPCClient& result = *packet->Cast<network::ResultRegisterRPCClient>();
 
                     const auto iter = _registers.find(result.serviceName);
                     if (iter != _registers.end())
@@ -143,8 +161,7 @@ namespace zerosugar::xr
                 break;
                 case network::RequestRemoteProcedureCall::opcode:
                 {
-                    network::RequestRemoteProcedureCall request;
-                    request.Deserialize(reader);
+                    const network::RequestRemoteProcedureCall& request = *packet->Cast<network::RequestRemoteProcedureCall>();
 
                     Post(*_executor, [self = shared_from_this(), request = std::move(request)]() mutable
                         {
@@ -154,8 +171,7 @@ namespace zerosugar::xr
                 break;
                 case network::ResultRemoteProcedureCall::opcode:
                 {
-                    network::ResultRemoteProcedureCall result;
-                    result.Deserialize(reader);
+                    const network::ResultRemoteProcedureCall& result = *packet->Cast<network::ResultRemoteProcedureCall>();
 
                     HandleResultRemoteProcedureCall(result);
                 }
@@ -163,13 +179,6 @@ namespace zerosugar::xr
                 default:
                     assert(false);
                 }
-
-                assert(reader.GetReadSize() == packetSize);
-
-                Buffer used;
-                receivedBuffer.SliceFront(used, packetSize);
-
-                receiveBuffer.MergeBack(std::move(used));
             }
             else
             {
@@ -219,6 +228,9 @@ namespace zerosugar::xr
 
         try
         {
+            [[maybe_unused]]
+            auto self = shared_from_this();
+
             std::string result = co_await iter->second(request.parameter);
 
             resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorNone;

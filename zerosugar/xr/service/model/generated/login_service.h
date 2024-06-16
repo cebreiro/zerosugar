@@ -19,6 +19,8 @@ namespace zerosugar::xr::service
 
         virtual auto LoginAsync(LoginParam param) -> Future<LoginResult> = 0;
         virtual auto CreateAccountAsync(CreateAccountParam param) -> Future<CreateAccountResult> = 0;
+        virtual auto AuthenticateAsync(AuthenticateParam param) -> Future<AuthenticateResult> = 0;
+        auto GetName() const -> std::string_view override { return "LoginService"; }
     };
 
     class LoginServiceProxy final
@@ -30,7 +32,10 @@ namespace zerosugar::xr::service
 
         auto LoginAsync(LoginParam param) -> Future<LoginResult> override;
         auto CreateAccountAsync(CreateAccountParam param) -> Future<CreateAccountResult> override;
+        auto AuthenticateAsync(AuthenticateParam param) -> Future<AuthenticateResult> override;
     private:
         SharedPtrNotNull<RPCClient> _client;
     };
+
+    void Configure(const SharedPtrNotNull<ILoginService>& service, RPCClient& rpcClient);
 }

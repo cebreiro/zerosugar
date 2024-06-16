@@ -30,14 +30,7 @@ namespace zerosugar::xr
 
         bool IsOpen() const;
 
-        auto GetName() const -> std::string_view;
-
-    public:
-        using request_handler_type = std::function<Future<network::RemoteProcedureCallErrorCode>(const network::RequestRemoteProcedureCall&)>;
-        using result_handler_type = std::function<Future<void>(const network::ResultRemoteProcedureCall&)>;
-
-        void SetRequestHandler(const request_handler_type& handler);
-        void SetResultHandler(const result_handler_type& handler);
+        auto GetName() const -> std::string_view override;
 
     private:
         void HandleAccept(Session& session);
@@ -51,9 +44,6 @@ namespace zerosugar::xr
         SharedPtrNotNull<execution::AsioExecutor> _executor;
         SharedPtrNotNull<ServerImpl> _server;
         ServiceLocatorT<ILogService> _serviceLocator;
-
-        request_handler_type _requestHandler;
-        result_handler_type _resultHandler;
 
         using service_name_type = std::string;
         std::mutex _serviceSessionIdMutex;

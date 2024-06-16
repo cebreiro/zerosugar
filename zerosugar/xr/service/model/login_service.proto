@@ -6,6 +6,8 @@ service LoginService
 {
     rpc Login (LoginParam) returns (LoginResult);
     rpc CreateAccount (CreateAccountParam) returns (CreateAccountResult);
+
+    rpc Authenticate (AuthenticateParam) returns (AuthenticateResult);
 }
 
 enum LoginServiceErrorCode
@@ -13,7 +15,7 @@ enum LoginServiceErrorCode
     login_error_none = 0;
     login_error_fail_invalid = 1;
 
-    create_account_error_duplicated = 10001;
+    authenticate_error_fail = 300001;
 }
 
 message LoginParam
@@ -37,4 +39,15 @@ message CreateAccountParam
 message CreateAccountResult
 {
     LoginServiceErrorCode error_code = 1;
+}
+
+message AuthenticateParam
+{
+    string token = 1;
+}
+
+message AuthenticateResult
+{
+    LoginServiceErrorCode error_code = 1;
+    int64 account_id = 2;
 }

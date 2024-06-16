@@ -156,40 +156,40 @@ namespace zerosugar
 
                 const int64_t fieldIndent = methodIndent + 1;
 
-                //_cxxPrinter.AddLine(fieldIndent, "if (reader.Read<int32_t>() != {}::opcode)", message.name);
-                //{
-                //    BraceGuard ifBraceGuard(_cxxPrinter, fieldIndent, false);
-                //    _cxxPrinter.AddLine(fieldIndent + 1, "throw std::runtime_error(\"{} invalid opcode\");", message.name);
-                //}
-                //_cxxPrinter.BreakLine();
-
-                for (const Field& field : message.fields)
+                if (message.fields.empty())
                 {
-                    const std::string& type = ResolveType(field);
+                    _cxxPrinter.AddLine(fieldIndent, "(void)reader;");
+                }
+                else
+                {
+                    for (const Field& field : message.fields)
+                    {
+                        const std::string& type = ResolveType(field);
 
-                    if (type.starts_with("int") || type.starts_with("float") || type.starts_with("bool"))
-                    {
-                        _cxxPrinter.AddLine(fieldIndent, "{} = reader.Read<{}>();", field.name, type);
-                    }
-                    else if (type.starts_with("std::string"))
-                    {
-                        _cxxPrinter.AddLine(fieldIndent, "{} = reader.ReadString();", field.name);
-                    }
-                    else if (type.starts_with("std::vector"))
-                    {
-                        if (!field.option.sizeElement.has_value())
+                        if (type.starts_with("int") || type.starts_with("float") || type.starts_with("bool"))
                         {
-                            throw std::runtime_error(std::format("field option-size element- not found. field: {}", field.name));
+                            _cxxPrinter.AddLine(fieldIndent, "{} = reader.Read<{}>();", field.name, type);
                         }
+                        else if (type.starts_with("std::string"))
+                        {
+                            _cxxPrinter.AddLine(fieldIndent, "{} = reader.ReadString();", field.name);
+                        }
+                        else if (type.starts_with("std::vector"))
+                        {
+                            if (!field.option.sizeElement.has_value())
+                            {
+                                throw std::runtime_error(std::format("field option-size element- not found. field: {}", field.name));
+                            }
 
-                        _cxxPrinter.AddLine(fieldIndent, "for (int32_t i = 0; i < {}; ++i)", *field.option.sizeElement);
-                        BraceGuard loopBraceGuard(_cxxPrinter, fieldIndent, false);
+                            _cxxPrinter.AddLine(fieldIndent, "for (int32_t i = 0; i < {}; ++i)", *field.option.sizeElement);
+                            BraceGuard loopBraceGuard(_cxxPrinter, fieldIndent, false);
 
-                        _cxxPrinter.AddLine(fieldIndent + 1, "{}.emplace_back(reader.Read<{}>());", field.name, GetValueType(type));
-                    }
-                    else
-                    {
-                        _cxxPrinter.AddLine(fieldIndent, "{} = reader.Read<{}>();", field.name, type);
+                            _cxxPrinter.AddLine(fieldIndent + 1, "{}.emplace_back(reader.Read<{}>());", field.name, GetValueType(type));
+                        }
+                        else
+                        {
+                            _cxxPrinter.AddLine(fieldIndent, "{} = reader.Read<{}>();", field.name, type);
+                        }
                     }
                 }
             }
@@ -202,30 +202,35 @@ namespace zerosugar
 
                 const int64_t fieldIndent = methodIndent + 1;
 
-                //_cxxPrinter.AddLine(fieldIndent, "writer.Write<int32_t>({}::opcode);", message.name);
-
-                for (const Field& field : message.fields)
+                if (message.fields.empty())
                 {
-                    const std::string& type = ResolveType(field);
+                    _cxxPrinter.AddLine(fieldIndent, "(void)writer;");
+                }
+                else
+                {
+                    for (const Field& field : message.fields)
+                    {
+                        const std::string& type = ResolveType(field);
 
-                    if (type.starts_with("int") || type.starts_with("float") || type.starts_with("bool"))
-                    {
-                        _cxxPrinter.AddLine(fieldIndent, "writer.Write<{1}>({0});", field.name, type);
-                    }
-                    else if (type.starts_with("std::string"))
-                    {
-                        _cxxPrinter.AddLine(fieldIndent, "writer.Write({});", field.name);
-                    }
-                    else if (type.starts_with("std::vector"))
-                    {
-                        _cxxPrinter.AddLine(fieldIndent, "for (const auto& item : {})", field.name);
-                        BraceGuard loopBraceGuard(_cxxPrinter, fieldIndent, false);
+                        if (type.starts_with("int") || type.starts_with("float") || type.starts_with("bool"))
+                        {
+                            _cxxPrinter.AddLine(fieldIndent, "writer.Write<{1}>({0});", field.name, type);
+                        }
+                        else if (type.starts_with("std::string"))
+                        {
+                            _cxxPrinter.AddLine(fieldIndent, "writer.Write({});", field.name);
+                        }
+                        else if (type.starts_with("std::vector"))
+                        {
+                            _cxxPrinter.AddLine(fieldIndent, "for (const auto& item : {})", field.name);
+                            BraceGuard loopBraceGuard(_cxxPrinter, fieldIndent, false);
 
-                        _cxxPrinter.AddLine(fieldIndent + 1, "writer.WriteObject(item);");
-                    }
-                    else
-                    {
-                        _cxxPrinter.AddLine(fieldIndent, "writer.Write({});", field.name);
+                            _cxxPrinter.AddLine(fieldIndent + 1, "writer.WriteObject(item);");
+                        }
+                        else
+                        {
+                            _cxxPrinter.AddLine(fieldIndent, "writer.Write({});", field.name);
+                        }
                     }
                 }
             }

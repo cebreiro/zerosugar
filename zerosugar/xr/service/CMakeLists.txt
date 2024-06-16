@@ -1,6 +1,5 @@
 add_subdirectory(model)
 add_subdirectory(login)
-add_subdirectory(lobby)
-add_subdirectory(zone)
+add_subdirectory(gateway)
+add_subdirectory(game)
 add_subdirectory(database)
-add_subdirectory(orchestrator)

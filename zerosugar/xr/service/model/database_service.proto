@@ -1,11 +1,16 @@
 syntax = "proto3";
 
+import "data_transfer_object.proto";
+
 package zerosugar.xr.service;
 
 service DatabaseService
 {
     rpc AddAccount (AddAccountParam) returns (AddAccountResult);
     rpc GetAccount (GetAccountParam) returns (GetAccountResult);
+
+    rpc AddCharacter (AddCharacterParam) returns (AddCharacterResult);
+    rpc GetLobbyCharacters (GetLobbyCharactersParam) returns (GetLobbyCharactersResult);
 }
 
 enum DatabaseServiceErrorCode
@@ -38,9 +43,31 @@ message GetAccountResult
 {
     DatabaseServiceErrorCode error_code = 1;
 
-    int64 account_id = 2;
-    string account = 3;
-    string password = 4;
-    bool banned = 5;
-    bool deleted = 6;
+    DTOAccount account = 2;
+}
+
+message AddCharacterParam
+{
+    DTOCharacterAdd character_add = 1;
+    repeated DTOEquipItem equip_items = 2;
+    repeated DTOItem items = 3;
+}
+
+message AddCharacterResult
+{
+    DatabaseServiceErrorCode error_code = 1;
+
+    int64 added_character_id = 2;
+}
+
+message GetLobbyCharactersParam
+{
+    int64 account_id = 1;
+}
+
+message GetLobbyCharactersResult
+{
+    DatabaseServiceErrorCode error_code = 1;
+
+    repeated DTOLobbyCharacter lobby_characters = 2;
 }

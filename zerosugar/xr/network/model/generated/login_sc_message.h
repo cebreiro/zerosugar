@@ -25,7 +25,7 @@ namespace zerosugar::xr::network::login::sc
         void Serialize(PacketWriter& writer) const final;
         auto GetOpcode() const -> int32_t final { return opcode; }
 
-        int32_t errorCode = {};
+        bool success = {};
         std::string authenticationToken = {};
         std::string lobbyIp = {};
         int32_t lobbyPort = {};

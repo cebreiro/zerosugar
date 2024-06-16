@@ -32,4 +32,9 @@ namespace zerosugar
         auto iter = _loggers.find(key);
         return iter != _loggers.end() ? iter->second.get() : nullptr;
     }
+
+    auto LogService::GetName() const -> std::string_view
+    {
+        return "log_service";
+    }
 }

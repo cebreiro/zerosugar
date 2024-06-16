@@ -35,11 +35,13 @@ namespace zerosugar::xr
 
         auto RegisterToServer(std::string serviceName, std::string ip, uint16_t port) -> Future<void>;
 
-        template <typename T, typename Func>
-        bool RegisterProcedure(const std::string& rpcName, const Func& function);
+        template <typename Func>
+        bool RegisterProcedure(const std::string& serviceName, const std::string& rpcName, const Func& function);
 
         template <typename P, typename R>
         auto CallRemoteProcedure(std::string serviceName, std::string rpcName, const P& param) -> Future<R>;
+
+        auto GetName() const -> std::string_view override;
 
     private:
         auto Run() -> Future<void>;
@@ -65,13 +67,13 @@ namespace zerosugar::xr
         std::unordered_map<std::string, std::unordered_map<int32_t, send_callback_type>> _remoteProcedures;
     };
 
-    template <typename T, typename Func>
-    bool RPCClient::RegisterProcedure(const std::string& rpcName, const Func& function)
+    template <typename Func>
+    bool RPCClient::RegisterProcedure(const std::string& serviceName, const std::string& rpcName, const Func& function)
     {
         using TParam = std::tuple_element_t<0, boost::callable_traits::args_t<Func>>;
         using TResult = boost::callable_traits::return_type_t<Func>;
 
-        return _procedures.try_emplace(MakeProcedureKey(T::name, rpcName), [function](const std::string& str) -> Future<std::string>
+        return _procedures.try_emplace(MakeProcedureKey(serviceName, rpcName), [function](const std::string& str) -> Future<std::string>
             {
                 const nlohmann::json& input = nlohmann::json::parse(str);
                 TParam param = input.get<TParam>();
@@ -90,6 +92,9 @@ namespace zerosugar::xr
 
         const nlohmann::json input = param;
         std::string str = input.dump();
+
+        [[maybe_unused]]
+        auto self = shared_from_this();
 
         co_await *_strand;
 

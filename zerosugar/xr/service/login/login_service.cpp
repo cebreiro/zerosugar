@@ -11,6 +11,7 @@ namespace zerosugar::xr
         : _executor(std::move(executor))
         , _strand(std::make_shared<Strand>(_executor))
         , evpContext(EVP_MD_CTX_new())
+        , _mt(std::random_device{}())
     {
     }
 
@@ -25,7 +26,7 @@ namespace zerosugar::xr
 
         _serviceLocator = serviceLocator;
 
-        ConfigureRemoteProcedureClient(serviceLocator.Get<RPCClient>());
+        Configure(shared_from_this(), serviceLocator.Get<RPCClient>());
     }
 
     void LoginService::Shutdown()
@@ -40,23 +41,90 @@ namespace zerosugar::xr
 
     auto LoginService::LoginAsync(service::LoginParam param) -> Future<service::LoginResult>
     {
-        (void)param;
-        co_return{};
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
+        using namespace service;
+
+        co_await *_strand;
+        assert(ExecutionContext::IsEqualTo(*_strand));
+
+        IDatabaseService& databaseService = _serviceLocator.Get<IDatabaseService>();
+
+        GetAccountParam getAccountParam;
+        getAccountParam.account = param.account;
+
+        GetAccountResult getAccountResult = co_await databaseService.GetAccountAsync(std::move(getAccountParam));
+        assert(ExecutionContext::IsEqualTo(*_strand));
+
+
+        LoginResult result;
+
+        do
+        {
+            if (getAccountResult.errorCode != DatabaseServiceErrorCode::DatabaseErrorNone)
+            {
+                break;
+            }
+
+            const DTOAccount& dto = getAccountResult.account;
+
+            if (dto.banned || dto.deleted)
+            {
+                break;
+            }
+
+            const std::string& encoded = Encode(param.password);
+            if (encoded != dto.password)
+            {
+                break;
+            }
+
+            std::string token = [this, &param, &dto]()
+                {
+                    while (true)
+                    {
+                        std::uniform_int_distribution<int64_t> dist;
+
+                        const std::string& token = Encode(std::format("{}{}", param.account, dist(_mt)));
+
+                        if (_authenticationTokens.try_emplace(token, dto.accountId).second)
+                        {
+                            return token;
+                        }
+                    }
+                }();
+
+            result.errorCode = LoginServiceErrorCode::LoginErrorNone;
+            result.authenticationToken = std::move(token);
+
+            co_return result;
+            
+        } while (false);
+
+        result.errorCode = LoginServiceErrorCode::LoginErrorFailInvalid;
+
+        co_return result;
     }
 
     auto LoginService::CreateAccountAsync(service::CreateAccountParam param) -> Future<service::CreateAccountResult>
     {
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
         using namespace service;
 
         co_await *_strand;
+        assert(ExecutionContext::IsEqualTo(*_strand));
+
+        IDatabaseService& databaseService = _serviceLocator.Get<IDatabaseService>();
 
         AddAccountParam addAccountParam{
             .account = param.account,
-            .password = MakeSHA256(param.password),
+            .password = Encode(param.password),
         };
 
-        AddAccountResult addAccountResult = co_await _serviceLocator.Get<IDatabaseService>()
-            .AddAccountAsync(std::move(addAccountParam));
+        AddAccountResult addAccountResult = co_await databaseService.AddAccountAsync(std::move(addAccountParam));
 
         CreateAccountResult result;
         result.errorCode = addAccountResult.errorCode == DatabaseServiceErrorCode::DatabaseErrorNone
@@ -65,23 +133,32 @@ namespace zerosugar::xr
         co_return result;
     }
 
-    void LoginService::ConfigureRemoteProcedureClient(RPCClient& rpcClient)
+    auto LoginService::AuthenticateAsync(service::AuthenticateParam param) -> Future<service::AuthenticateResult>
     {
-        // TODO: code-generation
-        rpcClient.RegisterProcedure<LoginService>("LoginAsync",
-            [self = shared_from_this()](service::LoginParam param) -> Future<service::LoginResult>
-            {
-                return self->LoginAsync(std::move(param));
-            });
+        [[maybe_unused]]
+        auto self = shared_from_this();
 
-        rpcClient.RegisterProcedure<LoginService>("CreateAccountAsync",
-            [self = shared_from_this()](service::CreateAccountParam param) -> Future<service::CreateAccountResult>
-            {
-                return self->CreateAccountAsync(std::move(param));
-            });
+        using namespace service;
+
+        co_await *_strand;
+        assert(ExecutionContext::IsEqualTo(*_strand));
+
+        AuthenticateResult result;
+
+        auto iter = _authenticationTokens.find(param.token);
+        if (iter != _authenticationTokens.end())
+        {
+            result.accountId = iter->second;
+        }
+        else
+        {
+            result.errorCode = LoginServiceErrorCode::AuthenticateErrorFail;
+        }
+
+        co_return result;
     }
 
-    auto LoginService::MakeSHA256(const std::string& str) -> std::string
+    auto LoginService::Encode(const std::string& str) -> std::string
     {
         assert(ExecutionContext::IsEqualTo(*_strand));
 

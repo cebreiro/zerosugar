@@ -101,6 +101,7 @@ namespace zerosugar::future
     FutureAwaiter<T>::FutureAwaiter(Future<T> future)
         : _context(std::move(future._context))
     {
+        assert(_context);
     }
 
     template <typename T>

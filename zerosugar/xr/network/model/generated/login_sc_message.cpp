@@ -17,7 +17,7 @@ namespace zerosugar::xr::network::login::sc
 
     void LoginResult::Deserialize(PacketReader& reader)
     {
-        errorCode = reader.Read<int32_t>();
+        success = reader.Read<bool>();
         authenticationToken = reader.ReadString();
         lobbyIp = reader.ReadString();
         lobbyPort = reader.Read<int32_t>();
@@ -25,7 +25,7 @@ namespace zerosugar::xr::network::login::sc
 
     void LoginResult::Serialize(PacketWriter& writer) const
     {
-        writer.Write<int32_t>(errorCode);
+        writer.Write<bool>(success);
         writer.Write(authenticationToken);
         writer.Write(lobbyIp);
         writer.Write<int32_t>(lobbyPort);

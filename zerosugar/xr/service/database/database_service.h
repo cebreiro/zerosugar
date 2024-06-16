@@ -1,6 +1,11 @@
 #pragma once
 #include "zerosugar/xr/service/model/generated/database_service.h"
 
+namespace zerosugar
+{
+    class DatabaseError;
+}
+
 namespace zerosugar::db
 {
     class ConnectionPool;
@@ -21,9 +26,11 @@ namespace zerosugar::xr
 
         auto AddAccountAsync(service::AddAccountParam param) -> Future<service::AddAccountResult> override;
         auto GetAccountAsync(service::GetAccountParam param) -> Future<service::GetAccountResult> override;
+        auto AddCharacterAsync(service::AddCharacterParam param) -> Future<service::AddCharacterResult> override;
+        auto GetLobbyCharactersAsync(service::GetLobbyCharactersParam param) -> Future<service::GetLobbyCharactersResult> override;
 
     private:
-        void ConfigureRemoteProcedureClient(RPCClient& rpcClient);
+        void LogError(std::string_view function, const DatabaseError& error);
 
     private:
         SharedPtrNotNull<execution::IExecutor> _executor;

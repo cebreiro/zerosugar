@@ -6,8 +6,13 @@ namespace zerosugar::xr
     {
         int64_t workerCount = std::thread::hardware_concurrency();
         std::string logFilePath;
+
         std::string rpcServerIP;
         uint16_t rpcServerPort;
+
+        std::string lobbyIP;
+        uint16_t lobbyPort = 0;
+
         std::string databaseIP;
         uint16_t databasePort = 0;
         std::string databaseUser;
@@ -21,6 +26,8 @@ namespace zerosugar::xr
             config.logFilePath = j.at("log_file_path").get<std::string>();
             config.rpcServerIP = j.at("rpc_server_ip").get<std::string>();
             config.rpcServerPort = j.at("rpc_server_port").get<uint16_t>();
+            config.lobbyIP = j.at("lobby_ip").get<std::string>();
+            config.lobbyPort = j.at("lobby_port").get<uint16_t>();
             config.databaseIP = j.at("database_ip").get<std::string>();
             config.databasePort = j.at("database_port").get<uint16_t>();
             config.databaseUser = j.at("database_user").get<std::string>();

@@ -46,11 +46,7 @@ namespace zerosugar::xr::service
     void from_json(const nlohmann::json& j, GetAccountResult& item)
     {
         j.at("errorCode").get_to(item.errorCode);
-        j.at("accountId").get_to(item.accountId);
         j.at("account").get_to(item.account);
-        j.at("password").get_to(item.password);
-        j.at("banned").get_to(item.banned);
-        j.at("deleted").get_to(item.deleted);
     }
 
     void to_json(nlohmann::json& j, const GetAccountResult& item)
@@ -58,11 +54,67 @@ namespace zerosugar::xr::service
         j = nlohmann::json
             {
                 { "errorCode", item.errorCode },
-                { "accountId", item.accountId },
                 { "account", item.account },
-                { "password", item.password },
-                { "banned", item.banned },
-                { "deleted", item.deleted },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, AddCharacterParam& item)
+    {
+        j.at("characterAdd").get_to(item.characterAdd);
+        j.at("equipItems").get_to(item.equipItems);
+        j.at("items").get_to(item.items);
+    }
+
+    void to_json(nlohmann::json& j, const AddCharacterParam& item)
+    {
+        j = nlohmann::json
+            {
+                { "characterAdd", item.characterAdd },
+                { "equipItems", item.equipItems },
+                { "items", item.items },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, AddCharacterResult& item)
+    {
+        j.at("errorCode").get_to(item.errorCode);
+        j.at("addedCharacterId").get_to(item.addedCharacterId);
+    }
+
+    void to_json(nlohmann::json& j, const AddCharacterResult& item)
+    {
+        j = nlohmann::json
+            {
+                { "errorCode", item.errorCode },
+                { "addedCharacterId", item.addedCharacterId },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, GetLobbyCharactersParam& item)
+    {
+        j.at("accountId").get_to(item.accountId);
+    }
+
+    void to_json(nlohmann::json& j, const GetLobbyCharactersParam& item)
+    {
+        j = nlohmann::json
+            {
+                { "accountId", item.accountId },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, GetLobbyCharactersResult& item)
+    {
+        j.at("errorCode").get_to(item.errorCode);
+        j.at("lobbyCharacters").get_to(item.lobbyCharacters);
+    }
+
+    void to_json(nlohmann::json& j, const GetLobbyCharactersResult& item)
+    {
+        j = nlohmann::json
+            {
+                { "errorCode", item.errorCode },
+                { "lobbyCharacters", item.lobbyCharacters },
             };
     }
 

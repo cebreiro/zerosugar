@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+import "option.proto";
+import "lobby.proto";
+
+package zerosugar.xr.network.lobby.sc;
+
+message FailAuthenticate
+{
+    option (opcode) = 100;
+}
+
+message ResultCreateCharacter
+{
+    option (opcode) = 101;
+
+    bool success = 1;
+    LobbyCharacter character = 2;
+}
+
+message SuccessDeleteCharacter
+{
+    option (opcode) = 102;
+
+    int32 slot = 1;
+}
+
+message NotifyCharacterList
+{
+    option (opcode) = 103;
+
+    int32 count = 1;
+    repeated LobbyCharacter character = 2 [(size_element) = "count"];
+}
+
+message SuccessSelectCharacter
+{
+    option (opcode) = 104;
+
+    string ip = 1;
+    int32 port = 2;
+}

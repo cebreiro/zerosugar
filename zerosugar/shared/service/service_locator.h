@@ -45,6 +45,7 @@ namespace zerosugar
     bool ServiceLocator::Add(SharedPtrNotNull<IService> service)
     {
         const int64_t id = service_id_type::Get<T>();
+        assert(dynamic_cast<const T*>(service.get()) != nullptr);
 
         return _services.try_emplace(id, std::move(service)).second;
     }

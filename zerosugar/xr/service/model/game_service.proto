@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package zerosugar.xr.service;
+
+service GameService
+{
+    rpc GetName (GetNameParam) returns (GetNameResult);
+
+    rpc RequestSnowflakeKey (RequestSnowflakeKeyParam) returns (RequestSnowflakeKeyResult);
+    rpc ReturnSnowflakeKey (ReturnSnowflakeKeyParam) returns (ReturnSnowflakeKeyResult);
+}
+
+enum GameServiceErrorCode
+{
+    game_error_none = 0;
+    game_error_internal_error = 1;
+
+    request_snowflake_key_error_out_of_pool = 30001;
+    return_snowflake_key_error_invalid_key = 40001;
+}
+
+message GetNameParam
+{
+}
+
+message GetNameResult
+{
+    string name = 1;
+}
+
+message RequestSnowflakeKeyParam
+{
+    string requester = 1;
+}
+
+message RequestSnowflakeKeyResult
+{
+    GameServiceErrorCode error_code = 1;
+    int32 snowflake_key = 2;
+}
+
+message ReturnSnowflakeKeyParam
+{
+    string requester = 1;
+    int32 snowflake_key = 2;
+}
+
+message ReturnSnowflakeKeyResult
+{
+    GameServiceErrorCode error_code = 1;
+}

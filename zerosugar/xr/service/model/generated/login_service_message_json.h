@@ -21,4 +21,10 @@ namespace zerosugar::xr::service
     void from_json(const nlohmann::json& j, CreateAccountResult& item);
     void to_json(nlohmann::json& j, const CreateAccountResult& item);
 
+    void from_json(const nlohmann::json& j, AuthenticateParam& item);
+    void to_json(nlohmann::json& j, const AuthenticateParam& item);
+
+    void from_json(const nlohmann::json& j, AuthenticateResult& item);
+    void to_json(nlohmann::json& j, const AuthenticateResult& item);
+
 }

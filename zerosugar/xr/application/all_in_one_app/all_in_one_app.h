@@ -16,18 +16,21 @@ namespace zerosugar::xr
     class RPCServer;
     class RPCClient;
     class LoginServer;
+    class LobbyServer;
 }
 
 namespace zerosugar::xr
 {
-    class OrchestratorService;
     class LoginService;
+    class GatewayService;
+    class GameService;
     class DatabaseService;
 
     namespace service
     {
-        class OrchestratorServiceProxy;
         class LoginServiceProxy;
+        class GatewayServiceProxy;
+        class GameServiceProxy;
         class DatabaseServiceProxy;
     }
 }
@@ -53,7 +56,7 @@ namespace zerosugar::xr
         void InitializeExecutor();
         void InitializeDatabaseConnection();
         void InitializeService(ServiceLocator& serviceLocator);
-        void InitializeNetwork(ServiceLocator& serviceLocator);
+        void InitializeServer(ServiceLocator& serviceLocator);
 
     public:
         auto GetName() const -> std::string_view override;
@@ -69,13 +72,19 @@ namespace zerosugar::xr
         SharedPtrNotNull<RPCServer> _rpcServer;
         SharedPtrNotNull<RPCClient> _rpcClient;
         SharedPtrNotNull<LoginServer> _loginServer;
+        SharedPtrNotNull<LobbyServer> _lobbyServer;
 
         // service
-        SharedPtrNotNull<OrchestratorService> _orchestratorService;
-        SharedPtrNotNull<service::OrchestratorServiceProxy> _orchestratorServiceProxy;
+        std::vector<SharedPtrNotNull<IService>> _services;
 
         SharedPtrNotNull<LoginService> _loginService;
         SharedPtrNotNull<service::LoginServiceProxy> _loginServiceProxy;
+
+        SharedPtrNotNull<GatewayService> _gatewayService;
+        SharedPtrNotNull<service::GatewayServiceProxy> _gatewayServiceProxy;
+
+        SharedPtrNotNull<GameService> _gameService;
+        SharedPtrNotNull<service::GameServiceProxy> _gameServiceProxy;
 
         SharedPtrNotNull<DatabaseService> _databaseService;
         SharedPtrNotNull<service::DatabaseServiceProxy> _databaseServiceProxy;

@@ -1,0 +1,237 @@
+[
+	{
+		"Name": "1010001",
+		"ResourcePath": "/Game/Resources/Characters/Human/Mesh/SK_human_naked_bindpos.SK_human_naked_bindpos",
+		"ResourceName": "SK_Human"
+	},
+	{
+		"Name": "3010001",
+		"ResourcePath": "/Game/Resources/Characters/Human/Anim/ABP_human.ABP_human_C",
+		"ResourceName": "ABP_Human"
+	},
+	{
+		"Name": "10010001",
+		"ResourcePath": "StaticMesh'/Game/Resources/Character/PlayerCharacter/Mesh/Weapon/1/SM_Character_human_male_weapon_common.SM_Character_human_male_weapon_common'",
+		"ResourceName": "SM_Weapon1"
+	},
+	{
+		"Name": "10010002",
+		"ResourcePath": "StaticMesh'/Game/Resources/Character/PlayerCharacter/Mesh/Weapon/2/SM_Character_human_male_weapon_rare.SM_Character_human_male_weapon_rare'",
+		"ResourceName": "SM_Weapon2"
+	},
+	{
+		"Name": "10010003",
+		"ResourcePath": "StaticMesh'/Game/Resources/Character/PlayerCharacter/Mesh/Weapon/3/SM_Character_human_male_weapon_unique.SM_Character_human_male_weapon_unique'",
+		"ResourceName": "SM_Weapon3"
+	},
+	{
+		"Name": "10010004",
+		"ResourcePath": "StaticMesh'/Game/Resources/Character/PlayerCharacter/Mesh/Weapon/4/SM_Character_human_male_weapon_epic.SM_Character_human_male_weapon_epic'",
+		"ResourceName": "SM_Weapon4"
+	},
+	{
+		"Name": "20010001",
+		"ResourcePath": "/Game/Resources/Character/PlayerCharacter/Mesh/Body/SK_Character_human_male_body_common.SK_Character_human_male_body_common",
+		"ResourceName": "SK_Body1"
+	},
+	{
+		"Name": "20010002",
+		"ResourcePath": "/Game/Resources/Character/PlayerCharacter/Mesh/Face/SK_Character_human_male_face_common.SK_Character_human_male_face_common",
+		"ResourceName": "SK_Face"
+	},
+	{
+		"Name": "20010003",
+		"ResourcePath": "/Game/Resources/Character/PlayerCharacter/Mesh/Hair/SK_Character_human_male_hair_common.SK_Character_human_male_hair_common",
+		"ResourceName": "SK_Hair"
+	},
+	{
+		"Name": "20010004",
+		"ResourcePath": "/Game/Resources/Character/PlayerCharacter/Mesh/Hand/SK_Character_human_male_hand_common.SK_Character_human_male_hand_common",
+		"ResourceName": "SK_Hand1"
+	},
+	{
+		"Name": "20010005",
+		"ResourcePath": "/Game/Resources/Character/PlayerCharacter/Mesh/Leg/SK_Character_human_male_leg_common.SK_Character_human_male_leg_common",
+		"ResourceName": "SK_Leg1"
+	},
+	{
+		"Name": "20010006",
+		"ResourcePath": "/Game/Resources/Character/PlayerCharacter/Mesh/Body/SK_Character_human_male_body_Rare.SK_Character_human_male_body_Rare",
+		"ResourceName": "SK_Body2"
+	},
+	{
+		"Name": "20010007",
+		"ResourcePath": "/Game/Resources/Character/PlayerCharacter/Mesh/Hand/SK_Character_human_male_hand_Rare.SK_Character_human_male_hand_Rare",
+		"ResourceName": "SK_Hand2"
+	},
+	{
+		"Name": "20010008",
+		"ResourcePath": "/Game/Resources/Character/PlayerCharacter/Mesh/Leg/SK_Character_human_male_leg_Rare.SK_Character_human_male_leg_Rare",
+		"ResourceName": "SK_Leg2"
+	},
+	{
+		"Name": "20010009",
+		"ResourcePath": "/Game/Resources/Character/PlayerCharacter/Mesh/Body/SK_Character_human_male_body_unique.SK_Character_human_male_body_unique",
+		"ResourceName": "SK_Body3"
+	},
+	{
+		"Name": "20010010",
+		"ResourcePath": "/Game/Resources/Character/PlayerCharacter/Mesh/Leg/SK_Character_human_male_leg_unique.SK_Character_human_male_leg_unique",
+		"ResourceName": "SK_Leg3"
+	},
+	{
+		"Name": "20010011",
+		"ResourcePath": "/Game/Resources/Character/PlayerCharacter/Mesh/Hand/SK_Character_human_male_hand_unique.SK_Character_human_male_hand_unique",
+		"ResourceName": "SK_Hand3"
+	},
+	{
+		"Name": "20010012",
+		"ResourcePath": "/Game/Resources/Character/PlayerCharacter/Mesh/Body/SK_Character_human_male_body_epic.SK_Character_human_male_body_epic",
+		"ResourceName": "SK_Body4"
+	},
+	{
+		"Name": "20010013",
+		"ResourcePath": "/Game/Resources/Character/PlayerCharacter/Mesh/Hand/SK_Character_human_male_hand_epic.SK_Character_human_male_hand_epic",
+		"ResourceName": "SK_Hand4"
+	},
+	{
+		"Name": "20010014",
+		"ResourcePath": "/Game/Resources/Character/PlayerCharacter/Mesh/Leg/SK_Character_human_male_leg_epic.SK_Character_human_male_leg_epic",
+		"ResourceName": "SK_Leg4"
+	},
+	{
+		"Name": "20010015",
+		"ResourcePath": "SkeletalMesh'/Game/Resources/Character/Monster/UndeadSpearman/Mesh/SK_UndeadSpearman.SK_UndeadSpearman'",
+		"ResourceName": "SK_UndeadSpearman"
+	},
+	{
+		"Name": "20010016",
+		"ResourcePath": "/Game/Resources/Character/PlayerCharacter/Mesh/Body/SK_Character_human_male_body_naked.SK_Character_human_male_body_naked",
+		"ResourceName": "SK_Body0"
+	},
+	{
+		"Name": "20010017",
+		"ResourcePath": "/Game/Resources/Character/PlayerCharacter/Mesh/Hand/SK_Character_human_male_hand_naked.SK_Character_human_male_hand_naked",
+		"ResourceName": "SK_Hand0"
+	},
+	{
+		"Name": "20010018",
+		"ResourcePath": "/Game/Resources/Character/PlayerCharacter/Mesh/Leg/SK_Character_human_male_leg_naked.SK_Character_human_male_leg_naked",
+		"ResourceName": "SK_Leg0"
+	},
+	{
+		"Name": "30010001",
+		"ResourcePath": "AnimBlueprint'/Game/Resources/Character/Monster/UndeadSpearman/Anim/ABP_UndeadSpearman.ABP_UndeadSpearman_C'",
+		"ResourceName": "ABP_UnrdeadSpearman"
+	},
+	{
+		"Name": "60040101",
+		"ResourcePath": "/Game/Resources/UI/Icon/etc/TEX_icon_diamond.TEX_icon_diamond",
+		"ResourceName": "Icon_01"
+	},
+	{
+		"Name": "60040102",
+		"ResourcePath": "/Game/Resources/UI/Icon/etc/TEX_icon_eye.TEX_icon_eye",
+		"ResourceName": "Icon_02"
+	},
+	{
+		"Name": "60040103",
+		"ResourcePath": "/Game/Resources/UI/Icon/etc/TEX_icon_heart.TEX_icon_heart",
+		"ResourceName": "Icon_03"
+	},
+	{
+		"Name": "60040201",
+		"ResourcePath": "Texture2D'/Game/Resources/UI/Icon/consumption/TEX_icon_hp_potion1.TEX_icon_hp_potion1'",
+		"ResourceName": "Icon_04"
+	},
+	{
+		"Name": "60040202",
+		"ResourcePath": "Texture2D'/Game/Resources/UI/Icon/consumption/TEX_icon_hp_potion2.TEX_icon_hp_potion2'",
+		"ResourceName": "Icon_05"
+	},
+	{
+		"Name": "60040203",
+		"ResourcePath": "Texture2D'/Game/Resources/UI/Icon/consumption/TEX_icon_hp_potion3.TEX_icon_hp_potion3'",
+		"ResourceName": "Icon_06"
+	},
+	{
+		"Name": "60040301",
+		"ResourcePath": "Texture2D'/Game/Resources/UI/Icon/equip/body/TEX_icon_body1.TEX_icon_body1'",
+		"ResourceName": "Icon_07"
+	},
+	{
+		"Name": "60040302",
+		"ResourcePath": "Texture2D'/Game/Resources/UI/Icon/equip/body/TEX_icon_body2.TEX_icon_body2'",
+		"ResourceName": "Icon_08"
+	},
+	{
+		"Name": "60040303",
+		"ResourcePath": "Texture2D'/Game/Resources/UI/Icon/equip/body/TEX_icon_body3.TEX_icon_body3'",
+		"ResourceName": "Icon_09"
+	},
+	{
+		"Name": "60040304",
+		"ResourcePath": "Texture2D'/Game/Resources/UI/Icon/equip/body/TEX_icon_body4.TEX_icon_body4'",
+		"ResourceName": "Icon_10"
+	},
+	{
+		"Name": "60040305",
+		"ResourcePath": "Texture2D'/Game/Resources/UI/Icon/equip/hand/TEX_icon_hand1.TEX_icon_hand1'",
+		"ResourceName": "Icon_11"
+	},
+	{
+		"Name": "60040306",
+		"ResourcePath": "Texture2D'/Game/Resources/UI/Icon/equip/hand/TEX_icon_hand2.TEX_icon_hand2'",
+		"ResourceName": "Icon_12"
+	},
+	{
+		"Name": "60040307",
+		"ResourcePath": "Texture2D'/Game/Resources/UI/Icon/equip/hand/TEX_icon_hand3.TEX_icon_hand3'",
+		"ResourceName": "Icon_13"
+	},
+	{
+		"Name": "60040308",
+		"ResourcePath": "Texture2D'/Game/Resources/UI/Icon/equip/hand/TEX_icon_hand4.TEX_icon_hand4'",
+		"ResourceName": "Icon_14"
+	},
+	{
+		"Name": "60040309",
+		"ResourcePath": "Texture2D'/Game/Resources/UI/Icon/equip/foot/TEX_icon_foot1.TEX_icon_foot1'",
+		"ResourceName": "Icon_15"
+	},
+	{
+		"Name": "60040310",
+		"ResourcePath": "Texture2D'/Game/Resources/UI/Icon/equip/foot/TEX_icon_foot2.TEX_icon_foot2'",
+		"ResourceName": "Icon_16"
+	},
+	{
+		"Name": "60040311",
+		"ResourcePath": "Texture2D'/Game/Resources/UI/Icon/equip/foot/TEX_icon_foot3.TEX_icon_foot3'",
+		"ResourceName": "Icon_17"
+	},
+	{
+		"Name": "60040312",
+		"ResourcePath": "Texture2D'/Game/Resources/UI/Icon/equip/foot/TEX_icon_foot4.TEX_icon_foot4'",
+		"ResourceName": "Icon_18"
+	},
+	{
+		"Name": "60040313",
+		"ResourcePath": "Texture2D'/Game/Resources/UI/Icon/equip/weapon/TEX_icon_weapon1.TEX_icon_weapon1'",
+		"ResourceName": "Icon_19"
+	},
+	{
+		"Name": "60040314",
+		"ResourcePath": "Texture2D'/Game/Resources/UI/Icon/equip/weapon/TEX_icon_weapon2.TEX_icon_weapon2'",
+		"ResourceName": "Icon_20"
+	},
+	{
+		"Name": "60040315",
+		"ResourcePath": "Texture2D'/Game/Resources/UI/Icon/equip/weapon/TEX_icon_weapon3.TEX_icon_weapon3'",
+		"ResourceName": "Icon_21"
+	},
+	{
+		"Name": "60040316",
+		"ResourcePath": "Texture2D'/Game/Resources/UI/Icon/equip/weapon/TEX_icon_weapon4.TEX_icon_weapon4'",
+		"ResourceName": "Icon_22"
+	}
+]

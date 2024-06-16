@@ -20,5 +20,7 @@ namespace zerosugar
         virtual void Initialize([[maybe_unused]] ServiceLocator& serviceLocator) {}
         virtual void Shutdown() {}
         virtual void Join([[maybe_unused]] std::vector<boost::system::error_code>& errors) {}
+
+        virtual auto GetName() const->std::string_view = 0;
     };
 }

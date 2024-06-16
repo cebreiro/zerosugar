@@ -1,5 +1,6 @@
 #include "rpc_server.h"
 
+#include <boost/scope/scope_exit.hpp>
 #include "zerosugar/shared/execution/executor/impl/asio_executor.h"
 #include "zerosugar/shared/network/session/session.h"
 #include "zerosugar/xr/network/packet_reader.h"
@@ -76,16 +77,6 @@ namespace zerosugar::xr
         return "rpc_server";
     }
 
-    void RPCServer::SetRequestHandler(const request_handler_type& handler)
-    {
-        _requestHandler = handler;
-    }
-
-    void RPCServer::SetResultHandler(const result_handler_type& handler)
-    {
-        _resultHandler = handler;
-    }
-
     void RPCServer::HandleAccept(Session& session)
     {
         decltype(_receiveBuffers)::accessor accessor;
@@ -131,26 +122,28 @@ namespace zerosugar::xr
             return;
         }
 
-        PacketReader packetReader(receiveBuffer->cbegin(), receiveBuffer->cend());
+        PacketReader reader(receiveBuffer->cbegin(), receiveBuffer->cend());
 
-        const int32_t packetSize = packetReader.Read<int32_t>();
+        const int32_t packetSize = reader.Read<int32_t>();
         if (receivedSize < packetSize)
         {
             return;
         }
 
-        const int32_t opcode = packetReader.Read<int32_t>();
-        switch (opcode)
+        std::unique_ptr<IPacket> packet = CreateFrom(reader);
+
+        Buffer temp;
+        [[maybe_unused]] bool sliced = receiveBuffer->SliceFront(temp, packetSize);
+        assert(sliced);
+
+        switch (packet->GetOpcode())
         {
         case RequestRegisterRPCClient::opcode:
         {
-            RequestRegisterRPCClient request;
-            request.Deserialize(packetReader);
+            const RequestRegisterRPCClient& request = *packet->Cast<RequestRegisterRPCClient>();
 
             const bool inserted = [&]() -> bool
                 {
-                    std::shared_ptr<Session> shared = session.shared_from_this();
-
                     decltype(_sessions)::accessor accessor;
                     if (_sessions.insert(accessor, request.serviceName))
                     {
@@ -181,70 +174,41 @@ namespace zerosugar::xr
         break;
         case RequestRemoteProcedureCall::opcode:
         {
-            RequestRemoteProcedureCall request;
-            request.Deserialize(packetReader);
+            const RequestRemoteProcedureCall& request = *packet->Cast<RequestRemoteProcedureCall>();
 
-            assert(_requestHandler);
+            const std::shared_ptr<Session>& target = FindSession(request.serviceName);
+            if (target)
+            {
+                target->Send(RPCPacketBuilder::MakePacket(request));
+            }
+            else
+            {
+                ZEROSUGAR_LOG_ERROR(_serviceLocator,
+                    std::format("[{}] fail to find service. service_name: {}", GetName(), request.serviceName));
 
-            _requestHandler(request)
-                .Then(*_executor,
-                    [self = shared_from_this(), sessionId = session.GetId(), request = request]
-                    (RemoteProcedureCallErrorCode ec) mutable
-                    {
-                        do
-                        {
-                            if (ec != RemoteProcedureCallErrorCode::RpcErrorNone)
-                            {
-                                break;
-                            }
+                ResultRemoteProcedureCall result;
+                result.errorCode = RemoteProcedureCallErrorCode::RpcErrorInternalError;
+                result.rpcId = request.rpcId;
+                result.serviceName = request.serviceName;
 
-                            std::shared_ptr<Session> session = self->FindSession(request.serviceName);
-                            if (!session)
-                            {
-                                ZEROSUGAR_LOG_ERROR(self->_serviceLocator,
-                                    std::format("[{}] fail to find service. service_name: {}", self->GetName(), request.serviceName));
-
-                                ec = RemoteProcedureCallErrorCode::RpcErrorInternalError;
-
-                                break;
-                            }
-
-                            session->Send(RPCPacketBuilder::MakePacket(request));
-
-                            return;
-
-                        } while (false);
-
-                        ResultRemoteProcedureCall result;
-                        result.errorCode = ec;
-                        result.rpcId = request.rpcId;
-                        result.serviceName = request.serviceName;
-
-                        self->SendTo(sessionId, RPCPacketBuilder::MakePacket(result));
-                    });
+                session.Send(RPCPacketBuilder::MakePacket(result));
+            }
         }
         break;
         case ResultRemoteProcedureCall::opcode:
         {
-            ResultRemoteProcedureCall result;
-            result.Deserialize(packetReader);
+            const ResultRemoteProcedureCall& result = *packet->Cast<ResultRemoteProcedureCall>();
 
-            assert(_resultHandler);
-
-            _resultHandler(result)
-                .Then(*_executor, [self = shared_from_this(), result = result]()
-                    {
-                        std::shared_ptr<Session> session = self->FindSession(result.serviceName);
-                        if (!session)
-                        {
-                            ZEROSUGAR_LOG_ERROR(self->_serviceLocator,
-                                std::format("[{}] fail to find service. service_name: {}", self->GetName(), result.serviceName));
-
-                            return;
-                        }
-
-                        session->Send(RPCPacketBuilder::MakePacket(result));
-                    });
+            const std::shared_ptr<Session>& target = FindSession(result.serviceName);
+            if (target)
+            {
+                target->Send(RPCPacketBuilder::MakePacket(result));
+            }
+            else
+            {
+                ZEROSUGAR_LOG_ERROR(_serviceLocator,
+                    std::format("[{}] fail to find service. service_name: {}", GetName(), result.serviceName));
+            }
         }
         break;
         default:
@@ -252,10 +216,6 @@ namespace zerosugar::xr
 
             throw std::runtime_error(std::format("invalid rpc packet opcode: {}", opcode));
         }
-
-        Buffer temp;
-        [[maybe_unused]] bool sliced = receiveBuffer->SliceFront(temp, packetSize);
-        assert(sliced);
     }
 
     auto RPCServer::FindSession(const std::string& serviceName) const -> std::shared_ptr<Session>
