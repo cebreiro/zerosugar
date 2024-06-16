@@ -32,7 +32,11 @@ namespace zerosugar::xr::service
         int64_t itemId = {};
         int32_t itemDataId = {};
         int32_t quantity = {};
-        std::optional<DTOItemOption> option = {};
+        std::optional<int32_t> attack = {};
+        std::optional<int32_t> defence = {};
+        std::optional<int32_t> str = {};
+        std::optional<int32_t> dex = {};
+        std::optional<int32_t> intell = {};
     };
 
     struct DTOEquipItem

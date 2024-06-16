@@ -27,7 +27,11 @@ message DTOItem
     int32 item_data_id = 2;
     int32 quantity = 3;
 
-    optional DTOItemOption option = 4;
+    optional int32 attack = 4;
+    optional int32 defence = 5;
+    optional int32 str = 6;
+    optional int32 dex = 7;
+    optional int32 intell = 8;
 }
 
 message DTOEquipItem

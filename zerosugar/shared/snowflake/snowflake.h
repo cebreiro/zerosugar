@@ -5,6 +5,14 @@
 
 namespace zerosugar
 {
+    class IUniqueIDGenerator
+    {
+    public:
+        virtual ~IUniqueIDGenerator() = default;
+
+        virtual auto Generate() -> uint64_t = 0;
+    };
+
     namespace snowflake
 	{
 		static inline constexpr uint64_t SEQUENCE_BIT = 12;
@@ -29,7 +37,7 @@ namespace zerosugar
 	}
 
 	template <typename Mutex, typename Clock, uint64_t EPOCH>
-	class basic_snowflake
+	class basic_snowflake : public IUniqueIDGenerator
 	{
 	public:
 		using mutex_t = Mutex;
@@ -44,7 +52,7 @@ namespace zerosugar
 		basic_snowflake(uint64_t machineID, uint64_t dataCenterID);
 
 		[[nodiscard]]
-		auto Generate() -> uint64_t;
+        auto Generate() -> uint64_t override;
 
 	private:
 		const uint64_t _machineId = 0;

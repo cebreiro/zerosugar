@@ -47,4 +47,49 @@ namespace zerosugar::xr::db
 
         co_return {};
     }
+
+    namespace
+    {
+        auto ExecuteAsync(zerosugar::db::ConnectionPool::Borrowed& conn, std::string_view sql) -> Future<DatabaseError>
+        {
+            boost::mysql::diagnostics diagnostics = {};
+            boost::mysql::results executeResult = {};
+
+            Promise<boost::system::error_code> promise;
+            Future<boost::system::error_code> future = promise.GetFuture();
+
+            conn->async_execute(sql, executeResult, diagnostics,
+                [p = std::move(promise)](boost::system::error_code ec) mutable
+                {
+                    p.Set(ec);
+                });
+            boost::system::error_code ec = co_await future;
+
+            try
+            {
+                throw_on_error(ec, diagnostics);
+            }
+            catch (const boost::mysql::error_with_diagnostics& e)
+            {
+                co_return DatabaseError(e);
+            }
+
+            co_return{};
+        }
+    }
+
+    auto StartTransaction(zerosugar::db::ConnectionPool::Borrowed& conn) -> Future<DatabaseError>
+    {
+        return ExecuteAsync(conn, "START TRANSACTION");
+    }
+
+    auto Commit(zerosugar::db::ConnectionPool::Borrowed& conn) -> Future<DatabaseError>
+    {
+        return ExecuteAsync(conn, "COMMIT");
+    }
+
+    auto Rollback(zerosugar::db::ConnectionPool::Borrowed& conn) -> Future<DatabaseError>
+    {
+        return ExecuteAsync(conn, "ROLLBACK");
+    }
 }

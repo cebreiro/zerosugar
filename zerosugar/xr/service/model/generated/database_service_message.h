@@ -51,7 +51,6 @@ namespace zerosugar::xr::service
     struct AddCharacterResult
     {
         DatabaseServiceErrorCode errorCode = {};
-        int64_t addedCharacterId = {};
     };
 
     struct GetLobbyCharactersParam

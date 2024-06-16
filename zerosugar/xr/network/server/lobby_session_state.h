@@ -7,6 +7,7 @@
 namespace zerosugar
 {
     class Session;
+    class IUniqueIDGenerator;
 }
 
 namespace zerosugar::xr::network::lobby::cs
@@ -29,7 +30,7 @@ namespace zerosugar::xr
         , public std::enable_shared_from_this<LobbyServerSessionStateMachine>
     {
     public:
-        LobbyServerSessionStateMachine(ServiceLocator& serviceLocator, Session& session);
+        LobbyServerSessionStateMachine(ServiceLocator& serviceLocator, IUniqueIDGenerator& idGenerator, Session& session);
 
         void Start();
         void Shutdown();
@@ -74,7 +75,7 @@ namespace zerosugar::xr::lobby
     class AuthenticatedState final : public LobbyServerSessionStateMachine::state_type
     {
     public:
-        AuthenticatedState(LobbyServerSessionStateMachine& stateMachine, ServiceLocator& serviceLocator, Session& session);
+        AuthenticatedState(LobbyServerSessionStateMachine& stateMachine, ServiceLocator& serviceLocator, IUniqueIDGenerator& idGenerator, Session& session);
 
         void OnEnter() override;
         auto OnEvent(UniquePtrNotNull<IPacket> inPacket) -> Future<void> override;
@@ -87,6 +88,7 @@ namespace zerosugar::xr::lobby
     private:
         LobbyServerSessionStateMachine& _stateMachine;
         ServiceLocatorT<ILogService, service::IDatabaseService> _serviceLocator;
+        IUniqueIDGenerator& _idGenerator;
         WeakPtrNotNull<Session> _session;
     };
 

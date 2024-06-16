@@ -103,21 +103,59 @@ namespace zerosugar::xr
         assert(ExecutionContext::IsEqualTo(*_executor));
 
         ConnectionPool::Borrowed conn = co_await _connectionPool->Pop();
-        sp::CharactersAdd storedProcedure(conn, param.characterAdd);
+
+        sp::CharactersAdd characterAdd(conn, param.characterAdd);
 
         service::AddCharacterResult result;
-        result.errorCode = service::DatabaseServiceErrorCode::DatabaseErrorNone;
+        result.errorCode = service::DatabaseServiceErrorCode::DatabaseErrorInternalError;
 
-        DatabaseError error = co_await storedProcedure.ExecuteAsync();
-        if (error)
-        {
-            result.errorCode = service::DatabaseServiceErrorCode::DatabaseErrorInternalError;
+        bool shouldRollback = true;
 
-            LogError(__FUNCTION__, error);
-        }
-        else
+        do
         {
-            result.addedCharacterId = storedProcedure.GetAddedCharacterId();
+            if (DatabaseError error = co_await StartTransaction(conn); error)
+            {
+                LogError(std::format("{} start transaction", __FUNCTION__), error);
+
+                break;
+            }
+
+            if (DatabaseError error = co_await characterAdd.ExecuteAsync(); error)
+            {
+                LogError(std::format("{} characterAdd", __FUNCTION__), error);
+
+                break;
+            }
+
+            const int64_t cid = characterAdd.GetAddedCharacterId();
+            sp::EquipItemsAdd equipItemsAdd(conn, cid, param.equipItems);
+
+            if (DatabaseError error = co_await equipItemsAdd.ExecuteAsync(); error)
+            {
+                LogError(std::format("{} equipItemsAdd", __FUNCTION__), error);
+
+                break;
+            }
+
+            if (DatabaseError error = co_await Commit(conn); error)
+            {
+                LogError(std::format("{} commit", __FUNCTION__), error);
+
+                break;
+            }
+
+            result.errorCode = service::DatabaseServiceErrorCode::DatabaseErrorNone;
+
+            shouldRollback = false;
+            
+        } while (false);
+
+        if (shouldRollback)
+        {
+            if (DatabaseError error = co_await Rollback(conn); error)
+            {
+                LogError(std::format("{} rollback", __FUNCTION__), error);
+            }
         }
 
         co_return result;

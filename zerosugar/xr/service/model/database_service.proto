@@ -56,8 +56,6 @@ message AddCharacterParam
 message AddCharacterResult
 {
     DatabaseServiceErrorCode error_code = 1;
-
-    int64 added_character_id = 2;
 }
 
 message GetLobbyCharactersParam

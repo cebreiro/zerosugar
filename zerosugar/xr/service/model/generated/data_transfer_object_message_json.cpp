@@ -51,9 +51,25 @@ namespace zerosugar::xr::service
         j.at("itemId").get_to(item.itemId);
         j.at("itemDataId").get_to(item.itemDataId);
         j.at("quantity").get_to(item.quantity);
-        if (const auto iter = j.find("option"); iter != j.end())
+        if (const auto iter = j.find("attack"); iter != j.end())
         {
-            item.option.emplace(*iter);
+            item.attack.emplace(*iter);
+        }
+        if (const auto iter = j.find("defence"); iter != j.end())
+        {
+            item.defence.emplace(*iter);
+        }
+        if (const auto iter = j.find("str"); iter != j.end())
+        {
+            item.str.emplace(*iter);
+        }
+        if (const auto iter = j.find("dex"); iter != j.end())
+        {
+            item.dex.emplace(*iter);
+        }
+        if (const auto iter = j.find("intell"); iter != j.end())
+        {
+            item.intell.emplace(*iter);
         }
     }
 
@@ -66,9 +82,25 @@ namespace zerosugar::xr::service
                 { "quantity", item.quantity },
             };
 
-        if (item.option.has_value())
+        if (item.attack.has_value())
         {
-            j.push_back(nlohmann::json{ "option", *item.option });
+            j.push_back(nlohmann::json{ "attack", *item.attack });
+        }
+        if (item.defence.has_value())
+        {
+            j.push_back(nlohmann::json{ "defence", *item.defence });
+        }
+        if (item.str.has_value())
+        {
+            j.push_back(nlohmann::json{ "str", *item.str });
+        }
+        if (item.dex.has_value())
+        {
+            j.push_back(nlohmann::json{ "dex", *item.dex });
+        }
+        if (item.intell.has_value())
+        {
+            j.push_back(nlohmann::json{ "intell", *item.intell });
         }
     }
 

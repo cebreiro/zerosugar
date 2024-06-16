@@ -213,8 +213,6 @@ namespace zerosugar::xr
         break;
         default:
             assert(false);
-
-            throw std::runtime_error(std::format("invalid rpc packet opcode: {}", opcode));
         }
     }
 

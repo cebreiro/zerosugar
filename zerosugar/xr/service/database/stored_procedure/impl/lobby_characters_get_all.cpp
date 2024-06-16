@@ -35,15 +35,14 @@ namespace zerosugar::xr::db::sp
             return;
         }
 
-        std::unordered_map<int64_t, service::DTOLobbyCharacter> sets;
-        sets.reserve(result.size());
+        _results.reserve(result.size());
 
         for (const boost::mysql::row_view& row : characterSet.rows())
         {
             size_t index = 0;
 
             const int64_t characterId = row.at(index++).as_int64();
-            service::DTOLobbyCharacter& character = sets[characterId];
+            service::DTOLobbyCharacter& character = _results[characterId];
 
             character.characterId = characterId;
             character.slot = static_cast<int32_t>(row.at(index++).as_int64());
@@ -68,8 +67,8 @@ namespace zerosugar::xr::db::sp
             const int32_t itemDataId = static_cast<int32_t>(row.at(index++).as_int64());
             const int32_t equipPosition = static_cast<int32_t>(row.at(index++).as_int64());
 
-            auto iter = sets.find(cid);
-            if (iter != sets.end())
+            auto iter = _results.find(cid);
+            if (iter != _results.end())
             {
                 service::DTOLobbyItem item;
                 item.itemDataId = itemDataId;

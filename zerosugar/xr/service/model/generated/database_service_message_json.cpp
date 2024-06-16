@@ -78,7 +78,6 @@ namespace zerosugar::xr::service
     void from_json(const nlohmann::json& j, AddCharacterResult& item)
     {
         j.at("errorCode").get_to(item.errorCode);
-        j.at("addedCharacterId").get_to(item.addedCharacterId);
     }
 
     void to_json(nlohmann::json& j, const AddCharacterResult& item)
@@ -86,7 +85,6 @@ namespace zerosugar::xr::service
         j = nlohmann::json
             {
                 { "errorCode", item.errorCode },
-                { "addedCharacterId", item.addedCharacterId },
             };
     }
 

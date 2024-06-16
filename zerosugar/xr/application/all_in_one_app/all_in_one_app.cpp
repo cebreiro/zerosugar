@@ -69,12 +69,6 @@ namespace zerosugar::xr
 
         InitializeService(serviceLocator);
         InitializeServer(serviceLocator);
-
-        service::GetLobbyCharactersParam param;
-        param.accountId = 123123;
-
-        auto f = _databaseService->GetLobbyCharactersAsync(std::move(param));
-        f.Get();
     }
 
     void AllInOneApp::OnShutdown()

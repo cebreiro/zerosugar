@@ -2,6 +2,7 @@
 
 #include "zerosugar/shared/execution/executor/impl/asio_strand.h"
 #include "zerosugar/shared/network/session/session.h"
+#include "zerosugar/shared/snowflake/snowflake.h"
 #include "zerosugar/xr/data/enum/equip_position.h"
 #include "zerosugar/xr/network/packet_builder.h"
 #include "zerosugar/xr/network/packet_reader.h"
@@ -10,7 +11,7 @@
 
 namespace zerosugar::xr
 {
-    LobbyServerSessionStateMachine::LobbyServerSessionStateMachine(ServiceLocator& serviceLocator, Session& session)
+    LobbyServerSessionStateMachine::LobbyServerSessionStateMachine(ServiceLocator& serviceLocator, IUniqueIDGenerator& idGenerator, Session& session)
         : _session(session.weak_from_this())
         , _name(std::format("lobby_session_state_machine[{}]", session.GetId()))
         , _serviceLocator(serviceLocator)
@@ -19,7 +20,7 @@ namespace zerosugar::xr
         AddState<lobby::ConnectedState>(true, *this, serviceLocator, session)
             .Add(LobbySessionState::Authenticated);
 
-        AddState<lobby::AuthenticatedState>( false, *this, serviceLocator, session)
+        AddState<lobby::AuthenticatedState>( false, *this, serviceLocator, idGenerator, session)
             .Add(LobbySessionState::TransitionToGame);
 
         AddState<lobby::TransitionToGameState>(false);
@@ -199,10 +200,11 @@ namespace zerosugar::xr::lobby
         throw std::runtime_error(std::format("unhandled packet. opcode: {}", inPacket->GetOpcode()));
     }
 
-    AuthenticatedState::AuthenticatedState(LobbyServerSessionStateMachine& stateMachine, ServiceLocator& serviceLocator, Session& session)
+    AuthenticatedState::AuthenticatedState(LobbyServerSessionStateMachine& stateMachine, ServiceLocator& serviceLocator, IUniqueIDGenerator& idGenerator, Session& session)
         : LobbyServerSessionStateMachine::state_type(LobbySessionState::Authenticated)
         , _stateMachine(stateMachine)
         , _serviceLocator(serviceLocator)
+        , _idGenerator(idGenerator)
         , _session(session.weak_from_this())
     {
     }
@@ -331,37 +333,60 @@ namespace zerosugar::xr::lobby
             addParam.accountId = _stateMachine.GetAccountId();
             addParam.slot = request.slot;
             addParam.name = request.name;
-            addParam.level = request.level;
-            addParam.str = request.str;
-            addParam.dex = request.dex;
-            addParam.intell = request.intell;
+            addParam.level = 1;
+            addParam.str = 10;
+            addParam.dex = 10;
+            addParam.intell = 10;
             addParam.job = request.job;
             addParam.faceId = request.faceId;
             addParam.hairId = request.hairId;
-            addParam.gold = request.gold;
-            addParam.zoneId = request.zoneId;
-            addParam.x = request.x;
-            addParam.y = request.y;
-            addParam.z = request.z;
+            addParam.gold = 0;
+            addParam.zoneId = 100;
+            addParam.x = 0;
+            addParam.y = 0;
+            addParam.z = 0;
         }
         {
-            service::DTOEquipItem equipItem;
-            equipItem.item.itemId = 0;
-            equipItem.item.itemDataId = packet.character.armorId;
-            equipItem.item.option = service::DTOItemOption{};
+            constexpr std::array equipItems{
+                std::pair{ 3000001, data::EquipPosition::Armor },
+                std::pair{ 3100001, data::EquipPosition::Gloves },
+                std::pair{ 3200001, data::EquipPosition::Shoes },
+                std::pair{ 3300001, data::EquipPosition::Weapon },
+            };
+
+            for (const auto& [itemId, equipPosition] : equipItems)
+            {
+                service::DTOEquipItem& equipItem = param.equipItems.emplace_back();
+                equipItem.item.itemId = _idGenerator.Generate();
+                equipItem.item.itemDataId = itemId;
+                equipItem.equipPosition = static_cast<int32_t>(equipPosition);
+            }
         }
 
         service::AddCharacterResult result = co_await databaseService.AddCharacterAsync(std::move(param));
-        if (result.errorCode != service::DatabaseServiceErrorCode::DatabaseErrorNone)
+
+        network::lobby::sc::ResultCreateCharacter outPacket;
+        outPacket.success = result.errorCode == service::DatabaseServiceErrorCode::DatabaseErrorNone;
+
+        if (outPacket.success)
         {
-            network::lobby::sc::ResultCreateCharacter outPacket;
-            outPacket.success = false;
-
-            session.Send(PacketBuilder::MakePacket(outPacket));
-
-            co_return;
+            outPacket.character.slot = param.characterAdd.slot;
+            outPacket.character.name = param.characterAdd.name;
+            outPacket.character.level = param.characterAdd.level;
+            outPacket.character.str = param.characterAdd.str;
+            outPacket.character.dex = param.characterAdd.dex;
+            outPacket.character.intell = param.characterAdd.intell;
+            outPacket.character.job = param.characterAdd.job;
+            outPacket.character.faceId = param.characterAdd.faceId;
+            outPacket.character.hairId = param.characterAdd.hairId;
+            outPacket.character.gold = param.characterAdd.gold;
+            outPacket.character.zoneId = param.characterAdd.zoneId;
+            outPacket.character.x = param.characterAdd.x;
+            outPacket.character.y = param.characterAdd.y;
+            outPacket.character.z = param.characterAdd.z;
         }
 
+        session.Send(PacketBuilder::MakePacket(outPacket));
     }
 
     auto AuthenticatedState::HandlePacket(Session& session, const network::lobby::cs::DeleteCharacter& packet) -> Future<void>

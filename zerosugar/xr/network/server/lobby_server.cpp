@@ -27,10 +27,25 @@ namespace zerosugar::xr
         execution::IExecutor* executor = ExecutionContext::GetExecutor();
         assert(executor);
 
-        service::GetNameResult getNameResult = _serviceLocator.Get<service::IGameService>().GetNameAsync(service::GetNameParam{}).Get();
+        service::IGameService& gameService = _serviceLocator.Get<service::IGameService>();
+
+        service::RequestSnowflakeKeyParam requestSnowflakeKeyParam;
+        requestSnowflakeKeyParam.requester = GetName();
+
+        auto task1 = gameService.RequestSnowflakeKeyAsync(std::move(requestSnowflakeKeyParam));
+        auto task2 = gameService.GetNameAsync(service::GetNameParam{});
+
+        WaitAll(*executor, task1, task2).Wait();
+
+        service::RequestSnowflakeKeyResult res = task1.Get();
+        if (res.errorCode != service::GameServiceErrorCode::GameErrorNone)
+        {
+            ZEROSUGAR_LOG_CRITICAL(_serviceLocator,
+                std::format("[{}] fail to get snowflake key: {}", GetName(), GetEnumName(res.errorCode)));
+        }
 
         service::AddGameServiceParam param;
-        param.address.name = getNameResult.name;
+        param.address.name = task2.Get().name;
         param.address.ip = _ip;
         param.address.port = listenPort;
 
@@ -38,8 +53,10 @@ namespace zerosugar::xr
         if (addResult.errorCode != service::GatewayServiceErrorCode::GatewayErrorNone)
         {
             ZEROSUGAR_LOG_CRITICAL(_serviceLocator,
-                std::format("[{}] fail to add game service. eror: {}", GetName(), GetEnumName(addResult.errorCode)));
+                std::format("[{}] fail to add game service. erorr: {}", GetName(), GetEnumName(addResult.errorCode)));
         }
+
+        _snowflake.emplace(res.snowflakeKey);
     }
 
     void LobbyServer::SetPublicIP(const std::string& ip)
@@ -49,7 +66,9 @@ namespace zerosugar::xr
 
     void LobbyServer::OnAccept(Session& session)
     {
-        auto stateMachine = std::make_shared<LobbyServerSessionStateMachine>(_serviceLocator, session);
+        assert(_snowflake.has_value());
+
+        auto stateMachine = std::make_shared<LobbyServerSessionStateMachine>(_serviceLocator, *_snowflake, session);
 
         {
             decltype(_stateMachines)::accessor accessor;

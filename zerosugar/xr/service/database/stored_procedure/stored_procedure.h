@@ -30,4 +30,8 @@ namespace zerosugar::xr::db
         boost::mysql::diagnostics _dbDiagnostics = {};
         boost::mysql::results _executeResult = {};
     };
+
+    auto StartTransaction(zerosugar::db::ConnectionPool::Borrowed& conn) -> Future<DatabaseError>;
+    auto Commit(zerosugar::db::ConnectionPool::Borrowed& conn) -> Future<DatabaseError>;
+    auto Rollback(zerosugar::db::ConnectionPool::Borrowed& conn) -> Future<DatabaseError>;
 }
