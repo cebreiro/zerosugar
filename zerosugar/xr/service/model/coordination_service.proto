@@ -2,18 +2,20 @@ syntax = "proto3";
 
 package zerosugar.xr.service;
 
-service GameService
+service CoordinationService
 {
     rpc GetName (GetNameParam) returns (GetNameResult);
 
     rpc RequestSnowflakeKey (RequestSnowflakeKeyParam) returns (RequestSnowflakeKeyResult);
     rpc ReturnSnowflakeKey (ReturnSnowflakeKeyParam) returns (ReturnSnowflakeKeyResult);
+
+    rpc AddPlayer (AddPlayerParam) returns (AddPlayerResult);
 }
 
-enum GameServiceErrorCode
+enum CoordinationServiceErrorCode
 {
-    game_error_none = 0;
-    game_error_internal_error = 1;
+    Coordination_error_none = 0;
+    Coordination_error_internal_error = 1;
 
     request_snowflake_key_error_out_of_pool = 30001;
     return_snowflake_key_error_invalid_key = 40001;
@@ -35,7 +37,7 @@ message RequestSnowflakeKeyParam
 
 message RequestSnowflakeKeyResult
 {
-    GameServiceErrorCode error_code = 1;
+    CoordinationServiceErrorCode error_code = 1;
     int32 snowflake_key = 2;
 }
 
@@ -47,5 +49,21 @@ message ReturnSnowflakeKeyParam
 
 message ReturnSnowflakeKeyResult
 {
-    GameServiceErrorCode error_code = 1;
+    CoordinationServiceErrorCode error_code = 1;
+}
+
+message AddPlayerParam
+{
+    string authentication_token = 1;
+    int64 account_id = 2;
+    int64 character_id = 3;
+    int32 zone_id = 4;
+}
+
+message AddPlayerResult
+{
+    CoordinationServiceErrorCode error_code = 1;
+
+    string ip = 2;
+    int32 port = 3;
 }

@@ -5,7 +5,7 @@
 #include <vector>
 #include <map>
 #include <nlohmann/json.hpp>
-#include "zerosugar/xr/service/model/generated/game_service_message.h"
+#include "zerosugar/xr/service/model/generated/coordination_service_message.h"
 
 namespace zerosugar::xr::service
 {
@@ -26,5 +26,11 @@ namespace zerosugar::xr::service
 
     void from_json(const nlohmann::json& j, ReturnSnowflakeKeyResult& item);
     void to_json(nlohmann::json& j, const ReturnSnowflakeKeyResult& item);
+
+    void from_json(const nlohmann::json& j, AddPlayerParam& item);
+    void to_json(nlohmann::json& j, const AddPlayerParam& item);
+
+    void from_json(const nlohmann::json& j, AddPlayerResult& item);
+    void to_json(nlohmann::json& j, const AddPlayerResult& item);
 
 }

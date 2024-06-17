@@ -1,4 +1,4 @@
-#include "game_service.h"
+#include "coordination_service.h"
 
 #include <boost/scope/scope_exit.hpp>
 
@@ -6,30 +6,30 @@
 
 namespace zerosugar::xr
 {
-    GameService::GameService(SharedPtrNotNull<execution::IExecutor> executor)
+    CoordinationService::CoordinationService(SharedPtrNotNull<execution::IExecutor> executor)
         : _executor(std::move(executor))
         , _strand(std::make_shared<Strand>(_executor))
     {
     }
 
-    void GameService::Initialize(ServiceLocator& serviceLocator)
+    void CoordinationService::Initialize(ServiceLocator& serviceLocator)
     {
-        IGameService::Initialize(serviceLocator);
+        ICoordinationService::Initialize(serviceLocator);
 
         _serviceLocator = serviceLocator;
     }
 
-    void GameService::Shutdown()
+    void CoordinationService::Shutdown()
     {
-        IGameService::Shutdown();
+        ICoordinationService::Shutdown();
     }
 
-    void GameService::Join(std::vector<boost::system::error_code>& errors)
+    void CoordinationService::Join(std::vector<boost::system::error_code>& errors)
     {
-        IGameService::Join(errors);
+        ICoordinationService::Join(errors);
     }
 
-    auto GameService::RequestSnowflakeKeyAsync(service::RequestSnowflakeKeyParam param) -> Future<service::RequestSnowflakeKeyResult>
+    auto CoordinationService::RequestSnowflakeKeyAsync(service::RequestSnowflakeKeyParam param) -> Future<service::RequestSnowflakeKeyResult>
     {
         [[maybe_unused]]
         auto self = shared_from_this();
@@ -53,13 +53,13 @@ namespace zerosugar::xr
             ZEROSUGAR_LOG_CRITICAL(_serviceLocator,
                 std::format("[{}] fail to publish snowflake. reuqester: {}", GetName(), param.requester));
 
-            result.errorCode = service::GameServiceErrorCode::RequestSnowflakeKeyErrorOutOfPool;
+            result.errorCode = service::CoordinationServiceErrorCode::RequestSnowflakeKeyErrorOutOfPool;
         }
 
         co_return result;
     }
 
-    auto GameService::ReturnSnowflakeKeyAsync(service::ReturnSnowflakeKeyParam param) -> Future<service::ReturnSnowflakeKeyResult>
+    auto CoordinationService::ReturnSnowflakeKeyAsync(service::ReturnSnowflakeKeyParam param) -> Future<service::ReturnSnowflakeKeyResult>
     {
         [[maybe_unused]]
         auto self = shared_from_this();
@@ -68,7 +68,7 @@ namespace zerosugar::xr
         assert(ExecutionContext::IsEqualTo(*_strand));
 
         service::ReturnSnowflakeKeyResult result;
-        result.errorCode = service::GameServiceErrorCode::ReturnSnowflakeKeyErrorInvalidKey;
+        result.errorCode = service::CoordinationServiceErrorCode::ReturnSnowflakeKeyErrorInvalidKey;
 
         const auto& [begin, end] = _publishedSnowflakeKeys.equal_range(param.requester);
         for (auto iter = begin; iter != end; ++iter)
@@ -78,7 +78,7 @@ namespace zerosugar::xr
                 _returnedSnowflakeKeys.emplace(param.snowflakeKey);
                 _publishedSnowflakeKeys.erase(iter);
 
-                result.errorCode = service::GameServiceErrorCode::GameErrorNone;
+                result.errorCode = service::CoordinationServiceErrorCode::CoordinationErrorNone;
 
                 break;
             }
@@ -87,7 +87,14 @@ namespace zerosugar::xr
         co_return result;
     }
 
-    auto GameService::PublishSnowflakeKey(const std::string& requester) -> std::optional<int32_t>
+    auto CoordinationService::AddPlayerAsync(service::AddPlayerParam param) -> Future<service::AddPlayerResult>
+    {
+        (void)param;
+
+        co_return{};
+    }
+
+    auto CoordinationService::PublishSnowflakeKey(const std::string& requester) -> std::optional<int32_t>
     {
         assert(ExecutionContext::IsEqualTo(*_strand));
 
@@ -115,12 +122,12 @@ namespace zerosugar::xr
         return key;
     }
 
-    auto GameService::GetNameAsync(service::GetNameParam param) -> Future<service::GetNameResult>
+    auto CoordinationService::GetNameAsync(service::GetNameParam param) -> Future<service::GetNameResult>
     {
         (void)param;
 
         service::GetNameResult result;
-        result.name = "default_game_service";
+        result.name = "default";
 
         co_return result;
     }

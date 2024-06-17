@@ -1,4 +1,4 @@
-#include "game_service_message_json.h"
+#include "coordination_service_message_json.h"
 
 namespace zerosugar::xr::service
 {
@@ -80,6 +80,42 @@ namespace zerosugar::xr::service
         j = nlohmann::json
             {
                 { "errorCode", item.errorCode },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, AddPlayerParam& item)
+    {
+        j.at("authenticationToken").get_to(item.authenticationToken);
+        j.at("accountId").get_to(item.accountId);
+        j.at("characterId").get_to(item.characterId);
+        j.at("zoneId").get_to(item.zoneId);
+    }
+
+    void to_json(nlohmann::json& j, const AddPlayerParam& item)
+    {
+        j = nlohmann::json
+            {
+                { "authenticationToken", item.authenticationToken },
+                { "accountId", item.accountId },
+                { "characterId", item.characterId },
+                { "zoneId", item.zoneId },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, AddPlayerResult& item)
+    {
+        j.at("errorCode").get_to(item.errorCode);
+        j.at("ip").get_to(item.ip);
+        j.at("port").get_to(item.port);
+    }
+
+    void to_json(nlohmann::json& j, const AddPlayerResult& item)
+    {
+        j = nlohmann::json
+            {
+                { "errorCode", item.errorCode },
+                { "ip", item.ip },
+                { "port", item.port },
             };
     }
 

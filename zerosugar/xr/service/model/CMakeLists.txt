@@ -27,7 +27,7 @@ add_custom_target(zerosugar_xr_generate_service
         login_service.proto
         database_service.proto
         gateway_service.proto
-        game_service.proto
+        coordination_service.proto
     WORKING_DIRECTORY ${ZEROSUGAR_XR_SERVICE_DIR}
     DEPENDS zerosugar_proto_code_generator
 )

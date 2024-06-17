@@ -1,5 +1,5 @@
 add_subdirectory(model)
 add_subdirectory(login)
 add_subdirectory(gateway)
-add_subdirectory(game)
+add_subdirectory(coordination)
 add_subdirectory(database)

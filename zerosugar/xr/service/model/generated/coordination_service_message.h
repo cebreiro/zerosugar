@@ -8,15 +8,15 @@
 
 namespace zerosugar::xr::service
 {
-    enum class GameServiceErrorCode : int64_t
+    enum class CoordinationServiceErrorCode : int64_t
     {
-        GameErrorNone = 0,
-        GameErrorInternalError = 1,
+        CoordinationErrorNone = 0,
+        CoordinationErrorInternalError = 1,
         RequestSnowflakeKeyErrorOutOfPool = 30001,
         ReturnSnowflakeKeyErrorInvalidKey = 40001,
 
     };
-    auto GetEnumName(GameServiceErrorCode e) -> std::string_view;
+    auto GetEnumName(CoordinationServiceErrorCode e) -> std::string_view;
 
     struct GetNameParam
     {
@@ -34,7 +34,7 @@ namespace zerosugar::xr::service
 
     struct RequestSnowflakeKeyResult
     {
-        GameServiceErrorCode errorCode = {};
+        CoordinationServiceErrorCode errorCode = {};
         int32_t snowflakeKey = {};
     };
 
@@ -46,7 +46,22 @@ namespace zerosugar::xr::service
 
     struct ReturnSnowflakeKeyResult
     {
-        GameServiceErrorCode errorCode = {};
+        CoordinationServiceErrorCode errorCode = {};
+    };
+
+    struct AddPlayerParam
+    {
+        std::string authenticationToken = {};
+        int64_t accountId = {};
+        int64_t characterId = {};
+        int32_t zoneId = {};
+    };
+
+    struct AddPlayerResult
+    {
+        CoordinationServiceErrorCode errorCode = {};
+        std::string ip = {};
+        int32_t port = {};
     };
 
 }

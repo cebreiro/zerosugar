@@ -8,7 +8,7 @@
 
 namespace zerosugar
 {
-    thread_local bool Strand::_isInTaskExecuteContext = false;
+    thread_local std::optional<size_t> Strand::_executeContext = std::nullopt;
 
     Strand::Strand(SharedPtrNotNull<IExecutor> executor)
         : _executor(std::move(executor))
@@ -95,11 +95,13 @@ namespace zerosugar
     {
         SwapTasks();
 
-        _isInTaskExecuteContext = true;
+        assert(!_executeContext.has_value());
+
+        _executeContext.emplace(reinterpret_cast<size_t>(_executor.get()));
 
         ExecuteTasks();
 
-        _isInTaskExecuteContext = false;
+        _executeContext.reset();
 
         if (!FinalizeFlush())
         {
@@ -151,8 +153,16 @@ namespace zerosugar
         return false;
     }
 
-    bool Strand::CanExecuteImmediately()
+    bool Strand::CanExecuteImmediately() const
     {
-        return _isInTaskExecuteContext;
+        if (_executeContext.has_value())
+        {
+            if (*_executeContext == reinterpret_cast<size_t>(_executor.get()))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

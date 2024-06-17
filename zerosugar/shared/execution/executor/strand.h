@@ -2,6 +2,7 @@
 #include <vector>
 #include <variant>
 #include <functional>
+#include <optional>
 #include <shared_mutex>
 #include "zerosugar/shared/type/not_null_pointer.h"
 #include "zerosugar/shared/execution/executor/executor_interface.h"
@@ -37,7 +38,7 @@ namespace zerosugar
         void ExecuteTasks();
         bool FinalizeFlush();
 
-        static bool CanExecuteImmediately();
+        bool CanExecuteImmediately() const;
 
     private:
         SharedPtrNotNull<IExecutor> _executor;
@@ -47,6 +48,6 @@ namespace zerosugar
         std::vector<task_type> _frontBuffer;
         std::vector<task_type> _backBuffer;
 
-        static thread_local bool _isInTaskExecuteContext;
+        static thread_local std::optional<size_t> _executeContext;
     };
 }

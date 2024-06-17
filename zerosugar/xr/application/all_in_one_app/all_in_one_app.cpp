@@ -12,7 +12,7 @@
 #include "zerosugar/xr/service/database/database_service.h"
 #include "zerosugar/xr/service/gateway/gateway_service.h"
 #include "zerosugar/xr/service/login/login_service.h"
-#include "zerosugar/xr/service/game/game_service.h"
+#include "zerosugar/xr/service/coordination/coordination_service.h"
 
 namespace zerosugar::xr
 {
@@ -29,8 +29,8 @@ namespace zerosugar::xr
         , _loginServiceProxy(std::make_shared<service::LoginServiceProxy>(_rpcClient))
         , _gatewayService(std::make_shared<GatewayService>(_executor))
         , _gatewayServiceProxy(std::make_shared<service::GatewayServiceProxy>(_rpcClient))
-        , _gameService(std::make_shared<GameService>(_executor))
-        , _gameServiceProxy(std::make_shared<service::GameServiceProxy>(_rpcClient))
+        , _coordinationService(std::make_shared<CoordinationService>(_executor))
+        , _coordinationServiceProxy(std::make_shared<service::CoordinationServiceProxy>(_rpcClient))
         , _databaseService(std::make_shared<DatabaseService>(_executor, _connectionPool))
         , _databaseServiceProxy(std::make_shared<service::DatabaseServiceProxy>(_rpcClient))
     {
@@ -43,12 +43,12 @@ namespace zerosugar::xr
 
         serviceLocator.Add<service::ILoginService>(_loginServiceProxy);
         serviceLocator.Add<service::IGatewayService>(_gatewayServiceProxy);
-        serviceLocator.Add<service::IGameService>(_gameService);
+        serviceLocator.Add<service::ICoordinationService>(_coordinationService);
         serviceLocator.Add<service::IDatabaseService>(_databaseServiceProxy);
 
         _services.emplace_back(_loginService);
         _services.emplace_back(_gatewayService);
-        _services.emplace_back(_gameService);
+        _services.emplace_back(_coordinationService);
         _services.emplace_back(_databaseService);
     }
 

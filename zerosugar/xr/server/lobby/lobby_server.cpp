@@ -3,7 +3,7 @@
 #include "zerosugar/shared/execution/executor/impl/asio_strand.h"
 #include "zerosugar/shared/network/session/session.h"
 #include "zerosugar/xr/server/lobby/lobby_session_state.h"
-#include "zerosugar/xr/service/model/generated/game_service.h"
+#include "zerosugar/xr/service/model/generated/coordination_service.h"
 #include "zerosugar/xr/service/model/generated/gateway_service.h"
 
 namespace zerosugar::xr
@@ -27,18 +27,18 @@ namespace zerosugar::xr
         execution::IExecutor* executor = ExecutionContext::GetExecutor();
         assert(executor);
 
-        service::IGameService& gameService = _serviceLocator.Get<service::IGameService>();
+        service::ICoordinationService& coordinationService = _serviceLocator.Get<service::ICoordinationService>();
 
         service::RequestSnowflakeKeyParam requestSnowflakeKeyParam;
         requestSnowflakeKeyParam.requester = GetName();
 
-        auto task1 = gameService.RequestSnowflakeKeyAsync(std::move(requestSnowflakeKeyParam));
-        auto task2 = gameService.GetNameAsync(service::GetNameParam{});
+        auto task1 = coordinationService.RequestSnowflakeKeyAsync(std::move(requestSnowflakeKeyParam));
+        auto task2 = coordinationService.GetNameAsync(service::GetNameParam{});
 
         WaitAll(*executor, task1, task2).Wait();
 
         service::RequestSnowflakeKeyResult res = task1.Get();
-        if (res.errorCode != service::GameServiceErrorCode::GameErrorNone)
+        if (res.errorCode != service::CoordinationServiceErrorCode::CoordinationErrorNone)
         {
             ZEROSUGAR_LOG_CRITICAL(_serviceLocator,
                 std::format("[{}] fail to get snowflake key: {}", GetName(), GetEnumName(res.errorCode)));

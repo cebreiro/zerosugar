@@ -21,11 +21,11 @@ TEST(Strand, SimpleArithmeticAdd)
     // act
     for (int32_t i = 0; i < expected; ++i)
     {
-        Post(*strand, std::function([&result, &counter]()
+        Post(*strand, [&result, &counter]()
             {
                 ++result;
                 counter.fetch_add(1);
-            }));
+            });
     }
 
     while (counter.load() != expected)

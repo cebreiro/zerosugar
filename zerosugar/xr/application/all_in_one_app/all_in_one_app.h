@@ -23,14 +23,14 @@ namespace zerosugar::xr
 {
     class LoginService;
     class GatewayService;
-    class GameService;
+    class CoordinationService;
     class DatabaseService;
 
     namespace service
     {
         class LoginServiceProxy;
         class GatewayServiceProxy;
-        class GameServiceProxy;
+        class CoordinationServiceProxy;
         class DatabaseServiceProxy;
     }
 }
@@ -83,8 +83,8 @@ namespace zerosugar::xr
         SharedPtrNotNull<GatewayService> _gatewayService;
         SharedPtrNotNull<service::GatewayServiceProxy> _gatewayServiceProxy;
 
-        SharedPtrNotNull<GameService> _gameService;
-        SharedPtrNotNull<service::GameServiceProxy> _gameServiceProxy;
+        SharedPtrNotNull<CoordinationService> _coordinationService;
+        SharedPtrNotNull<service::CoordinationServiceProxy> _coordinationServiceProxy;
 
         SharedPtrNotNull<DatabaseService> _databaseService;
         SharedPtrNotNull<service::DatabaseServiceProxy> _databaseServiceProxy;

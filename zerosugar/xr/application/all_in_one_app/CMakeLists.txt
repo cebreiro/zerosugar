@@ -9,7 +9,7 @@ target_link_libraries(zerosugar_xr_application_all_in_one_app PRIVATE
 
     zerosugar_xr_service_login
     zerosugar_xr_service_gateway
-    zerosugar_xr_service_game
+    zerosugar_xr_service_coordination
     zerosugar_xr_service_database
 )
 
