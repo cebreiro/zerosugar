@@ -26,6 +26,11 @@ namespace zerosugar::xr::service
         return _client->CallRemoteProcedure<AddCharacterParam, Future<AddCharacterResult>::value_type>(name, "AddCharacterAsync", param);
     }
 
+    auto DatabaseServiceProxy::RemoveCharacterAsync(RemoveCharacterParam param) -> Future<RemoveCharacterResult>
+    {
+        return _client->CallRemoteProcedure<RemoveCharacterParam, Future<RemoveCharacterResult>::value_type>(name, "RemoveCharacterAsync", param);
+    }
+
     auto DatabaseServiceProxy::GetLobbyCharactersAsync(GetLobbyCharactersParam param) -> Future<GetLobbyCharactersResult>
     {
         return _client->CallRemoteProcedure<GetLobbyCharactersParam, Future<GetLobbyCharactersResult>::value_type>(name, "GetLobbyCharactersAsync", param);
@@ -47,6 +52,11 @@ namespace zerosugar::xr::service
             [service = service](AddCharacterParam param) -> Future<AddCharacterResult>
             {
                 return service->AddCharacterAsync(std::move(param));
+            });
+        rpcClient.RegisterProcedure("DatabaseService", "RemoveCharacterAsync",
+            [service = service](RemoveCharacterParam param) -> Future<RemoveCharacterResult>
+            {
+                return service->RemoveCharacterAsync(std::move(param));
             });
         rpcClient.RegisterProcedure("DatabaseService", "GetLobbyCharactersAsync",
             [service = service](GetLobbyCharactersParam param) -> Future<GetLobbyCharactersResult>

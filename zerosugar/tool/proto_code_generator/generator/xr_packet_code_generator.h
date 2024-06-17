@@ -20,5 +20,12 @@ namespace zerosugar
             const google::protobuf::FileDescriptor& file,
             google::protobuf::compiler::GeneratorContext& context,
             const ProtoCodeGeneratorOption& option, const WriterInput& input) const;
+        void GenerateMessageJsonSerialize(const google::protobuf::FileDescriptor& file,
+            google::protobuf::compiler::GeneratorContext& context,
+            const ProtoCodeGeneratorOption& option, const WriterInput& input) const;
+
+    private:
+        std::string _messageFileName;
+        std::string _messageJsonFileName;
     };
 }

@@ -26,7 +26,9 @@ namespace zerosugar::xr
 
         auto AddAccountAsync(service::AddAccountParam param) -> Future<service::AddAccountResult> override;
         auto GetAccountAsync(service::GetAccountParam param) -> Future<service::GetAccountResult> override;
+
         auto AddCharacterAsync(service::AddCharacterParam param) -> Future<service::AddCharacterResult> override;
+        auto RemoveCharacterAsync(service::RemoveCharacterParam param) -> Future<service::RemoveCharacterResult> override;
         auto GetLobbyCharactersAsync(service::GetLobbyCharactersParam param) -> Future<service::GetLobbyCharactersResult> override;
 
     private:

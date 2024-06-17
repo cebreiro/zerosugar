@@ -1,6 +1,6 @@
 #pragma once
 #include "zerosugar/shared/network/server/server.h"
-#include "zerosugar/xr/network/server/login_session_state.h"
+#include "zerosugar/xr/server/login/login_session_state.h"
 
 namespace zerosugar::execution
 {

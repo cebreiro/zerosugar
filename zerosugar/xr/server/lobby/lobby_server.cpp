@@ -2,7 +2,7 @@
 
 #include "zerosugar/shared/execution/executor/impl/asio_strand.h"
 #include "zerosugar/shared/network/session/session.h"
-#include "zerosugar/xr/network/server/lobby_session_state.h"
+#include "zerosugar/xr/server/lobby/lobby_session_state.h"
 #include "zerosugar/xr/service/model/generated/game_service.h"
 #include "zerosugar/xr/service/model/generated/gateway_service.h"
 

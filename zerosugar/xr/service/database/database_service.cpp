@@ -50,7 +50,7 @@ namespace zerosugar::xr
         service::AddAccountResult result;
         result.errorCode = service::DatabaseServiceErrorCode::DatabaseErrorNone;
 
-        DatabaseError error = co_await storedProcedure.ExecuteAsync();
+        const DatabaseError error = co_await storedProcedure.ExecuteAsync();
         if (error)
         {
             result.errorCode = service::DatabaseServiceErrorCode::DatabaseErrorInternalError;
@@ -75,7 +75,7 @@ namespace zerosugar::xr
         service::GetAccountResult result;
         result.errorCode = service::DatabaseServiceErrorCode::DatabaseErrorNone;
 
-        DatabaseError error = co_await storedProcedure.ExecuteAsync();
+        const DatabaseError error = co_await storedProcedure.ExecuteAsync();
         if (error)
         {
             result.errorCode = service::DatabaseServiceErrorCode::DatabaseErrorInternalError;
@@ -113,14 +113,14 @@ namespace zerosugar::xr
 
         do
         {
-            if (DatabaseError error = co_await StartTransaction(conn); error)
+            if (const DatabaseError error = co_await StartTransaction(conn); error)
             {
                 LogError(std::format("{} start transaction", __FUNCTION__), error);
 
                 break;
             }
 
-            if (DatabaseError error = co_await characterAdd.ExecuteAsync(); error)
+            if (const DatabaseError error = co_await characterAdd.ExecuteAsync(); error)
             {
                 LogError(std::format("{} characterAdd", __FUNCTION__), error);
 
@@ -130,14 +130,14 @@ namespace zerosugar::xr
             const int64_t cid = characterAdd.GetAddedCharacterId();
             sp::EquipItemsAdd equipItemsAdd(conn, cid, param.equipItems);
 
-            if (DatabaseError error = co_await equipItemsAdd.ExecuteAsync(); error)
+            if (const DatabaseError error = co_await equipItemsAdd.ExecuteAsync(); error)
             {
                 LogError(std::format("{} equipItemsAdd", __FUNCTION__), error);
 
                 break;
             }
 
-            if (DatabaseError error = co_await Commit(conn); error)
+            if (const DatabaseError error = co_await Commit(conn); error)
             {
                 LogError(std::format("{} commit", __FUNCTION__), error);
 
@@ -145,6 +145,7 @@ namespace zerosugar::xr
             }
 
             result.errorCode = service::DatabaseServiceErrorCode::DatabaseErrorNone;
+            result.characterId = cid;
 
             shouldRollback = false;
             
@@ -152,10 +153,34 @@ namespace zerosugar::xr
 
         if (shouldRollback)
         {
-            if (DatabaseError error = co_await Rollback(conn); error)
+            if (const DatabaseError error = co_await Rollback(conn); error)
             {
                 LogError(std::format("{} rollback", __FUNCTION__), error);
             }
+        }
+
+        co_return result;
+    }
+
+    auto DatabaseService::RemoveCharacterAsync(service::RemoveCharacterParam param) -> Future<service::RemoveCharacterResult>
+    {
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
+        co_await *_executor;
+        assert(ExecutionContext::IsEqualTo(*_executor));
+
+        ConnectionPool::Borrowed conn = co_await _connectionPool->Pop();
+        sp::CharactersDelete storedProcedure(conn, param.characterId);
+
+        service::RemoveCharacterResult result;
+
+        const DatabaseError error = co_await storedProcedure.ExecuteAsync();
+        if (error)
+        {
+            result.errorCode = service::DatabaseServiceErrorCode::DatabaseErrorInternalError;
+
+            LogError(__FUNCTION__, error);
         }
 
         co_return result;
@@ -176,7 +201,7 @@ namespace zerosugar::xr
         service::GetLobbyCharactersResult result;
         result.errorCode = service::DatabaseServiceErrorCode::DatabaseErrorNone;
 
-        DatabaseError error = co_await storedProcedure.ExecuteAsync();
+        const DatabaseError error = co_await storedProcedure.ExecuteAsync();
         if (error)
         {
             result.errorCode = service::DatabaseServiceErrorCode::DatabaseErrorInternalError;

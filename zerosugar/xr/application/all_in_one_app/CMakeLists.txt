@@ -3,6 +3,10 @@ add_executable(zerosugar_xr_application_all_in_one_app)
 target_link_libraries(zerosugar_xr_application_all_in_one_app PRIVATE
     zerosugar_xr_pch
     zerosugar_xr_network
+
+    zerosugar_xr_server_login
+    zerosugar_xr_server_lobby
+
     zerosugar_xr_service_login
     zerosugar_xr_service_gateway
     zerosugar_xr_service_game

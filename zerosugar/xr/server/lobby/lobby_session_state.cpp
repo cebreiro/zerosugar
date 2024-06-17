@@ -5,145 +5,9 @@
 #include "zerosugar/shared/snowflake/snowflake.h"
 #include "zerosugar/xr/data/enum/equip_position.h"
 #include "zerosugar/xr/network/packet_builder.h"
-#include "zerosugar/xr/network/packet_reader.h"
 #include "zerosugar/xr/network/model/generated/lobby_cs_message.h"
 #include "zerosugar/xr/network/model/generated/lobby_sc_message.h"
-
-namespace zerosugar::xr
-{
-    LobbyServerSessionStateMachine::LobbyServerSessionStateMachine(ServiceLocator& serviceLocator, IUniqueIDGenerator& idGenerator, Session& session)
-        : _session(session.weak_from_this())
-        , _name(std::format("lobby_session_state_machine[{}]", session.GetId()))
-        , _serviceLocator(serviceLocator)
-        , _channel(std::make_shared<Channel<Buffer>>())
-    {
-        AddState<lobby::ConnectedState>(true, *this, serviceLocator, session)
-            .Add(LobbySessionState::Authenticated);
-
-        AddState<lobby::AuthenticatedState>( false, *this, serviceLocator, idGenerator, session)
-            .Add(LobbySessionState::TransitionToGame);
-
-        AddState<lobby::TransitionToGameState>(false);
-    }
-
-    void LobbyServerSessionStateMachine::Start()
-    {
-        const std::shared_ptr<Session>& session = _session.lock();
-        assert(session);
-
-        Post(session->GetStrand(),
-            [](SharedPtrNotNull<LobbyServerSessionStateMachine> self, session::id_type id, WeakPtrNotNull<Session> weak) -> Future<void>
-            {
-                try
-                {
-                    co_await self->Run();
-                }
-                catch (const std::exception& e)
-                {
-                    ZEROSUGAR_LOG_DEBUG(self->_serviceLocator,
-                        std::format("[{}] exit with exception. session_id: {}, exception: {}", self->GetName(), id, e.what()));
-                }
-
-                if (const std::shared_ptr<Session>& session = weak.lock())
-                {
-                    session->Close();
-                }
-
-            }, shared_from_this(), session->GetId(), _session);
-    }
-
-    void LobbyServerSessionStateMachine::Shutdown()
-    {
-        _shutdown.store(true);
-
-        _channel->Close();
-    }
-
-    void LobbyServerSessionStateMachine::Receive(Buffer buffer)
-    {
-        _channel->Send(std::move(buffer), channel::ChannelSignal::NotifyOne);
-    }
-
-    auto LobbyServerSessionStateMachine::GetName() const -> std::string_view
-    {
-        return _name;
-    }
-
-    auto LobbyServerSessionStateMachine::Run() -> Future<void>
-    {
-        [[maybe_unused]]
-        auto self = shared_from_this();
-
-        AsyncEnumerable<Buffer> enumerable(_channel);
-
-        Buffer receiveBuffer;
-
-        while (enumerable.HasNext())
-        {
-            Buffer buffer = co_await enumerable;
-
-            const std::shared_ptr<Session>& session = _session.lock();
-
-            if (_shutdown.load() || !session)
-            {
-                co_return;
-            }
-
-            assert(ExecutionContext::IsEqualTo(session->GetStrand()));
-
-            try
-            {
-                receiveBuffer.MergeBack(std::move(buffer));
-
-                if (receiveBuffer.GetSize() < 2)
-                {
-                    continue;
-                }
-
-                PacketReader reader(receiveBuffer.cbegin(), receiveBuffer.cend());
-
-                const int64_t packetSize = reader.Read<int16_t>();
-                if (receiveBuffer.GetSize() < packetSize)
-                {
-                    continue;
-                }
-
-                std::unique_ptr<IPacket> packet = network::lobby::cs::CreateFrom(reader);
-
-                Buffer temp;
-                [[maybe_unused]] bool sliced = receiveBuffer.SliceFront(temp, packetSize);
-                assert(sliced);
-
-                if (!packet)
-                {
-                    ZEROSUGAR_LOG_WARN(_serviceLocator,
-                        std::format("[{}] unnkown packet. session: {}", GetName(), *session));
-
-                    session->Close();
-
-                    co_return;
-                }
-
-                co_await OnEvent(std::move(packet));
-            }
-            catch (const std::exception& e)
-            {
-                ZEROSUGAR_LOG_WARN(self->_serviceLocator, std::format("[{}] throws. session: {}, exsception: {}",
-                    self->GetName(), *session, e.what()));
-            }
-        }
-    }
-
-    auto LobbyServerSessionStateMachine::GetAccountId() const -> int64_t
-    {
-        return _accountId;
-    }
-
-    void LobbyServerSessionStateMachine::SetAccountId(int64_t accountId)
-    {
-        _accountId = accountId;
-    }
-}
+#include "zerosugar/xr/network/model/generated/lobby_cs_message_json.h"
 
 namespace zerosugar::xr::lobby
 {
@@ -217,15 +81,19 @@ namespace zerosugar::xr::lobby
             return;
         }
 
+        Promise<void> promise;
+        _pendingGetCharacterList = promise.GetFuture();
+
         service::GetLobbyCharactersParam param;
         param.accountId = _stateMachine.GetAccountId();
 
         _serviceLocator.Get<service::IDatabaseService>().GetLobbyCharactersAsync(std::move(param))
-            .Then(session->GetStrand(), [session](service::GetLobbyCharactersResult result)
+            .Then(session->GetStrand(),
+                [session, p = std::move(promise), self = shared_from_this()](service::GetLobbyCharactersResult result) mutable
                 {
                     if (result.errorCode == service::DatabaseServiceErrorCode::DatabaseErrorNone)
                     {
-                        const auto notifyCharacterList = [&result]() -> network::lobby::sc::NotifyCharacterList
+                        const auto notifyCharacterList = [&result, &self]() -> network::lobby::sc::NotifyCharacterList
                             {
                                 network::lobby::sc::NotifyCharacterList notify;
                                 notify.count = static_cast<int32_t>(result.lobbyCharacters.size());
@@ -265,6 +133,8 @@ namespace zerosugar::xr::lobby
                                             assert(false);
                                         }
                                     }
+
+                                    self->AddCharacterId(dto.slot, dto.characterId);
                                 }
 
                                 return notify;
@@ -276,11 +146,18 @@ namespace zerosugar::xr::lobby
                     {
                         session->Close();
                     }
+
+                    p.Set();
                 });
     }
 
     auto AuthenticatedState::OnEvent(UniquePtrNotNull<IPacket> inPacket) -> Future<void>
     {
+        if (_pendingGetCharacterList.IsPending())
+        {
+            co_await _pendingGetCharacterList;
+        }
+
         using namespace network::lobby;
 
         std::shared_ptr<Session> session = _session.lock();
@@ -321,8 +198,48 @@ namespace zerosugar::xr::lobby
         co_return;
     }
 
+    bool AuthenticatedState::HasCharacter(int32_t slotId) const
+    {
+        return _slotCharacterIdIndex.contains(slotId);
+    }
+
+    auto AuthenticatedState::FindCharacterId(int32_t slotId) const -> std::optional<int64_t>
+    {
+        const auto iter = _slotCharacterIdIndex.find(slotId);
+
+        return iter != _slotCharacterIdIndex.end() ? iter->second : std::optional<int64_t>();
+    }
+
+    void AuthenticatedState::AddCharacterId(int32_t slotId, int64_t characterId)
+    {
+        [[maybe_unused]]
+        bool inserted = _slotCharacterIdIndex.try_emplace(slotId, characterId).second;
+        assert(inserted);
+    }
+
+    void AuthenticatedState::RemoveCharacterId(int32_t slotId)
+    {
+        [[maybe_unused]]
+        const size_t erased = _slotCharacterIdIndex.erase(slotId);
+        assert(erased > 0);
+    }
+
     auto AuthenticatedState::HandlePacket(Session& session, const network::lobby::cs::CreateCharacter& packet) -> Future<void>
     {
+        if (HasCharacter(packet.character.slot))
+        {
+            ZEROSUGAR_LOG_WARN(_serviceLocator,
+                std::format("[lobby_stete_authenticated] invalid request - character slot already used. session: {}, param: {}",
+                    session, nlohmann::json(packet.character).dump()));
+
+            network::lobby::sc::ResultCreateCharacter outPacket;
+            outPacket.success = false;
+
+            session.Send(PacketBuilder::MakePacket(outPacket));
+
+            co_return;
+        }
+
         service::IDatabaseService& databaseService = _serviceLocator.Get<service::IDatabaseService>();
 
         service::AddCharacterParam param;
@@ -357,19 +274,21 @@ namespace zerosugar::xr::lobby
             for (const auto& [itemId, equipPosition] : equipItems)
             {
                 service::DTOEquipItem& equipItem = param.equipItems.emplace_back();
-                equipItem.item.itemId = _idGenerator.Generate();
+                equipItem.item.itemId = static_cast<int64_t>(_idGenerator.Generate());
                 equipItem.item.itemDataId = itemId;
                 equipItem.equipPosition = static_cast<int32_t>(equipPosition);
             }
         }
 
-        service::AddCharacterResult result = co_await databaseService.AddCharacterAsync(std::move(param));
+        service::AddCharacterResult result = co_await databaseService.AddCharacterAsync(param);
 
         network::lobby::sc::ResultCreateCharacter outPacket;
         outPacket.success = result.errorCode == service::DatabaseServiceErrorCode::DatabaseErrorNone;
 
         if (outPacket.success)
         {
+            AddCharacterId(param.characterAdd.slot, result.characterId);
+
             outPacket.character.slot = param.characterAdd.slot;
             outPacket.character.name = param.characterAdd.name;
             outPacket.character.level = param.characterAdd.level;
@@ -391,12 +310,36 @@ namespace zerosugar::xr::lobby
 
     auto AuthenticatedState::HandlePacket(Session& session, const network::lobby::cs::DeleteCharacter& packet) -> Future<void>
     {
-        (void)session;
-        (void)packet;
+        std::optional<int64_t> characterId = FindCharacterId(packet.slot);
+        if (!characterId.has_value())
+        {
+            ZEROSUGAR_LOG_WARN(_serviceLocator,
+                std::format("[lobby_stete_authenticated] invalid request - character slot is empty. session: {}, slot: {}",
+                    session, packet.slot));
+
+            co_return;
+        }
+
+        service::IDatabaseService& databaseService = _serviceLocator.Get<service::IDatabaseService>();
+
+        service::RemoveCharacterParam param;
+        param.characterId = *characterId;
+
+        service::RemoveCharacterResult result = co_await databaseService.RemoveCharacterAsync(std::move(param));
+
+        if (result.errorCode != service::DatabaseServiceErrorCode::DatabaseErrorNone)
+        {
+            co_return;
+        }
+
+        RemoveCharacterId(packet.slot);
+
+        network::lobby::sc::SuccessDeleteCharacter outPacket;
+        outPacket.slot = packet.slot;
+
+        session.Send(PacketBuilder::MakePacket(outPacket));
 
         co_return;
-
-        //service::IDatabaseService& databaseService = _serviceLocator.Get<service::IDatabaseService>();
     }
 
     auto AuthenticatedState::HandlePacket(Session& session, const network::lobby::cs::SelectCharacter& packet) -> Future<void>

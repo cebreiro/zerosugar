@@ -26,6 +26,12 @@ namespace zerosugar::xr::service
     void from_json(const nlohmann::json& j, AddCharacterParam& item);
     void to_json(nlohmann::json& j, const AddCharacterParam& item);
 
+    void from_json(const nlohmann::json& j, RemoveCharacterParam& item);
+    void to_json(nlohmann::json& j, const RemoveCharacterParam& item);
+
+    void from_json(const nlohmann::json& j, RemoveCharacterResult& item);
+    void to_json(nlohmann::json& j, const RemoveCharacterResult& item);
+
     void from_json(const nlohmann::json& j, AddCharacterResult& item);
     void to_json(nlohmann::json& j, const AddCharacterResult& item);
 

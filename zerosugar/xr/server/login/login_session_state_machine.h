@@ -1,8 +1,6 @@
 #pragma once
 #include "zerosugar/shared/state_machine/state_machine.h"
 #include "zerosugar/xr/network/packet_interface.h"
-#include "zerosugar/xr/service/model/generated/login_service.h"
-#include "zerosugar/xr/service/model/generated/gateway_service.h"
 
 namespace zerosugar
 {
@@ -40,33 +38,5 @@ namespace zerosugar::xr
         std::atomic<bool> _shutdown = false;
 
         SharedPtrNotNull<Channel<Buffer>> _channel;
-    };
-}
-
-namespace zerosugar::xr::login
-{
-    class ConnectedState final : public LoginServerSessionStateMachine::state_type
-    {
-    public:
-        ConnectedState(LoginServerSessionStateMachine& stateMachine, ServiceLocator& serviceLocator, Session& session);
-
-        auto OnEvent(UniquePtrNotNull<IPacket> inPacket) -> Future<void> override;
-
-    private:
-        LoginServerSessionStateMachine& _stateMachine;
-        ServiceLocatorT<service::ILoginService, service::IGatewayService> _serviceLocator;
-        WeakPtrNotNull<Session> _session;
-    };
-
-    class AuthenticatedState final : public LoginServerSessionStateMachine::state_type
-    {
-    public:
-        explicit AuthenticatedState(Session& session);
-
-        void OnEnter() override;
-        auto OnEvent(UniquePtrNotNull<IPacket> inPacket) -> Future<void> override;
-
-    private:
-        Session& _session;
     };
 }

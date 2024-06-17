@@ -40,8 +40,21 @@ namespace zerosugar::xr
         const std::optional<int32_t>& key = PublishSnowflakeKey(param.requester);
 
         service::RequestSnowflakeKeyResult result;
-        result.errorCode = key ? service::GameServiceErrorCode::GameErrorNone : service::GameServiceErrorCode::RequestSnowflakeKeyErrorOutOfPool;
-        result.snowflakeKey = key.value_or(-1);
+
+        if (key.has_value())
+        {
+            ZEROSUGAR_LOG_INFO(_serviceLocator,
+                std::format("[{}] publish snowflake. id: {}, requester: {}", GetName(), *key, param.requester));
+
+            result.snowflakeKey = *key;
+        }
+        else
+        {
+            ZEROSUGAR_LOG_CRITICAL(_serviceLocator,
+                std::format("[{}] fail to publish snowflake. reuqester: {}", GetName(), param.requester));
+
+            result.errorCode = service::GameServiceErrorCode::RequestSnowflakeKeyErrorOutOfPool;
+        }
 
         co_return result;
     }
