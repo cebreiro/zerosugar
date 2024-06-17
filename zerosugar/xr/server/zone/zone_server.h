@@ -1,6 +1,5 @@
 #pragma once
 #include "zerosugar/shared/network/server/server.h"
-#include "zerosugar/xr/server/login/login_session_state.h"
 
 namespace zerosugar::execution
 {
@@ -9,11 +8,11 @@ namespace zerosugar::execution
 
 namespace zerosugar::xr
 {
-    class LoginServer final
+    class ZoneServer final
         : public Server
     {
     public:
-        explicit LoginServer(execution::AsioExecutor& executor);
+        explicit ZoneServer(execution::AsioExecutor& executor);
 
         void Initialize(ServiceLocator& serviceLocator) override;
 
@@ -27,6 +26,6 @@ namespace zerosugar::xr
     private:
         ServiceLocator _serviceLocator;
 
-        tbb::concurrent_hash_map<session::id_type, SharedPtrNotNull<LoginServerSessionStateMachine>> _stateMachines;
+        // std::unordered_map<int64_t, ZoneInstance> _zoneInstances;
     };
 }

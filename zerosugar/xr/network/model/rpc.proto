@@ -14,6 +14,10 @@ enum RemoteProcedureCallErrorCode
     rpc_error_invalid_service_name = 20001;
     rpc_error_invalid_rpc_name = 20002;
     rpc_error_invalid_parameter = 20003;
+
+    rpc_error_streaming_closed_gracefully = 300001;
+    rpc_error_streaming_closed_by_client = 300002;
+    rpc_error_streaming_closed_by_server = 300003;
 }
 
 message RequestRegisterRPCClient
@@ -37,10 +41,10 @@ message RequestRemoteProcedureCall
 {
     option (opcode) = 3;
 
-    int32 rpc_id = 2;
-    string service_name = 3;
-    string rpc_name = 4;
-    string parameter = 5;
+    int32 rpc_id = 1;
+    string service_name = 2;
+    string rpc_name = 3;
+    string parameter = 4;
 }
 
 message ResultRemoteProcedureCall
@@ -51,4 +55,21 @@ message ResultRemoteProcedureCall
     int32 rpc_id = 2;
     string service_name = 3;
     string rpc_result = 4;
+}
+
+message SendClientSteaming
+{
+    option (opcode) = 5;
+
+    int32 rpc_id = 1;
+    string service_name = 2;
+    string parameter = 3;
+}
+
+message AbortClientStreamingRPC
+{
+    option (opcode) = 6;
+
+    int32 rpc_id = 1;
+    string service_name = 2;
 }

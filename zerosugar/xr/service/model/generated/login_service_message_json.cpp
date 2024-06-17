@@ -88,4 +88,30 @@ namespace zerosugar::xr::service
             };
     }
 
+    void from_json(const nlohmann::json& j, TestParam& item)
+    {
+        j.at("token").get_to(item.token);
+    }
+
+    void to_json(nlohmann::json& j, const TestParam& item)
+    {
+        j = nlohmann::json
+            {
+                { "token", item.token },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, TestResult& item)
+    {
+        j.at("token").get_to(item.token);
+    }
+
+    void to_json(nlohmann::json& j, const TestResult& item)
+    {
+        j = nlohmann::json
+            {
+                { "token", item.token },
+            };
+    }
+
 }

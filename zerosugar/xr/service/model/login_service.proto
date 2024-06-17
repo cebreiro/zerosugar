@@ -8,6 +8,10 @@ service LoginService
     rpc CreateAccount (CreateAccountParam) returns (CreateAccountResult);
 
     rpc Authenticate (AuthenticateParam) returns (AuthenticateResult);
+
+    rpc Test1 (stream TestParam) returns (TestResult);
+    rpc Test2 (TestParam) returns (stream TestResult);
+    rpc Test3 (stream TestParam) returns (stream TestResult);
 }
 
 enum LoginServiceErrorCode
@@ -50,4 +54,14 @@ message AuthenticateResult
 {
     LoginServiceErrorCode error_code = 1;
     int64 account_id = 2;
+}
+
+message TestParam
+{
+    string token = 1;
+}
+
+message TestResult
+{
+    string token = 1;
 }

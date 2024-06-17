@@ -158,6 +158,95 @@ namespace zerosugar::xr
         co_return result;
     }
 
+    auto LoginService::Test1Async(AsyncEnumerable<service::TestParam> param) -> Future<service::TestResult>
+    {
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
+        co_await *_strand;
+        assert(ExecutionContext::IsEqualTo(*_strand));
+
+        int64_t i = 0;
+
+        try
+        {
+            while (param.HasNext())
+            {
+                service::TestParam asd = co_await param;
+                ++i;
+
+                if (i > 50)
+                {
+                    throw std::runtime_error("test");
+                }
+
+                ZEROSUGAR_LOG_INFO(_serviceLocator, std::format("{}, {}, {}", __FUNCTION__, asd.token, i));
+            }
+        }
+        catch (const std::exception& e)
+        {
+            ZEROSUGAR_LOG_WARN(_serviceLocator, std::format("{}, exception: {}", __FUNCTION__, e.what()));
+
+            throw;
+        }
+
+        service::TestResult result;
+        result.token = std::format("{} END", __FUNCTION__);
+
+        ZEROSUGAR_LOG_INFO(_serviceLocator, std::format("{}, {} END", __FUNCTION__, i));
+
+        co_return result;
+    }
+
+    auto LoginService::Test2Async(service::TestParam param) -> AsyncEnumerable<service::TestResult>
+    {
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
+        co_await *_strand;
+        assert(ExecutionContext::IsEqualTo(*_strand));
+
+        for (int64_t i = 0; i < 10; ++i)
+        {
+            co_await Delay(std::chrono::seconds(1));
+
+            service::TestResult result;
+            result.token = std::format("{}:{} END", __FUNCTION__, i);
+
+            co_yield result;
+        }
+
+        co_return;
+    }
+
+    auto LoginService::Test3Async(AsyncEnumerable<service::TestParam> param) -> AsyncEnumerable<service::TestResult>
+    {
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
+        co_await *_strand;
+        assert(ExecutionContext::IsEqualTo(*_strand));
+
+        try
+        {
+            while (param.HasNext())
+            {
+                service::TestParam asd = co_await param;
+
+                service::TestResult result;
+                result.token = asd.token;
+
+                co_yield result;
+            }
+        }
+        catch (const std::exception& e)
+        {
+            ZEROSUGAR_LOG_WARN(_serviceLocator, std::format("{}, exception: {}", __FUNCTION__, e.what()));
+        }
+
+        co_return;
+    }
+
     auto LoginService::Encode(const std::string& str) -> std::string
     {
         assert(ExecutionContext::IsEqualTo(*_strand));

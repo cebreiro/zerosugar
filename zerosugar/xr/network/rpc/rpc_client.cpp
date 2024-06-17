@@ -6,6 +6,7 @@
 #include "zerosugar/xr/network/packet_reader.h"
 #include "zerosugar/xr/network/rpc/rpc_packet_builder.h"
 #include "zerosugar/xr/network/model/generated/rpc_message.h"
+#include "zerosugar/xr/network/model/generated/rpc_message_json.h"
 
 namespace zerosugar::xr
 {
@@ -44,14 +45,15 @@ namespace zerosugar::xr
         request.ip = std::move(ip);
         request.port = port;
 
+        Promise<void> promise;
+        Future<void> future = promise.GetFuture();
+
+        _registers[serviceName] = std::move(promise);
+
         const std::expected<int64_t, IOError> ioResult = co_await _socket->SendAsync(RPCPacketBuilder::MakePacket(request));
 
         if (ioResult.has_value())
         {
-            Promise<void> promise;
-            Future<void> future = promise.GetFuture();
-
-            _registers[serviceName] = std::move(promise);
             co_await future;
 
             co_return;
@@ -99,125 +101,186 @@ namespace zerosugar::xr
                         return temp;
                     }());
 
-                if (receivedBuffer.GetSize() < 4)
+                while(true)
                 {
-                    continue;
-                }
-
-                PacketReader reader(receivedBuffer.cbegin(), receivedBuffer.cend());
-
-                const int32_t packetSize = reader.Read<int32_t>();
-                if (packetSize < receivedBuffer.GetSize())
-                {
-                    if (receiveBuffer.GetSize() < packetSize - 4)
+                    if (receivedBuffer.GetSize() < 4)
                     {
-                        receiveBuffer.Add(buffer::Fragment::Create(packetSize));
+                        break;
                     }
 
-                    continue;
-                }
+                    PacketReader reader(receivedBuffer.cbegin(), receivedBuffer.cend());
 
-                std::unique_ptr<IPacket> packet = network::CreateFrom(reader);
-
-                assert(reader.GetReadSize() == packetSize);
-
-                Buffer used;
-                [[maybe_unused]] bool sliced = receivedBuffer.SliceFront(used, packetSize);
-                assert(sliced);
-
-                receiveBuffer.MergeBack(std::move(used));
-
-                switch (packet->GetOpcode())
-                {
-                case network::ResultRegisterRPCClient::opcode:
-                {
-                    const network::ResultRegisterRPCClient& result = *packet->Cast<network::ResultRegisterRPCClient>();
-
-                    const auto iter = _registers.find(result.serviceName);
-                    if (iter != _registers.end())
+                    const int32_t packetSize = reader.Read<int32_t>();
+                    if (receivedBuffer.GetSize() < packetSize)
                     {
-                        Promise<void> promise = std::exchange(iter->second, {});
-                        _registers.erase(iter);
-
-                        try
+                        if (receiveBuffer.GetSize() < packetSize - 4)
                         {
-                            if (result.errorCode != network::RemoteProcedureCallErrorCode::RpcErrorNone)
+                            receiveBuffer.Add(buffer::Fragment::Create(packetSize));
+                        }
+
+                        break;
+                    }
+
+                    std::unique_ptr<IPacket> packet = network::CreateFrom(reader);
+                    assert(reader.GetReadSize() == packetSize);
+
+                    Buffer temp;
+                    [[maybe_unused]] bool sliced = receivedBuffer.SliceFront(temp, packetSize);
+                    assert(sliced);
+
+                    switch (packet->GetOpcode())
+                    {
+                    case network::ResultRegisterRPCClient::opcode:
+                    {
+                        const network::ResultRegisterRPCClient& result = *packet->Cast<network::ResultRegisterRPCClient>();
+
+                        const auto iter = _registers.find(result.serviceName);
+                        if (iter != _registers.end())
+                        {
+                            Promise<void> promise = std::exchange(iter->second, {});
+                            _registers.erase(iter);
+
+                            try
                             {
-                                throw std::runtime_error(std::format("fail to register rpc client. error: {}", GetEnumName(result.errorCode)));
-                            }
+                                if (result.errorCode != network::RemoteProcedureCallErrorCode::RpcErrorNone)
+                                {
+                                    throw std::runtime_error(std::format("fail to register rpc client. error: {}", GetEnumName(result.errorCode)));
+                                }
 
-                            promise.Set();
+                                promise.Set();
+                            }
+                            catch (...)
+                            {
+                                promise.SetException(std::current_exception());
+                            }
                         }
-                        catch (...)
+                        else
                         {
-                            promise.SetException(std::current_exception());
+                            assert(false);
                         }
                     }
-                    else
+                    break;
+                    case network::RequestRemoteProcedureCall::opcode:
                     {
+                        const network::RequestRemoteProcedureCall& request = *packet->Cast<network::RequestRemoteProcedureCall>();
+
+                        HandleRequestRemoteProcedureCall(request);
+                    }
+                    break;
+                    case network::ResultRemoteProcedureCall::opcode:
+                    {
+                        const network::ResultRemoteProcedureCall& result = *packet->Cast<network::ResultRemoteProcedureCall>();
+
+                        HandleResultRemoteProcedureCall(result);
+                    }
+                    break;
+                    case network::SendClientSteaming::opcode:
+                    {
+                        const network::SendClientSteaming& clientStreaming = *packet->Cast<network::SendClientSteaming>();
+
+                        HandleClientStreaming(clientStreaming);
+                    }
+                    break;
+                    case network::AbortClientStreamingRPC::opcode:
+                    {
+                        const network::AbortClientStreamingRPC& abort = *packet->Cast<network::AbortClientStreamingRPC>();
+
+                        HandleAbortClientStreaming(abort);
+                    }
+                    break;
+                    default:
                         assert(false);
                     }
-                }
-                break;
-                case network::RequestRemoteProcedureCall::opcode:
-                {
-                    const network::RequestRemoteProcedureCall& request = *packet->Cast<network::RequestRemoteProcedureCall>();
-
-                    Post(*_executor, [self = shared_from_this(), request = std::move(request)]() mutable
-                        {
-                            self->HandleRequestRemoteProcedureCall(std::move(request));
-                        });
-                }
-                break;
-                case network::ResultRemoteProcedureCall::opcode:
-                {
-                    const network::ResultRemoteProcedureCall& result = *packet->Cast<network::ResultRemoteProcedureCall>();
-
-                    HandleResultRemoteProcedureCall(result);
-                }
-                break;
-                default:
-                    assert(false);
                 }
             }
             else
             {
-                // TODO: log
+                ZEROSUGAR_LOG_CRITICAL(_serviceLocator,
+                    std::format("[rpc_client] receive error. error: {}", receiveResult.error().message));
+                
                 co_return;
             }
         }
     }
 
-    void RPCClient::Send(int32_t rpcId, std::string serviceName, std::string rpcName, std::string param, const send_callback_type& callback)
+    bool RPCClient::HasRPCCallback(const std::string& serviceName, int32_t rpcId) const
+    {
+        const auto iter = _remoteProcedures.find(serviceName);
+        if (iter == _remoteProcedures.end())
+        {
+            return false;
+        }
+
+        return iter->second.contains(rpcId);
+    }
+
+    void RPCClient::SetRPCCallback(const std::string& serviceName, int32_t rpcId, const result_callback_type& callback)
+    {
+        [[maybe_unused]]
+        bool inserted = _remoteProcedures[serviceName].try_emplace(rpcId, callback).second;
+        assert(inserted);
+    }
+
+    void RPCClient::Send(int32_t rpcId, std::string serviceName, std::string rpcName, std::string param)
+    {
+        assert(ExecutionContext::IsEqualTo(*_strand));
+        assert(HasRPCCallback(serviceName, rpcId));
+
+        network::RequestRemoteProcedureCall packet;
+        packet.rpcId = rpcId;
+        packet.serviceName = std::move(serviceName);
+        packet.rpcName = std::move(rpcName);
+        packet.parameter = std::move(param);
+
+        Buffer buffer = RPCPacketBuilder::MakePacket(packet);
+
+        _socket->SendAsync(std::move(buffer));
+    }
+
+    void RPCClient::SendClientStreaming(int32_t rpcId, std::string serviceName, std::string param)
     {
         assert(ExecutionContext::IsEqualTo(*_strand));
 
-        if (!_remoteProcedures[serviceName].try_emplace(rpcId, callback).second)
+        if (!HasRPCCallback(serviceName, rpcId))
         {
-            assert(false);
-
             return;
         }
 
-        network::RequestRemoteProcedureCall request;
-        request.rpcId = rpcId;
-        request.serviceName = std::move(serviceName);
-        request.rpcName = std::move(rpcName);
-        request.parameter = std::move(param);
+        network::SendClientSteaming packet;
+        packet.rpcId = rpcId;
+        packet.serviceName = serviceName;
+        packet.parameter = std::move(param);
 
-        Buffer packet = RPCPacketBuilder::MakePacket(request);
+        Buffer buffer = RPCPacketBuilder::MakePacket(packet);
 
-        _socket->SendAsync(std::move(packet));
+        _socket->SendAsync(std::move(buffer));
+    }
+
+    void RPCClient::SendAbortClientStreaming(int32_t rpcId, const std::string& serviceName)
+    {
+        assert(ExecutionContext::IsEqualTo(*_strand));
+        assert(HasRPCCallback(serviceName, rpcId));
+
+        network::AbortClientStreamingRPC packet;
+        packet.rpcId = rpcId;
+        packet.serviceName = serviceName;
+
+        Buffer buffer = RPCPacketBuilder::MakePacket(packet);
+
+        _socket->SendAsync(std::move(buffer));
     }
 
     auto RPCClient::HandleRequestRemoteProcedureCall(network::RequestRemoteProcedureCall request) -> Future<void>
     {
+        assert(ExecutionContext::IsEqualTo(*_strand));
+
         network::ResultRemoteProcedureCall resultRPC;
+        resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorNone;
         resultRPC.rpcId = request.rpcId;
         resultRPC.serviceName = request.serviceName;
 
-        auto iter = _procedures.find(MakeProcedureKey(request.serviceName, request.rpcName));
-        if (iter == _procedures.end())
+        auto iterProcedure = _procedures.find(MakeProcedureKey(request.serviceName, request.rpcName));
+        if (iterProcedure == _procedures.end())
         {
             resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorInvalidRpcName;
 
@@ -226,23 +289,140 @@ namespace zerosugar::xr
             co_return;
         }
 
-        try
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
+        if (std::holds_alternative<std::function<Future<std::string>(const std::string&)>>(iterProcedure->second))
         {
-            [[maybe_unused]]
-            auto self = shared_from_this();
+            auto& function = std::get<std::function<Future<std::string>(const std::string&)>>(iterProcedure->second);
 
-            std::string result = co_await iter->second(request.parameter);
+            try
+            {
+                resultRPC.rpcResult = co_await function(request.parameter);
+            }
+            catch (const std::exception& e)
+            {
+                resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorInternalError;
 
-            resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorNone;
-            resultRPC.rpcResult = std::move(result);
+                ZEROSUGAR_LOG_ERROR(self->_serviceLocator,
+                    std::format("[rpc_client] rpc throws. id: {}, service: {}, rpc: {}, exception: {}",
+                        request.rpcId, request.serviceName, request.rpcName, e.what()));
+            }
 
             _socket->SendAsync(RPCPacketBuilder::MakePacket(resultRPC));
         }
-        catch (...)
+        else if (std::holds_alternative<std::function<AsyncEnumerable<std::string>(const std::string&)>>(iterProcedure->second))
         {
-            resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorInternalError;
+            auto& function = std::get<std::function<AsyncEnumerable<std::string>(const std::string&)>>(iterProcedure->second);
 
-            _socket->SendAsync(RPCPacketBuilder::MakePacket(resultRPC));
+            AsyncEnumerable<std::string> enumerable = function(request.parameter);
+
+            try
+            {
+                while (enumerable.HasNext())
+                {
+                    resultRPC.rpcResult = co_await enumerable;
+                    assert(ExecutionContext::IsEqualTo(*self->_strand));
+
+                    _socket->SendAsync(RPCPacketBuilder::MakePacket(resultRPC));
+                }
+
+                resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorStreamingClosedGracefully;
+                resultRPC.rpcResult.clear();
+
+                _socket->SendAsync(RPCPacketBuilder::MakePacket(resultRPC));
+            }
+            catch (const std::exception& e)
+            {
+                ZEROSUGAR_LOG_ERROR(self->_serviceLocator,
+                    std::format("[rpc_client] server streaming rpc throws. id: {}, service: {}, rpc: {}, exception: {}",
+                        request.rpcId, request.serviceName, request.rpcName, e.what()));
+
+                resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorStreamingClosedByServer;
+                resultRPC.rpcResult.clear();
+
+                _socket->SendAsync(RPCPacketBuilder::MakePacket(resultRPC));
+            }
+        }
+        else if (std::holds_alternative<std::function<Future<std::string>(SharedPtrNotNull<Channel<std::string>>)>>(iterProcedure->second))
+        {
+            auto& function = std::get<std::function<Future<std::string>(SharedPtrNotNull<Channel<std::string>>)>>(iterProcedure->second);
+
+            if (!_runningClientStreamingProcedures.contains(request.rpcId))
+            {
+                auto channel = std::make_shared<Channel<std::string>>();
+                _runningClientStreamingProcedures[request.rpcId] = channel;
+
+                channel->Send(request.parameter, channel::ChannelSignal::NotifyOne);
+
+                try
+                {
+                    resultRPC.rpcResult = co_await function(std::move(channel));
+                }
+                catch (const std::exception& e)
+                {
+                    ZEROSUGAR_LOG_ERROR(self->_serviceLocator,
+                        std::format("[rpc_client] client streaming rpc throws. id: {}, service: {}, rpc: {}, exception: {}",
+                            request.rpcId, request.serviceName, request.rpcName, e.what()));
+
+                    resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorStreamingClosedByServer;
+                    resultRPC.rpcResult.clear();
+
+                    _runningClientStreamingProcedures.erase(request.rpcId);
+                }
+
+                _socket->SendAsync(RPCPacketBuilder::MakePacket(resultRPC));
+
+                co_return;
+            }
+            else
+            {
+                assert(false);
+            }
+        }
+        else if (std::holds_alternative<std::function<AsyncEnumerable<std::string>(SharedPtrNotNull<Channel<std::string>>)>>(iterProcedure->second))
+        {
+            auto& function = std::get<std::function<AsyncEnumerable<std::string>(SharedPtrNotNull<Channel<std::string>>)>>(iterProcedure->second);
+
+            if (!_runningClientStreamingProcedures.contains(request.rpcId))
+            {
+                auto channel = std::make_shared<Channel<std::string>>();
+                _runningClientStreamingProcedures[request.rpcId] = channel;
+
+                channel->Send(request.parameter, channel::ChannelSignal::NotifyOne);
+
+                try
+                {
+                    AsyncEnumerable<std::string> enumerable = function(std::move(channel));
+
+                    while (enumerable.HasNext())
+                    {
+                        resultRPC.rpcResult = co_await function(std::move(channel));
+
+                        _socket->SendAsync(RPCPacketBuilder::MakePacket(resultRPC));
+                    }
+
+                    resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorStreamingClosedGracefully;
+                    resultRPC.rpcResult.clear();
+
+                    _socket->SendAsync(RPCPacketBuilder::MakePacket(resultRPC));
+                }
+                catch (const std::exception& e)
+                {
+                    ZEROSUGAR_LOG_ERROR(self->_serviceLocator,
+                        std::format("[rpc_client] server-client streaming rpc throws. id: {}, service: {}, rpc: {}, exception: {}",
+                            request.rpcId, request.serviceName, request.rpcName, e.what()));
+
+                    resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorStreamingClosedByServer;
+                    resultRPC.rpcResult.clear();
+
+                    _runningClientStreamingProcedures.erase(request.rpcId);
+                }
+            }
+            else
+            {
+                assert(false);
+            }
         }
     }
 
@@ -250,7 +430,7 @@ namespace zerosugar::xr
     {
         assert(ExecutionContext::IsEqualTo(*_strand));
 
-        auto* remoteProcedures = [this, &result]() -> std::unordered_map<int32_t, send_callback_type>*
+        auto* remoteProcedures = [this, &result]() -> std::unordered_map<int32_t, result_callback_type>*
             {
                 auto iter = _remoteProcedures.find(result.serviceName);
                 return iter != _remoteProcedures.end() ? &iter->second : nullptr;
@@ -276,6 +456,28 @@ namespace zerosugar::xr
 
         assert(callback);
         callback(result.errorCode, result.rpcResult);
+    }
+
+    void RPCClient::HandleClientStreaming(const network::SendClientSteaming& clientStreaming)
+    {
+        auto iter = _runningClientStreamingProcedures.find(clientStreaming.rpcId);
+        if (iter == _runningClientStreamingProcedures.end())
+        {
+            return;
+        }
+
+        iter->second->Send(clientStreaming.parameter, channel::ChannelSignal::NotifyOne);
+    }
+
+    void RPCClient::HandleAbortClientStreaming(const network::AbortClientStreamingRPC& abort)
+    {
+        auto iter = _runningClientStreamingProcedures.find(abort.rpcId);
+        if (iter != _runningClientStreamingProcedures.end())
+        {
+            iter->second->Close();
+
+            _runningClientStreamingProcedures.erase(iter);
+        }
     }
 
     auto RPCClient::MakeProcedureKey(const std::string& service, const std::string& rpc) -> std::string

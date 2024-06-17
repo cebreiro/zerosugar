@@ -19,6 +19,8 @@ namespace zerosugar
         void Set();
         void SetException(const std::exception_ptr& exception);
 
+        void Reset();
+
         auto GetFuture() const -> Future<void>;
 
     private:
@@ -39,11 +41,19 @@ namespace zerosugar
         void Set(T value);
         void SetException(const std::exception_ptr& exception);
 
+        void Reset();
+
         auto GetFuture() const -> Future<T>;
 
     private:
         SharedPtrNotNull<context_type> _context = std::make_shared<context_type>();
     };
+
+    template <std::move_constructible T>
+    void Promise<T>::Reset()
+    {
+        _context->Reset();
+    }
 
     template <std::move_constructible T>
     bool Promise<T>::IsValid() const

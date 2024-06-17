@@ -51,4 +51,14 @@ namespace zerosugar::xr::service
         int64_t accountId = {};
     };
 
+    struct TestParam
+    {
+        std::string token = {};
+    };
+
+    struct TestResult
+    {
+        std::string token = {};
+    };
+
 }

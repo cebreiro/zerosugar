@@ -14,6 +14,9 @@ namespace zerosugar::xr::network
         RpcErrorInvalidServiceName = 20001,
         RpcErrorInvalidRpcName = 20002,
         RpcErrorInvalidParameter = 20003,
+        RpcErrorStreamingClosedGracefully = 300001,
+        RpcErrorStreamingClosedByClient = 300002,
+        RpcErrorStreamingClosedByServer = 300003,
     };
     auto GetEnumName(RemoteProcedureCallErrorCode e) -> std::string_view;
 
@@ -68,6 +71,31 @@ namespace zerosugar::xr::network
         int32_t rpcId = {};
         std::string serviceName = {};
         std::string rpcResult = {};
+    };
+
+    struct SendClientSteaming final : IPacket
+    {
+        static constexpr int32_t opcode = 5;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        int32_t rpcId = {};
+        std::string serviceName = {};
+        std::string parameter = {};
+    };
+
+    struct AbortClientStreamingRPC final : IPacket
+    {
+        static constexpr int32_t opcode = 6;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        int32_t rpcId = {};
+        std::string serviceName = {};
     };
 
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>;

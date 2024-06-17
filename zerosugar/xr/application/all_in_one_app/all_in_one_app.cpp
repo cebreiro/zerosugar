@@ -204,5 +204,43 @@ namespace zerosugar::xr
         _lobbyServer->StartUp(_config->lobbyPort);
 
         ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize network --> Done", GetName()));
+
+
+        try
+        {
+            auto channel = std::make_shared<Channel<service::TestParam>>();
+
+            auto future = GetServiceLocator().Get<service::ILoginService>().Test1Async(AsyncEnumerable<service::TestParam>(channel));
+
+            Post(*_executor, [future = std::move(future), this]() mutable
+                {
+                    try
+                    {
+                        service::TestResult result = future.Get();
+                        ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("receive result: {}", result.token));
+                    }
+                    catch (const std::exception& e)
+                    {
+                        ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("exception: {}", e.what()));
+                    }
+                });
+
+            for (int32_t i = 0; i < 10000000; ++i)
+            {
+                service::TestParam param;
+                param.token = std::to_string(i);
+
+                if (channel->IsOpen())
+                {
+                    ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("produce: {}", i));
+
+                    channel->Send(std::move(param), channel::ChannelSignal::NotifyOne);
+                }
+            }
+        }
+        catch (const std::exception& e)
+        {
+            (void)e;
+        }
     }
 }

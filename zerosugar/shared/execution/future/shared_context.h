@@ -56,6 +56,8 @@ namespace zerosugar::future
     public:
         void OnSuccess();
         void Get();
+
+        void Reset();
     };
 
     template <std::move_constructible T>
@@ -66,6 +68,8 @@ namespace zerosugar::future
         void OnSuccess(const T& value);
 
         auto Get() -> T;
+
+        void Reset();
 
     private:
         std::optional<T> _value = std::nullopt;
@@ -141,5 +145,16 @@ namespace zerosugar::future
         default:
             throw std::runtime_error("operation aborted");
         }
+    }
+
+    template <std::move_constructible T>
+    void SharedContext<T>::Reset()
+    {
+        std::lock_guard lock(_mutex);
+
+        _continuation = {};
+        _exception = nullptr;
+        _status.store(FutureStatus::Pending);
+        _value.reset();
     }
 }

@@ -151,4 +151,13 @@ namespace zerosugar::future
             throw std::runtime_error("operation aborted");
         }
     }
+
+    void SharedContext<void>::Reset()
+    {
+        std::lock_guard lock(_mutex);
+
+        _continuation = {};
+        _exception = nullptr;
+        _status.store(FutureStatus::Pending);
+    }
 }

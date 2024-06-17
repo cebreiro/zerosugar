@@ -17,6 +17,11 @@ namespace zerosugar
         _context->OnFailure(exception);
     }
 
+    void Promise<void>::Reset()
+    {
+        _context->Reset();
+    }
+
     auto Promise<void>::GetFuture() const -> Future<void>
     {
         return Future<void>(_context);

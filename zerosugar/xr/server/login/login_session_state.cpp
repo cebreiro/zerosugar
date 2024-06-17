@@ -146,7 +146,7 @@ namespace zerosugar::xr::login
 
     AuthenticatedState::AuthenticatedState(Session& session)
         : LoginServerSessionStateMachine::state_type(LoginSessionState::Authenticated)
-        , _session(session)
+        , _session(session.weak_from_this())
     {
     }
 
@@ -156,7 +156,7 @@ namespace zerosugar::xr::login
         assert(executor);
 
         Delay(std::chrono::seconds(3))
-            .Then(*executor, [weak = _session.weak_from_this()]()
+            .Then(*executor, [weak = _session]()
                 {
                     const std::shared_ptr<Session>& session = weak.lock();
                     if (session)

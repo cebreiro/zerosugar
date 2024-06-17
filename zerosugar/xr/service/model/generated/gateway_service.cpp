@@ -13,22 +13,22 @@ namespace zerosugar::xr::service
 
     auto GatewayServiceProxy::AddGameServiceAsync(AddGameServiceParam param) -> Future<AddGameServiceResult>
     {
-        return _client->CallRemoteProcedure<AddGameServiceParam, Future<AddGameServiceResult>::value_type>(name, "AddGameServiceAsync", param);
+        return _client->CallRemoteProcedure<AddGameServiceParam, Future<AddGameServiceResult>::value_type>(name, "AddGameServiceAsync", std::move(param));
     }
 
     auto GatewayServiceProxy::GetGameServiceListAsync(GetGameServiceListParam param) -> Future<GetGameServiceListResult>
     {
-        return _client->CallRemoteProcedure<GetGameServiceListParam, Future<GetGameServiceListResult>::value_type>(name, "GetGameServiceListAsync", param);
+        return _client->CallRemoteProcedure<GetGameServiceListParam, Future<GetGameServiceListResult>::value_type>(name, "GetGameServiceListAsync", std::move(param));
     }
 
     void Configure(const SharedPtrNotNull<IGatewayService>& service, RPCClient& rpcClient)
     {
-        rpcClient.RegisterProcedure("GatewayService", "AddGameServiceAsync",
+        rpcClient.RegisterProcedure<false, false>("GatewayService", "AddGameServiceAsync",
             [service = service](AddGameServiceParam param) -> Future<AddGameServiceResult>
             {
                 return service->AddGameServiceAsync(std::move(param));
             });
-        rpcClient.RegisterProcedure("GatewayService", "GetGameServiceListAsync",
+        rpcClient.RegisterProcedure<false, false>("GatewayService", "GetGameServiceListAsync",
             [service = service](GetGameServiceListParam param) -> Future<GetGameServiceListResult>
             {
                 return service->GetGameServiceListAsync(std::move(param));

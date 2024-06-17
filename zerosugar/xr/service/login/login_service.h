@@ -24,6 +24,10 @@ namespace zerosugar::xr
         auto CreateAccountAsync(service::CreateAccountParam param) -> Future<service::CreateAccountResult> override;
         auto AuthenticateAsync(service::AuthenticateParam param) -> Future<service::AuthenticateResult> override;
 
+        auto Test1Async(AsyncEnumerable<service::TestParam> param) -> Future<service::TestResult> override;
+        auto Test2Async(service::TestParam param) -> AsyncEnumerable<service::TestResult> override;
+        auto Test3Async(AsyncEnumerable<service::TestParam> param) -> AsyncEnumerable<service::TestResult> override;
+
     private:
         auto Encode(const std::string& str) -> std::string;
 
@@ -32,7 +36,7 @@ namespace zerosugar::xr
         SharedPtrNotNull<Strand> _strand;
         void* evpContext = nullptr;
 
-        ServiceLocatorT<service::IDatabaseService> _serviceLocator;
+        ServiceLocatorT<ILogService, service::IDatabaseService> _serviceLocator;
 
         std::mt19937 _mt;
         std::unordered_map<std::string, int64_t> _authenticationTokens;

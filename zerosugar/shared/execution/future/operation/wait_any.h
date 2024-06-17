@@ -13,11 +13,11 @@ namespace zerosugar
         auto context = (std::make_shared<future::SharedContext<void>>());
         context->SetExecutor(executor.SharedFromThis());
 
-        auto fn = [=, &executor]<typename T>(Future<T>&fut) mutable
+        auto fn = [=, &executor]<typename T>(Future<T>& future) mutable
         {
-            fut.ContinuationWith(executor, [=]([[maybe_unused]] Future<T>& self) mutable
+            future.ContinuationWith(executor, [=]([[maybe_unused]] Future<T>& self) mutable
                 {
-                    size_t current = counter->fetch_add(1) + 1;
+                    const size_t current = counter->fetch_add(1) + 1;
                     if (current == 1)
                     {
                         context->OnSuccess();

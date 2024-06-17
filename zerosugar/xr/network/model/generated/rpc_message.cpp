@@ -15,6 +15,9 @@ namespace zerosugar::xr::network
             case RemoteProcedureCallErrorCode::RpcErrorInvalidServiceName: return "RpcErrorInvalidServiceName";
             case RemoteProcedureCallErrorCode::RpcErrorInvalidRpcName: return "RpcErrorInvalidRpcName";
             case RemoteProcedureCallErrorCode::RpcErrorInvalidParameter: return "RpcErrorInvalidParameter";
+            case RemoteProcedureCallErrorCode::RpcErrorStreamingClosedGracefully: return "RpcErrorStreamingClosedGracefully";
+            case RemoteProcedureCallErrorCode::RpcErrorStreamingClosedByClient: return "RpcErrorStreamingClosedByClient";
+            case RemoteProcedureCallErrorCode::RpcErrorStreamingClosedByServer: return "RpcErrorStreamingClosedByServer";
         }
         assert(false);
         return "unk";
@@ -77,6 +80,32 @@ namespace zerosugar::xr::network
         writer.Write(rpcResult);
     }
 
+    void SendClientSteaming::Deserialize(PacketReader& reader)
+    {
+        rpcId = reader.Read<int32_t>();
+        serviceName = reader.ReadString();
+        parameter = reader.ReadString();
+    }
+
+    void SendClientSteaming::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int32_t>(rpcId);
+        writer.Write(serviceName);
+        writer.Write(parameter);
+    }
+
+    void AbortClientStreamingRPC::Deserialize(PacketReader& reader)
+    {
+        rpcId = reader.Read<int32_t>();
+        serviceName = reader.ReadString();
+    }
+
+    void AbortClientStreamingRPC::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int32_t>(rpcId);
+        writer.Write(serviceName);
+    }
+
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>
     {
         const int16_t opcode = reader.Read<int16_t>();
@@ -106,6 +135,20 @@ namespace zerosugar::xr::network
             case ResultRemoteProcedureCall::opcode:
             {
                 auto item = std::make_unique<ResultRemoteProcedureCall>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case SendClientSteaming::opcode:
+            {
+                auto item = std::make_unique<SendClientSteaming>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case AbortClientStreamingRPC::opcode:
+            {
+                auto item = std::make_unique<AbortClientStreamingRPC>();
                 item->Deserialize(reader);
 
                 return item;

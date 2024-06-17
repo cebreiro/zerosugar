@@ -21,4 +21,10 @@ namespace zerosugar::xr::network
     void from_json(const nlohmann::json& j, ResultRemoteProcedureCall& item);
     void to_json(nlohmann::json& j, const ResultRemoteProcedureCall& item);
 
+    void from_json(const nlohmann::json& j, SendClientSteaming& item);
+    void to_json(nlohmann::json& j, const SendClientSteaming& item);
+
+    void from_json(const nlohmann::json& j, AbortClientStreamingRPC& item);
+    void to_json(nlohmann::json& j, const AbortClientStreamingRPC& item);
+
 }

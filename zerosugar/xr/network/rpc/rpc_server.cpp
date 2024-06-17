@@ -116,103 +116,138 @@ namespace zerosugar::xr
 
         receiveBuffer->MergeBack(std::move(buffer));
 
-        const int64_t receivedSize = receiveBuffer->GetSize();
-        if (receivedSize < 4)
+        while (true)
         {
-            return;
-        }
+            const int64_t receivedSize = receiveBuffer->GetSize();
+            if (receivedSize < 4)
+            {
+                return;
+            }
 
-        PacketReader reader(receiveBuffer->cbegin(), receiveBuffer->cend());
+            PacketReader reader(receiveBuffer->cbegin(), receiveBuffer->cend());
 
-        const int32_t packetSize = reader.Read<int32_t>();
-        if (receivedSize < packetSize)
-        {
-            return;
-        }
+            const int32_t packetSize = reader.Read<int32_t>();
+            if (receivedSize < packetSize)
+            {
+                return;
+            }
 
-        std::unique_ptr<IPacket> packet = CreateFrom(reader);
+            std::unique_ptr<IPacket> packet = CreateFrom(reader);
 
-        Buffer temp;
-        [[maybe_unused]] bool sliced = receiveBuffer->SliceFront(temp, packetSize);
-        assert(sliced);
+            Buffer temp;
+            [[maybe_unused]] bool sliced = receiveBuffer->SliceFront(temp, packetSize);
+            assert(sliced);
 
-        switch (packet->GetOpcode())
-        {
-        case RequestRegisterRPCClient::opcode:
-        {
-            const RequestRegisterRPCClient& request = *packet->Cast<RequestRegisterRPCClient>();
+            switch (packet->GetOpcode())
+            {
+            case RequestRegisterRPCClient::opcode:
+            {
+                const RequestRegisterRPCClient& request = *packet->Cast<RequestRegisterRPCClient>();
 
-            const bool inserted = [&]() -> bool
-                {
-                    decltype(_sessions)::accessor accessor;
-                    if (_sessions.insert(accessor, request.serviceName))
+                const bool inserted = [&]() -> bool
                     {
-                        accessor->second = session.shared_from_this();
+                        decltype(_sessions)::accessor accessor;
+                        if (_sessions.insert(accessor, request.serviceName))
+                        {
+                            accessor->second = session.shared_from_this();
 
-                        return true;
-                    }
+                            return true;
+                        }
 
-                    return false;
-                }();
+                        return false;
+                    }();
 
-            assert(inserted);
+                assert(inserted);
 
-            if (inserted)
-            {
-                std::lock_guard lock(_serviceSessionIdMutex);
-                _sessionServiceLists.emplace(session.GetId(), request.serviceName);
-            }
+                if (inserted)
+                {
+                    std::lock_guard lock(_serviceSessionIdMutex);
+                    _sessionServiceLists.emplace(session.GetId(), request.serviceName);
+                }
 
-            using enum RemoteProcedureCallErrorCode;
+                using enum RemoteProcedureCallErrorCode;
 
-            ResultRegisterRPCClient result;
-            result.errorCode = inserted ? RpcErrorNone : RpcErrorDuplicatedServiceName;
-            result.serviceName = request.serviceName;
-
-            session.Send(RPCPacketBuilder::MakePacket(result));
-        }
-        break;
-        case RequestRemoteProcedureCall::opcode:
-        {
-            const RequestRemoteProcedureCall& request = *packet->Cast<RequestRemoteProcedureCall>();
-
-            const std::shared_ptr<Session>& target = FindSession(request.serviceName);
-            if (target)
-            {
-                target->Send(RPCPacketBuilder::MakePacket(request));
-            }
-            else
-            {
-                ZEROSUGAR_LOG_ERROR(_serviceLocator,
-                    std::format("[{}] fail to find service. service_name: {}", GetName(), request.serviceName));
-
-                ResultRemoteProcedureCall result;
-                result.errorCode = RemoteProcedureCallErrorCode::RpcErrorInternalError;
-                result.rpcId = request.rpcId;
+                ResultRegisterRPCClient result;
+                result.errorCode = inserted ? RpcErrorNone : RpcErrorDuplicatedServiceName;
                 result.serviceName = request.serviceName;
 
                 session.Send(RPCPacketBuilder::MakePacket(result));
             }
-        }
-        break;
-        case ResultRemoteProcedureCall::opcode:
-        {
-            const ResultRemoteProcedureCall& result = *packet->Cast<ResultRemoteProcedureCall>();
+            break;
+            case RequestRemoteProcedureCall::opcode:
+            {
+                const RequestRemoteProcedureCall& request = *packet->Cast<RequestRemoteProcedureCall>();
 
-            const std::shared_ptr<Session>& target = FindSession(result.serviceName);
-            if (target)
-            {
-                target->Send(RPCPacketBuilder::MakePacket(result));
+                const std::shared_ptr<Session>& target = FindSession(request.serviceName);
+                if (target)
+                {
+                    target->Send(RPCPacketBuilder::MakePacket(request));
+                }
+                else
+                {
+                    ZEROSUGAR_LOG_ERROR(_serviceLocator,
+                        std::format("[{}] fail to find service. service_name: {}", GetName(), request.serviceName));
+
+                    ResultRemoteProcedureCall result;
+                    result.errorCode = RemoteProcedureCallErrorCode::RpcErrorInternalError;
+                    result.rpcId = request.rpcId;
+                    result.serviceName = request.serviceName;
+
+                    session.Send(RPCPacketBuilder::MakePacket(result));
+                }
             }
-            else
+            break;
+            case ResultRemoteProcedureCall::opcode:
             {
-                ZEROSUGAR_LOG_ERROR(_serviceLocator,
-                    std::format("[{}] fail to find service. service_name: {}", GetName(), result.serviceName));
+                const ResultRemoteProcedureCall& result = *packet->Cast<ResultRemoteProcedureCall>();
+
+                const std::shared_ptr<Session>& target = FindSession(result.serviceName);
+                if (target)
+                {
+                    target->Send(RPCPacketBuilder::MakePacket(result));
+                }
+                else
+                {
+                    ZEROSUGAR_LOG_ERROR(_serviceLocator,
+                        std::format("[{}] fail to find service. service_name: {}", GetName(), result.serviceName));
+                }
             }
-        }
-        break;
-        default:
-            assert(false);
+            break;
+            case SendClientSteaming::opcode:
+            {
+                const SendClientSteaming& clientSteaming = *packet->Cast<SendClientSteaming>();
+
+                const std::shared_ptr<Session>& target = FindSession(clientSteaming.serviceName);
+                if (target)
+                {
+                    target->Send(RPCPacketBuilder::MakePacket(clientSteaming));
+                }
+                else
+                {
+                    ZEROSUGAR_LOG_ERROR(_serviceLocator,
+                        std::format("[{}] fail to find service. service_name: {}", GetName(), clientSteaming.serviceName));
+                }
+            }
+            break;
+            case AbortClientStreamingRPC::opcode:
+            {
+                const AbortClientStreamingRPC& abort = *packet->Cast<AbortClientStreamingRPC>();
+
+                const std::shared_ptr<Session>& target = FindSession(abort.serviceName);
+                if (target)
+                {
+                    target->Send(RPCPacketBuilder::MakePacket(abort));
+                }
+                else
+                {
+                    ZEROSUGAR_LOG_ERROR(_serviceLocator,
+                        std::format("[{}] fail to find service. service_name: {}", GetName(), abort.serviceName));
+                }
+            }
+            break;
+            default:
+                assert(false);
+            }
         }
     }
 

@@ -30,6 +30,16 @@ namespace zerosugar
         Printer _headerPrinter;
         Printer _cxxPrinter;
 
-        std::unordered_map<std::string, std::vector<std::tuple<std::string, std::string, std::string, std::string>>> _methods;
+        struct MethodContext
+        {
+            std::string fullName;
+            std::string name;
+            std::string paramTypeName;
+            std::string returnTypeName;
+            bool paramStream = false;
+            bool returnStream = false;
+        };
+
+        std::unordered_map<std::string, std::vector<MethodContext>> _methods;
     };
 }

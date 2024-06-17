@@ -54,6 +54,8 @@ namespace zerosugar::xr::lobby
             }
 
             _stateMachine.SetAccountId(result.accountId);
+            _stateMachine.SetAuthenticationToken(packet->authenticationToken);
+
             _stateMachine.Transition(LobbySessionState::Authenticated);
 
             co_return;
@@ -134,7 +136,10 @@ namespace zerosugar::xr::lobby
                                         }
                                     }
 
-                                    self->AddCharacterId(dto.slot, dto.characterId);
+                                    self->AddCharacter(dto.slot, CharacterCache{
+                                        .characterId = dto.characterId,
+                                        .zoneId = dto.zoneId
+                                    });
                                 }
 
                                 return notify;
@@ -200,27 +205,27 @@ namespace zerosugar::xr::lobby
 
     bool AuthenticatedState::HasCharacter(int32_t slotId) const
     {
-        return _slotCharacterIdIndex.contains(slotId);
+        return _characters.contains(slotId);
     }
 
-    auto AuthenticatedState::FindCharacterId(int32_t slotId) const -> std::optional<int64_t>
+    auto AuthenticatedState::FindCharacter(int32_t slotId) const -> const CharacterCache*
     {
-        const auto iter = _slotCharacterIdIndex.find(slotId);
+        const auto iter = _characters.find(slotId);
 
-        return iter != _slotCharacterIdIndex.end() ? iter->second : std::optional<int64_t>();
+        return iter != _characters.end() ? &iter->second : nullptr;
     }
 
-    void AuthenticatedState::AddCharacterId(int32_t slotId, int64_t characterId)
+    void AuthenticatedState::AddCharacter(int32_t slotId, const CharacterCache& character)
     {
         [[maybe_unused]]
-        bool inserted = _slotCharacterIdIndex.try_emplace(slotId, characterId).second;
+        bool inserted = _characters.try_emplace(slotId, character).second;
         assert(inserted);
     }
 
-    void AuthenticatedState::RemoveCharacterId(int32_t slotId)
+    void AuthenticatedState::RemoveCharacter(int32_t slotId)
     {
         [[maybe_unused]]
-        const size_t erased = _slotCharacterIdIndex.erase(slotId);
+        const size_t erased = _characters.erase(slotId);
         assert(erased > 0);
     }
 
@@ -229,8 +234,8 @@ namespace zerosugar::xr::lobby
         if (HasCharacter(packet.character.slot))
         {
             ZEROSUGAR_LOG_WARN(_serviceLocator,
-                std::format("[lobby_stete_authenticated] invalid request - character slot already used. session: {}, param: {}",
-                    session, nlohmann::json(packet.character).dump()));
+                std::format("[lobby_stete_authenticated] invalid request - character slot already used. session: {}, packet: {}",
+                    session, nlohmann::json(packet).dump()));
 
             network::lobby::sc::ResultCreateCharacter outPacket;
             outPacket.success = false;
@@ -287,7 +292,10 @@ namespace zerosugar::xr::lobby
 
         if (outPacket.success)
         {
-            AddCharacterId(param.characterAdd.slot, result.characterId);
+            AddCharacter(param.characterAdd.slot, CharacterCache{
+                .characterId = result.characterId,
+                .zoneId = param.characterAdd.zoneId,
+            });
 
             outPacket.character.slot = param.characterAdd.slot;
             outPacket.character.name = param.characterAdd.name;
@@ -310,8 +318,8 @@ namespace zerosugar::xr::lobby
 
     auto AuthenticatedState::HandlePacket(Session& session, const network::lobby::cs::DeleteCharacter& packet) -> Future<void>
     {
-        std::optional<int64_t> characterId = FindCharacterId(packet.slot);
-        if (!characterId.has_value())
+        const auto* character = FindCharacter(packet.slot);
+        if (!character)
         {
             ZEROSUGAR_LOG_WARN(_serviceLocator,
                 std::format("[lobby_stete_authenticated] invalid request - character slot is empty. session: {}, slot: {}",
@@ -323,16 +331,16 @@ namespace zerosugar::xr::lobby
         service::IDatabaseService& databaseService = _serviceLocator.Get<service::IDatabaseService>();
 
         service::RemoveCharacterParam param;
-        param.characterId = *characterId;
+        param.characterId = character->characterId;
 
-        service::RemoveCharacterResult result = co_await databaseService.RemoveCharacterAsync(std::move(param));
+        const service::RemoveCharacterResult& result = co_await databaseService.RemoveCharacterAsync(std::move(param));
 
         if (result.errorCode != service::DatabaseServiceErrorCode::DatabaseErrorNone)
         {
             co_return;
         }
 
-        RemoveCharacterId(packet.slot);
+        RemoveCharacter(packet.slot);
 
         network::lobby::sc::SuccessDeleteCharacter outPacket;
         outPacket.slot = packet.slot;
@@ -345,21 +353,67 @@ namespace zerosugar::xr::lobby
     auto AuthenticatedState::HandlePacket(Session& session, const network::lobby::cs::SelectCharacter& packet) -> Future<void>
     {
         (void)session;
-        (void)packet;
 
-        co_return;
+        do
+        {
+            const CharacterCache* character = FindCharacter(packet.slot);
+            if (!character)
+            {
+                break;
+            }
 
-        //service::IDatabaseService& databaseService = _serviceLocator.Get<service::IDatabaseService>();
+            service::ICoordinationService& service = _serviceLocator.Get<service::ICoordinationService>();
+
+            service::AddPlayerParam param;
+            param.authenticationToken = _stateMachine.GetAuthenticationToken();
+            param.accountId = _stateMachine.GetAccountId();
+            param.characterId = character->characterId;
+            param.zoneId = character->zoneId;
+
+            service::AddPlayerResult result = co_await service.AddPlayerAsync(std::move(param));
+
+            if (result.errorCode != service::CoordinationServiceErrorCode::CoordinationErrorNone)
+            {
+                break;
+            }
+
+            network::lobby::sc::SuccessSelectCharacter outPacket;
+            outPacket.ip = result.ip;
+            outPacket.port = result.port;
+
+            session.Send(PacketBuilder::MakePacket(outPacket));
+
+            _stateMachine.Transition(LobbySessionState::TransitionToGame);
+
+            co_return;
+
+        } while (false);
+
+        ZEROSUGAR_LOG_WARN(_serviceLocator,
+            std::format("[lobby_stete_authenticated] fail to select character. session: {}, packet: {}",
+                session, nlohmann::json(packet).dump()));
     }
 
-    TransitionToGameState::TransitionToGameState()
+    TransitionToGameState::TransitionToGameState(Session& session)
         : LobbyServerSessionStateMachine::state_type(LobbySessionState::TransitionToGame)
+        , _session(session.weak_from_this())
     {
     }
 
     void TransitionToGameState::OnEnter()
     {
-        IState<LobbySessionState, StateEvent<std::unique_ptr<IPacket>, Future<void>>>::OnEnter();
+        execution::IExecutor* executor = ExecutionContext::GetExecutor();
+        assert(executor);
+
+        Delay(std::chrono::seconds(3))
+            .Then(*executor, [weak = _session]()
+                {
+                    const std::shared_ptr<Session>& session = weak.lock();
+                    if (session)
+                    {
+                        session->Close();
+                    }
+                });
     }
 
     auto TransitionToGameState::OnEvent(UniquePtrNotNull<IPacket> inPacket) -> Future<void>

@@ -27,7 +27,7 @@ namespace zerosugar::xr
         SharedPtrNotNull<execution::IExecutor> _executor;
         SharedPtrNotNull<Strand> _strand;
 
-        ServiceLocatorT<ILogService> _serviceLocator;
+        ServiceLocator _serviceLocator;
 
         std::optional<std::pair<std::string, int32_t>> _lobby;
 

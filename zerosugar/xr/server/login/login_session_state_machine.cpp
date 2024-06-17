@@ -87,36 +87,39 @@ namespace zerosugar::xr
             {
                 receiveBuffer.MergeBack(std::move(buffer));
 
-                if (receiveBuffer.GetSize() < 2)
+                while (true)
                 {
-                    continue;
+                    if (receiveBuffer.GetSize() < 2)
+                    {
+                        break;
+                    }
+
+                    PacketReader reader(receiveBuffer.cbegin(), receiveBuffer.cend());
+
+                    const int64_t packetSize = reader.Read<int16_t>();
+                    if (receiveBuffer.GetSize() < packetSize)
+                    {
+                        break;
+                    }
+
+                    std::unique_ptr<IPacket> packet = network::login::cs::CreateFrom(reader);
+
+                    Buffer temp;
+                    [[maybe_unused]] bool sliced = receiveBuffer.SliceFront(temp, packetSize);
+                    assert(sliced);
+
+                    if (!packet)
+                    {
+                        ZEROSUGAR_LOG_WARN(_serviceLocator,
+                            std::format("[{}] unnkown packet. session: {}", GetName(), *session));
+
+                        session->Close();
+
+                        co_return;
+                    }
+
+                    co_await OnEvent(std::move(packet));
                 }
-
-                PacketReader reader(receiveBuffer.cbegin(), receiveBuffer.cend());
-
-                const int64_t packetSize = reader.Read<int16_t>();
-                if (receiveBuffer.GetSize() < packetSize)
-                {
-                    continue;
-                }
-
-                std::unique_ptr<IPacket> packet = network::login::cs::CreateFrom(reader);
-
-                Buffer temp;
-                [[maybe_unused]] bool sliced = receiveBuffer.SliceFront(temp, packetSize);
-                assert(sliced);
-
-                if (!packet)
-                {
-                    ZEROSUGAR_LOG_WARN(_serviceLocator,
-                        std::format("[{}] unnkown packet. session: {}", GetName(), *session));
-
-                    session->Close();
-
-                    co_return;
-                }
-
-                co_await OnEvent(std::move(packet));
             }
             catch (const std::exception& e)
             {

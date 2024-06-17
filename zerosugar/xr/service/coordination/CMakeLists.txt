@@ -2,6 +2,7 @@ add_library(zerosugar_xr_service_coordination)
 
 target_link_libraries(zerosugar_xr_service_coordination PRIVATE
     zerosugar_xr_pch
+    zerosugar_xr_service_model
 )
 
 target_precompile_headers(zerosugar_xr_service_coordination REUSE_FROM zerosugar_xr_pch)

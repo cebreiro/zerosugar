@@ -499,6 +499,47 @@ TEST_F(FutureTest, WaitAny)
     EXPECT_EQ(count3, counter.load());
 }
 
+TEST_F(FutureTest, WaitAny2)
+{
+    // arrange
+
+    // act
+    Future<int32_t> f1 = []() -> Future<int32_t>
+        {
+            co_await zerosugar::Delay(std::chrono::milliseconds(1));
+
+            co_return 0;
+        }();
+    Future<int32_t> f2 = []() -> Future<int32_t>
+        {
+            co_await zerosugar::Delay(std::chrono::milliseconds(100));
+
+            co_return 0;
+        }();
+
+    Future<int32_t> f3 = []() -> Future<int32_t>
+        {
+            co_await zerosugar::Delay(std::chrono::milliseconds(200));
+
+            co_return 0;
+        }();
+
+    Future<void> waitAny = WaitAny(executor, f1, f2, f3);
+    waitAny.Get();
+
+    const bool operation1Complete = f1.IsComplete();
+    const bool operation2Pending = f2.IsPending();
+    const bool operation3Pending = f3.IsPending();
+
+    f2.Wait();
+    f3.Wait();
+
+    // assert
+    EXPECT_TRUE(operation1Complete);
+    EXPECT_TRUE(operation2Pending);
+    EXPECT_TRUE(operation3Pending);
+}
+
 
 TEST_F(FutureTest, Coroutine_ResumeOnOriginExecutor)
 {

@@ -61,15 +61,15 @@ namespace zerosugar
             _headerPrinter.AddLine(fieldIndent, "virtual ~I{}() = default;", service.name);
             _headerPrinter.BreakLine();
 
-            auto& methodSignatures = _methods[service.name];
+            auto& contextArray = _methods[service.name];
 
             for (const Method& method : service.methods)
             {
-                auto& [fullName, methodName, paramTypeName, returnTypeName] = methodSignatures.emplace_back();
+                MethodContext& context = contextArray.emplace_back();
 
                 const std::string& str = [&]()
                     {
-                        const std::optional<std::string> paramType = [](const Method::inout_type& type) -> std::optional<std::string>
+                        const std::optional<std::string> paramType = [&](const Method::inout_type& type) -> std::optional<std::string>
                             {
                                 if (!type.has_value())
                                 {
@@ -77,10 +77,11 @@ namespace zerosugar
                                 }
 
                                 const bool streaming = type->second;
+                                context.paramStream = streaming;
 
-                                return streaming ? std::format("SharedPtrNotNull<Channel<{}>>", type->first) : type->first;
+                                return streaming ? std::format("AsyncEnumerable<{}>", type->first) : type->first;
                             }(method.input);
-                        const std::optional<std::string> returnType = [](const Method::inout_type& type) -> std::optional<std::string>
+                        const std::optional<std::string> returnType = [&](const Method::inout_type& type) -> std::optional<std::string>
                             {
                                 if (!type.has_value())
                                 {
@@ -88,24 +89,26 @@ namespace zerosugar
                                 }
 
                                 const bool streaming = type->second;
+                                context.returnStream = streaming;
+
                                 if (streaming)
                                 {
-                                    return std::format("SharedPtrNotNull<Channel<{}>>", type->first);
+                                    return std::format("AsyncEnumerable<{}>", type->first);
                                 }
 
                                 return std::format("Future<{}>", type->first);
 
                             }(method.output);
 
-                        methodName = std::format("{}Async", method.name);
+                        context.name = std::format("{}Async", method.name);
 
                         std::ostringstream oss;
-                        oss << "auto " << methodName;
+                        oss << "auto " << context.name;
 
                         if (paramType.has_value())
                         {
                             oss << "(" << *paramType << " param)";
-                            paramTypeName = *paramType;
+                            context.paramTypeName = *paramType;
                         }
                         else
                         {
@@ -117,17 +120,17 @@ namespace zerosugar
                         if (returnType.has_value())
                         {
                             oss << *returnType;
-                            returnTypeName = *returnType;
+                            context.returnTypeName = *returnType;
                         }
                         else
                         {
                             oss << "void";
-                            returnTypeName = "void";
+                            context.returnTypeName = "void";
                         }
 
-                        fullName = oss.str();
+                        context.fullName = oss.str();
                         
-                        return std::format("virtual {} = 0;", fullName);
+                        return std::format("virtual {} = 0;", context.fullName);
                     }();
 
                 _headerPrinter.AddLine(fieldIndent, str);
@@ -147,9 +150,9 @@ namespace zerosugar
             _headerPrinter.AddLine(fieldIndent, "explicit {}Proxy(SharedPtrNotNull<RPCClient> client);", service.name);
             _headerPrinter.BreakLine();
 
-            for (const std::string& fullName : methodSignatures | std::views::elements<0>)
+            for (const MethodContext& context : contextArray)
             {
-                _headerPrinter.AddLine(fieldIndent, "{} override;", fullName);
+                _headerPrinter.AddLine(fieldIndent, "{} override;", context.fullName);
             }
 
             _cxxPrinter.BreakLine();
@@ -194,9 +197,9 @@ namespace zerosugar
             }
             _cxxPrinter.BreakLine();
 
-            for (const auto& [fullName, methodName, paramType, returnType] : _methods[service.name])
+            for (const MethodContext& context : _methods[service.name])
             {
-                std::string line = fullName;
+                std::string line = context.fullName;
 
                 const size_t offset = line.find_first_of(' ') + 1;
                 line.insert(offset, std::format("{}Proxy::", service.name));
@@ -205,8 +208,30 @@ namespace zerosugar
                 {
                     BraceGuard methodBraceGuard(_cxxPrinter, methodIndent, false);
 
+                    std::ostringstream oss;
+                    oss << "CallRemoteProcedure";
+
+                    if (context.paramStream)
+                    {
+                        oss << "Client";
+                    }
+
+                    if (context.returnStream)
+                    {
+                        oss << "Server";
+                    }
+
+                    if (context.paramStream || context.returnStream)
+                    {
+                        oss << "Streaming";
+                    }
+
                     _cxxPrinter.AddLine(methodIndent + 1,
-                        "return _client->CallRemoteProcedure<{}, {}::value_type>(name, \"{}\", param);", paramType, returnType, methodName);
+                        "return _client->{}<{}, {}::value_type>(name, \"{}\", std::move(param));",
+                        oss.str(),
+                        context.paramStream ? std::format("{}::value_type", context.paramTypeName) : context.paramTypeName,
+                        context.returnTypeName,
+                        context.name);
                 }
                 _cxxPrinter.BreakLine();
             }
@@ -218,12 +243,15 @@ namespace zerosugar
 
                     const int64_t methodBodyIndent = methodIndent + 1;
 
-                    for (const auto& [_, methodName, paramType, returnType] : _methods[service.name])
+                    for (const auto& context : _methods[service.name])
                     {
-                        _cxxPrinter.AddLine(methodBodyIndent, "rpcClient.RegisterProcedure(\"{}\", \"{}\",", service.name, methodName);
-                        _cxxPrinter.AddLine(methodBodyIndent + 1, "[service = service]({} param) -> {}", paramType, returnType);
+                        _cxxPrinter.AddLine(methodBodyIndent, "rpcClient.RegisterProcedure<{}, {}>(\"{}\", \"{}\",",
+                            context.paramStream ? "true" : "false",
+                            context.returnStream ? "true" : "false",
+                            service.name, context.name);
+                        _cxxPrinter.AddLine(methodBodyIndent + 1, "[service = service]({} param) -> {}", context.paramTypeName, context.returnTypeName);
                         _cxxPrinter.AddLine(methodBodyIndent + 1, "{");
-                        _cxxPrinter.AddLine(methodBodyIndent + 2, "return service->{}(std::move(param));", methodName);
+                        _cxxPrinter.AddLine(methodBodyIndent + 2, "return service->{}(std::move(param));", context.name);
                         _cxxPrinter.AddLine(methodBodyIndent + 1, "});");
                     }
                 }

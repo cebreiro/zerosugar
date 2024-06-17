@@ -13,52 +13,52 @@ namespace zerosugar::xr::service
 
     auto DatabaseServiceProxy::AddAccountAsync(AddAccountParam param) -> Future<AddAccountResult>
     {
-        return _client->CallRemoteProcedure<AddAccountParam, Future<AddAccountResult>::value_type>(name, "AddAccountAsync", param);
+        return _client->CallRemoteProcedure<AddAccountParam, Future<AddAccountResult>::value_type>(name, "AddAccountAsync", std::move(param));
     }
 
     auto DatabaseServiceProxy::GetAccountAsync(GetAccountParam param) -> Future<GetAccountResult>
     {
-        return _client->CallRemoteProcedure<GetAccountParam, Future<GetAccountResult>::value_type>(name, "GetAccountAsync", param);
+        return _client->CallRemoteProcedure<GetAccountParam, Future<GetAccountResult>::value_type>(name, "GetAccountAsync", std::move(param));
     }
 
     auto DatabaseServiceProxy::AddCharacterAsync(AddCharacterParam param) -> Future<AddCharacterResult>
     {
-        return _client->CallRemoteProcedure<AddCharacterParam, Future<AddCharacterResult>::value_type>(name, "AddCharacterAsync", param);
+        return _client->CallRemoteProcedure<AddCharacterParam, Future<AddCharacterResult>::value_type>(name, "AddCharacterAsync", std::move(param));
     }
 
     auto DatabaseServiceProxy::RemoveCharacterAsync(RemoveCharacterParam param) -> Future<RemoveCharacterResult>
     {
-        return _client->CallRemoteProcedure<RemoveCharacterParam, Future<RemoveCharacterResult>::value_type>(name, "RemoveCharacterAsync", param);
+        return _client->CallRemoteProcedure<RemoveCharacterParam, Future<RemoveCharacterResult>::value_type>(name, "RemoveCharacterAsync", std::move(param));
     }
 
     auto DatabaseServiceProxy::GetLobbyCharactersAsync(GetLobbyCharactersParam param) -> Future<GetLobbyCharactersResult>
     {
-        return _client->CallRemoteProcedure<GetLobbyCharactersParam, Future<GetLobbyCharactersResult>::value_type>(name, "GetLobbyCharactersAsync", param);
+        return _client->CallRemoteProcedure<GetLobbyCharactersParam, Future<GetLobbyCharactersResult>::value_type>(name, "GetLobbyCharactersAsync", std::move(param));
     }
 
     void Configure(const SharedPtrNotNull<IDatabaseService>& service, RPCClient& rpcClient)
     {
-        rpcClient.RegisterProcedure("DatabaseService", "AddAccountAsync",
+        rpcClient.RegisterProcedure<false, false>("DatabaseService", "AddAccountAsync",
             [service = service](AddAccountParam param) -> Future<AddAccountResult>
             {
                 return service->AddAccountAsync(std::move(param));
             });
-        rpcClient.RegisterProcedure("DatabaseService", "GetAccountAsync",
+        rpcClient.RegisterProcedure<false, false>("DatabaseService", "GetAccountAsync",
             [service = service](GetAccountParam param) -> Future<GetAccountResult>
             {
                 return service->GetAccountAsync(std::move(param));
             });
-        rpcClient.RegisterProcedure("DatabaseService", "AddCharacterAsync",
+        rpcClient.RegisterProcedure<false, false>("DatabaseService", "AddCharacterAsync",
             [service = service](AddCharacterParam param) -> Future<AddCharacterResult>
             {
                 return service->AddCharacterAsync(std::move(param));
             });
-        rpcClient.RegisterProcedure("DatabaseService", "RemoveCharacterAsync",
+        rpcClient.RegisterProcedure<false, false>("DatabaseService", "RemoveCharacterAsync",
             [service = service](RemoveCharacterParam param) -> Future<RemoveCharacterResult>
             {
                 return service->RemoveCharacterAsync(std::move(param));
             });
-        rpcClient.RegisterProcedure("DatabaseService", "GetLobbyCharactersAsync",
+        rpcClient.RegisterProcedure<false, false>("DatabaseService", "GetLobbyCharactersAsync",
             [service = service](GetLobbyCharactersParam param) -> Future<GetLobbyCharactersResult>
             {
                 return service->GetLobbyCharactersAsync(std::move(param));

@@ -1,5 +1,6 @@
 #pragma once
 #include "zerosugar/xr/server/lobby/lobby_session_state_machine.h"
+#include "zerosugar/xr/service/model/generated/coordination_service.h"
 #include "zerosugar/xr/service/model/generated/database_service.h"
 #include "zerosugar/xr/service/model/generated/login_service.h"
 
@@ -30,16 +31,23 @@ namespace zerosugar::xr::lobby
         , public std::enable_shared_from_this<AuthenticatedState>
     {
     public:
+        struct CharacterCache
+        {
+            int64_t characterId = 0;
+            int32_t zoneId = 0;
+        };
+
+    public:
         AuthenticatedState(LobbyServerSessionStateMachine& stateMachine, ServiceLocator& serviceLocator, IUniqueIDGenerator& idGenerator, Session& session);
 
         void OnEnter() override;
         auto OnEvent(UniquePtrNotNull<IPacket> inPacket) -> Future<void> override;
 
         bool HasCharacter(int32_t slotId) const;
-        auto FindCharacterId(int32_t slotId) const -> std::optional<int64_t>;
+        auto FindCharacter(int32_t slotId) const -> const CharacterCache*;
 
-        void AddCharacterId(int32_t slotId, int64_t characterId);
-        void RemoveCharacterId(int32_t slotId);
+        void AddCharacter(int32_t slotId, const CharacterCache& character);
+        void RemoveCharacter(int32_t slotId);
 
 
     private:
@@ -49,20 +57,23 @@ namespace zerosugar::xr::lobby
 
     private:
         LobbyServerSessionStateMachine& _stateMachine;
-        ServiceLocatorT<ILogService, service::IDatabaseService> _serviceLocator;
+        ServiceLocatorT<ILogService, service::ICoordinationService, service::IDatabaseService> _serviceLocator;
         IUniqueIDGenerator& _idGenerator;
         WeakPtrNotNull<Session> _session;
 
         Future<void> _pendingGetCharacterList;
-        std::unordered_map<int32_t, int64_t> _slotCharacterIdIndex;
+        std::unordered_map<int32_t, CharacterCache> _characters;
     };
 
     class TransitionToGameState final : public LobbyServerSessionStateMachine::state_type
     {
     public:
-        TransitionToGameState();
+        explicit TransitionToGameState(Session& session);
 
         void OnEnter() override;
         auto OnEvent(UniquePtrNotNull<IPacket> inPacket) -> Future<void> override;
+
+    private:
+        WeakPtrNotNull<Session> _session;
     };
 }

@@ -20,7 +20,7 @@ namespace zerosugar::xr
         AddState<lobby::AuthenticatedState>(false, *this, serviceLocator, idGenerator, session)
             .Add(LobbySessionState::TransitionToGame);
 
-        AddState<lobby::TransitionToGameState>(false);
+        AddState<lobby::TransitionToGameState>(false, session);
     }
 
     void LobbyServerSessionStateMachine::Start()
@@ -92,36 +92,39 @@ namespace zerosugar::xr
             {
                 receiveBuffer.MergeBack(std::move(buffer));
 
-                if (receiveBuffer.GetSize() < 2)
+                while (true)
                 {
-                    continue;
+                    if (receiveBuffer.GetSize() < 2)
+                    {
+                        break;
+                    }
+
+                    PacketReader reader(receiveBuffer.cbegin(), receiveBuffer.cend());
+
+                    const int64_t packetSize = reader.Read<int16_t>();
+                    if (receiveBuffer.GetSize() < packetSize)
+                    {
+                        break;
+                    }
+
+                    std::unique_ptr<IPacket> packet = network::lobby::cs::CreateFrom(reader);
+
+                    Buffer temp;
+                    [[maybe_unused]] bool sliced = receiveBuffer.SliceFront(temp, packetSize);
+                    assert(sliced);
+
+                    if (!packet)
+                    {
+                        ZEROSUGAR_LOG_WARN(_serviceLocator,
+                            std::format("[{}] unnkown packet. session: {}", GetName(), *session));
+
+                        session->Close();
+
+                        co_return;
+                    }
+
+                    co_await OnEvent(std::move(packet));
                 }
-
-                PacketReader reader(receiveBuffer.cbegin(), receiveBuffer.cend());
-
-                const int64_t packetSize = reader.Read<int16_t>();
-                if (receiveBuffer.GetSize() < packetSize)
-                {
-                    continue;
-                }
-
-                std::unique_ptr<IPacket> packet = network::lobby::cs::CreateFrom(reader);
-
-                Buffer temp;
-                [[maybe_unused]] bool sliced = receiveBuffer.SliceFront(temp, packetSize);
-                assert(sliced);
-
-                if (!packet)
-                {
-                    ZEROSUGAR_LOG_WARN(_serviceLocator,
-                        std::format("[{}] unnkown packet. session: {}", GetName(), *session));
-
-                    session->Close();
-
-                    co_return;
-                }
-
-                co_await OnEvent(std::move(packet));
             }
             catch (const std::exception& e)
             {
@@ -134,6 +137,16 @@ namespace zerosugar::xr
     auto LobbyServerSessionStateMachine::GetAccountId() const -> int64_t
     {
         return _accountId;
+    }
+
+    auto LobbyServerSessionStateMachine::GetAuthenticationToken() const -> const std::string&
+    {
+        return _authenticationToken;
+    }
+
+    void LobbyServerSessionStateMachine::SetAuthenticationToken(std::string token)
+    {
+        _authenticationToken = std::move(token);
     }
 
     void LobbyServerSessionStateMachine::SetAccountId(int64_t accountId)

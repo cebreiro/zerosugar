@@ -1,8 +1,8 @@
 #include "coordination_service.h"
 
 #include <boost/scope/scope_exit.hpp>
-
 #include "zerosugar/shared/snowflake/snowflake.h"
+#include "zerosugar/xr/service/model/generated/login_service.h"
 
 namespace zerosugar::xr
 {
@@ -89,9 +89,35 @@ namespace zerosugar::xr
 
     auto CoordinationService::AddPlayerAsync(service::AddPlayerParam param) -> Future<service::AddPlayerResult>
     {
-        (void)param;
+        [[maybe_unused]]
+        auto self = shared_from_this();
 
-        co_return{};
+        co_await *_strand;
+        assert(ExecutionContext::IsEqualTo(*_strand));
+
+        service::AddPlayerResult result;
+
+        service::AuthenticateParam authParam;
+        authParam.token = param.authenticationToken;
+
+        service::AuthenticateResult authResult = co_await _serviceLocator.Get<service::ILoginService>().AuthenticateAsync(std::move(authParam));
+        if (authResult.errorCode == service::LoginServiceErrorCode::LoginErrorNone)
+        {
+            // select game server
+            // register...
+
+            result.ip = "";
+            result.port = 0;
+        }
+        else
+        {
+            ZEROSUGAR_LOG_ERROR(_serviceLocator,
+                std::format("[{}] fail to authenticate. error: {}", GetName(), GetEnumName(authResult.errorCode)));
+
+            result.errorCode = service::CoordinationServiceErrorCode::CoordinationErrorInternalError;
+        }
+
+        co_return result;
     }
 
     auto CoordinationService::PublishSnowflakeKey(const std::string& requester) -> std::optional<int32_t>

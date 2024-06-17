@@ -27,6 +27,6 @@ namespace zerosugar::xr::login
         auto OnEvent(UniquePtrNotNull<IPacket> inPacket) -> Future<void> override;
 
     private:
-        Session& _session;
+        WeakPtrNotNull<Session> _session;
     };
 }

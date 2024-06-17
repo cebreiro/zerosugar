@@ -30,8 +30,10 @@ namespace zerosugar::xr
 
         auto GetName() const -> std::string_view;
         auto GetAccountId() const -> int64_t;
+        auto GetAuthenticationToken() const -> const std::string&;
 
         void SetAccountId(int64_t accountId);
+        void SetAuthenticationToken(std::string token);
 
     private:
         auto Run() -> Future<void>;
@@ -45,5 +47,6 @@ namespace zerosugar::xr
         SharedPtrNotNull<Channel<Buffer>> _channel;
 
         int64_t _accountId = 0;
+        std::string _authenticationToken;
     };
 }

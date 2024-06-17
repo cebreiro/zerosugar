@@ -29,6 +29,8 @@ namespace zerosugar
             void await_suspend(std::coroutine_handle<> handle);
             auto await_resume() -> value_type;
 
+            auto GetChannel() const -> const SharedPtrNotNull<channel_type>&;
+
         private:
             void RegisterHandleForCoroutineResume(SharedPtrNotNull<execution::IExecutor> ex, std::coroutine_handle<> handle);
             bool TrySetCurrent();
@@ -77,6 +79,12 @@ namespace zerosugar
     private:
         SharedPtrNotNull<channel_type> _channel;
     };
+
+    template <std::move_constructible T, typename TChannel>
+    auto AsyncEnumerable<T, TChannel>::Enumerator::GetChannel() const -> const SharedPtrNotNull<channel_type>&
+    {
+        return _channel;
+    }
 
     template <std::move_constructible T, typename TChannel>
     auto AsyncEnumerable<T, TChannel>::promise_type::get_return_object() -> AsyncEnumerable
