@@ -11,9 +11,14 @@ namespace zerosugar::xr::service
     {
     }
 
-    auto CoordinationServiceProxy::GetNameAsync(GetNameParam param) -> Future<GetNameResult>
+    auto CoordinationServiceProxy::RegisterServerAsync(RegisterServerParam param) -> Future<RegisterServerResult>
     {
-        return _client->CallRemoteProcedure<GetNameParam, Future<GetNameResult>::value_type>(name, "GetNameAsync", std::move(param));
+        return _client->CallRemoteProcedure<RegisterServerParam, Future<RegisterServerResult>::value_type>(name, "RegisterServerAsync", std::move(param));
+    }
+
+    auto CoordinationServiceProxy::OpenChannelAsync(AsyncEnumerable<CoordinationChannelInput> param) -> AsyncEnumerable<CoordinationChannelOutput>
+    {
+        return _client->CallRemoteProcedureClientServerStreaming<AsyncEnumerable<CoordinationChannelInput>::value_type, AsyncEnumerable<CoordinationChannelOutput>::value_type>(name, "OpenChannelAsync", std::move(param));
     }
 
     auto CoordinationServiceProxy::RequestSnowflakeKeyAsync(RequestSnowflakeKeyParam param) -> Future<RequestSnowflakeKeyResult>
@@ -33,10 +38,15 @@ namespace zerosugar::xr::service
 
     void Configure(const SharedPtrNotNull<ICoordinationService>& service, RPCClient& rpcClient)
     {
-        rpcClient.RegisterProcedure<false, false>("CoordinationService", "GetNameAsync",
-            [service = service](GetNameParam param) -> Future<GetNameResult>
+        rpcClient.RegisterProcedure<false, false>("CoordinationService", "RegisterServerAsync",
+            [service = service](RegisterServerParam param) -> Future<RegisterServerResult>
             {
-                return service->GetNameAsync(std::move(param));
+                return service->RegisterServerAsync(std::move(param));
+            });
+        rpcClient.RegisterProcedure<true, true>("CoordinationService", "OpenChannelAsync",
+            [service = service](AsyncEnumerable<CoordinationChannelInput> param) -> AsyncEnumerable<CoordinationChannelOutput>
+            {
+                return service->OpenChannelAsync(std::move(param));
             });
         rpcClient.RegisterProcedure<false, false>("CoordinationService", "RequestSnowflakeKeyAsync",
             [service = service](RequestSnowflakeKeyParam param) -> Future<RequestSnowflakeKeyResult>

@@ -8,6 +8,8 @@ namespace zerosugar::xr::service
         {
             case CoordinationServiceErrorCode::CoordinationErrorNone: return "CoordinationErrorNone";
             case CoordinationServiceErrorCode::CoordinationErrorInternalError: return "CoordinationErrorInternalError";
+            case CoordinationServiceErrorCode::CoordinationErrorFailAuthentication: return "CoordinationErrorFailAuthentication";
+            case CoordinationServiceErrorCode::RegisterErrorDuplicatedAddress: return "RegisterErrorDuplicatedAddress";
             case CoordinationServiceErrorCode::RequestSnowflakeKeyErrorOutOfPool: return "RequestSnowflakeKeyErrorOutOfPool";
             case CoordinationServiceErrorCode::ReturnSnowflakeKeyErrorInvalidKey: return "ReturnSnowflakeKeyErrorInvalidKey";
         }

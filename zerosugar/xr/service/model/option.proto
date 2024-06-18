@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.MessageOptions
+{
+    optional int32 opcode = 60000;
+}

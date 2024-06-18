@@ -4,7 +4,8 @@ package zerosugar.xr.service;
 
 service CoordinationService
 {
-    rpc GetName (GetNameParam) returns (GetNameResult);
+    rpc RegisterServer (RegisterServerParam) returns (RegisterServerResult);
+    rpc OpenChannel (stream CoordinationChannelInput) returns (stream CoordinationChannelOutput);
 
     rpc RequestSnowflakeKey (RequestSnowflakeKeyParam) returns (RequestSnowflakeKeyResult);
     rpc ReturnSnowflakeKey (ReturnSnowflakeKeyParam) returns (ReturnSnowflakeKeyResult);
@@ -14,20 +15,39 @@ service CoordinationService
 
 enum CoordinationServiceErrorCode
 {
-    Coordination_error_none = 0;
-    Coordination_error_internal_error = 1;
+    coordination_error_none = 0;
+    coordination_error_internal_error = 1;
+    coordination_error_fail_authentication = 2;
+
+    register_error_duplicated_address = 10001;
 
     request_snowflake_key_error_out_of_pool = 30001;
     return_snowflake_key_error_invalid_key = 40001;
 }
 
-message GetNameParam
-{
-}
-
-message GetNameResult
+message RegisterServerParam
 {
     string name = 1;
+    string ip = 2;
+    int32 port = 3;
+}
+
+message RegisterServerResult
+{
+    CoordinationServiceErrorCode error_code = 1;
+    int64 server_id = 2;
+}
+
+message CoordinationChannelInput
+{
+    int32 opcode = 1;
+    bytes bytes = 2;
+}
+
+message CoordinationChannelOutput
+{
+    int32 opcode = 1;
+    bytes bytes = 2;
 }
 
 message RequestSnowflakeKeyParam

@@ -32,20 +32,17 @@ namespace zerosugar::xr
         service::RequestSnowflakeKeyParam requestSnowflakeKeyParam;
         requestSnowflakeKeyParam.requester = GetName();
 
-        auto task1 = coordinationService.RequestSnowflakeKeyAsync(std::move(requestSnowflakeKeyParam));
-        auto task2 = coordinationService.GetNameAsync(service::GetNameParam{});
-
-        WaitAll(*executor, task1, task2).Wait();
-
-        service::RequestSnowflakeKeyResult res = task1.Get();
+        const service::RequestSnowflakeKeyResult res = coordinationService.RequestSnowflakeKeyAsync(std::move(requestSnowflakeKeyParam)).Get();
         if (res.errorCode != service::CoordinationServiceErrorCode::CoordinationErrorNone)
         {
             ZEROSUGAR_LOG_CRITICAL(_serviceLocator,
                 std::format("[{}] fail to get snowflake key: {}", GetName(), GetEnumName(res.errorCode)));
+
+            return;
         }
 
         service::AddGameServiceParam param;
-        param.address.name = task2.Get().name;
+        param.address.name = "default";
         param.address.ip = _ip;
         param.address.port = listenPort;
 

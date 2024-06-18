@@ -8,11 +8,11 @@ namespace zerosugar::execution
 
 namespace zerosugar::xr
 {
-    class ZoneServer final
+    class GameServer final
         : public Server
     {
     public:
-        explicit ZoneServer(execution::AsioExecutor& executor);
+        explicit GameServer(execution::AsioExecutor& executor);
 
         void Initialize(ServiceLocator& serviceLocator) override;
 

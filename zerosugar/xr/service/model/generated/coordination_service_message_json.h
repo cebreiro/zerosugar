@@ -9,11 +9,17 @@
 
 namespace zerosugar::xr::service
 {
-    void from_json(const nlohmann::json& j, GetNameParam& item);
-    void to_json(nlohmann::json& j, const GetNameParam& item);
+    void from_json(const nlohmann::json& j, RegisterServerParam& item);
+    void to_json(nlohmann::json& j, const RegisterServerParam& item);
 
-    void from_json(const nlohmann::json& j, GetNameResult& item);
-    void to_json(nlohmann::json& j, const GetNameResult& item);
+    void from_json(const nlohmann::json& j, RegisterServerResult& item);
+    void to_json(nlohmann::json& j, const RegisterServerResult& item);
+
+    void from_json(const nlohmann::json& j, CoordinationChannelInput& item);
+    void to_json(nlohmann::json& j, const CoordinationChannelInput& item);
+
+    void from_json(const nlohmann::json& j, CoordinationChannelOutput& item);
+    void to_json(nlohmann::json& j, const CoordinationChannelOutput& item);
 
     void from_json(const nlohmann::json& j, RequestSnowflakeKeyParam& item);
     void to_json(nlohmann::json& j, const RequestSnowflakeKeyParam& item);
