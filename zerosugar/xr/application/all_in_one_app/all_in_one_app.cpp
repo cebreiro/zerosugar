@@ -111,8 +111,8 @@ namespace zerosugar::xr
         const std::filesystem::path& logFilePath = std::filesystem::current_path() / _config->logFilePath;
 
         SpdLogLoggerBuilder builder;
-        builder.ConfigureConsole().SetLogLevel(LogLevel::Info).SetAsync(false);
-        builder.ConfigureDailyFile().SetLogLevel(LogLevel::Debug).SetPath(logFilePath);
+        builder.ConfigureConsole().SetLogLevel(LogLevel::Debug).SetAsync(false);
+        builder.ConfigureDailyFile().SetLogLevel(LogLevel::Info).SetPath(logFilePath);
 
         _logService->Add(-1, builder.CreateLogger());
 
@@ -206,7 +206,7 @@ namespace zerosugar::xr
         ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize network --> Done", GetName()));
 
 
-        try
+        /*try
         {
             auto channel = std::make_shared<Channel<service::TestParam>>();
 
@@ -229,6 +229,88 @@ namespace zerosugar::xr
             {
                 service::TestParam param;
                 param.token = std::to_string(i);
+
+                if (channel->IsOpen())
+                {
+                    ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("produce: {}", i));
+
+                    channel->Send(std::move(param), channel::ChannelSignal::NotifyOne);
+                }
+            }
+        }
+        catch (const std::exception& e)
+        {
+            (void)e;
+        }*/
+
+        /*try
+        {
+            service::TestParam param;
+            param.token = "25";
+
+            AsyncEnumerable<service::TestResult> enumerable = GetServiceLocator().Get<service::ILoginService>().Test2Async(std::move(param));
+
+            Post(*_executor, [](AsyncEnumerable<service::TestResult> enumerable, AllInOneApp& self) mutable -> Future<void>
+                {
+                    try
+                    {
+                        while (enumerable.HasNext())
+                        {
+                            service::TestResult result = co_await enumerable;
+
+                            ZEROSUGAR_LOG_INFO(self.GetServiceLocator(), std::format("receive result: {}", result.token));
+                        }
+
+                        ZEROSUGAR_LOG_INFO(self.GetServiceLocator(), std::format("--- end ---"));
+                    }
+                    catch (const std::exception& e)
+                    {
+                        ZEROSUGAR_LOG_INFO(self.GetServiceLocator(), std::format("exception: {}", e.what()));
+                    }
+                }, std::move(enumerable), std::ref(*this));
+        }
+        catch (const std::exception& e)
+        {
+            (void)e;
+        }*/
+
+        try
+        {
+            auto channel = std::make_shared<Channel<service::TestParam>>();
+            AsyncEnumerable<service::TestResult> enumerable = GetServiceLocator().Get<service::ILoginService>().Test3Async(AsyncEnumerable<service::TestParam>(channel));
+
+            Post(*_executor, [](AsyncEnumerable<service::TestResult> enumerable, AllInOneApp& self) mutable -> Future<void>
+                {
+                    try
+                    {
+                        while (enumerable.HasNext())
+                        {
+                            service::TestResult result = co_await enumerable;
+
+                            ZEROSUGAR_LOG_INFO(self.GetServiceLocator(), std::format("receive result: {}", result.token));
+                        }
+
+                        ZEROSUGAR_LOG_INFO(self.GetServiceLocator(), std::format("--- end ---"));
+                    }
+                    catch (const std::exception& e)
+                    {
+                        ZEROSUGAR_LOG_INFO(self.GetServiceLocator(), std::format("exception: {}", e.what()));
+                    }
+                }, std::move(enumerable), std::ref(*this));
+
+            for (int32_t i = 0; i < 10000000; ++i)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+                service::TestParam param;
+                param.token = std::to_string(i);
+
+                if (i > 10)
+                {
+                    channel->Close();
+
+                    break;
+                }
 
                 if (channel->IsOpen())
                 {

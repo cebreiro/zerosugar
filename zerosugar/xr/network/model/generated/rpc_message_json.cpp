@@ -72,6 +72,23 @@ namespace zerosugar::xr::network
             };
     }
 
+    void from_json(const nlohmann::json& j, SendServerStreaming& item)
+    {
+        j.at("rpcId").get_to(item.rpcId);
+        j.at("serviceName").get_to(item.serviceName);
+        j.at("rpcResult").get_to(item.rpcResult);
+    }
+
+    void to_json(nlohmann::json& j, const SendServerStreaming& item)
+    {
+        j = nlohmann::json
+            {
+                { "rpcId", item.rpcId },
+                { "serviceName", item.serviceName },
+                { "rpcResult", item.rpcResult },
+            };
+    }
+
     void from_json(const nlohmann::json& j, SendClientSteaming& item)
     {
         j.at("rpcId").get_to(item.rpcId);

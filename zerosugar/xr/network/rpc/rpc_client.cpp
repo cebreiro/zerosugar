@@ -174,6 +174,13 @@ namespace zerosugar::xr
                         HandleResultRemoteProcedureCall(result);
                     }
                     break;
+                    case network::SendServerStreaming::opcode:
+                    {
+                        const network::SendServerStreaming& serverStreaming = *packet->Cast<network::SendServerStreaming>();
+
+                        HandleServerStreaming(serverStreaming);
+                    }
+                    break;
                     case network::SendClientSteaming::opcode:
                     {
                         const network::SendClientSteaming& clientStreaming = *packet->Cast<network::SendClientSteaming>();
@@ -203,7 +210,7 @@ namespace zerosugar::xr
         }
     }
 
-    bool RPCClient::HasRPCCallback(const std::string& serviceName, int32_t rpcId) const
+    bool RPCClient::HasCompletionCallback(const std::string& serviceName, int32_t rpcId) const
     {
         const auto iter = _remoteProcedures.find(serviceName);
         if (iter == _remoteProcedures.end())
@@ -214,17 +221,20 @@ namespace zerosugar::xr
         return iter->second.contains(rpcId);
     }
 
-    void RPCClient::SetRPCCallback(const std::string& serviceName, int32_t rpcId, const result_callback_type& callback)
+    void RPCClient::SetCompletionCallback(const std::string& serviceName, int32_t rpcId, const completion_callback_type& callback)
     {
-        [[maybe_unused]]
-        bool inserted = _remoteProcedures[serviceName].try_emplace(rpcId, callback).second;
-        assert(inserted);
+        _remoteProcedures[serviceName][rpcId].second = callback;
+    }
+
+    void RPCClient::SetServerStreamingCallback(const std::string& serviceName, int32_t rpcId, const server_streaming_callback& callback)
+    {
+        _remoteProcedures[serviceName][rpcId].first = callback;
     }
 
     void RPCClient::Send(int32_t rpcId, std::string serviceName, std::string rpcName, std::string param)
     {
         assert(ExecutionContext::IsEqualTo(*_strand));
-        assert(HasRPCCallback(serviceName, rpcId));
+        assert(HasCompletionCallback(serviceName, rpcId));
 
         network::RequestRemoteProcedureCall packet;
         packet.rpcId = rpcId;
@@ -241,7 +251,7 @@ namespace zerosugar::xr
     {
         assert(ExecutionContext::IsEqualTo(*_strand));
 
-        if (!HasRPCCallback(serviceName, rpcId))
+        if (!HasCompletionCallback(serviceName, rpcId))
         {
             return;
         }
@@ -259,7 +269,11 @@ namespace zerosugar::xr
     void RPCClient::SendAbortClientStreaming(int32_t rpcId, const std::string& serviceName)
     {
         assert(ExecutionContext::IsEqualTo(*_strand));
-        assert(HasRPCCallback(serviceName, rpcId));
+
+        if (!HasCompletionCallback(serviceName, rpcId))
+        {
+            return;
+        }
 
         network::AbortClientStreamingRPC packet;
         packet.rpcId = rpcId;
@@ -319,18 +333,27 @@ namespace zerosugar::xr
 
             try
             {
+                network::SendServerStreaming serverStreaming;
+                serverStreaming.rpcId = resultRPC.rpcId;
+                serverStreaming.serviceName = resultRPC.serviceName;
+
                 while (enumerable.HasNext())
                 {
-                    resultRPC.rpcResult = co_await enumerable;
+                    serverStreaming.rpcResult = co_await enumerable;
                     assert(ExecutionContext::IsEqualTo(*self->_strand));
 
-                    _socket->SendAsync(RPCPacketBuilder::MakePacket(resultRPC));
+                    _socket->SendAsync(RPCPacketBuilder::MakePacket(serverStreaming));
                 }
 
                 resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorStreamingClosedGracefully;
                 resultRPC.rpcResult.clear();
+            }
+            catch (const AsyncEnumerableClosedException& e)
+            {
+                (void)e;
 
-                _socket->SendAsync(RPCPacketBuilder::MakePacket(resultRPC));
+                resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorStreamingClosedGracefully;
+                resultRPC.rpcResult.clear();
             }
             catch (const std::exception& e)
             {
@@ -340,9 +363,9 @@ namespace zerosugar::xr
 
                 resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorStreamingClosedByServer;
                 resultRPC.rpcResult.clear();
-
-                _socket->SendAsync(RPCPacketBuilder::MakePacket(resultRPC));
             }
+
+            _socket->SendAsync(RPCPacketBuilder::MakePacket(resultRPC));
         }
         else if (std::holds_alternative<std::function<Future<std::string>(SharedPtrNotNull<Channel<std::string>>)>>(iterProcedure->second))
         {
@@ -367,11 +390,11 @@ namespace zerosugar::xr
 
                     resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorStreamingClosedByServer;
                     resultRPC.rpcResult.clear();
-
-                    _runningClientStreamingProcedures.erase(request.rpcId);
                 }
 
                 _socket->SendAsync(RPCPacketBuilder::MakePacket(resultRPC));
+
+                _runningClientStreamingProcedures.erase(request.rpcId);
 
                 co_return;
             }
@@ -390,22 +413,30 @@ namespace zerosugar::xr
                 _runningClientStreamingProcedures[request.rpcId] = channel;
 
                 channel->Send(request.parameter, channel::ChannelSignal::NotifyOne);
+                AsyncEnumerable<std::string> enumerable = function(std::move(channel));
 
                 try
                 {
-                    AsyncEnumerable<std::string> enumerable = function(std::move(channel));
+                    network::SendServerStreaming serverStreaming;
+                    serverStreaming.rpcId = resultRPC.rpcId;
+                    serverStreaming.serviceName = resultRPC.serviceName;
 
                     while (enumerable.HasNext())
                     {
-                        resultRPC.rpcResult = co_await function(std::move(channel));
+                        serverStreaming.rpcResult = co_await enumerable;
 
-                        _socket->SendAsync(RPCPacketBuilder::MakePacket(resultRPC));
+                        _socket->SendAsync(RPCPacketBuilder::MakePacket(serverStreaming));
                     }
 
                     resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorStreamingClosedGracefully;
                     resultRPC.rpcResult.clear();
+                }
+                catch (const AsyncEnumerableClosedException& e)
+                {
+                    (void)e;
 
-                    _socket->SendAsync(RPCPacketBuilder::MakePacket(resultRPC));
+                    resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorStreamingClosedGracefully;
+                    resultRPC.rpcResult.clear();
                 }
                 catch (const std::exception& e)
                 {
@@ -415,9 +446,11 @@ namespace zerosugar::xr
 
                     resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorStreamingClosedByServer;
                     resultRPC.rpcResult.clear();
-
-                    _runningClientStreamingProcedures.erase(request.rpcId);
                 }
+
+                _socket->SendAsync(RPCPacketBuilder::MakePacket(resultRPC));
+
+                _runningClientStreamingProcedures.erase(request.rpcId);
             }
             else
             {
@@ -430,7 +463,7 @@ namespace zerosugar::xr
     {
         assert(ExecutionContext::IsEqualTo(*_strand));
 
-        auto* remoteProcedures = [this, &result]() -> std::unordered_map<int32_t, result_callback_type>*
+        auto* remoteProcedures = [this, &result]() -> std::unordered_map<int32_t, std::pair<server_streaming_callback, completion_callback_type>>*
             {
                 auto iter = _remoteProcedures.find(result.serviceName);
                 return iter != _remoteProcedures.end() ? &iter->second : nullptr;
@@ -451,11 +484,47 @@ namespace zerosugar::xr
             return;
         }
 
-        auto callback = std::exchange(iter->second, {});
+        auto callback = std::exchange(iter->second.second, {});
         remoteProcedures->erase(iter);
 
         assert(callback);
         callback(result.errorCode, result.rpcResult);
+
+        ZEROSUGAR_LOG_DEBUG(_serviceLocator,
+            std::format("[rpc_client] rpc is removed. rpc_id: {}, service: {}, error: {}",
+                result.rpcId, result.serviceName, GetEnumName(result.errorCode)));
+    }
+
+    void RPCClient::HandleServerStreaming(const network::SendServerStreaming& serverStreaming)
+    {
+        assert(ExecutionContext::IsEqualTo(*_strand));
+
+        auto* remoteProcedures = [this, &serverStreaming]() -> std::unordered_map<int32_t, std::pair<server_streaming_callback, completion_callback_type>>*
+            {
+                auto iter = _remoteProcedures.find(serverStreaming.serviceName);
+                return iter != _remoteProcedures.end() ? &iter->second : nullptr;
+            }();
+
+        if (!remoteProcedures)
+        {
+            assert(false);
+
+            return;
+        }
+
+        auto iter = remoteProcedures->find(serverStreaming.rpcId);
+        if (iter == remoteProcedures->end())
+        {
+            assert(false);
+
+            return;
+        }
+
+        iter->second.first(serverStreaming.rpcResult);
+
+        ZEROSUGAR_LOG_DEBUG(_serviceLocator,
+            std::format("[rpc_client] receive server streaming. rpc_id: {}, service: {}",
+                serverStreaming.rpcId, serverStreaming.serviceName));
     }
 
     void RPCClient::HandleClientStreaming(const network::SendClientSteaming& clientStreaming)

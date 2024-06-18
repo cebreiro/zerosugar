@@ -24,7 +24,8 @@ namespace zerosugar::xr
         : public IService
         , public std::enable_shared_from_this<RPCClient>
     {
-        using result_callback_type = std::function<void(network::RemoteProcedureCallErrorCode, const std::string&)>;
+        using server_streaming_callback = std::function<void(const std::string&)>;
+        using completion_callback_type = std::function<void(network::RemoteProcedureCallErrorCode, const std::string&)>;
 
     public:
         explicit RPCClient(SharedPtrNotNull<execution::AsioExecutor> executor);
@@ -55,8 +56,10 @@ namespace zerosugar::xr
     private:
         auto Run() -> Future<void>;
 
-        bool HasRPCCallback(const std::string& serviceName, int32_t rpcId) const;
-        void SetRPCCallback(const std::string& serviceName, int32_t rpcId, const result_callback_type& callback);
+        bool HasCompletionCallback(const std::string& serviceName, int32_t rpcId) const;
+        void SetCompletionCallback(const std::string& serviceName, int32_t rpcId, const completion_callback_type& callback);
+
+        void SetServerStreamingCallback(const std::string& serviceName, int32_t rpcId, const server_streaming_callback& callback);
 
         void Send(int32_t rpcId, std::string serviceName, std::string rpcName, std::string param);
         void SendClientStreaming(int32_t rpcId, std::string serviceName, std::string param);
@@ -64,6 +67,7 @@ namespace zerosugar::xr
 
         auto HandleRequestRemoteProcedureCall(network::RequestRemoteProcedureCall request) -> Future<void>;
         void HandleResultRemoteProcedureCall(const network::ResultRemoteProcedureCall& result);
+        void HandleServerStreaming(const network::SendServerStreaming& serverStreaming);
         void HandleClientStreaming(const network::SendClientSteaming& clientStreaming);
         void HandleAbortClientStreaming(const network::AbortClientStreamingRPC& abort);
 
@@ -77,6 +81,7 @@ namespace zerosugar::xr
 
         SharedPtrNotNull<Socket> _socket;
 
+        // server-side
         std::unordered_map<std::string, Promise<void>> _registers;
         std::unordered_map<std::string,
             std::variant<
@@ -88,8 +93,10 @@ namespace zerosugar::xr
         > _procedures;
         std::unordered_map<int32_t, SharedPtrNotNull<Channel<std::string>>> _runningClientStreamingProcedures;
 
+        // client-side
         std::unordered_map<std::string, int32_t> _nextRemoteProcedureIds;
-        std::unordered_map<std::string, std::unordered_map<int32_t, result_callback_type>> _remoteProcedures;
+        std::unordered_map<std::string,
+            std::unordered_map<int32_t, std::pair<server_streaming_callback, completion_callback_type>>> _remoteProcedures;
     };
 
     template <bool ParamStreaming, bool ReturnStreaming, typename Func>
@@ -126,15 +133,13 @@ namespace zerosugar::xr
 
                         while (true)
                         {
-                            {
-                                Future externFuture(externContext);
-                                Future outputFuture(outputContext);
+                            co_await WaitAny(*executor, Future(externContext), Future(outputContext));
+                            ExecutionContext::IsEqualTo(*executor);
 
-                                co_await WaitAny(*executor, externFuture, outputFuture);
-                                ExecutionContext::IsEqualTo(*executor);
-                            }
+                            const bool completeExternContext = externContext->IsComplete();
+                            const bool completeOutputContext = outputContext->IsComplete();
 
-                            if (externContext->IsComplete())
+                            if (completeExternContext)
                             {
                                 std::variant<std::string, std::exception_ptr> item;
 
@@ -175,7 +180,7 @@ namespace zerosugar::xr
                                 }
                             }
 
-                            if (outputContext->IsComplete())
+                            if (completeOutputContext)
                             {
                                 std::variant<typename TResult::value_type, std::exception_ptr> item;
 
@@ -272,7 +277,10 @@ namespace zerosugar::xr
                         {
                             co_await WaitAny(*executor, Future(externContext), Future(outputContext));
 
-                            if (outputContext->IsComplete())
+                            const bool completeExternContext = externContext->IsComplete();
+                            const bool completeOutputContext = outputContext->IsComplete();
+
+                            if (completeOutputContext)
                             {
                                 const typename TResult::value_type result = future.Get();
                                 nlohmann::json output = result;
@@ -280,7 +288,7 @@ namespace zerosugar::xr
                                 co_return output.dump();
                             }
 
-                            if (externContext->IsComplete())
+                            if (completeExternContext)
                             {
                                 std::variant<std::string, std::exception_ptr> item;
 
@@ -302,7 +310,10 @@ namespace zerosugar::xr
                                     const nlohmann::json& input = nlohmann::json::parse(str);
                                     typename TParam::value_type param = input.get<typename TParam::value_type>();
 
-                                    inputChannel->Send(std::move(param), channel::ChannelSignal::NotifyOne);
+                                    if (inputChannel->IsOpen())
+                                    {
+                                        inputChannel->Send(std::move(param), channel::ChannelSignal::NotifyOne);
+                                    }
                                 }
 
                                 externContext->Reset();
@@ -357,7 +368,7 @@ namespace zerosugar::xr
         Promise<R> promise;
         Future<R> future = promise.GetFuture();
 
-        this->SetRPCCallback(serviceName, rpcId,
+        this->SetCompletionCallback(serviceName, rpcId,
             [p = std::move(promise), rpcId, serviceName, rpcName](network::RemoteProcedureCallErrorCode ec, const std::string& param) mutable
             {
                 if (ec != network::RemoteProcedureCallErrorCode::RpcErrorNone)
@@ -405,7 +416,7 @@ namespace zerosugar::xr
         Promise<R> promise;
         Future<R> future = promise.GetFuture();
 
-        this->SetRPCCallback(serviceName, rpcId,
+        this->SetCompletionCallback(serviceName, rpcId,
             [p = std::move(promise), rpcId, serviceName, rpcName, channel = enumerable.GetChannel()]
             (network::RemoteProcedureCallErrorCode ec, const std::string& param) mutable
             {
@@ -460,6 +471,12 @@ namespace zerosugar::xr
                 }
             }
         }
+        catch (const AsyncEnumerableClosedException& e)
+        {
+            (void)e;
+
+            this->SendAbortClientStreaming(rpcId, serviceName);
+        }
         catch (const std::exception& e)
         {
             ZEROSUGAR_LOG_ERROR(_serviceLocator,
@@ -488,14 +505,28 @@ namespace zerosugar::xr
             {
                 const int32_t rpcId = ++self->_nextRemoteProcedureIds[serviceName];
 
-                self->SetRPCCallback(serviceName, rpcId,
+                self->SetServerStreamingCallback(serviceName, rpcId, [channel = channel](const std::string& str)
+                    {
+                        if (channel->IsOpen())
+                        {
+                            nlohmann::json j = nlohmann::json::parse(str);
+                            R result = j.get<R>();
+
+                            channel->Send(std::move(result), channel::ChannelSignal::NotifyOne);
+                        }
+                    });
+
+                self->SetCompletionCallback(serviceName, rpcId,
                     [channel = std::move(channel), rpcId, serviceName, rpcName](network::RemoteProcedureCallErrorCode ec, const std::string& param) mutable
                     {
-                        if (ec == network::RemoteProcedureCallErrorCode::RpcErrorStreamingClosedGracefully)
+                        (void)param;
+
+                        if (ec == network::RemoteProcedureCallErrorCode::RpcErrorStreamingClosedGracefully ||
+                            ec == network::RemoteProcedureCallErrorCode::RpcErrorNone)
                         {
                             channel->Close();
                         }
-                        else if (ec != network::RemoteProcedureCallErrorCode::RpcErrorNone)
+                        else
                         {
                             try
                             {
@@ -504,16 +535,11 @@ namespace zerosugar::xr
                             }
                             catch (...)
                             {
-                                channel->Send(std::current_exception(), channel::ChannelSignal::NotifyOne);
+                                if (channel->IsOpen())
+                                {
+                                    channel->Send(std::current_exception(), channel::ChannelSignal::NotifyOne);
+                                }
                             }
-                        }
-                        else
-                        {
-                            nlohmann::json j = nlohmann::json::parse(param);
-
-                            R result = j.get<R>();
-
-                            channel->Send(std::move(result), channel::ChannelSignal::NotifyOne);
                         }
                     });
 
@@ -537,14 +563,28 @@ namespace zerosugar::xr
             {
                 const int32_t rpcId = ++self->_nextRemoteProcedureIds[serviceName];
 
-                self->SetRPCCallback(serviceName, rpcId,
+                self->SetServerStreamingCallback(serviceName, rpcId, [channel = channel](const std::string& str)
+                    {
+                        if (channel->IsOpen())
+                        {
+                            nlohmann::json j = nlohmann::json::parse(str);
+                            R result = j.get<R>();
+
+                            channel->Send(std::move(result), channel::ChannelSignal::NotifyOne);
+                        }
+                    });
+
+                self->SetCompletionCallback(serviceName, rpcId,
                     [channel = std::move(channel), rpcId, serviceName, rpcName](network::RemoteProcedureCallErrorCode ec, const std::string& param) mutable
                     {
-                        if (ec == network::RemoteProcedureCallErrorCode::RpcErrorStreamingClosedGracefully)
+                        (void)param;
+
+                        if (ec == network::RemoteProcedureCallErrorCode::RpcErrorStreamingClosedGracefully ||
+                            ec == network::RemoteProcedureCallErrorCode::RpcErrorNone)
                         {
                             channel->Close();
                         }
-                        else if (ec != network::RemoteProcedureCallErrorCode::RpcErrorNone)
+                        else
                         {
                             try
                             {
@@ -553,16 +593,11 @@ namespace zerosugar::xr
                             }
                             catch (...)
                             {
-                                channel->Send(std::current_exception(), channel::ChannelSignal::NotifyOne);
+                                if (channel->IsOpen())
+                                {
+                                    channel->Send(std::current_exception(), channel::ChannelSignal::NotifyOne);
+                                }
                             }
-                        }
-                        else
-                        {
-                            nlohmann::json j = nlohmann::json::parse(param);
-
-                            R result = j.get<R>();
-
-                            channel->Send(std::move(result), channel::ChannelSignal::NotifyOne);
                         }
                     });
 
@@ -587,6 +622,12 @@ namespace zerosugar::xr
                             self->SendClientStreaming(rpcId, serviceName, std::move(str));
                         }
                     }
+                }
+                catch (const AsyncEnumerableClosedException& e)
+                {
+                    (void)e;
+
+                    self->SendAbortClientStreaming(rpcId, serviceName);
                 }
                 catch (const std::exception& e)
                 {

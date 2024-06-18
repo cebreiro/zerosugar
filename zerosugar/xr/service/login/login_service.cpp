@@ -1,5 +1,6 @@
 #include "login_service.h"
 
+#include <boost/lexical_cast.hpp>
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 #include "zerosugar/xr/network/rpc/rpc_client.h"
@@ -206,15 +207,19 @@ namespace zerosugar::xr
         co_await *_strand;
         assert(ExecutionContext::IsEqualTo(*_strand));
 
-        for (int64_t i = 0; i < 10; ++i)
+        const int64_t count = boost::lexical_cast<int64_t>(param.token);
+
+        for (int64_t i = 0; i < count; ++i)
         {
-            co_await Delay(std::chrono::seconds(1));
+            co_await Delay(std::chrono::milliseconds(1));
 
             service::TestResult result;
-            result.token = std::format("{}:{} END", __FUNCTION__, i);
+            result.token = std::format("{}:{}", __FUNCTION__, i);
 
             co_yield result;
         }
+
+        ZEROSUGAR_LOG_DEBUG(_serviceLocator, std::format("{} END", __FUNCTION__));
 
         co_return;
     }
@@ -236,6 +241,8 @@ namespace zerosugar::xr
                 service::TestResult result;
                 result.token = asd.token;
 
+                ZEROSUGAR_LOG_DEBUG(_serviceLocator, std::format("{} : {}", __FUNCTION__, asd.token));
+
                 co_yield result;
             }
         }
@@ -243,6 +250,8 @@ namespace zerosugar::xr
         {
             ZEROSUGAR_LOG_WARN(_serviceLocator, std::format("{}, exception: {}", __FUNCTION__, e.what()));
         }
+
+        ZEROSUGAR_LOG_DEBUG(_serviceLocator, std::format("{} END", __FUNCTION__));
 
         co_return;
     }

@@ -50,6 +50,8 @@ namespace zerosugar
         std::vector<std::shared_ptr<spdlog::sinks::sink>> syncSinks;
         std::vector<std::shared_ptr<spdlog::sinks::sink>> asyncSinks;
 
+        int32_t minLogLevel = std::numeric_limits<int32_t>::max();
+
         if (_consoleConfig.has_value())
         {
             auto sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
@@ -69,6 +71,8 @@ namespace zerosugar
             {
                 syncSinks.emplace_back(std::move(sink));
             }
+
+            minLogLevel = std::min(minLogLevel, static_cast<int32_t>(_consoleConfig->GetLogLevel()));
         }
 
         if (_dailyFileConfig.has_value())
@@ -90,11 +94,14 @@ namespace zerosugar
             {
                 syncSinks.emplace_back(std::move(sink));
             }
+
+            minLogLevel = std::min(minLogLevel, static_cast<int32_t>(_dailyFileConfig->GetLogLevel()));
         }
 
         if (!syncSinks.empty())
         {
             syncLogger = std::make_shared<spdlog::logger>(makeLoggerName(), syncSinks.begin(), syncSinks.end());
+            syncLogger->set_level(static_cast<spdlog::level::level_enum>(minLogLevel));
         }
 
         if (!asyncSinks.empty())
@@ -105,6 +112,7 @@ namespace zerosugar
 
             asyncLogger = std::move(logger);
             asyncLogger->flush_on(spdlog::level::info);
+            asyncLogger->set_level(static_cast<spdlog::level::level_enum>(minLogLevel));
         }
 
         return std::make_shared<SpdLogLogger>(std::move(syncLogger), std::move(asyncLogger));

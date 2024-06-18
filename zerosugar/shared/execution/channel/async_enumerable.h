@@ -4,6 +4,7 @@
 #include <concepts>
 #include <coroutine>
 #include <memory>
+#include <stdexcept>
 #include <optional>
 #include "zerosugar/shared/execution/channel/channel.h"
 #include "zerosugar/shared/execution/context/execution_context.h"
@@ -11,6 +12,15 @@
 
 namespace zerosugar
 {
+    struct AsyncEnumerableClosedException : std::exception
+    {
+        AsyncEnumerableClosedException() = default;
+        explicit AsyncEnumerableClosedException(const char* str)
+            : std::exception(str)
+        {
+        }
+    };
+
     template <std::move_constructible T, typename TChannel = Channel<T>>
     class AsyncEnumerable
     {
@@ -207,7 +217,7 @@ namespace zerosugar
         if (!_current.has_value())
         {
             assert(_channel->IsClosed());
-            throw std::runtime_error("channel is closed by producer");
+            throw AsyncEnumerableClosedException("channel is closed by producer");
         }
 
         item_type temp;

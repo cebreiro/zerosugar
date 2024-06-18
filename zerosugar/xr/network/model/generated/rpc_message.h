@@ -73,9 +73,22 @@ namespace zerosugar::xr::network
         std::string rpcResult = {};
     };
 
-    struct SendClientSteaming final : IPacket
+    struct SendServerStreaming final : IPacket
     {
         static constexpr int32_t opcode = 5;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        int32_t rpcId = {};
+        std::string serviceName = {};
+        std::string rpcResult = {};
+    };
+
+    struct SendClientSteaming final : IPacket
+    {
+        static constexpr int32_t opcode = 6;
 
         void Deserialize(PacketReader& reader) final;
         void Serialize(PacketWriter& writer) const final;
@@ -88,7 +101,7 @@ namespace zerosugar::xr::network
 
     struct AbortClientStreamingRPC final : IPacket
     {
-        static constexpr int32_t opcode = 6;
+        static constexpr int32_t opcode = 7;
 
         void Deserialize(PacketReader& reader) final;
         void Serialize(PacketWriter& writer) const final;

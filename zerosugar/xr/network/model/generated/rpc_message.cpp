@@ -80,6 +80,20 @@ namespace zerosugar::xr::network
         writer.Write(rpcResult);
     }
 
+    void SendServerStreaming::Deserialize(PacketReader& reader)
+    {
+        rpcId = reader.Read<int32_t>();
+        serviceName = reader.ReadString();
+        rpcResult = reader.ReadString();
+    }
+
+    void SendServerStreaming::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int32_t>(rpcId);
+        writer.Write(serviceName);
+        writer.Write(rpcResult);
+    }
+
     void SendClientSteaming::Deserialize(PacketReader& reader)
     {
         rpcId = reader.Read<int32_t>();
@@ -135,6 +149,13 @@ namespace zerosugar::xr::network
             case ResultRemoteProcedureCall::opcode:
             {
                 auto item = std::make_unique<ResultRemoteProcedureCall>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case SendServerStreaming::opcode:
+            {
+                auto item = std::make_unique<SendServerStreaming>();
                 item->Deserialize(reader);
 
                 return item;

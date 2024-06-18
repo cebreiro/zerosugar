@@ -213,6 +213,22 @@ namespace zerosugar::xr
                 }
             }
             break;
+            case SendServerStreaming::opcode:
+            {
+                const SendServerStreaming& serverStreaming = *packet->Cast<SendServerStreaming>();
+
+                const std::shared_ptr<Session>& target = FindSession(serverStreaming.serviceName);
+                if (target)
+                {
+                    target->Send(RPCPacketBuilder::MakePacket(serverStreaming));
+                }
+                else
+                {
+                    ZEROSUGAR_LOG_ERROR(_serviceLocator,
+                        std::format("[{}] fail to find service. service_name: {}", GetName(), serverStreaming.serviceName));
+                }
+            }
+            break;
             case SendClientSteaming::opcode:
             {
                 const SendClientSteaming& clientSteaming = *packet->Cast<SendClientSteaming>();
