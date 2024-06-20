@@ -2,9 +2,13 @@
 
 #include <boost/scope/scope_exit.hpp>
 #include "zerosugar/shared/snowflake/snowflake.h"
+#include "zerosugar/xr/service/coordination/command/command_channel_runner.h"
+#include "zerosugar/xr/service/coordination/command/handler/command_response_handler_factory.h"
+#include "zerosugar/xr/service/coordination/load_balance/load_balancer.h"
 #include "zerosugar/xr/service/coordination/node/game_server.h"
 #include "zerosugar/xr/service/coordination/node/node_container.h"
 #include "zerosugar/xr/service/coordination/node/game_instance.h"
+#include "zerosugar/xr/service/model/generated/coordination_command_message.h"
 #include "zerosugar/xr/service/model/generated/login_service.h"
 
 namespace zerosugar::xr
@@ -13,6 +17,8 @@ namespace zerosugar::xr
         : _executor(std::move(executor))
         , _strand(std::make_shared<Strand>(_executor))
         , _nodeContainer(std::make_unique<coordination::NodeContainer>())
+        , _loadBalancer(std::make_unique<coordination::LoadBalancer>(*this))
+        , _commandResponseHandlerFactory(std::make_unique<coordination::CommandResponseHandlerFactory>())
     {
     }
 
@@ -47,7 +53,7 @@ namespace zerosugar::xr
 
         service::RegisterServerResult result;
 
-        if (self->_nodeContainer->HasServerAddress(param.ip, param.port))
+        if (self->_nodeContainer->HasServerAddress(param.ip, static_cast<uint16_t>(param.port)))
         {
             result.errorCode = service::CoordinationServiceErrorCode::RegisterErrorDuplicatedAddress;
 
@@ -55,49 +61,43 @@ namespace zerosugar::xr
         }
 
         const auto serverId = coordination::game_server_id_type(++self->_nextServerId);
-        auto server = std::make_shared<coordination::GameServer>(serverId, param.name, param.ip, param.port);
+        auto server = std::make_shared<coordination::GameServer>(serverId, param.name, param.ip, static_cast<uint16_t>(param.port));
 
         [[maybe_unused]]
         bool added = self->_nodeContainer->Add(std::move(server));
         assert(added);
 
+        added = _loadBalancer->Add(serverId);
+        assert(added);
+
         co_return result;
     }
 
-    auto CoordinationService::OpenChannelAsync(AsyncEnumerable<service::CoordinationChannelInput> param)
-        -> AsyncEnumerable<service::CoordinationChannelOutput>
+    auto CoordinationService::UpdateServerStatusAsync(service::UpdateServerStatusParam param) -> Future<service::UpdateServerStatusResult>
     {
-        auto channel = std::make_shared<Channel<service::CoordinationChannelOutput>>();
+        const auto id = coordination::game_server_id_type(param.serverId);
 
-        Post(*_strand, [](
-            SharedPtrNotNull<CoordinationService> self,
-            AsyncEnumerable<service::CoordinationChannelInput> enumerable,
-            SharedPtrNotNull<Channel<service::CoordinationChannelOutput>> outputChannel) -> Future<void>
-            {
-                try
-                {
-                    while (enumerable.HasNext())
-                    {
-                        service::CoordinationChannelInput input = co_await enumerable;
-                        (void)input;
+        [[maybe_unused]]
+        const bool updated = _loadBalancer->Update(id, coordination::ServerStatus{
+            .loadCPUPercentage = param.loadCPUPercentage,
+            .freePhysicalMemoryGB = param.freePhysicalMemoryGB,
+            });
+        assert(updated);
 
-                        switch (input.opcode)
-                        {
-                            
-                        }
-                    }
-                }
-                catch (const std::exception& e)
-                {
-                    ZEROSUGAR_LOG_ERROR(self->_serviceLocator,
-                        std::format("[{}] coordination channel handler throws. exception: {}", e.what()));
-                }
+        service::UpdateServerStatusResult result;
 
-                co_return;
+        co_return result;
+    }
 
-            }, shared_from_this(), std::move(param), channel);
+    auto CoordinationService::OpenChannelAsync(AsyncEnumerable<service::CoordinationCommandResponse> param)
+        -> AsyncEnumerable<service::CoordinationCommand>
+    {
+        auto commandChannel = std::make_shared<Channel<service::CoordinationCommand>>();
 
-        return AsyncEnumerable<service::CoordinationChannelOutput>(channel);
+        auto runner = std::make_shared<coordination::CommandChannelRunner>(*this, std::move(param), std::move(commandChannel));
+        runner->Start();
+
+        return AsyncEnumerable<service::CoordinationCommand>(commandChannel);
     }
 
     auto CoordinationService::RequestSnowflakeKeyAsync(service::RequestSnowflakeKeyParam param) -> Future<service::RequestSnowflakeKeyResult>
@@ -172,45 +172,85 @@ namespace zerosugar::xr
         authParam.token = param.authenticationToken;
 
         service::AuthenticateResult authResult = co_await _serviceLocator.Get<service::ILoginService>().AuthenticateAsync(std::move(authParam));
-        if (authResult.errorCode == service::LoginServiceErrorCode::LoginErrorNone)
-        {
-            // select game server
-            // register...
-
-            const auto finder = [zone = param.zoneId](const coordination::GameInstance* instance)
-                {
-                    return instance->GetZoneId() == zone;
-                };
-            const auto range = _nodeContainer->GetGameInstanceRange();
-            const auto iter = std::ranges::find_if(range, finder);
-
-            if (iter != range.end())
-            {
-                coordination::GameInstance* gameInstance = *iter;
-                coordination::GameServer* server = gameInstance->GetParent();
-                assert(server);
-
-                server->Send();
-            }
-            else
-            {
-                
-            }
-
-
-
-            result.ip = "";
-            result.port = 0;
-        }
-        else
+        if (authResult.errorCode != service::LoginServiceErrorCode::LoginErrorNone)
         {
             ZEROSUGAR_LOG_ERROR(_serviceLocator,
                 std::format("[{}] fail to authenticate. error: {}", GetName(), GetEnumName(authResult.errorCode)));
 
             result.errorCode = service::CoordinationServiceErrorCode::CoordinationErrorFailAuthentication;
+
+            co_return result;
         }
 
+        coordination::GameServer* server = _loadBalancer->Select();
+        assert(server);
+
+        coordination::GameInstance* instance = server->FindGameInstance(param.zoneId);
+        if (!instance)
+        {
+            const coordination::game_instance_id_type instanceId(++_nextGameInstanceId);
+
+            coordination::command::LaunchGameInstance launchGameInstance;
+            launchGameInstance.zoneId = param.zoneId;
+            launchGameInstance.gameInstanceId = instanceId.Unwrap();
+
+            Future<void> response;
+            server->SendCommand(launchGameInstance, response);
+
+            try
+            {
+                co_await response;
+            }
+            catch (const std::exception& e)
+            {
+                ZEROSUGAR_LOG_ERROR(_serviceLocator,
+                    std::format("[{}] fail to launch game instance. server: [{}, {}:{}], exception: {}",
+                        server->GetName(), server->GetIP(), server->GetPort(), e.what()));
+
+                result.errorCode = service::CoordinationServiceErrorCode::CoordinationErrorInternalError;
+
+                co_return result;
+            }
+
+            instance = server->FindChild(instanceId);
+            if (!instance)
+            {
+                assert(false);
+
+                ZEROSUGAR_LOG_CRITICAL(_serviceLocator,
+                    std::format("[{}] launch game instance success. but not found instance. server: [{}, {}:{}], instanceId: {}",
+                        server->GetName(), server->GetIP(), server->GetPort(), instanceId));
+
+                result.errorCode = service::CoordinationServiceErrorCode::CoordinationErrorInternalError;
+
+                co_return result;
+            }
+        }
+
+        result.ip = server->GetIP();
+        result.port = server->GetPort();
+
         co_return result;
+    }
+
+    auto CoordinationService::GetStrand() -> Strand&
+    {
+        return *_strand;
+    }
+
+    auto CoordinationService::GetServiceLocator() -> ServiceLocator&
+    {
+        return _serviceLocator;
+    }
+
+    auto CoordinationService::GetNodeContainer() -> coordination::NodeContainer&
+    {
+        return *_nodeContainer;
+    }
+
+    auto CoordinationService::GetChannelInputHandlerFactory() -> const coordination::CommandResponseHandlerFactory&
+    {
+        return *_commandResponseHandlerFactory;
     }
 
     auto CoordinationService::PublishSnowflakeKey(const std::string& requester) -> std::optional<int32_t>

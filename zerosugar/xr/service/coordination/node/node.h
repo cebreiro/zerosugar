@@ -71,6 +71,17 @@ namespace zerosugar::xr::coordination
                 return iter != _children.end() ? iter->second : nullptr;
             }
 
+            auto GetChildCount() const -> int64_t
+            {
+                return std::ssize(_children);
+            }
+
+        protected:
+            auto GetChildrenRange()
+            {
+                return _children | std::views::values;
+            }
+
         private:
             boost::unordered_flat_map<TChildId, TChild> _children;
         };

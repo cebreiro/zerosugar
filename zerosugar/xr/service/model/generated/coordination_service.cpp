@@ -16,9 +16,14 @@ namespace zerosugar::xr::service
         return _client->CallRemoteProcedure<RegisterServerParam, Future<RegisterServerResult>::value_type>(name, "RegisterServerAsync", std::move(param));
     }
 
-    auto CoordinationServiceProxy::OpenChannelAsync(AsyncEnumerable<CoordinationChannelInput> param) -> AsyncEnumerable<CoordinationChannelOutput>
+    auto CoordinationServiceProxy::UpdateServerStatusAsync(UpdateServerStatusParam param) -> Future<UpdateServerStatusResult>
     {
-        return _client->CallRemoteProcedureClientServerStreaming<AsyncEnumerable<CoordinationChannelInput>::value_type, AsyncEnumerable<CoordinationChannelOutput>::value_type>(name, "OpenChannelAsync", std::move(param));
+        return _client->CallRemoteProcedure<UpdateServerStatusParam, Future<UpdateServerStatusResult>::value_type>(name, "UpdateServerStatusAsync", std::move(param));
+    }
+
+    auto CoordinationServiceProxy::OpenChannelAsync(AsyncEnumerable<CoordinationCommandResponse> param) -> AsyncEnumerable<CoordinationCommand>
+    {
+        return _client->CallRemoteProcedureClientServerStreaming<AsyncEnumerable<CoordinationCommandResponse>::value_type, AsyncEnumerable<CoordinationCommand>::value_type>(name, "OpenChannelAsync", std::move(param));
     }
 
     auto CoordinationServiceProxy::RequestSnowflakeKeyAsync(RequestSnowflakeKeyParam param) -> Future<RequestSnowflakeKeyResult>
@@ -43,8 +48,13 @@ namespace zerosugar::xr::service
             {
                 return service->RegisterServerAsync(std::move(param));
             });
+        rpcClient.RegisterProcedure<false, false>("CoordinationService", "UpdateServerStatusAsync",
+            [service = service](UpdateServerStatusParam param) -> Future<UpdateServerStatusResult>
+            {
+                return service->UpdateServerStatusAsync(std::move(param));
+            });
         rpcClient.RegisterProcedure<true, true>("CoordinationService", "OpenChannelAsync",
-            [service = service](AsyncEnumerable<CoordinationChannelInput> param) -> AsyncEnumerable<CoordinationChannelOutput>
+            [service = service](AsyncEnumerable<CoordinationCommandResponse> param) -> AsyncEnumerable<CoordinationCommand>
             {
                 return service->OpenChannelAsync(std::move(param));
             });

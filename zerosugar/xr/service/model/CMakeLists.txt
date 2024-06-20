@@ -39,9 +39,8 @@ add_custom_target(zerosugar_xr_generate_service_coordination_channel
         --plugin=protoc-gen-zerosugar_proto_code_generator=$<TARGET_FILE_DIR:zerosugar_proto_code_generator>/zerosugar_proto_code_generator.exe
         --zerosugar_proto_code_generator_opt="{ \"\"include_path\"\" : \"\"zerosugar/xr/service/model/generated\"\", \"\"generator\"\" : \"\"xr_packet_code_generator\"\" }"
         --zerosugar_proto_code_generator_out=./generated
-        option.proto
-        coordination_channel_input.proto
-        coordination_channel_output.proto
+        coordination_command.proto
+        coordination_command_response.proto
     WORKING_DIRECTORY ${ZEROSUGAR_XR_SERVICE_DIR}
     DEPENDS zerosugar_proto_code_generator
 )

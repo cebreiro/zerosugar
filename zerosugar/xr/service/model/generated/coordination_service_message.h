@@ -33,16 +33,30 @@ namespace zerosugar::xr::service
         int64_t serverId = {};
     };
 
-    struct CoordinationChannelInput
+    struct UpdateServerStatusParam
     {
-        int32_t opcode = {};
-        std::vector<char> bytes = {};
+        int64_t serverId = {};
+        int32_t loadCPUPercentage = {};
+        double freePhysicalMemoryGB = {};
     };
 
-    struct CoordinationChannelOutput
+    struct UpdateServerStatusResult
     {
+        CoordinationServiceErrorCode errorCode = {};
+    };
+
+    struct CoordinationCommandResponse
+    {
+        int64_t responseId = {};
         int32_t opcode = {};
-        std::vector<char> bytes = {};
+        std::string contents = {};
+    };
+
+    struct CoordinationCommand
+    {
+        std::optional<int64_t> responseId = {};
+        int32_t opcode = {};
+        std::string contents = {};
     };
 
     struct RequestSnowflakeKeyParam

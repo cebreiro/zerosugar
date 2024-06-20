@@ -34,34 +34,75 @@ namespace zerosugar::xr::service
             };
     }
 
-    void from_json(const nlohmann::json& j, CoordinationChannelInput& item)
+    void from_json(const nlohmann::json& j, UpdateServerStatusParam& item)
     {
-        j.at("opcode").get_to(item.opcode);
-        j.at("bytes").get_to(item.bytes);
+        j.at("serverId").get_to(item.serverId);
+        j.at("loadCPUPercentage").get_to(item.loadCPUPercentage);
+        j.at("freePhysicalMemoryGB").get_to(item.freePhysicalMemoryGB);
     }
 
-    void to_json(nlohmann::json& j, const CoordinationChannelInput& item)
+    void to_json(nlohmann::json& j, const UpdateServerStatusParam& item)
+    {
+        j = nlohmann::json
+            {
+                { "serverId", item.serverId },
+                { "loadCPUPercentage", item.loadCPUPercentage },
+                { "freePhysicalMemoryGB", item.freePhysicalMemoryGB },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, UpdateServerStatusResult& item)
+    {
+        j.at("errorCode").get_to(item.errorCode);
+    }
+
+    void to_json(nlohmann::json& j, const UpdateServerStatusResult& item)
+    {
+        j = nlohmann::json
+            {
+                { "errorCode", item.errorCode },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, CoordinationCommandResponse& item)
+    {
+        j.at("responseId").get_to(item.responseId);
+        j.at("opcode").get_to(item.opcode);
+        j.at("contents").get_to(item.contents);
+    }
+
+    void to_json(nlohmann::json& j, const CoordinationCommandResponse& item)
+    {
+        j = nlohmann::json
+            {
+                { "responseId", item.responseId },
+                { "opcode", item.opcode },
+                { "contents", item.contents },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, CoordinationCommand& item)
+    {
+        if (const auto iter = j.find("responseId"); iter != j.end())
+        {
+            item.responseId.emplace(*iter);
+        }
+        j.at("opcode").get_to(item.opcode);
+        j.at("contents").get_to(item.contents);
+    }
+
+    void to_json(nlohmann::json& j, const CoordinationCommand& item)
     {
         j = nlohmann::json
             {
                 { "opcode", item.opcode },
-                { "bytes", item.bytes },
+                { "contents", item.contents },
             };
-    }
 
-    void from_json(const nlohmann::json& j, CoordinationChannelOutput& item)
-    {
-        j.at("opcode").get_to(item.opcode);
-        j.at("bytes").get_to(item.bytes);
-    }
-
-    void to_json(nlohmann::json& j, const CoordinationChannelOutput& item)
-    {
-        j = nlohmann::json
-            {
-                { "opcode", item.opcode },
-                { "bytes", item.bytes },
-            };
+        if (item.responseId.has_value())
+        {
+            j.push_back(nlohmann::json{ "responseId", *item.responseId });
+        }
     }
 
     void from_json(const nlohmann::json& j, RequestSnowflakeKeyParam& item)

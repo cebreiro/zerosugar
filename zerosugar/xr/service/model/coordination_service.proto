@@ -5,7 +5,9 @@ package zerosugar.xr.service;
 service CoordinationService
 {
     rpc RegisterServer (RegisterServerParam) returns (RegisterServerResult);
-    rpc OpenChannel (stream CoordinationChannelInput) returns (stream CoordinationChannelOutput);
+    rpc UpdateServerStatus (UpdateServerStatusParam) returns (UpdateServerStatusResult);
+
+    rpc OpenChannel (stream CoordinationCommandResponse) returns (stream CoordinationCommand);
 
     rpc RequestSnowflakeKey (RequestSnowflakeKeyParam) returns (RequestSnowflakeKeyResult);
     rpc ReturnSnowflakeKey (ReturnSnowflakeKeyParam) returns (ReturnSnowflakeKeyResult);
@@ -38,16 +40,30 @@ message RegisterServerResult
     int64 server_id = 2;
 }
 
-message CoordinationChannelInput
+message UpdateServerStatusParam
 {
-    int32 opcode = 1;
-    bytes bytes = 2;
+    int64 server_id = 1;
+    int32 loadCPUPercentage = 2;
+    double freePhysicalMemoryGB = 3;
 }
 
-message CoordinationChannelOutput
+message UpdateServerStatusResult
 {
-    int32 opcode = 1;
-    bytes bytes = 2;
+    CoordinationServiceErrorCode error_code = 1;
+}
+
+message CoordinationCommandResponse
+{
+    int64 response_id = 1;
+    int32 opcode = 2;
+    string contents = 3;
+}
+
+message CoordinationCommand
+{
+    optional int64 response_id = 1;
+    int32 opcode = 2;
+    string contents = 3;
 }
 
 message RequestSnowflakeKeyParam

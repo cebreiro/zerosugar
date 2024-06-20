@@ -3,6 +3,7 @@
 #include <string>
 #include <format>
 #include <functional>
+#include <boost/container_hash/hash.hpp>
 
 namespace zerosugar
 {
@@ -69,6 +70,13 @@ namespace zerosugar
     auto ValueType<T, Tag>::Default() -> ValueType
     {
         return ValueType(0);
+    }
+
+    template <typename T, typename Tag>
+    auto hash_value(const ValueType<T, Tag>& item) -> size_t
+    {
+        boost::hash<T> hasher;
+        return hasher(item.Unwrap());
     }
 }
 

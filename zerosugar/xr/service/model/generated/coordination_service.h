@@ -18,7 +18,8 @@ namespace zerosugar::xr::service
         virtual ~ICoordinationService() = default;
 
         virtual auto RegisterServerAsync(RegisterServerParam param) -> Future<RegisterServerResult> = 0;
-        virtual auto OpenChannelAsync(AsyncEnumerable<CoordinationChannelInput> param) -> AsyncEnumerable<CoordinationChannelOutput> = 0;
+        virtual auto UpdateServerStatusAsync(UpdateServerStatusParam param) -> Future<UpdateServerStatusResult> = 0;
+        virtual auto OpenChannelAsync(AsyncEnumerable<CoordinationCommandResponse> param) -> AsyncEnumerable<CoordinationCommand> = 0;
         virtual auto RequestSnowflakeKeyAsync(RequestSnowflakeKeyParam param) -> Future<RequestSnowflakeKeyResult> = 0;
         virtual auto ReturnSnowflakeKeyAsync(ReturnSnowflakeKeyParam param) -> Future<ReturnSnowflakeKeyResult> = 0;
         virtual auto AddPlayerAsync(AddPlayerParam param) -> Future<AddPlayerResult> = 0;
@@ -33,7 +34,8 @@ namespace zerosugar::xr::service
         explicit CoordinationServiceProxy(SharedPtrNotNull<RPCClient> client);
 
         auto RegisterServerAsync(RegisterServerParam param) -> Future<RegisterServerResult> override;
-        auto OpenChannelAsync(AsyncEnumerable<CoordinationChannelInput> param) -> AsyncEnumerable<CoordinationChannelOutput> override;
+        auto UpdateServerStatusAsync(UpdateServerStatusParam param) -> Future<UpdateServerStatusResult> override;
+        auto OpenChannelAsync(AsyncEnumerable<CoordinationCommandResponse> param) -> AsyncEnumerable<CoordinationCommand> override;
         auto RequestSnowflakeKeyAsync(RequestSnowflakeKeyParam param) -> Future<RequestSnowflakeKeyResult> override;
         auto ReturnSnowflakeKeyAsync(ReturnSnowflakeKeyParam param) -> Future<ReturnSnowflakeKeyResult> override;
         auto AddPlayerAsync(AddPlayerParam param) -> Future<AddPlayerResult> override;
