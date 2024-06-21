@@ -112,6 +112,9 @@ namespace zerosugar::xr
 
     void GameServer::OnAccept(Session& session)
     {
+        ZEROSUGAR_LOG_DEBUG(_serviceLocator,
+            std::format("[{}] accept session. session: {}", GetName(), session));
+
         {
             decltype(_sessionReceiveBuffers)::accessor accessor;
 
@@ -319,6 +322,9 @@ namespace zerosugar::xr
 
     void GameServer::OnError(Session& session, const boost::system::error_code& error)
     {
+        ZEROSUGAR_LOG_DEBUG(_serviceLocator,
+            std::format("[{}] session io error. session: {}, error: {}", GetName(), session, error.message()));
+
         (void)session;
         (void)error;
     }
@@ -373,7 +379,7 @@ namespace zerosugar::xr
 
                         for (int32_t i = 0; i < samplingCount; ++i)
                         {
-                            co_await Delay(std::chrono::milliseconds(1000));
+                            co_await Delay(std::chrono::milliseconds(500));
 
                             if (token.stop_requested())
                             {

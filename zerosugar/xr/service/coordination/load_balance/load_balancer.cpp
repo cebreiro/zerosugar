@@ -74,9 +74,8 @@ namespace zerosugar::xr::coordination
     {
         NodeContainer& nodeContainer = _coordinationService.GetNodeContainer();
 
-        for (const auto category : { StatusCategory::Healthy, StatusCategory::Moderate , StatusCategory::Busy })
+        for (auto& [vector, rrCount] : _categorized)
         {
-            auto& [vector, rrCount] = _categorized[static_cast<int32_t>(category)];
             if (vector.empty())
             {
                 continue;
@@ -127,7 +126,7 @@ namespace zerosugar::xr::coordination
     {
         if (IsInvalid(status))
         {
-            return StatusCategory::Unusable;
+            return StatusCategory::Invalid;
         }
 
         if (status.loadCPUPercentage < 20)

@@ -18,7 +18,7 @@ namespace zerosugar::xr::coordination
             Healthy = 0,
             Moderate,
             Busy,
-            Unusable,
+            Invalid,
 
             Count,
         };
