@@ -92,8 +92,8 @@ namespace std
         auto format(const zerosugar::Session& session, format_context& ctx) const
         {
             return formatter<string>::format(
-                std::format("{{ id: \"{}\", address: \"{}\" }}",
-                    session.GetId(), session.GetRemoteAddress()), ctx);
+                std::format("{{ id: \"{}\", address: \"{}:{}\" }}",
+                    session.GetId(), session.GetRemoteAddress(), session.GetRemotePort()), ctx);
         }
     };
 }

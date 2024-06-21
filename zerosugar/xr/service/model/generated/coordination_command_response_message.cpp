@@ -5,6 +5,16 @@
 
 namespace zerosugar::xr::coordination::command::response
 {
+    void Exception::Deserialize(PacketReader& reader)
+    {
+        message = reader.ReadString();
+    }
+
+    void Exception::Serialize(PacketWriter& writer) const
+    {
+        writer.Write(message);
+    }
+
     void Authenticate::Deserialize(PacketReader& reader)
     {
         serverId = reader.Read<int64_t>();
@@ -32,6 +42,13 @@ namespace zerosugar::xr::coordination::command::response
         const int16_t opcode = reader.Read<int16_t>();
         switch(opcode)
         {
+            case Exception::opcode:
+            {
+                auto item = std::make_unique<Exception>();
+                item->Deserialize(reader);
+
+                return item;
+            }
             case Authenticate::opcode:
             {
                 auto item = std::make_unique<Authenticate>();

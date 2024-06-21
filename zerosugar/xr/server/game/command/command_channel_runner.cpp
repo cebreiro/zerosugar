@@ -43,6 +43,8 @@ namespace zerosugar::xr
             _server.SendCommandResponse(response);
         }
 
+        std::optional<int64_t> pendingResponse = std::nullopt;
+
         while (_commandEnumerable.HasNext())
         {
             try
@@ -62,12 +64,24 @@ namespace zerosugar::xr
                     continue;
                 }
 
+                pendingResponse = command.responseId;
+
                 co_await handler->Handle(_server, command.contents, command.responseId);
+
+                pendingResponse.reset();
             }
             catch (const std::exception& e)
             {
                 ZEROSUGAR_LOG_ERROR(_server.GetServiceLocator(),
                     std::format("[{}] handler throws. exception: {}", GetName(), e.what()));
+
+                if (pendingResponse.has_value())
+                {
+                    response::Exception exception;
+                    exception.message = e.what();
+
+                    _server.SendCommandResponse(*pendingResponse, exception);
+                }
             }
         }
     }

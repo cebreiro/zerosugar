@@ -101,7 +101,7 @@ namespace zerosugar::xr::service
 
         if (item.responseId.has_value())
         {
-            j.push_back(nlohmann::json{ "responseId", *item.responseId });
+            j["responseId"] = *item.responseId;
         }
     }
 
@@ -194,6 +194,34 @@ namespace zerosugar::xr::service
                 { "errorCode", item.errorCode },
                 { "ip", item.ip },
                 { "port", item.port },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, RemovePlayerParam& item)
+    {
+        j.at("serverId").get_to(item.serverId);
+        j.at("authenticationToken").get_to(item.authenticationToken);
+    }
+
+    void to_json(nlohmann::json& j, const RemovePlayerParam& item)
+    {
+        j = nlohmann::json
+            {
+                { "serverId", item.serverId },
+                { "authenticationToken", item.authenticationToken },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, RemovePlayerResult& item)
+    {
+        j.at("errorCode").get_to(item.errorCode);
+    }
+
+    void to_json(nlohmann::json& j, const RemovePlayerResult& item)
+    {
+        j = nlohmann::json
+            {
+                { "errorCode", item.errorCode },
             };
     }
 

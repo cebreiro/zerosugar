@@ -12,6 +12,8 @@ namespace zerosugar::xr::service
             case CoordinationServiceErrorCode::RegisterErrorDuplicatedAddress: return "RegisterErrorDuplicatedAddress";
             case CoordinationServiceErrorCode::RequestSnowflakeKeyErrorOutOfPool: return "RequestSnowflakeKeyErrorOutOfPool";
             case CoordinationServiceErrorCode::ReturnSnowflakeKeyErrorInvalidKey: return "ReturnSnowflakeKeyErrorInvalidKey";
+            case CoordinationServiceErrorCode::RemovePlayerErrorInvalidServer: return "RemovePlayerErrorInvalidServer";
+            case CoordinationServiceErrorCode::RemovePlayerErrorUserNotFound: return "RemovePlayerErrorUserNotFound";
             case CoordinationServiceErrorCode::AuthenticatePlayerErrorUserNotFound: return "AuthenticatePlayerErrorUserNotFound";
             case CoordinationServiceErrorCode::AuthenticatePlayerErrorUserIsNotMigrating: return "AuthenticatePlayerErrorUserIsNotMigrating";
             case CoordinationServiceErrorCode::AuthenticatePlayerErrorRequestToInvalidServer: return "AuthenticatePlayerErrorRequestToInvalidServer";

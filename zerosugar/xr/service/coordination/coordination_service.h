@@ -33,7 +33,7 @@ namespace zerosugar::xr
 
         auto AddPlayerAsync(service::AddPlayerParam param) -> Future<service::AddPlayerResult> override;
         auto AuthenticatePlayerAsync(service::AuthenticatePlayerParam param) -> Future<service::AuthenticatePlayerResult> override;
-
+        auto RemovePlayerAsync(service::RemovePlayerParam param) -> Future<service::RemovePlayerResult> override;
         auto GetStrand() -> Strand&;
         auto GetServiceLocator() -> ServiceLocator&;
 

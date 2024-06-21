@@ -155,7 +155,7 @@ namespace zerosugar
                             _cxxPrinter.AddLine(fieldIndent, "if (item.{}.has_value())", field.name);
                             BraceGuard ifBraceGuard(_cxxPrinter, fieldIndent, false);
 
-                            _cxxPrinter.AddLine(fieldIndent + 1, "j.push_back(nlohmann::json{{ \"{0}\", *item.{0} }});", field.name);
+                            _cxxPrinter.AddLine(fieldIndent + 1, "j[\"{0}\"] = *item.{0};", field.name);
                         }
                     }
                 }

@@ -84,23 +84,23 @@ namespace zerosugar::xr::service
 
         if (item.attack.has_value())
         {
-            j.push_back(nlohmann::json{ "attack", *item.attack });
+            j["attack"] = *item.attack;
         }
         if (item.defence.has_value())
         {
-            j.push_back(nlohmann::json{ "defence", *item.defence });
+            j["defence"] = *item.defence;
         }
         if (item.str.has_value())
         {
-            j.push_back(nlohmann::json{ "str", *item.str });
+            j["str"] = *item.str;
         }
         if (item.dex.has_value())
         {
-            j.push_back(nlohmann::json{ "dex", *item.dex });
+            j["dex"] = *item.dex;
         }
         if (item.intell.has_value())
         {
-            j.push_back(nlohmann::json{ "intell", *item.intell });
+            j["intell"] = *item.intell;
         }
     }
 

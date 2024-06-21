@@ -4,16 +4,23 @@ import "option.proto";
 
 package zerosugar.xr.coordination.command.response;
 
-message Authenticate
+message Exception
 {
     option (opcode) = 0;
+
+    string message = 1;
+}
+
+message Authenticate
+{
+    option (opcode) = 1;
 
     int64 server_id = 1;
 }
 
 message LaunchGameInstance
 {
-    option (opcode) = 1;
+    option (opcode) = 2;
 
     int64 game_instance_id = 1;
     int32 zone_id = 2;

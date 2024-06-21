@@ -23,6 +23,7 @@ namespace zerosugar::xr::service
         virtual auto RequestSnowflakeKeyAsync(RequestSnowflakeKeyParam param) -> Future<RequestSnowflakeKeyResult> = 0;
         virtual auto ReturnSnowflakeKeyAsync(ReturnSnowflakeKeyParam param) -> Future<ReturnSnowflakeKeyResult> = 0;
         virtual auto AddPlayerAsync(AddPlayerParam param) -> Future<AddPlayerResult> = 0;
+        virtual auto RemovePlayerAsync(RemovePlayerParam param) -> Future<RemovePlayerResult> = 0;
         virtual auto AuthenticatePlayerAsync(AuthenticatePlayerParam param) -> Future<AuthenticatePlayerResult> = 0;
         auto GetName() const -> std::string_view override { return "CoordinationService"; }
     };
@@ -40,6 +41,7 @@ namespace zerosugar::xr::service
         auto RequestSnowflakeKeyAsync(RequestSnowflakeKeyParam param) -> Future<RequestSnowflakeKeyResult> override;
         auto ReturnSnowflakeKeyAsync(ReturnSnowflakeKeyParam param) -> Future<ReturnSnowflakeKeyResult> override;
         auto AddPlayerAsync(AddPlayerParam param) -> Future<AddPlayerResult> override;
+        auto RemovePlayerAsync(RemovePlayerParam param) -> Future<RemovePlayerResult> override;
         auto AuthenticatePlayerAsync(AuthenticatePlayerParam param) -> Future<AuthenticatePlayerResult> override;
     private:
         SharedPtrNotNull<RPCClient> _client;

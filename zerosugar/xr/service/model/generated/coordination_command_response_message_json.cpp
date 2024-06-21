@@ -2,6 +2,19 @@
 
 namespace zerosugar::xr::coordination::command::response
 {
+    void from_json(const nlohmann::json& j, Exception& item)
+    {
+        j.at("message").get_to(item.message);
+    }
+
+    void to_json(nlohmann::json& j, const Exception& item)
+    {
+        j = nlohmann::json
+            {
+                { "message", item.message },
+            };
+    }
+
     void from_json(const nlohmann::json& j, Authenticate& item)
     {
         j.at("serverId").get_to(item.serverId);

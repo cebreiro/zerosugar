@@ -303,6 +303,13 @@ namespace zerosugar::xr
         co_return result;
     }
 
+    auto CoordinationService::RemovePlayerAsync(service::RemovePlayerParam param) -> Future<service::RemovePlayerResult>
+    {
+        (void)param;
+
+        co_return{};
+    }
+
     auto CoordinationService::GetStrand() -> Strand&
     {
         return *_strand;

@@ -41,6 +41,11 @@ namespace zerosugar::xr::service
         return _client->CallRemoteProcedure<AddPlayerParam, Future<AddPlayerResult>::value_type>(name, "AddPlayerAsync", std::move(param));
     }
 
+    auto CoordinationServiceProxy::RemovePlayerAsync(RemovePlayerParam param) -> Future<RemovePlayerResult>
+    {
+        return _client->CallRemoteProcedure<RemovePlayerParam, Future<RemovePlayerResult>::value_type>(name, "RemovePlayerAsync", std::move(param));
+    }
+
     auto CoordinationServiceProxy::AuthenticatePlayerAsync(AuthenticatePlayerParam param) -> Future<AuthenticatePlayerResult>
     {
         return _client->CallRemoteProcedure<AuthenticatePlayerParam, Future<AuthenticatePlayerResult>::value_type>(name, "AuthenticatePlayerAsync", std::move(param));
@@ -77,6 +82,11 @@ namespace zerosugar::xr::service
             [service = service](AddPlayerParam param) -> Future<AddPlayerResult>
             {
                 return service->AddPlayerAsync(std::move(param));
+            });
+        rpcClient.RegisterProcedure<false, false>("CoordinationService", "RemovePlayerAsync",
+            [service = service](RemovePlayerParam param) -> Future<RemovePlayerResult>
+            {
+                return service->RemovePlayerAsync(std::move(param));
             });
         rpcClient.RegisterProcedure<false, false>("CoordinationService", "AuthenticatePlayerAsync",
             [service = service](AuthenticatePlayerParam param) -> Future<AuthenticatePlayerResult>

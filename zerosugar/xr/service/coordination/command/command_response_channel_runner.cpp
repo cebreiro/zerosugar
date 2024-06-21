@@ -47,6 +47,29 @@ namespace zerosugar::xr::coordination
 
                 switch (response.opcode)
                 {
+                case Exception::opcode:
+                {
+                    std::shared_ptr<GameServer> server = _server.lock();
+                    if (!server)
+                    {
+                        assert(false);
+
+                        continue;
+                    }
+
+                    const nlohmann::json& json = nlohmann::json::parse(response.contents);
+                    const Exception exception = json.get<Exception>();
+
+                    try
+                    {
+                        throw std::runtime_error(exception.message);
+                    }
+                    catch (...)
+                    {
+                        server->MarkCommandResponseAsFailure(response.responseId, std::current_exception());
+                    }
+                }
+                break;
                 case Authenticate::opcode:
                 {
                     const nlohmann::json& json = nlohmann::json::parse(response.contents);
