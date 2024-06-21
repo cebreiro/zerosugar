@@ -8,8 +8,6 @@
 
 namespace zerosugar
 {
-    thread_local std::optional<size_t> Strand::_executeContext = std::nullopt;
-
     Strand::Strand(SharedPtrNotNull<IExecutor> executor)
         : _executor(std::move(executor))
     {
@@ -79,7 +77,7 @@ namespace zerosugar
     {
         std::unique_lock lock(_mutex);
 
-        _frontBuffer.emplace_back(std::move(task));
+        _backBuffer.emplace_back(std::move(task));
         startFlushTask = std::exchange(_runningFlushTask, true) == false;
     }
 
@@ -93,15 +91,13 @@ namespace zerosugar
 
     void Strand::FlushTasks()
     {
-        SwapTasks();
+        SwapBuffer();
 
-        assert(!_executeContext.has_value());
+        {
+            ExecutionContext::ExecutorGuard guard(this);
 
-        _executeContext.emplace(reinterpret_cast<size_t>(_executor.get()));
-
-        ExecuteTasks();
-
-        _executeContext.reset();
+            ExecuteTasks();
+        }
 
         if (!FinalizeFlush())
         {
@@ -109,41 +105,37 @@ namespace zerosugar
         }
     }
 
-    void Strand::SwapTasks()
+    void Strand::SwapBuffer()
     {
         {
             std::unique_lock lock(_mutex);
 
             assert(_runningFlushTask);
-            assert(!_frontBuffer.empty());
-            assert(_backBuffer.empty());
+            assert(!_backBuffer.empty());
+            assert(_frontBuffer.empty());
 
-            _backBuffer.swap(_frontBuffer);
+            _frontBuffer.swap(_backBuffer);
         }
-
-        // for optimization
-        std::ranges::reverse(_backBuffer);
     }
 
     void Strand::ExecuteTasks()
     {
-        while (!_backBuffer.empty())
+        for (auto& task : _frontBuffer)
         {
-            task_type task = std::move(_backBuffer.back());
-            _backBuffer.pop_back();
-
             std::visit([]<typename T>(T && va)
             {
                 std::invoke(va);
             }, std::move(task));
         }
+
+        _frontBuffer.clear();
     }
 
     bool Strand::FinalizeFlush()
     {
         std::unique_lock lock(_mutex);
 
-        if (_frontBuffer.empty())
+        if (_backBuffer.empty())
         {
             _runningFlushTask = false;
 
@@ -155,14 +147,6 @@ namespace zerosugar
 
     bool Strand::CanExecuteImmediately() const
     {
-        if (_executeContext.has_value())
-        {
-            if (*_executeContext == reinterpret_cast<size_t>(_executor.get()))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return ExecutionContext::Contains(*this);
     }
 }

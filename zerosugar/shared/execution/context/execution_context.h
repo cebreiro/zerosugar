@@ -25,6 +25,7 @@ namespace zerosugar
 
     public:
         static bool IsEqualTo(const execution::IExecutor& e);
+        static bool Contains(const execution::IExecutor& e);
 
         static auto GetExecutor() -> execution::IExecutor*;
         static auto GetCancelable() -> execution::ICancelable&;

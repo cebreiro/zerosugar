@@ -34,7 +34,7 @@ namespace zerosugar
         void StartFlushTask();
 
         void FlushTasks();
-        void SwapTasks();
+        void SwapBuffer();
         void ExecuteTasks();
         bool FinalizeFlush();
 
@@ -45,9 +45,7 @@ namespace zerosugar
 
         mutable std::shared_mutex _mutex;
         bool _runningFlushTask = false;
-        std::vector<task_type> _frontBuffer;
         std::vector<task_type> _backBuffer;
-
-        static thread_local std::optional<size_t> _executeContext;
+        std::vector<task_type> _frontBuffer;
     };
 }

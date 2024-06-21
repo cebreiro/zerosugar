@@ -1,6 +1,8 @@
 #include "execution_context.h"
 
+#include <algorithm>
 #include <cassert>
+#include <ranges>
 
 namespace zerosugar
 {
@@ -38,6 +40,15 @@ namespace zerosugar
     bool ExecutionContext::IsEqualTo(const execution::IExecutor& e)
     {
         return GetExecutor() == &e;
+    }
+
+    bool ExecutionContext::Contains(const execution::IExecutor& e)
+    {
+        return std::ranges::any_of(_executors | std::views::elements<0>,
+            [e = &e](const execution::IExecutor* executor)
+            {
+                return executor == e;
+            });
     }
 
     auto ExecutionContext::GetExecutor() -> execution::IExecutor*
