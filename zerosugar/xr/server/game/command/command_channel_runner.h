@@ -16,6 +16,8 @@ namespace zerosugar::xr
 
         void Start();
 
+        auto GetName() const -> std::string_view;
+
     private:
         auto Run() -> Future<void>;
 

@@ -11,17 +11,19 @@ namespace zerosugar::xr::coordination
 {
     class GameServer;
 
-    class CommandChannelRunner final
-        : public std::enable_shared_from_this<CommandChannelRunner>
+    class CommandResponseChannelRunner final
+        : public std::enable_shared_from_this<CommandResponseChannelRunner>
     {
     public:
-        CommandChannelRunner() = delete;
+        CommandResponseChannelRunner() = delete;
 
-        CommandChannelRunner(CoordinationService& coordinationService,
+        CommandResponseChannelRunner(CoordinationService& coordinationService,
             AsyncEnumerable<service::CoordinationCommandResponse> responseEnumerable,
             SharedPtrNotNull<Channel<service::CoordinationCommand>> commandChannel);
 
         void Start();
+
+        auto GetName() const -> std::string_view;
 
     private:
         auto Run() -> Future<void>;

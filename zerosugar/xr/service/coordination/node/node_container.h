@@ -12,7 +12,7 @@ namespace zerosugar::xr::coordination
     public:
         bool HasServerAddress(std::string_view ip, uint16_t port) const;
 
-        bool Add(SharedPtrNotNull<GameServer> server);
+        bool Add(const SharedPtrNotNull<GameServer>& server);
         bool Add(SharedPtrNotNull<GameInstance> instance);
         bool Add(SharedPtrNotNull<GameUser> user);
 
@@ -27,6 +27,9 @@ namespace zerosugar::xr::coordination
         auto Find(game_user_id_type id) -> GameUser*;
         auto Find(game_user_id_type id) const -> const GameUser*;
 
+        auto FindGameUser(const std::string& authToken) -> GameUser*;
+        auto FindGameUser(const std::string& authToken) const -> const GameUser*;
+
         inline auto GetServerRange() -> const auto&;
         inline auto GetServerRange() const -> const auto&;
 
@@ -38,11 +41,13 @@ namespace zerosugar::xr::coordination
 
     private:
         std::unordered_map<game_server_id_type, SharedPtrNotNull<GameServer>> _servers;
-        std::unordered_multimap<int64_t, GameServer*> _serverAddressIndex;
-        std::vector<GameServer*> _serversForIteration;
+        std::unordered_multimap<int64_t, PtrNotNull<GameServer>> _serverAddressIndex;
+        std::vector<PtrNotNull<GameServer>> _serversForIteration;
 
         std::unordered_map<game_instance_id_type, SharedPtrNotNull<GameInstance>> _instances;
+
         std::unordered_map<game_user_id_type, SharedPtrNotNull<GameUser>> _users;
+        std::unordered_map<std::string, PtrNotNull<GameUser>> _userAuthTokenIndex;
     };
 
     auto NodeContainer::GetServerRange() -> const auto&

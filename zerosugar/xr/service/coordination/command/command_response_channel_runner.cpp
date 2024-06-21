@@ -1,4 +1,4 @@
-#include "command_channel_runner.h"
+#include "command_response_channel_runner.h"
 
 #include "zerosugar/xr/service/coordination/coordination_service.h"
 #include "zerosugar/xr/service/coordination/command/handler/command_response_handler_interface.h"
@@ -9,7 +9,7 @@
 
 namespace zerosugar::xr::coordination
 {
-    CommandChannelRunner::CommandChannelRunner(CoordinationService& coordinationService,
+    CommandResponseChannelRunner::CommandResponseChannelRunner(CoordinationService& coordinationService,
         AsyncEnumerable<service::CoordinationCommandResponse> responseEnumerable,
         SharedPtrNotNull<Channel<service::CoordinationCommand>> commandChannel)
         : _coordinationService(coordinationService)
@@ -18,7 +18,7 @@ namespace zerosugar::xr::coordination
     {
     }
 
-    void CommandChannelRunner::Start()
+    void CommandResponseChannelRunner::Start()
     {
         Post(_coordinationService.GetStrand(), [self = shared_from_this()]()
             {
@@ -26,7 +26,12 @@ namespace zerosugar::xr::coordination
             });
     }
 
-    auto CommandChannelRunner::Run() -> Future<void>
+    auto CommandResponseChannelRunner::GetName() const -> std::string_view
+    {
+        return "command_response_channel_runner";
+    }
+
+    auto CommandResponseChannelRunner::Run() -> Future<void>
     {
         [[maybe_unused]]
         auto self = shared_from_this();
@@ -37,18 +42,21 @@ namespace zerosugar::xr::coordination
 
             while (_responseEnumerable.HasNext())
             {
-                const service::CoordinationCommandResponse input = co_await _responseEnumerable;
+                const service::CoordinationCommandResponse response = co_await _responseEnumerable;
                 assert(ExecutionContext::IsEqualTo(_coordinationService.GetStrand()));
 
-                switch (input.opcode)
+                switch (response.opcode)
                 {
                 case Authenticate::opcode:
                 {
-                    const auto authenticate = nlohmann::json(input.contents).get<Authenticate>();
+                    const nlohmann::json& json = nlohmann::json::parse(response.contents);
+                    const Authenticate authenticate = json.get<Authenticate>();
 
                     NodeContainer& container = _coordinationService.GetNodeContainer();
 
                     GameServer* server = container.Find(game_server_id_type(authenticate.serverId));
+                    assert(server);
+
                     server->SetChannel(_commandChannel);
 
                     _server = server->weak_from_this();
@@ -60,24 +68,34 @@ namespace zerosugar::xr::coordination
                     if (!server)
                     {
                         ZEROSUGAR_LOG_WARN(_coordinationService.GetServiceLocator(),
-                            std::format("[channel_runner] fail to get game server instance"));
+                            std::format("[{}] fail to get game server instance", GetName()));
 
                         co_return;
                     }
 
                     const auto& factory = _coordinationService.GetChannelInputHandlerFactory();
-                    const auto& handler = factory.CreateHandler(input.opcode);
+                    const auto& handler = factory.CreateHandler(response.opcode);
+
                     if (!handler)
                     {
                         assert(false);
 
                         ZEROSUGAR_LOG_CRITICAL(_coordinationService.GetServiceLocator(),
-                            std::format("[channel_runner] fail to find response handler. opcode: {}", input.opcode));
+                            std::format("[{}] fail to find response handler. opcode: {}", GetName(), response.opcode));
 
                         continue;
                     }
 
-                    co_await handler->Handle(_coordinationService, *server, input.contents);
+                    try
+                    {
+                        co_await handler->Handle(_coordinationService, *server, response.contents);
+
+                        server->MarkCommandResponseAsSuccess(response.responseId);
+                    }
+                    catch (...)
+                    {
+                        server->MarkCommandResponseAsFailure(response.responseId, std::current_exception());
+                    }
                 }
                 break;
                 }
@@ -86,7 +104,7 @@ namespace zerosugar::xr::coordination
         catch (const std::exception& e)
         {
             ZEROSUGAR_LOG_ERROR(_coordinationService.GetServiceLocator(),
-                std::format("[channel_runner] command response handler throws. exception: {}", e.what()));
+                std::format("[{}] handler throws. exception: {}", GetName(), e.what()));
         }
     }
 }

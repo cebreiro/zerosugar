@@ -32,8 +32,8 @@ namespace zerosugar::xr
         auto ReturnSnowflakeKeyAsync(service::ReturnSnowflakeKeyParam param) -> Future<service::ReturnSnowflakeKeyResult> override;
 
         auto AddPlayerAsync(service::AddPlayerParam param) -> Future<service::AddPlayerResult> override;
+        auto AuthenticatePlayerAsync(service::AuthenticatePlayerParam param) -> Future<service::AuthenticatePlayerResult> override;
 
-    public:
         auto GetStrand() -> Strand&;
         auto GetServiceLocator() -> ServiceLocator&;
 
@@ -55,6 +55,7 @@ namespace zerosugar::xr
 
         int64_t _nextServerId = 0;
         int64_t _nextGameInstanceId = 0;
+        int64_t _nextGameUserId = 0;
 
         std::optional<std::pair<std::string, int32_t>> _lobby;
         std::unique_ptr<coordination::NodeContainer> _nodeContainer;

@@ -11,7 +11,17 @@ namespace zerosugar::xr::coordination
     {
     }
 
-    auto GameUser::GetAuthToken() const -> std::string_view
+    bool GameUser::IsMigrating() const
+    {
+        return _migrating;
+    }
+
+    void GameUser::SetMigrating(bool value)
+    {
+        _migrating = value;
+    }
+
+    auto GameUser::GetAuthToken() const -> const std::string&
     {
         return _authToken;
     }

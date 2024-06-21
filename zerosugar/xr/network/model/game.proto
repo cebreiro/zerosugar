@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package zerosugar.xr.network.game;
+
+message Position
+{
+    float x = 1;
+    float y = 2;
+    float z = 3;
+}
+
+message Rotation
+{
+    float yaw = 1;
+    float pitch = 2;
+    float roll = 3;
+}
+
+message Transform
+{
+    Position position = 1;
+    Rotation rotation = 2;
+}
+
+message CharacterStat
+{
+    int32 hp = 1;
+    int32 maxHP = 2;
+    int32 attackMin = 3;
+    int32 attackMax = 4;
+    int32 attackRange = 5;
+    int32 attackSpeed = 6;
+    int32 defence = 7;
+    string name = 8;
+    int32 level = 9;
+    int32 gender = 10;
+    int32 face = 11;
+    int32 hair = 12;
+    int32 str = 13;
+    int32 dex = 14;
+    int32 intell = 15;
+    float stamina = 16;
+    float staminaMax = 17;
+}
+
+message Equipment
+{
+    int32 type = 1;
+    int32 id = 2;
+    int32 attack = 3;
+    int32 defence = 4;
+    int32 str = 5;
+    int32 dex = 6;
+    int32 intell = 7;
+}
+
+message CharacterEquipment
+{
+    Equipment armor = 1;
+    Equipment gloves = 2;
+    Equipment shoes = 3;
+    Equipment weapon = 4;
+}
+
+message CharacterInventoryItem
+{
+    int32 id = 1;
+    int32 count = 2;
+    int32 attack = 3;
+    int32 defence = 4;
+    int32 str = 5;
+    int32 dex = 6;
+    int32 intell = 7;
+}
+
+message Character
+{
+    int64 instance_id = 1;
+    Transform transform = 2;
+    CharacterStat stat = 3;
+    CharacterEquipment equipment = 4;
+
+    int32 gold = 5;
+    repeated CharacterInventoryItem items = 6;
+}
+
+message Monster
+{
+
+}

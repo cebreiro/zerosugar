@@ -17,6 +17,7 @@ namespace zerosugar::xr
     class RPCClient;
     class LoginServer;
     class LobbyServer;
+    class GameServer;
 }
 
 namespace zerosugar::xr
@@ -73,6 +74,7 @@ namespace zerosugar::xr
         SharedPtrNotNull<RPCClient> _rpcClient;
         SharedPtrNotNull<LoginServer> _loginServer;
         SharedPtrNotNull<LobbyServer> _lobbyServer;
+        SharedPtrNotNull<GameServer> _gameServer;
 
         // service
         std::vector<SharedPtrNotNull<IService>> _services;

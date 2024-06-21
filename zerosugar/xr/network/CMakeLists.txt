@@ -30,6 +30,9 @@ add_custom_target(zerosugar_xr_generate_netcode
         lobby.proto
         lobby_cs.proto
         lobby_sc.proto
+        game.proto
+        game_cs.proto
+        game_sc.proto
     WORKING_DIRECTORY ${ZEROSUGAR_XR_NETWORK_MODEL_DIR}
     DEPENDS zerosugar_proto_code_generator
 )

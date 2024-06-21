@@ -2,12 +2,14 @@
 
 #include <boost/scope/scope_exit.hpp>
 #include "zerosugar/shared/snowflake/snowflake.h"
-#include "zerosugar/xr/service/coordination/command/command_channel_runner.h"
+#include "zerosugar/xr/network/rpc/rpc_client.h"
+#include "zerosugar/xr/service/coordination/command/command_response_channel_runner.h"
 #include "zerosugar/xr/service/coordination/command/handler/command_response_handler_factory.h"
 #include "zerosugar/xr/service/coordination/load_balance/load_balancer.h"
-#include "zerosugar/xr/service/coordination/node/game_server.h"
-#include "zerosugar/xr/service/coordination/node/node_container.h"
 #include "zerosugar/xr/service/coordination/node/game_instance.h"
+#include "zerosugar/xr/service/coordination/node/game_server.h"
+#include "zerosugar/xr/service/coordination/node/game_user.h"
+#include "zerosugar/xr/service/coordination/node/node_container.h"
 #include "zerosugar/xr/service/model/generated/coordination_command_message.h"
 #include "zerosugar/xr/service/model/generated/login_service.h"
 
@@ -31,6 +33,8 @@ namespace zerosugar::xr
         ICoordinationService::Initialize(serviceLocator);
 
         _serviceLocator = serviceLocator;
+
+        Configure(shared_from_this(), serviceLocator.Get<RPCClient>());
     }
 
     void CoordinationService::Shutdown()
@@ -61,10 +65,12 @@ namespace zerosugar::xr
         }
 
         const auto serverId = coordination::game_server_id_type(++self->_nextServerId);
+        result.serverId = serverId.Unwrap();
+
         auto server = std::make_shared<coordination::GameServer>(serverId, param.name, param.ip, static_cast<uint16_t>(param.port));
 
         [[maybe_unused]]
-        bool added = self->_nodeContainer->Add(std::move(server));
+        bool added = self->_nodeContainer->Add(server);
         assert(added);
 
         added = _loadBalancer->Add(serverId);
@@ -94,7 +100,7 @@ namespace zerosugar::xr
     {
         auto commandChannel = std::make_shared<Channel<service::CoordinationCommand>>();
 
-        auto runner = std::make_shared<coordination::CommandChannelRunner>(*this, std::move(param), std::move(commandChannel));
+        auto runner = std::make_shared<coordination::CommandResponseChannelRunner>(*this, std::move(param), commandChannel);
         runner->Start();
 
         return AsyncEnumerable<service::CoordinationCommand>(commandChannel);
@@ -229,6 +235,70 @@ namespace zerosugar::xr
 
         result.ip = server->GetIP();
         result.port = server->GetPort();
+
+        const auto gameUserId = coordination::game_user_id_type(++_nextGameUserId);
+        auto gameUser = std::make_shared<coordination::GameUser>(gameUserId, param.authenticationToken, param.accountId, param.characterId, param.zoneId);
+        gameUser->SetMigrating(true);
+
+        [[maybe_unused]]
+        bool added = _nodeContainer->Add(gameUser);
+        assert(added);
+
+        gameUser->SetParent(instance);
+
+        // TODO: register to login service
+
+        co_return result;
+    }
+
+    auto CoordinationService::AuthenticatePlayerAsync(service::AuthenticatePlayerParam param)
+        -> Future<service::AuthenticatePlayerResult>
+    {
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
+        co_await *_strand;
+        assert(ExecutionContext::IsEqualTo(*_strand));
+
+        service::AuthenticatePlayerResult result;
+
+        do
+        {
+            coordination::GameUser* user = _nodeContainer->FindGameUser(param.authenticationToken);
+            if (!user)
+            {
+                result.errorCode = service::CoordinationServiceErrorCode::AuthenticatePlayerErrorUserNotFound;
+
+                break;
+            }
+
+            if (!user->IsMigrating())
+            {
+                result.errorCode = service::CoordinationServiceErrorCode::AuthenticatePlayerErrorUserIsNotMigrating;
+
+                break;
+            }
+
+            coordination::GameInstance* gameInstance = user->GetParent();
+            assert(gameInstance);
+
+            coordination::GameServer* gameServer = gameInstance->GetParent();
+            assert(gameServer);
+
+            if (gameServer->GetId() != coordination::game_server_id_type(param.serverId))
+            {
+                result.errorCode = service::CoordinationServiceErrorCode::AuthenticatePlayerErrorRequestToInvalidServer;
+
+                break;
+            }
+
+            user->SetMigrating(false);
+
+            result.accountId = user->GetAccountId();
+            result.characterId = user->GetCharacterId();
+            result.gameInstanceId = gameInstance->GetId().Unwrap();
+            
+        } while (false);
 
         co_return result;
     }

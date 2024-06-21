@@ -1,9 +1,12 @@
 #include "command_handler_factory.h"
 
+#include "zerosugar/xr/server/game/command/handler/command_handler.hpp"
+
 namespace zerosugar::xr
 {
     CommandHandlerFactory::CommandHandlerFactory()
     {
+        Register<LaunchGameInstanceHandler>();
     }
 
     CommandHandlerFactory::~CommandHandlerFactory()

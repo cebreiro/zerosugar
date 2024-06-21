@@ -16,6 +16,9 @@ namespace zerosugar::xr::service
         RegisterErrorDuplicatedAddress = 10001,
         RequestSnowflakeKeyErrorOutOfPool = 30001,
         ReturnSnowflakeKeyErrorInvalidKey = 40001,
+        AuthenticatePlayerErrorUserNotFound = 50001,
+        AuthenticatePlayerErrorUserIsNotMigrating = 50002,
+        AuthenticatePlayerErrorRequestToInvalidServer = 50003,
 
     };
     auto GetEnumName(CoordinationServiceErrorCode e) -> std::string_view;
@@ -94,6 +97,20 @@ namespace zerosugar::xr::service
         CoordinationServiceErrorCode errorCode = {};
         std::string ip = {};
         int32_t port = {};
+    };
+
+    struct AuthenticatePlayerParam
+    {
+        int64_t serverId = {};
+        std::string authenticationToken = {};
+    };
+
+    struct AuthenticatePlayerResult
+    {
+        CoordinationServiceErrorCode errorCode = {};
+        int64_t accountId = {};
+        int64_t characterId = {};
+        int64_t gameInstanceId = {};
     };
 
 }

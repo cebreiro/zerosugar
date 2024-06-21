@@ -10,18 +10,14 @@ namespace zerosugar::xr::coordination
     {
         const auto [begin, end] = _serverAddressIndex.equal_range(MakeServerAddressKey(ip, port));
 
-        for (const GameServer* server : std::ranges::subrange(begin, end) | std::views::values)
-        {
-            if (server->GetIP() == ip && server->GetPort() == port)
+        return std::ranges::any_of(std::ranges::subrange(begin, end) | std::views::values,
+            [ip, port](const GameServer* server)
             {
-                return true;
-            }
-        }
-
-        return false;
+                return server->GetIP() == ip && server->GetPort() == port;
+            });
     }
 
-    bool NodeContainer::Add(SharedPtrNotNull<GameServer> server)
+    bool NodeContainer::Add(const SharedPtrNotNull<GameServer>& server)
     {
         const auto& id = server->GetId();
 
@@ -29,6 +25,8 @@ namespace zerosugar::xr::coordination
         {
             _serversForIteration.push_back(server.get());
             _serverAddressIndex.insert(std::make_pair(MakeServerAddressKey(*server), server.get()));
+
+            return true;
         }
 
         return false;
@@ -45,7 +43,16 @@ namespace zerosugar::xr::coordination
     {
         const auto& id = user->GetId();
 
-        return _users.try_emplace(id, std::move(user)).second;
+        if (_users.try_emplace(id, user).second)
+        {
+            [[maybe_unused]]
+            bool inserted = _userAuthTokenIndex.try_emplace(user->GetAuthToken(), user.get()).second;
+            assert(inserted);
+
+            return true;
+        }
+
+        return false;
     }
 
     bool NodeContainer::Remove(game_server_id_type id)
@@ -85,7 +92,19 @@ namespace zerosugar::xr::coordination
 
     bool NodeContainer::Remove(game_user_id_type id)
     {
-        return _users.erase(id);
+        auto iter = _users.find(id);
+        if (iter != _users.end())
+        {
+            [[maybe_unused]]
+            const size_t count = _userAuthTokenIndex.erase(iter->second->GetAuthToken());
+            assert(count > 0);
+
+            _users.erase(iter);
+
+            return true;
+        }
+
+        return false;
     }
 
     auto NodeContainer::Find(game_server_id_type id) -> GameServer*
@@ -128,6 +147,20 @@ namespace zerosugar::xr::coordination
         const auto iter = _users.find(id);
 
         return iter != _users.end() ? iter->second.get() : nullptr;
+    }
+
+    auto NodeContainer::FindGameUser(const std::string& authToken) -> GameUser*
+    {
+        const auto iter = _userAuthTokenIndex.find(authToken);
+
+        return iter != _userAuthTokenIndex.end() ? iter->second : nullptr;
+    }
+
+    auto NodeContainer::FindGameUser(const std::string& authToken) const -> const GameUser*
+    {
+        const auto iter = _userAuthTokenIndex.find(authToken);
+
+        return iter != _userAuthTokenIndex.end() ? iter->second : nullptr;
     }
 
     auto NodeContainer::MakeServerAddressKey(const GameServer& server) -> int64_t

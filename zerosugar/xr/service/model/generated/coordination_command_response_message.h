@@ -25,7 +25,6 @@ namespace zerosugar::xr::coordination::command::response
         void Serialize(PacketWriter& writer) const final;
         auto GetOpcode() const -> int32_t final { return opcode; }
 
-        int64_t responseId = {};
         int64_t gameInstanceId = {};
         int32_t zoneId = {};
     };

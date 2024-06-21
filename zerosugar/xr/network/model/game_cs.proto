@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+import "option.proto";
+
+package zerosugar.xr.network.game.cs;
+
+message Authenticate
+{
+    option (opcode) = 1000;
+
+    string authentication_token = 1;
+}

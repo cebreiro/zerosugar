@@ -7,6 +7,7 @@
 #include "zerosugar/xr/application/all_in_one_app/all_in_one_app_config.h"
 #include "zerosugar/xr/network/rpc/rpc_client.h"
 #include "zerosugar/xr/network/rpc/rpc_server.h"
+#include "zerosugar/xr/server/game/game_server.h"
 #include "zerosugar/xr/server/lobby/lobby_server.h"
 #include "zerosugar/xr/server/login/login_server.h"
 #include "zerosugar/xr/service/database/database_service.h"
@@ -25,6 +26,7 @@ namespace zerosugar::xr
         , _rpcClient(std::make_shared<RPCClient>(_executor))
         , _loginServer(std::make_shared<LoginServer>(*_executor))
         , _lobbyServer(std::make_shared<LobbyServer>(*_executor))
+        , _gameServer(std::make_shared<GameServer>(*_executor))
         , _loginService(std::make_shared<LoginService>(_executor))
         , _loginServiceProxy(std::make_shared<service::LoginServiceProxy>(_rpcClient))
         , _gatewayService(std::make_shared<GatewayService>(_executor))
@@ -43,7 +45,7 @@ namespace zerosugar::xr
 
         serviceLocator.Add<service::ILoginService>(_loginServiceProxy);
         serviceLocator.Add<service::IGatewayService>(_gatewayServiceProxy);
-        serviceLocator.Add<service::ICoordinationService>(_coordinationService);
+        serviceLocator.Add<service::ICoordinationService>(_coordinationServiceProxy);
         serviceLocator.Add<service::IDatabaseService>(_databaseServiceProxy);
 
         _services.emplace_back(_loginService);
@@ -171,6 +173,9 @@ namespace zerosugar::xr
         _lobbyServer->Initialize(serviceLocator);
         _lobbyServer->SetPublicIP(_config->lobbyIP);
 
+        _gameServer->Initialize(serviceLocator);
+        _gameServer->SetPublicIP(_config->gameIP);
+
         _rpcServer->StartUp(_config->rpcServerPort);
         assert(_rpcServer->IsOpen());
         {
@@ -199,130 +204,11 @@ namespace zerosugar::xr
             }
         }
 
-        // TODO: remove hardcoding
         _loginServer->StartUp(8181);
         _lobbyServer->StartUp(_config->lobbyPort);
 
+        _gameServer->StartUp(_config->gamePort);
+
         ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize network --> Done", GetName()));
-
-
-        /*try
-        {
-            auto channel = std::make_shared<Channel<service::TestParam>>();
-
-            auto future = GetServiceLocator().Get<service::ILoginService>().Test1Async(AsyncEnumerable<service::TestParam>(channel));
-
-            Post(*_executor, [future = std::move(future), this]() mutable
-                {
-                    try
-                    {
-                        service::TestResult result = future.Get();
-                        ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("receive result: {}", result.token));
-                    }
-                    catch (const std::exception& e)
-                    {
-                        ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("exception: {}", e.what()));
-                    }
-                });
-
-            for (int32_t i = 0; i < 10000000; ++i)
-            {
-                service::TestParam param;
-                param.token = std::to_string(i);
-
-                if (channel->IsOpen())
-                {
-                    ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("produce: {}", i));
-
-                    channel->Send(std::move(param), channel::ChannelSignal::NotifyOne);
-                }
-            }
-        }
-        catch (const std::exception& e)
-        {
-            (void)e;
-        }*/
-
-        /*try
-        {
-            service::TestParam param;
-            param.token = "25";
-
-            AsyncEnumerable<service::TestResult> enumerable = GetServiceLocator().Get<service::ILoginService>().Test2Async(std::move(param));
-
-            Post(*_executor, [](AsyncEnumerable<service::TestResult> enumerable, AllInOneApp& self) mutable -> Future<void>
-                {
-                    try
-                    {
-                        while (enumerable.HasNext())
-                        {
-                            service::TestResult result = co_await enumerable;
-
-                            ZEROSUGAR_LOG_INFO(self.GetServiceLocator(), std::format("receive result: {}", result.token));
-                        }
-
-                        ZEROSUGAR_LOG_INFO(self.GetServiceLocator(), std::format("--- end ---"));
-                    }
-                    catch (const std::exception& e)
-                    {
-                        ZEROSUGAR_LOG_INFO(self.GetServiceLocator(), std::format("exception: {}", e.what()));
-                    }
-                }, std::move(enumerable), std::ref(*this));
-        }
-        catch (const std::exception& e)
-        {
-            (void)e;
-        }*/
-
-        try
-        {
-            auto channel = std::make_shared<Channel<service::TestParam>>();
-            AsyncEnumerable<service::TestResult> enumerable = GetServiceLocator().Get<service::ILoginService>().Test3Async(AsyncEnumerable<service::TestParam>(channel));
-
-            Post(*_executor, [](AsyncEnumerable<service::TestResult> enumerable, AllInOneApp& self) mutable -> Future<void>
-                {
-                    try
-                    {
-                        while (enumerable.HasNext())
-                        {
-                            service::TestResult result = co_await enumerable;
-
-                            ZEROSUGAR_LOG_INFO(self.GetServiceLocator(), std::format("receive result: {}", result.token));
-                        }
-
-                        ZEROSUGAR_LOG_INFO(self.GetServiceLocator(), std::format("--- end ---"));
-                    }
-                    catch (const std::exception& e)
-                    {
-                        ZEROSUGAR_LOG_INFO(self.GetServiceLocator(), std::format("exception: {}", e.what()));
-                    }
-                }, std::move(enumerable), std::ref(*this));
-
-            for (int32_t i = 0; i < 10000000; ++i)
-            {
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-                service::TestParam param;
-                param.token = std::to_string(i);
-
-                if (i > 10)
-                {
-                    channel->Close();
-
-                    break;
-                }
-
-                if (channel->IsOpen())
-                {
-                    ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("produce: {}", i));
-
-                    channel->Send(std::move(param), channel::ChannelSignal::NotifyOne);
-                }
-            }
-        }
-        catch (const std::exception& e)
-        {
-            (void)e;
-        }
     }
 }

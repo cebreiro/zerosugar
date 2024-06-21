@@ -21,24 +21,12 @@ namespace zerosugar::xr::coordination
             assert(added);
 
             gameInstance->SetParent(&server);
-
-            server.MarkCommandResponseAsSuccess(response.responseId);
         }
         else
         {
             assert(false);
 
-            ZEROSUGAR_LOG_CRITICAL(service.GetServiceLocator(),
-                std::format("fail to add game_instance to NodeContainer"));
-
-            try
-            {
-                throw std::runtime_error(std::format("[{}] invalid response", __FUNCTION__));
-            }
-            catch (...)
-            {
-                server.MarkCommandResponseAsFailure(response.responseId, std::current_exception());
-            }
+            throw std::runtime_error(std::format("[{}] fail to add game_instance to NodeContainer", __FUNCTION__));
         }
 
         co_return;

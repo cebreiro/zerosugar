@@ -9,7 +9,7 @@ namespace zerosugar::xr
     public:
         virtual ~ICommandHandler() = default;
 
-        virtual auto Handle(GameServer& server, const std::string& str) const -> Future<void> = 0;
+        virtual auto Handle(GameServer& server, const std::string& str, std::optional<int64_t> responseId) const -> Future<void> = 0;
     };
 
     template <typename T>
@@ -19,14 +19,15 @@ namespace zerosugar::xr
         static constexpr auto opcode = T::opcode;
 
     public:
-        auto Handle(GameServer& server, const std::string& str) const -> Future<void> final
+        auto Handle(GameServer& server, const std::string& str, std::optional<int64_t> responseId) const -> Future<void> final
         {
-            const T& command = nlohmann::json(str).get<T>();
+            const nlohmann::json& json = nlohmann::json::parse(str);
+            const T& command = json.get<T>();
 
-            return this->HandleCommand(server, command);
+            return this->HandleCommand(server, command, responseId);
         }
 
     private:
-        virtual auto HandleCommand(GameServer& server, const T& command) const -> Future<void> = 0;
+        virtual auto HandleCommand(GameServer& server, const T& command, std::optional<int64_t> responseId) const -> Future<void> = 0;
     };
 }

@@ -6,10 +6,13 @@
 
 namespace zerosugar
 {
-    auto QueryCPULoadPercentage() -> int32_t
+    auto QueryCPULoadPercentage() -> std::optional<int32_t>
     {
         std::vector<std::string> results = ExecuteCommand("wmic cpu get LoadPercentage");
-        assert(std::ssize(results) == 2);
+        if (std::ssize(results) < 2)
+        {
+            return std::nullopt;
+        }
 
         const std::string& str = results.at(1);
 
@@ -20,10 +23,13 @@ namespace zerosugar
         return converted;
     }
 
-    auto QueryFreePhysicalMemoryGB() -> double
+    auto QueryFreePhysicalMemoryGB() -> std::optional<double>
     {
-        std::vector<std::string> results = ExecuteCommand("OS get FreePhysicalMemory");
-        assert(std::ssize(results) == 2);
+        std::vector<std::string> results = ExecuteCommand("wmic OS get FreePhysicalMemory");
+        if (std::ssize(results) < 2)
+        {
+            return std::nullopt;
+        }
 
         const std::string& str = results.at(1);
 

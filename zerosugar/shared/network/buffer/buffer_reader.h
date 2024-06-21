@@ -22,5 +22,26 @@ namespace zerosugar
         {
             value = static_cast<T>(Read<std::underlying_type_t<T>>());
         }
+
+        template <typename T>
+        void Read(T& value, int64_t count)
+        {
+            value.reserve(count);
+
+            for (int64_t i = 0; i < count; ++i)
+            {
+                if constexpr (std::derived_from<typename T::value_type, IBufferDeserializable>)
+                {
+                    typename T::value_type item;
+                    item.Deserialize(*this);
+
+                    value.push_back(item);
+                }
+                else
+                {
+                    value.push_back(Read<typename T::value_type>());
+                }
+            }
+        }
     };
 }

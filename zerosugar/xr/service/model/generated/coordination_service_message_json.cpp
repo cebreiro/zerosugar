@@ -197,4 +197,38 @@ namespace zerosugar::xr::service
             };
     }
 
+    void from_json(const nlohmann::json& j, AuthenticatePlayerParam& item)
+    {
+        j.at("serverId").get_to(item.serverId);
+        j.at("authenticationToken").get_to(item.authenticationToken);
+    }
+
+    void to_json(nlohmann::json& j, const AuthenticatePlayerParam& item)
+    {
+        j = nlohmann::json
+            {
+                { "serverId", item.serverId },
+                { "authenticationToken", item.authenticationToken },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, AuthenticatePlayerResult& item)
+    {
+        j.at("errorCode").get_to(item.errorCode);
+        j.at("accountId").get_to(item.accountId);
+        j.at("characterId").get_to(item.characterId);
+        j.at("gameInstanceId").get_to(item.gameInstanceId);
+    }
+
+    void to_json(nlohmann::json& j, const AuthenticatePlayerResult& item)
+    {
+        j = nlohmann::json
+            {
+                { "errorCode", item.errorCode },
+                { "accountId", item.accountId },
+                { "characterId", item.characterId },
+                { "gameInstanceId", item.gameInstanceId },
+            };
+    }
+
 }

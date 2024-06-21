@@ -17,14 +17,12 @@ namespace zerosugar::xr::coordination::command::response
 
     void LaunchGameInstance::Deserialize(PacketReader& reader)
     {
-        responseId = reader.Read<int64_t>();
         gameInstanceId = reader.Read<int64_t>();
         zoneId = reader.Read<int32_t>();
     }
 
     void LaunchGameInstance::Serialize(PacketWriter& writer) const
     {
-        writer.Write<int64_t>(responseId);
         writer.Write<int64_t>(gameInstanceId);
         writer.Write<int32_t>(zoneId);
     }

@@ -11,8 +11,12 @@ namespace zerosugar::xr::coordination
     public:
         GameUser(game_user_id_type id, std::string authToken, int64_t accountId, int64_t characterId, int32_t zoneId);
 
+        bool IsMigrating() const;
+
+        void SetMigrating(bool value);
+
         auto GetId() const -> const game_user_id_type&;
-        auto GetAuthToken() const -> std::string_view;
+        auto GetAuthToken() const -> const std::string&;
         auto GetAccountId() const -> int64_t;
         auto GetCharacterId() const -> int64_t;
         auto GetZoneId() const -> int32_t;
@@ -24,5 +28,7 @@ namespace zerosugar::xr::coordination
         int64_t _accountId = 0;
         int64_t _characterId = 0;
         int32_t _zoneId = 0;
+
+        bool _migrating = false;
     };
 }

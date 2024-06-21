@@ -1,7 +1,7 @@
 add_library(zerosugar_shared)
 
 find_package(OpenSSL REQUIRED)
-find_package(Boost REQUIRED COMPONENTS charconv)
+find_package(Boost REQUIRED COMPONENTS charconv system filesystem)
 
 target_link_libraries(zerosugar_shared PUBLIC
 	Boost::boost
@@ -11,6 +11,8 @@ target_link_libraries(zerosugar_shared PUBLIC
     OpenSSL::Crypto
 	OpenSSL::SSL
     Boost::charconv
+    Boost::system
+    Boost::filesystem
 )
 
 file(GLOB_RECURSE ZEROSUGAR_SHARED_SRC_FILES CONFIGURE_DEPENDS

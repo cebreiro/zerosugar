@@ -7,7 +7,7 @@
 
 #include "zerosugar/tool/proto_code_generator/proto_code_generator_option.h"
 #include "zerosugar/tool/proto_code_generator/writer/message_json_serialize_writer.h"
-#include "zerosugar/tool/proto_code_generator/writer/sl_message_writer.h"
+#include "zerosugar/tool/proto_code_generator/writer/xr_message_writer.h"
 #include "zerosugar/tool/proto_code_generator/writer/xr_packet_writer.h"
 #include "zerosugar/tool/proto_code_generator/writer/input/writer_input.h"
 
@@ -39,7 +39,7 @@ namespace zerosugar
     {
         (void)file;
 
-        const SlMessageWriter::Param param = [&]()
+        const XRMessageWriter::Param param = [&]()
             {
                 std::vector<std::string> includes;
                 includes.reserve(input.imports.size());
@@ -55,14 +55,14 @@ namespace zerosugar
                         GetMessageFileName(imported.name)));
                 }
 
-                return SlMessageWriter::Param{
+                return XRMessageWriter::Param{
                     .input = input,
                     .headerName = _messageFileName,
                     .includes = std::move(includes),
                 };
             }();
 
-        SlMessageWriter writer;
+        XRMessageWriter writer;
         if (!writer.CanWrite(param))
         {
             return;

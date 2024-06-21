@@ -1,6 +1,7 @@
 #include "execute_command.h"
 
 #include <boost/process.hpp>
+#include <boost/algorithm/string.hpp>
 
 namespace zerosugar
 {
@@ -14,6 +15,16 @@ namespace zerosugar
         std::string line;
         while (pipeStream && std::getline(pipeStream, line) && !line.empty())
         {
+            if (std::ranges::all_of(line, [](char c) -> bool
+                {
+                    return std::isspace(c);
+                }))
+            {
+                continue;
+            }
+
+            boost::algorithm::trim_right(line);
+
             result.push_back(std::move(line));
         }
 

@@ -13,6 +13,9 @@ namespace zerosugar::xr
         std::string lobbyIP;
         uint16_t lobbyPort = 0;
 
+        std::string gameIP;
+        uint16_t gamePort = 0;
+
         std::string databaseIP;
         uint16_t databasePort = 0;
         std::string databaseUser;
@@ -28,6 +31,8 @@ namespace zerosugar::xr
             config.rpcServerPort = j.at("rpc_server_port").get<uint16_t>();
             config.lobbyIP = j.at("lobby_ip").get<std::string>();
             config.lobbyPort = j.at("lobby_port").get<uint16_t>();
+            config.gameIP = j.at("game_ip").get<std::string>();
+            config.gamePort = j.at("game_port").get<uint16_t>();
             config.databaseIP = j.at("database_ip").get<std::string>();
             config.databasePort = j.at("database_port").get<uint16_t>();
             config.databaseUser = j.at("database_user").get<std::string>();

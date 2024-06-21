@@ -45,4 +45,10 @@ namespace zerosugar::xr::service
     void from_json(const nlohmann::json& j, AddPlayerResult& item);
     void to_json(nlohmann::json& j, const AddPlayerResult& item);
 
+    void from_json(const nlohmann::json& j, AuthenticatePlayerParam& item);
+    void to_json(nlohmann::json& j, const AuthenticatePlayerParam& item);
+
+    void from_json(const nlohmann::json& j, AuthenticatePlayerResult& item);
+    void to_json(nlohmann::json& j, const AuthenticatePlayerResult& item);
+
 }

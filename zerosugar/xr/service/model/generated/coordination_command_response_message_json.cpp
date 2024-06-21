@@ -17,7 +17,6 @@ namespace zerosugar::xr::coordination::command::response
 
     void from_json(const nlohmann::json& j, LaunchGameInstance& item)
     {
-        j.at("responseId").get_to(item.responseId);
         j.at("gameInstanceId").get_to(item.gameInstanceId);
         j.at("zoneId").get_to(item.zoneId);
     }
@@ -26,7 +25,6 @@ namespace zerosugar::xr::coordination::command::response
     {
         j = nlohmann::json
             {
-                { "responseId", item.responseId },
                 { "gameInstanceId", item.gameInstanceId },
                 { "zoneId", item.zoneId },
             };

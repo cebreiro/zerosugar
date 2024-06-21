@@ -57,6 +57,9 @@ namespace zerosugar
         template <std::floating_point U>
         void Write(U value);
 
+        template <std::ranges::input_range T>
+        void Write(T range);
+
         auto GetWriteSize() const -> int64_t;
 
     private:
@@ -98,5 +101,14 @@ namespace zerosugar
         ExpandIfNoSpace(sizeof(value));
 
         _streamWriter.Write(value);
+    }
+
+    template <std::ranges::input_range T>
+    void BufferWriter::Write(T range)
+    {
+        for (const std::ranges::range_value_t<T>& value : range)
+        {
+            Write(value);
+        }
     }
 }

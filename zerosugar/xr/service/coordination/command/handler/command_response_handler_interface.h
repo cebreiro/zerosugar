@@ -26,7 +26,8 @@ namespace zerosugar::xr::coordination
     public:
         auto Handle(CoordinationService& service, GameServer& server, const std::string& str) const -> Future<void> final
         {
-            const T& response = nlohmann::json(str).get<T>();
+            const nlohmann::json& json = nlohmann::json::parse(str);
+            const T& response = json.get<T>();
 
             return this->HandleResponse(service, server, response);
         }

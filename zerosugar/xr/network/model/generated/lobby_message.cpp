@@ -5,7 +5,7 @@ namespace zerosugar::xr::network::lobby
     void LobbyCharacter::Deserialize(BufferReader& reader)
     {
         slot = reader.Read<int32_t>();
-        name = reader.ReadString();
+        name = reader.ReadString(reader.Read<int16_t>());
         level = reader.Read<int32_t>();
         str = reader.Read<int32_t>();
         dex = reader.Read<int32_t>();
@@ -28,6 +28,7 @@ namespace zerosugar::xr::network::lobby
     void LobbyCharacter::Serialize(BufferWriter& writer) const
     {
         writer.Write<int32_t>(slot);
+        writer.Write<int16_t>((int16_t)std::ssize(name) + 1);
         writer.WriteString(name);
         writer.Write<int32_t>(level);
         writer.Write<int32_t>(str);

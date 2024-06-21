@@ -2,7 +2,6 @@
 #include <memory>
 #include <format>
 #include <boost/asio.hpp>
-#include "zerosugar/shared/execution/future/promise.h"
 #include "zerosugar/shared/network/session/event.h"
 
 namespace zerosugar

@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+import "option.proto";
+
+package zerosugar.xr.network.game.sc;
+
+message Test
+{
+    option (opcode) = 1000;
+}
