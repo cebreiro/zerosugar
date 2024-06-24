@@ -4,6 +4,8 @@
 #include <functional>
 #include <optional>
 #include <shared_mutex>
+#include <tbb/spin_mutex.h>
+#include <tbb/concurrent_queue.h>
 #include "zerosugar/shared/type/not_null_pointer.h"
 #include "zerosugar/shared/execution/executor/executor_interface.h"
 
@@ -30,22 +32,17 @@ namespace zerosugar
         auto SharedFromThis() const -> SharedPtrNotNull<const IExecutor> override;
 
     private:
-        void PushTask(bool& startFlushTask, task_type task);
-        void StartFlushTask();
-
+        void PostFlushTask();
         void FlushTasks();
-        void SwapBuffer();
-        void ExecuteTasks();
-        bool FinalizeFlush();
-
-        bool CanExecuteImmediately() const;
 
     private:
         SharedPtrNotNull<IExecutor> _executor;
 
-        mutable std::shared_mutex _mutex;
-        bool _runningFlushTask = false;
-        std::vector<task_type> _backBuffer;
-        std::vector<task_type> _frontBuffer;
+        tbb::spin_mutex _spinMutex;
+        bool _posted = false;
+        std::optional<std::thread::id> _owner = std::nullopt;
+        int32_t _taskCount = 0;
+
+        tbb::concurrent_queue<task_type> _tasks;
     };
 }

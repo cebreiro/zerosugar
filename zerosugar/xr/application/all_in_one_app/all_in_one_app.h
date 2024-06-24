@@ -18,6 +18,8 @@ namespace zerosugar::xr
     class LoginServer;
     class LobbyServer;
     class GameServer;
+
+    class NavigationDataProvider;
 }
 
 namespace zerosugar::xr
@@ -56,6 +58,7 @@ namespace zerosugar::xr
         void InitializeLogger();
         void InitializeExecutor();
         void InitializeDatabaseConnection();
+        void InitializeGameData(ServiceLocator& serviceLocator);
         void InitializeService(ServiceLocator& serviceLocator);
         void InitializeServer(ServiceLocator& serviceLocator);
 
@@ -68,6 +71,9 @@ namespace zerosugar::xr
         SharedPtrNotNull<execution::AsioExecutor> _executor;
         SharedPtrNotNull<LogService> _logService;
         SharedPtrNotNull<db::ConnectionPool> _connectionPool;
+
+        // data
+        SharedPtrNotNull<NavigationDataProvider> _navigationDataProvider;
 
         // network
         SharedPtrNotNull<RPCServer> _rpcServer;

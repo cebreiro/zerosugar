@@ -19,31 +19,69 @@ namespace zerosugar
 
     void Strand::Post(const std::function<void()>& function)
     {
-        bool startFlushTask = false;
-        PushTask(startFlushTask, function);
-
-        if (startFlushTask)
+        bool shouldPostTask = false;
         {
-            StartFlushTask();
+            std::lock_guard lock(_spinMutex);
+
+            ++_taskCount;
+            shouldPostTask = std::exchange(_posted, true) == false;
+        }
+
+        _tasks.emplace(function);
+
+        if (shouldPostTask)
+        {
+            PostFlushTask();
         }
     }
 
     void Strand::Post(std::move_only_function<void()> function)
     {
-        bool startFlushTask = false;
-        PushTask(startFlushTask, std::move(function));
-
-        if (startFlushTask)
+        bool shouldPostTask = false;
         {
-            StartFlushTask();
+            std::lock_guard lock(_spinMutex);
+
+            ++_taskCount;
+            shouldPostTask = std::exchange(_posted, true) == false;
+        }
+
+        _tasks.emplace(std::move(function));
+
+        if (shouldPostTask)
+        {
+            PostFlushTask();
         }
     }
 
     void Strand::Dispatch(const std::function<void()>& function)
     {
-        if (CanExecuteImmediately())
+        const auto threadId = std::this_thread::get_id();
+        bool shouldInvokeImmediately = false;
         {
-            std::invoke(function);
+            std::lock_guard lock(_spinMutex);
+
+            if (_owner.has_value() && *_owner == threadId)
+            {
+                shouldInvokeImmediately = true;
+            }
+            else if (!_owner.has_value())
+            {
+                _owner = threadId;
+
+                shouldInvokeImmediately = true;
+            }
+
+            if (!shouldInvokeImmediately)
+            {
+                ++_taskCount;
+            }
+        }
+
+        if (shouldInvokeImmediately)
+        {
+            ExecutionContext::ExecutorGuard guard(this);
+
+            function();
         }
         else
         {
@@ -53,9 +91,34 @@ namespace zerosugar
 
     void Strand::Dispatch(std::move_only_function<void()> function)
     {
-        if (CanExecuteImmediately())
+        const auto threadId = std::this_thread::get_id();
+
+        bool shouldInvokeImmediately = false;
         {
-            std::invoke(function);
+            std::lock_guard lock(_spinMutex);
+
+            if (_owner.has_value() && *_owner == threadId)
+            {
+                shouldInvokeImmediately = true;
+            }
+            else if (!_owner.has_value())
+            {
+                _owner = threadId;
+
+                shouldInvokeImmediately = true;
+            }
+
+            if (!shouldInvokeImmediately)
+            {
+                ++_taskCount;
+            }
+        }
+
+        if (shouldInvokeImmediately)
+        {
+            ExecutionContext::ExecutorGuard guard(this);
+
+            function();
         }
         else
         {
@@ -73,17 +136,9 @@ namespace zerosugar
         return shared_from_this();
     }
 
-    void Strand::PushTask(bool& startFlushTask, task_type task)
+    void Strand::PostFlushTask()
     {
-        std::unique_lock lock(_mutex);
-
-        _backBuffer.emplace_back(std::move(task));
-        startFlushTask = std::exchange(_runningFlushTask, true) == false;
-    }
-
-    void Strand::StartFlushTask()
-    {
-        execution::Post(*_executor, [this, self = SharedFromThis()]()
+        execution::Post(*_executor, [self = SharedFromThis(), this]()
             {
                 this->FlushTasks();
             });
@@ -91,62 +146,60 @@ namespace zerosugar
 
     void Strand::FlushTasks()
     {
-        SwapBuffer();
-
+        const auto threadId = std::this_thread::get_id();
+        int32_t taskCount = 0;
         {
-            ExecutionContext::ExecutorGuard guard(this);
+            std::lock_guard lock(_spinMutex);
 
-            ExecuteTasks();
-        }
-
-        if (!FinalizeFlush())
-        {
-            StartFlushTask();
-        }
-    }
-
-    void Strand::SwapBuffer()
-    {
-        {
-            std::unique_lock lock(_mutex);
-
-            assert(_runningFlushTask);
-            assert(!_backBuffer.empty());
-            assert(_frontBuffer.empty());
-
-            _frontBuffer.swap(_backBuffer);
-        }
-    }
-
-    void Strand::ExecuteTasks()
-    {
-        for (auto& task : _frontBuffer)
-        {
-            std::visit([]<typename T>(T && va)
+            if (_owner.has_value())
             {
-                std::invoke(va);
-            }, std::move(task));
+                if (*_owner != threadId)
+                {
+                    return;
+                }
+            }
+            else
+            {
+                _owner = threadId;
+            }
+
+            taskCount = _taskCount;
         }
 
-        _frontBuffer.clear();
-    }
+        int32_t count = 0;
 
-    bool Strand::FinalizeFlush()
-    {
-        std::unique_lock lock(_mutex);
-
-        if (_backBuffer.empty())
+        while (count < taskCount)
         {
-            _runningFlushTask = false;
+            task_type task;
+            if (_tasks.try_pop(task))
+            {
+                ++count;
 
-            return true;
+                std::visit([]<typename T>(T && va)
+                {
+                    va();
+                }, std::move(task));
+            }
         }
 
-        return false;
-    }
+        bool shouldContinue = false;
+        {
+            std::lock_guard lock(_spinMutex);
 
-    bool Strand::CanExecuteImmediately() const
-    {
-        return ExecutionContext::Contains(*this);
+            _owner.reset();
+
+            _taskCount -= taskCount;
+            shouldContinue = _taskCount > 0;
+
+            if (!shouldContinue)
+            {
+                _posted = false;
+            }
+        }
+
+        if (shouldContinue)
+        {
+            PostFlushTask();
+        }
     }
 }

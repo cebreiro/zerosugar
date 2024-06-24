@@ -11,6 +11,7 @@ namespace zerosugar
     {
         static constexpr size_t operationCount = sizeof...(Futures);
         const auto counter = std::make_shared<std::atomic<size_t>>(0);
+
         auto context = (std::make_shared<future::SharedContext<void>>());
         context->SetExecutor(executor.SharedFromThis());
 
@@ -34,8 +35,9 @@ namespace zerosugar
     template <std::ranges::range R>
     auto WaitAll(execution::IExecutor& executor, R&& range) -> Future<void>
     {
-        size_t operationCount = std::ranges::distance(range);
-        auto counter = std::make_shared<std::atomic<size_t>>(0);
+        const size_t operationCount = std::ranges::distance(range);
+        const auto counter = std::make_shared<std::atomic<size_t>>(0);
+
         auto context = (std::make_shared<future::SharedContext<void>>());
         context->SetExecutor(executor.SharedFromThis());
 

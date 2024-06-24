@@ -5,6 +5,7 @@
 #include "zerosugar/shared/log/spdlog/spdlog_logger.h"
 #include "zerosugar/shared/log/spdlog/spdlog_logger_builder.h"
 #include "zerosugar/xr/application/all_in_one_app/all_in_one_app_config.h"
+#include "zerosugar/xr/data/navigation_data_provider.h"
 #include "zerosugar/xr/network/rpc/rpc_client.h"
 #include "zerosugar/xr/network/rpc/rpc_server.h"
 #include "zerosugar/xr/server/game/game_server.h"
@@ -22,6 +23,7 @@ namespace zerosugar::xr
         , _executor(std::make_shared<execution::AsioExecutor>(_config->workerCount))
         , _logService(std::make_shared<LogService>())
         , _connectionPool(std::make_shared<db::ConnectionPool>(_executor))
+        , _navigationDataProvider(std::make_shared<NavigationDataProvider>())
         , _rpcServer(std::make_shared<RPCServer>(_executor))
         , _rpcClient(std::make_shared<RPCClient>(_executor))
         , _loginServer(std::make_shared<LoginServer>(*_executor))
@@ -42,6 +44,8 @@ namespace zerosugar::xr
 
         serviceLocator.Add<RPCServer>(_rpcServer);
         serviceLocator.Add<RPCClient>(_rpcClient);
+
+        serviceLocator.Add<NavigationDataProvider>(_navigationDataProvider);
 
         serviceLocator.Add<service::ILoginService>(_loginServiceProxy);
         serviceLocator.Add<service::IGatewayService>(_gatewayServiceProxy);
@@ -69,6 +73,7 @@ namespace zerosugar::xr
 
         ServiceLocator& serviceLocator = GetServiceLocator();
 
+        InitializeGameData(serviceLocator);
         InitializeService(serviceLocator);
         InitializeServer(serviceLocator);
     }
@@ -147,6 +152,16 @@ namespace zerosugar::xr
         _connectionPool->Start(option);
 
         ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize database connection --> Done", GetName()));
+    }
+
+    void AllInOneApp::InitializeGameData(ServiceLocator& serviceLocator)
+    {
+        ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize game data", GetName()));
+
+        _navigationDataProvider->Initialize(serviceLocator);
+        _navigationDataProvider->StartUp(_config->navigationDataDirectoryPath);
+
+        ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize game data --> Done", GetName()));
     }
 
     void AllInOneApp::InitializeService(ServiceLocator& serviceLocator)
