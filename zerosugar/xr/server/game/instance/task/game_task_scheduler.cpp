@@ -469,8 +469,6 @@ namespace zerosugar::xr
     {
         assert(process.HasTask());
 
-        const GameTask& task = process.GetTask();
-
         const auto deallocate = [this, &process](int64_t id)
             {
                 const auto iter = _resources.find(id);
@@ -479,12 +477,12 @@ namespace zerosugar::xr
                     return;
                 }
 
-                Resource& ownership = iter->second;
-                assert(ownership.state == Resource::StateType::Assigned);
-                assert(ownership.acquired && ownership.acquired == &process);
+                Resource& resource = iter->second;
+                assert(resource.state == Resource::StateType::Assigned);
+                assert(resource.acquired && resource.acquired == &process);
 
-                ownership.state = Resource::StateType::Free;
-                ownership.acquired = nullptr;
+                resource.state = Resource::StateType::Free;
+                resource.acquired = nullptr;
             };
 
         for (int64_t id : process.GetTask().GetTargetIds())
