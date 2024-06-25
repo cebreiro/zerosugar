@@ -1,5 +1,6 @@
 #include "game_task_scheduler.h"
 
+#include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/task/game_task.h"
 
 namespace zerosugar::xr
@@ -38,7 +39,7 @@ namespace zerosugar::xr
         return _id;
     }
 
-    auto GameTaskScheduler::Process::GetTask() const -> const GameTaskBase&
+    auto GameTaskScheduler::Process::GetTask() const -> GameTask&
     {
         assert(_task);
 
@@ -65,7 +66,7 @@ namespace zerosugar::xr
         _id = id;
     }
 
-    void GameTaskScheduler::Process::SetTask(std::unique_ptr<GameTaskBase> task)
+    void GameTaskScheduler::Process::SetTask(std::unique_ptr<GameTask> task)
     {
         _task = std::move(task);
     }
@@ -85,9 +86,35 @@ namespace zerosugar::xr
         _starvationCount = value;
     }
 
-    GameTaskScheduler::GameTaskScheduler(SharedPtrNotNull<Strand> strand)
-        : _strand(std::move(strand))
+    GameTaskScheduler::GameTaskScheduler(GameInstance& gameInstance)
+        : _gameInstance(gameInstance)
     {
+    }
+
+    void GameTaskScheduler::Shutdown()
+    {
+        _shutdown = true;
+    }
+
+    auto GameTaskScheduler::Join() -> Future<void>
+    {
+        if (!ExecutionContext::Contains(_gameInstance.GetStrand()))
+        {
+            co_await _gameInstance.GetStrand();
+        }
+
+        set_type& processes = GetProcessesBy(Process::State::Running);
+        if (processes.empty())
+        {
+            co_return;
+        }
+
+        _shutdownJoinPromise.emplace();
+
+        Future<void> future = _shutdownJoinPromise->GetFuture();
+        co_await future;
+
+        co_return;
     }
 
     auto GameTaskScheduler::AddProcess() -> Future<int64_t>
@@ -95,14 +122,14 @@ namespace zerosugar::xr
         [[maybe_unused]]
         auto self = shared_from_this();
 
-        if (!ExecutionContext::Contains(*_strand))
+        if (!ExecutionContext::Contains(_gameInstance.GetStrand()))
         {
-            co_await *_strand;
+            co_await _gameInstance.GetStrand();
         }
 
         const int64_t taskQueueId = ++_nextTaskQueueId;
 
-        if (_processTaskQueues.try_emplace(taskQueueId, std::vector<GameTaskBase>()).second)
+        if (_processTaskQueues.try_emplace(taskQueueId, std::vector<GameTask>()).second)
         {
             Process& process = CreateProcess(taskQueueId);
 
@@ -121,9 +148,9 @@ namespace zerosugar::xr
         [[maybe_unused]]
         auto self = shared_from_this();
 
-        if (!ExecutionContext::Contains(*_strand))
+        if (!ExecutionContext::Contains(_gameInstance.GetStrand()))
         {
-            co_await *_strand;
+            co_await _gameInstance.GetStrand();
         }
 
         co_return _processTaskQueues.erase(id);
@@ -134,9 +161,9 @@ namespace zerosugar::xr
         [[maybe_unused]]
         auto self = shared_from_this();
 
-        if (!ExecutionContext::Contains(*_strand))
+        if (!ExecutionContext::Contains(_gameInstance.GetStrand()))
         {
-            co_await *_strand;
+            co_await _gameInstance.GetStrand();
         }
 
         co_return _resources.try_emplace(id, Resource{}).second;
@@ -147,25 +174,30 @@ namespace zerosugar::xr
         [[maybe_unused]]
         auto self = shared_from_this();
 
-        if (!ExecutionContext::Contains(*_strand))
+        if (!ExecutionContext::Contains(_gameInstance.GetStrand()))
         {
-            co_await *_strand;
+            co_await _gameInstance.GetStrand();
         }
 
         co_return _resources.erase(id);
     }
 
-    void GameTaskScheduler::Schedule(std::unique_ptr<GameTaskBase> task, std::optional<int64_t> processId)
+    void GameTaskScheduler::Schedule(std::unique_ptr<GameTask> task, std::optional<int64_t> processId)
     {
-        Dispatch(*_strand, [self = shared_from_this(), task = std::move(task), processId]() mutable
+        Dispatch(_gameInstance.GetStrand(), [self = shared_from_this(), task = std::move(task), processId]() mutable
             {
                 self->ScheduleImpl(std::move(task), processId);
             });
     }
 
-    void GameTaskScheduler::ScheduleImpl(std::unique_ptr<GameTaskBase> task, std::optional<int64_t> processId)
+    void GameTaskScheduler::ScheduleImpl(std::unique_ptr<GameTask> task, std::optional<int64_t> processId)
     {
-        assert(ExecutionContext::IsEqualTo(*_strand));
+        assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
+
+        if (_shutdown)
+        {
+            return;
+        }
 
         Process* process = nullptr;
 
@@ -243,9 +275,9 @@ namespace zerosugar::xr
             return false;
         }
 
-        const GameTaskBase& task = process.GetTask();
+        const GameTask& task = process.GetTask();
 
-        const auto nullOrAcquirable = [process = &process](const Resource* resource)
+        const auto canAcquire = [process = &process](const Resource* resource)
             {
                 if (!resource)
                 {
@@ -257,7 +289,7 @@ namespace zerosugar::xr
                     return false;
                 }
 
-                if (!resource->reservers.empty() && resource->reservers.front() != process)
+                if (!resource->reserved.empty() && !resource->reserved.contains(process))
                 {
                     return false;
                 }
@@ -265,77 +297,10 @@ namespace zerosugar::xr
                 return true;
             };
 
-        if (const Resource* resource = FindResource(*task.GetMainTargetId());
-            nullOrAcquirable(resource))
-        {
-            if (std::ranges::all_of(task.GetSubTargetIds(), [nullOrAcquirable, this](int64_t id)
-                {
-                    return nullOrAcquirable(FindResource(id));
-                }))
+        return std::ranges::all_of(task.GetTargetIds(), [canAcquire, this](int64_t id)
             {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    void GameTaskScheduler::OnComplete(Process& process)
-    {
-        assert(ExecutionContext::IsEqualTo(*_strand));
-        assert(process.GetState() == Process::State::Running);
-        assert(process.HasTask());
-
-        DeallocateResource(process);
-
-        const std::optional<int64_t> taskQueueId = process.GetTaskQueueId();
-
-        std::optional<Process::State> newState = std::nullopt;
-
-        do
-        {
-            if (!taskQueueId.has_value())
-            {
-                break;
-            }
-
-            const int64_t queueId = *taskQueueId;
-
-            const auto iter = _processTaskQueues.find(queueId);
-            if (iter == _processTaskQueues.end())
-            {
-                break;
-            }
-
-            auto& queue = iter->second;
-            if (queue.empty())
-            {
-                newState = Process::State::Waiting;
-            }
-            else
-            {
-                std::unique_ptr<GameTaskBase> task = std::move(queue.front());
-                queue.pop();
-
-                process.SetTask(std::move(task));
-                process.SetStarvationCount(0);
-
-                newState = Process::State::Ready;
-            }
-
-            
-        } while (false);
-
-        if (newState)
-        {
-            ChangeState(process, *newState);
-        }
-        else
-        {
-            ExitProcess(process);
-        }
-
-        TryStartAll();
+                return canAcquire(FindResource(id));
+            });
     }
 
     void GameTaskScheduler::TryStartAll()
@@ -364,44 +329,106 @@ namespace zerosugar::xr
 
     void GameTaskScheduler::Start(Process& process)
     {
-        // container 에서 찾아서 target 이 없는 경우 따져봐야함
-        // 태스크 버리고 복귀시킬수도?
-
-        Post(*_executor, [self = shared_from_this(), process = &process]() mutable
+        Post(_gameInstance.GetExecutor(), [self = shared_from_this(), process = &process]() mutable
             {
-                // task->Start()
+                process->GetTask().Start(self->_gameInstance);
 
-                Strand* strand = self->_strand.get();
+                Strand& strand = self->_gameInstance.GetStrand();
 
-                Post(*strand, [self = std::move(self), process]()
+                Dispatch(strand, [self = std::move(self), process]()
                     {
+                        process->GetTask().Complete(self->_gameInstance);
+                        
                         self->OnComplete(*process);
                     });
             });
+    }
+
+    void GameTaskScheduler::OnComplete(Process& process)
+    {
+        assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
+        assert(process.GetState() == Process::State::Running);
+        assert(process.HasTask());
+
+        DeallocateResource(process);
+
+        const std::optional<int64_t> taskQueueId = process.GetTaskQueueId();
+
+        std::optional<Process::State> newState = std::nullopt;
+
+        do
+        {
+            if (!taskQueueId.has_value())
+            {
+                break;
+            }
+
+            const int64_t queueId = *taskQueueId;
+
+            const auto iter = _processTaskQueues.find(queueId);
+            if (iter == _processTaskQueues.end())
+            {
+                break;
+            }
+
+            if (auto& queue = iter->second; queue.empty())
+            {
+                newState = Process::State::Waiting;
+            }
+            else
+            {
+                std::unique_ptr<GameTask> task = std::move(queue.front());
+                queue.pop();
+
+                process.SetTask(std::move(task));
+                process.SetStarvationCount(0);
+
+                newState = Process::State::Ready;
+            }
+
+            
+        } while (false);
+
+        if (newState)
+        {
+            ChangeState(process, *newState);
+        }
+        else
+        {
+            ExitProcess(process);
+        }
+
+        if (_shutdown)
+        {
+            set_type& runningProcesses = GetProcessesBy(Process::State::Running);
+            if (runningProcesses.empty() && _shutdownJoinPromise)
+            {
+                _shutdownJoinPromise->Set();
+            }
+
+            return;
+        }
+
+        TryStartAll();
     }
 
     void GameTaskScheduler::ReserveResource(const Process& process)
     {
         assert(process.HasTask());
 
-        const GameTaskBase& task = process.GetTask();
-
-        const std::optional<int64_t> mainTarget = task.GetMainTargetId();
-        assert(mainTarget);
-
         const auto reserve = [this](int64_t id, const Process& process)
             {
                 const auto iter = _resources.find(id);
                 assert(iter != _resources.end());
 
-                Resource& ownership = iter->second;
+                Resource& resource = iter->second;
 
-                ownership.reservers.push_back(&process);
+                [[maybe_unused]]
+                const bool inserted = resource.reserved.emplace(&process).second;
+                assert(inserted);
             };
 
-        reserve(*mainTarget, process);
-
-        for (int64_t targetId : task.GetSubTargetIds())
+        for (int64_t targetId : process.GetTask().GetTargetIds())
         {
             reserve(targetId, process);
         }
@@ -411,33 +438,28 @@ namespace zerosugar::xr
     {
         assert(process.HasTask());
 
-        const GameTaskBase& task = process.GetTask();
-
-        const std::optional<int64_t> mainTarget = task.GetMainTargetId();
-        assert(mainTarget);
-
         const auto allocate = [this](int64_t id, const Process& process)
             {
-                const auto iter = _resources.find(id);
-                assert(iter != _resources.end());
+                const auto iterResource = _resources.find(id);
+                assert(iterResource != _resources.end());
 
-                Resource& ownership = iter->second;
-                assert(ownership.state == Resource::StateType::Free);
-                assert(!ownership.acquired);
+                Resource& resource = iterResource->second;
+                assert(resource.state == Resource::StateType::Free);
+                assert(!resource.acquired);
 
-                ownership.state = Resource::StateType::Assigned;
-                ownership.acquired = &process;
+                resource.state = Resource::StateType::Assigned;
+                resource.acquired = &process;
 
-                if (std::vector<const Process*>& reserved = ownership.reservers;
-                    !reserved.empty() && reserved.front() == &process)
+                if (auto& reserved = resource.reserved; !reserved.empty())
                 {
-                    reserved.erase(reserved.begin());
+                    if (const auto iter = reserved.find(&process); iter != reserved.end())
+                    {
+                        reserved.erase(iter);
+                    }
                 }
             };
 
-        allocate(*mainTarget, process);
-
-        for (int64_t targetId : task.GetSubTargetIds())
+        for (int64_t targetId : process.GetTask().GetTargetIds())
         {
             allocate(targetId, process);
         }
@@ -447,10 +469,7 @@ namespace zerosugar::xr
     {
         assert(process.HasTask());
 
-        const GameTaskBase& task = process.GetTask();
-
-        const std::optional<int64_t> mainTarget = task.GetMainTargetId();
-        assert(mainTarget);
+        const GameTask& task = process.GetTask();
 
         const auto deallocate = [this, &process](int64_t id)
             {
@@ -468,9 +487,7 @@ namespace zerosugar::xr
                 ownership.acquired = nullptr;
             };
 
-        deallocate(*mainTarget);
-
-        for (int64_t id : task.GetSubTargetIds())
+        for (int64_t id : process.GetTask().GetTargetIds())
         {
             deallocate(id);
         }

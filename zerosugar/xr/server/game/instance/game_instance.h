@@ -4,6 +4,10 @@
 namespace zerosugar::xr
 {
     class GameClient;
+    class GameEntityContainer;
+    class GameEntityViewContainer;
+    class GameSpatialContainer;
+    class GameTaskScheduler;
 
     class GameInstance final
         : public std::enable_shared_from_this<GameInstance>
@@ -14,16 +18,36 @@ namespace zerosugar::xr
     public:
         GameInstance(SharedPtrNotNull<execution::IExecutor> executor, service_locator_type serviceLocator,
             game_instance_id_type id, int32_t zoneId);
+        ~GameInstance();
 
         auto Accept(SharedPtrNotNull<GameClient> client) -> Future<void>;
+
+        auto GetExecutor() const -> execution::IExecutor&;
+        auto GetStrand() const -> Strand&;
+        auto GetServiceLocator() -> service_locator_type&;
 
         auto GetId() const -> game_instance_id_type;
         auto GetZoneId() const -> int32_t;
 
+        // TODO: return get_serial_context, get_parallel_context
+        auto GetEntityContainer() -> GameEntityContainer&;
+        auto GetEntityContainer() const -> const GameEntityContainer&;
+        auto GetEntityViewContainer() -> GameEntityViewContainer&;
+        auto GetEntityViewContainer() const -> const GameEntityViewContainer&;
+        auto GetSpatialContainer() -> GameSpatialContainer&;
+        auto GetSpatialContainer() const -> const GameSpatialContainer&;
+
     private:
+        SharedPtrNotNull<execution::IExecutor> _executor;
         SharedPtrNotNull<Strand> _strand;
         service_locator_type _serviceLocator;
+
         game_instance_id_type _id;
         int32_t _zoneId = 0;
+
+        std::unique_ptr<GameEntityContainer> _entityContainer;
+        std::unique_ptr<GameEntityViewContainer> _entityViewContainer;
+        std::unique_ptr<GameSpatialContainer> _spatialContainer;
+        std::unique_ptr<GameTaskScheduler> _taskScheduler;
     };
 }

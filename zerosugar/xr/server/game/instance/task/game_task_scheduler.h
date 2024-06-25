@@ -1,8 +1,10 @@
 #pragma once
+#include <boost/unordered/unordered_flat_set.hpp>
 
 namespace zerosugar::xr
 {
-    class GameTaskBase;
+    class GameTask;
+    class GameInstance;
 
     class GameTaskScheduler final
         : public std::enable_shared_from_this<GameTaskScheduler>
@@ -33,20 +35,20 @@ namespace zerosugar::xr
             void AddStarvationCount();
 
             auto GetId() const -> int64_t;
-            auto GetTask() const -> const GameTaskBase&;
+            auto GetTask() const -> GameTask&;
             auto GetTaskQueueId() const -> std::optional<int64_t>;
             auto GetState() const -> State;
             auto GetStarvationCount() const -> int64_t;
 
             void SetId(int64_t id);
-            void SetTask(std::unique_ptr<GameTaskBase> task);
+            void SetTask(std::unique_ptr<GameTask> task);
             void SetTaskQueueId(std::optional<int64_t> id);
             void SetState(State state);
             void SetStarvationCount(int64_t value);
 
         private:
             int64_t _id = 0;
-            std::unique_ptr<GameTaskBase> _task;
+            std::unique_ptr<GameTask> _task;
             std::optional<int64_t> _taskQueueId = std::nullopt;
 
             State _state = State::Waiting;
@@ -63,12 +65,16 @@ namespace zerosugar::xr
 
             StateType state = StateType::Free;
             const Process* acquired = nullptr;
-            std::vector<const Process*> reservers;
+
+            boost::unordered::unordered_flat_set<const Process*> reserved;
         };
 
     public:
         GameTaskScheduler() = delete;
-        explicit GameTaskScheduler(SharedPtrNotNull<Strand> strand);
+        explicit GameTaskScheduler(GameInstance& gameInstance);
+
+        void Shutdown();
+        auto Join() -> Future<void>;
 
         auto AddProcess() -> Future<int64_t>;
         auto RemoveProcess(int64_t id) -> Future<bool>;
@@ -76,20 +82,20 @@ namespace zerosugar::xr
         auto AddResource(int64_t id) -> Future<bool>;
         auto RemoveResource(int64_t id) -> Future<bool>;
 
-        void Schedule(std::unique_ptr<GameTaskBase> task, std::optional<int64_t> processId = std::nullopt);
+        void Schedule(std::unique_ptr<GameTask> task, std::optional<int64_t> processId = std::nullopt);
 
     private:
-        void ScheduleImpl(std::unique_ptr<GameTaskBase> task, std::optional<int64_t> processId);
+        void ScheduleImpl(std::unique_ptr<GameTask> task, std::optional<int64_t> processId);
 
         auto FindProcess(int64_t id) const -> const Process*;
         auto FindResource(int64_t id) const -> const Resource*;
 
         bool CanStart(const Process& process) const;
 
-        void OnComplete(Process& process);
-
         void TryStartAll();
         void Start(Process& process);
+
+        void OnComplete(Process& process);
 
         void ReserveResource(const Process& process);
         void AllocateResource(const Process& process);
@@ -106,7 +112,10 @@ namespace zerosugar::xr
         auto GetProcessesBy(Process::State state) -> set_type&;
 
     private:
-        SharedPtrNotNull<Strand> _strand;
+        GameInstance& _gameInstance;
+
+        bool _shutdown = false;
+        std::optional<Promise<void>> _shutdownJoinPromise;
 
         int64_t _nextTaskQueueId = 0;
         int64_t _nextProcessId = 0;
@@ -114,7 +123,7 @@ namespace zerosugar::xr
 
         std::unordered_map<int64_t, Resource> _resources;
 
-        std::unordered_map<int64_t, std::queue<std::unique_ptr<GameTaskBase>>> _processTaskQueues;
+        std::unordered_map<int64_t, std::queue<std::unique_ptr<GameTask>>> _processTaskQueues;
         std::unordered_map<int64_t, Process> _processes;
         std::unordered_map<int64_t, Process> _processesRecycleBuffer;
 
