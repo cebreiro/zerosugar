@@ -5,9 +5,11 @@ namespace zerosugar::xr
 {
     class GameTask;
     class GameInstance;
+}
 
+namespace zerosugar::xr
+{
     class GameTaskScheduler final
-        : public std::enable_shared_from_this<GameTaskScheduler>
     {
         class Process
         {
@@ -72,11 +74,12 @@ namespace zerosugar::xr
     public:
         GameTaskScheduler() = delete;
         explicit GameTaskScheduler(GameInstance& gameInstance);
+        ~GameTaskScheduler();
 
         void Shutdown();
         auto Join() -> Future<void>;
 
-        auto AddProcess() -> Future<int64_t>;
+        auto AddProcess(int64_t id) -> Future<bool>;
         auto RemoveProcess(int64_t id) -> Future<bool>;
 
         auto AddResource(int64_t id) -> Future<bool>;
@@ -123,7 +126,7 @@ namespace zerosugar::xr
 
         std::unordered_map<int64_t, Resource> _resources;
 
-        std::unordered_map<int64_t, std::queue<std::unique_ptr<GameTask>>> _processTaskQueues;
+        std::unordered_map<int64_t, std::queue<UniquePtrNotNull<GameTask>>> _processTaskQueues;
         std::unordered_map<int64_t, Process> _processes;
         std::unordered_map<int64_t, Process> _processesRecycleBuffer;
 

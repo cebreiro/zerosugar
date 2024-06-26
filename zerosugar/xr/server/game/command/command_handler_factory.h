@@ -1,5 +1,5 @@
 #pragma once
-#include "zerosugar/xr/server/game/command/handler/command_handler_factory_interface.h"
+#include "zerosugar/xr/server/game/command/command_handler_factory_interface.h"
 
 namespace zerosugar::xr
 {

@@ -9,7 +9,7 @@ namespace zerosugar::execution
 
 namespace zerosugar::xr
 {
-    class LobbyServerSessionStateMachine;
+    class LobbySessionStateMachine;
 
     class LobbyServer final
         : public Server
@@ -34,6 +34,6 @@ namespace zerosugar::xr
 
         std::string _ip;
         std::optional<SharedSnowflake<>> _snowflake;
-        tbb::concurrent_hash_map<session::id_type, SharedPtrNotNull<LobbyServerSessionStateMachine>> _stateMachines;
+        tbb::concurrent_hash_map<session::id_type, SharedPtrNotNull<LobbySessionStateMachine>> _stateMachines;
     };
 }

@@ -29,7 +29,7 @@ namespace zerosugar::xr::game_task
         explicit MainTargetSelector(game_entity_id_type targetId);
 
         bool SelectEntityId(const GameInstance& gameInstance);
-        void GetTargetId() const -> std::span<const game_entity_id_type>;
+        auto GetTargetId() const -> std::span<const game_entity_id_type>;
 
         bool SelectEntity(const GameInstance& gameInstance);
         auto GetTarget() const -> target_type;

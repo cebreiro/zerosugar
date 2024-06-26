@@ -171,7 +171,7 @@ namespace zerosugar::xr
                 result.errorCode = inserted ? RpcErrorNone : RpcErrorDuplicatedServiceName;
                 result.serviceName = request.serviceName;
 
-                session.Send(RPCPacketBuilder::MakePacket(result));
+                session.Send(RPCPacket::ToBuffer(result));
             }
             break;
             case RequestRemoteProcedureCall::opcode:
@@ -181,7 +181,7 @@ namespace zerosugar::xr
                 const std::shared_ptr<Session>& target = FindSession(request.serviceName);
                 if (target)
                 {
-                    target->Send(RPCPacketBuilder::MakePacket(request));
+                    target->Send(RPCPacket::ToBuffer(request));
                 }
                 else
                 {
@@ -193,7 +193,7 @@ namespace zerosugar::xr
                     result.rpcId = request.rpcId;
                     result.serviceName = request.serviceName;
 
-                    session.Send(RPCPacketBuilder::MakePacket(result));
+                    session.Send(RPCPacket::ToBuffer(result));
                 }
             }
             break;
@@ -204,7 +204,7 @@ namespace zerosugar::xr
                 const std::shared_ptr<Session>& target = FindSession(result.serviceName);
                 if (target)
                 {
-                    target->Send(RPCPacketBuilder::MakePacket(result));
+                    target->Send(RPCPacket::ToBuffer(result));
                 }
                 else
                 {
@@ -220,7 +220,7 @@ namespace zerosugar::xr
                 const std::shared_ptr<Session>& target = FindSession(serverStreaming.serviceName);
                 if (target)
                 {
-                    target->Send(RPCPacketBuilder::MakePacket(serverStreaming));
+                    target->Send(RPCPacket::ToBuffer(serverStreaming));
                 }
                 else
                 {
@@ -236,7 +236,7 @@ namespace zerosugar::xr
                 const std::shared_ptr<Session>& target = FindSession(clientSteaming.serviceName);
                 if (target)
                 {
-                    target->Send(RPCPacketBuilder::MakePacket(clientSteaming));
+                    target->Send(RPCPacket::ToBuffer(clientSteaming));
                 }
                 else
                 {
@@ -252,7 +252,7 @@ namespace zerosugar::xr
                 const std::shared_ptr<Session>& target = FindSession(abort.serviceName);
                 if (target)
                 {
-                    target->Send(RPCPacketBuilder::MakePacket(abort));
+                    target->Send(RPCPacket::ToBuffer(abort));
                 }
                 else
                 {

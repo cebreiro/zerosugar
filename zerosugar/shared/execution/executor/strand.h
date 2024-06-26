@@ -32,6 +32,9 @@ namespace zerosugar
         auto SharedFromThis() const -> SharedPtrNotNull<const IExecutor> override;
 
     private:
+        void Post(task_type task);
+        void Dispatch(task_type task);
+
         void PostFlushTask();
         void FlushTasks();
 

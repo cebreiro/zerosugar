@@ -4,7 +4,7 @@
 
 namespace zerosugar::xr
 {
-    GameTask* GameTask::_localInstance = nullptr;
+    thread_local GameTask* GameTask::_localInstance = nullptr;
 
     GameTask::GameTask(std::chrono::system_clock::time_point creationTimePoint)
         : _creationTimePoint(creationTimePoint)
@@ -49,6 +49,11 @@ namespace zerosugar::xr
     auto GameTask::GetTargetIds() const -> const boost::container::small_vector<int64_t, 8>&
     {
         return _targetIds;
+    }
+
+    bool GameTask::IsInExecution()
+    {
+        return _localInstance != nullptr;
     }
 
     auto GameTask::GetLocalInstance() -> GameTask&

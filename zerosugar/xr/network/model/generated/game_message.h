@@ -36,18 +36,19 @@ namespace zerosugar::xr::network::game
         Rotation rotation = {};
     };
 
-    struct CharacterStat : IBufferDeserializable, IBufferSerializable
+    struct PlayerBase : IBufferDeserializable, IBufferSerializable
     {
         void Deserialize(BufferReader& reader) final;
         void Serialize(BufferWriter& writer) const final;
 
-        int32_t hp = {};
-        int32_t maxHP = {};
-        int32_t attackMin = {};
-        int32_t attackMax = {};
-        int32_t attackRange = {};
-        int32_t attackSpeed = {};
-        int32_t defence = {};
+        float hp = {};
+        float maxHP = {};
+        float attackMin = {};
+        float attackMax = {};
+        float attackRange = {};
+        float attackSpeed = {};
+        float speed = {};
+        float defence = {};
         std::string name = {};
         int32_t level = {};
         int32_t gender = {};
@@ -65,8 +66,9 @@ namespace zerosugar::xr::network::game
         void Deserialize(BufferReader& reader) final;
         void Serialize(BufferWriter& writer) const final;
 
-        int32_t type = {};
         int32_t id = {};
+        int32_t type = {};
+        int32_t count = {};
         int32_t attack = {};
         int32_t defence = {};
         int32_t str = {};
@@ -74,7 +76,7 @@ namespace zerosugar::xr::network::game
         int32_t intell = {};
     };
 
-    struct CharacterEquipment : IBufferDeserializable, IBufferSerializable
+    struct PlayerEquipment : IBufferDeserializable, IBufferSerializable
     {
         void Deserialize(BufferReader& reader) final;
         void Serialize(BufferWriter& writer) const final;
@@ -85,7 +87,7 @@ namespace zerosugar::xr::network::game
         Equipment weapon = {};
     };
 
-    struct CharacterInventoryItem : IBufferDeserializable, IBufferSerializable
+    struct PlayerInventoryItem : IBufferDeserializable, IBufferSerializable
     {
         void Deserialize(BufferReader& reader) final;
         void Serialize(BufferWriter& writer) const final;
@@ -99,17 +101,28 @@ namespace zerosugar::xr::network::game
         int32_t intell = {};
     };
 
-    struct Character : IBufferDeserializable, IBufferSerializable
+    struct RemotePlayer : IBufferDeserializable, IBufferSerializable
     {
         void Deserialize(BufferReader& reader) final;
         void Serialize(BufferWriter& writer) const final;
 
-        int64_t instanceId = {};
+        int64_t id = {};
         Transform transform = {};
-        CharacterStat stat = {};
-        CharacterEquipment equipment = {};
+        PlayerBase base = {};
+        PlayerEquipment equipment = {};
+    };
+
+    struct Player : IBufferDeserializable, IBufferSerializable
+    {
+        void Deserialize(BufferReader& reader) final;
+        void Serialize(BufferWriter& writer) const final;
+
+        int64_t id = {};
+        Transform transform = {};
+        PlayerBase base = {};
+        PlayerEquipment equipment = {};
         int32_t gold = {};
-        std::vector<CharacterInventoryItem> items = {};
+        std::vector<PlayerInventoryItem> items = {};
     };
 
     struct Monster : IBufferDeserializable, IBufferSerializable

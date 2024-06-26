@@ -1,5 +1,5 @@
 #pragma once
-#include "zerosugar/xr/service/coordination/command/handler/command_response_handler_interface.h"
+#include "zerosugar/xr/service/coordination/command/command_response_handler_interface.h"
 #include "zerosugar/xr/service/model/generated/coordination_command_response_message_json.h"
 
 namespace zerosugar::xr::coordination

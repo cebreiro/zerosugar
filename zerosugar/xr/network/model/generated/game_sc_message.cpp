@@ -5,14 +5,36 @@
 
 namespace zerosugar::xr::network::game::sc
 {
-    void Test::Deserialize(PacketReader& reader)
+    void EnterGame::Deserialize(PacketReader& reader)
     {
-        (void)reader;
+        zoneId = reader.Read<int32_t>();
+        remotePlayersCount = reader.Read<int32_t>();
+        for (int32_t i = 0; i < remotePlayersCount; ++i)
+        {
+            remotePlayers.emplace_back(reader.Read<RemotePlayer>());
+        }
+        monstersCount = reader.Read<int32_t>();
+        for (int32_t i = 0; i < monstersCount; ++i)
+        {
+            monsters.emplace_back(reader.Read<Monster>());
+        }
+        localPlayer = reader.Read<Player>();
     }
 
-    void Test::Serialize(PacketWriter& writer) const
+    void EnterGame::Serialize(PacketWriter& writer) const
     {
-        (void)writer;
+        writer.Write<int32_t>(zoneId);
+        writer.Write<int32_t>(remotePlayersCount);
+        for (const auto& item : remotePlayers)
+        {
+            writer.WriteObject(item);
+        }
+        writer.Write<int32_t>(monstersCount);
+        for (const auto& item : monsters)
+        {
+            writer.WriteObject(item);
+        }
+        writer.Write(localPlayer);
     }
 
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>
@@ -20,9 +42,9 @@ namespace zerosugar::xr::network::game::sc
         const int16_t opcode = reader.Read<int16_t>();
         switch(opcode)
         {
-            case Test::opcode:
+            case EnterGame::opcode:
             {
-                auto item = std::make_unique<Test>();
+                auto item = std::make_unique<EnterGame>();
                 item->Deserialize(reader);
 
                 return item;

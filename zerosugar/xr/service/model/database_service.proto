@@ -10,6 +10,7 @@ service DatabaseService
     rpc GetAccount (GetAccountParam) returns (GetAccountResult);
 
     rpc AddCharacter (AddCharacterParam) returns (AddCharacterResult);
+    rpc GetCharacter (GetCharacterParam) returns (GetCharacterResult);
     rpc RemoveCharacter (RemoveCharacterParam) returns (RemoveCharacterResult);
 
     rpc GetLobbyCharacters (GetLobbyCharactersParam) returns (GetLobbyCharactersResult);
@@ -53,6 +54,18 @@ message AddCharacterParam
     DTOCharacterAdd character_add = 1;
     repeated DTOEquipItem equip_items = 2;
     repeated DTOItem items = 3;
+}
+
+message GetCharacterParam
+{
+    int64 character_id = 1;
+}
+
+message GetCharacterResult
+{
+    DatabaseServiceErrorCode error_code = 1;
+
+    DTOCharacter character = 2;
 }
 
 message RemoveCharacterParam

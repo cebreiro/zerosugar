@@ -42,15 +42,16 @@ namespace zerosugar::xr::network::game
         writer.Write(rotation);
     }
 
-    void CharacterStat::Deserialize(BufferReader& reader)
+    void PlayerBase::Deserialize(BufferReader& reader)
     {
-        hp = reader.Read<int32_t>();
-        maxHP = reader.Read<int32_t>();
-        attackMin = reader.Read<int32_t>();
-        attackMax = reader.Read<int32_t>();
-        attackRange = reader.Read<int32_t>();
-        attackSpeed = reader.Read<int32_t>();
-        defence = reader.Read<int32_t>();
+        hp = reader.Read<float>();
+        maxHP = reader.Read<float>();
+        attackMin = reader.Read<float>();
+        attackMax = reader.Read<float>();
+        attackRange = reader.Read<float>();
+        attackSpeed = reader.Read<float>();
+        speed = reader.Read<float>();
+        defence = reader.Read<float>();
         name = reader.ReadString(reader.Read<int16_t>());
         level = reader.Read<int32_t>();
         gender = reader.Read<int32_t>();
@@ -63,15 +64,16 @@ namespace zerosugar::xr::network::game
         staminaMax = reader.Read<float>();
     }
 
-    void CharacterStat::Serialize(BufferWriter& writer) const
+    void PlayerBase::Serialize(BufferWriter& writer) const
     {
-        writer.Write<int32_t>(hp);
-        writer.Write<int32_t>(maxHP);
-        writer.Write<int32_t>(attackMin);
-        writer.Write<int32_t>(attackMax);
-        writer.Write<int32_t>(attackRange);
-        writer.Write<int32_t>(attackSpeed);
-        writer.Write<int32_t>(defence);
+        writer.Write<float>(hp);
+        writer.Write<float>(maxHP);
+        writer.Write<float>(attackMin);
+        writer.Write<float>(attackMax);
+        writer.Write<float>(attackRange);
+        writer.Write<float>(attackSpeed);
+        writer.Write<float>(speed);
+        writer.Write<float>(defence);
         writer.Write<int16_t>((int16_t)std::ssize(name) + 1);
         writer.WriteString(name);
         writer.Write<int32_t>(level);
@@ -87,8 +89,9 @@ namespace zerosugar::xr::network::game
 
     void Equipment::Deserialize(BufferReader& reader)
     {
-        type = reader.Read<int32_t>();
         id = reader.Read<int32_t>();
+        type = reader.Read<int32_t>();
+        count = reader.Read<int32_t>();
         attack = reader.Read<int32_t>();
         defence = reader.Read<int32_t>();
         str = reader.Read<int32_t>();
@@ -98,8 +101,9 @@ namespace zerosugar::xr::network::game
 
     void Equipment::Serialize(BufferWriter& writer) const
     {
-        writer.Write<int32_t>(type);
         writer.Write<int32_t>(id);
+        writer.Write<int32_t>(type);
+        writer.Write<int32_t>(count);
         writer.Write<int32_t>(attack);
         writer.Write<int32_t>(defence);
         writer.Write<int32_t>(str);
@@ -107,7 +111,7 @@ namespace zerosugar::xr::network::game
         writer.Write<int32_t>(intell);
     }
 
-    void CharacterEquipment::Deserialize(BufferReader& reader)
+    void PlayerEquipment::Deserialize(BufferReader& reader)
     {
         reader.Read(armor);
         reader.Read(gloves);
@@ -115,7 +119,7 @@ namespace zerosugar::xr::network::game
         reader.Read(weapon);
     }
 
-    void CharacterEquipment::Serialize(BufferWriter& writer) const
+    void PlayerEquipment::Serialize(BufferWriter& writer) const
     {
         writer.Write(armor);
         writer.Write(gloves);
@@ -123,7 +127,7 @@ namespace zerosugar::xr::network::game
         writer.Write(weapon);
     }
 
-    void CharacterInventoryItem::Deserialize(BufferReader& reader)
+    void PlayerInventoryItem::Deserialize(BufferReader& reader)
     {
         id = reader.Read<int32_t>();
         count = reader.Read<int32_t>();
@@ -134,7 +138,7 @@ namespace zerosugar::xr::network::game
         intell = reader.Read<int32_t>();
     }
 
-    void CharacterInventoryItem::Serialize(BufferWriter& writer) const
+    void PlayerInventoryItem::Serialize(BufferWriter& writer) const
     {
         writer.Write<int32_t>(id);
         writer.Write<int32_t>(count);
@@ -145,21 +149,37 @@ namespace zerosugar::xr::network::game
         writer.Write<int32_t>(intell);
     }
 
-    void Character::Deserialize(BufferReader& reader)
+    void RemotePlayer::Deserialize(BufferReader& reader)
     {
-        instanceId = reader.Read<int64_t>();
+        id = reader.Read<int64_t>();
         reader.Read(transform);
-        reader.Read(stat);
+        reader.Read(base);
+        reader.Read(equipment);
+    }
+
+    void RemotePlayer::Serialize(BufferWriter& writer) const
+    {
+        writer.Write<int64_t>(id);
+        writer.Write(transform);
+        writer.Write(base);
+        writer.Write(equipment);
+    }
+
+    void Player::Deserialize(BufferReader& reader)
+    {
+        id = reader.Read<int64_t>();
+        reader.Read(transform);
+        reader.Read(base);
         reader.Read(equipment);
         gold = reader.Read<int32_t>();
         reader.Read(items, reader.Read<int16_t>());
     }
 
-    void Character::Serialize(BufferWriter& writer) const
+    void Player::Serialize(BufferWriter& writer) const
     {
-        writer.Write<int64_t>(instanceId);
+        writer.Write<int64_t>(id);
         writer.Write(transform);
-        writer.Write(stat);
+        writer.Write(base);
         writer.Write(equipment);
         writer.Write<int32_t>(gold);
         writer.Write<int16_t>((int16_t)std::ssize(items) + 1);

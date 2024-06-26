@@ -2,8 +2,8 @@
 
 #include "zerosugar/shared/execution/executor/strand.h"
 #include "zerosugar/xr/server/game/game_server.h"
-#include "zerosugar/xr/server/game/command/handler/command_handler_interface.h"
-#include "zerosugar/xr/server/game/command/handler/command_handler_factory_interface.h"
+#include "zerosugar/xr/server/game/command/command_handler_interface.h"
+#include "zerosugar/xr/server/game/command/command_handler_factory_interface.h"
 #include "zerosugar/xr/service/model/generated/coordination_command_message.h"
 #include "zerosugar/xr/service/model/generated/coordination_command_response_message_json.h"
 

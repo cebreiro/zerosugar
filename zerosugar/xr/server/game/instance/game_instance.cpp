@@ -1,8 +1,15 @@
 #include "game_instance.h"
 
+#include "zerosugar/xr/network/model/generated/game_sc_message.h"
+#include "zerosugar/xr/server/game/instance/component/movement_component.h"
+#include "zerosugar/xr/server/game/instance/controller/game_entity_controller_interface.h"
+#include "zerosugar/xr/server/game/instance/entity/game_entity.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_container.h"
+#include "zerosugar/xr/server/game/instance/entity/game_entity_view.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_view_container.h"
 #include "zerosugar/xr/server/game/instance/grid/game_spatial_container.h"
+#include "zerosugar/xr/server/game/instance/task/game_task_scheduler.h"
+#include "zerosugar/xr/server/game/packet/packet_builder.h"
 
 namespace zerosugar::xr
 {
@@ -15,7 +22,8 @@ namespace zerosugar::xr
         , _zoneId(zoneId)
         , _entityContainer(std::make_unique<GameEntityContainer>())
         , _entityViewContainer(std::make_unique<GameEntityViewContainer>())
-        //, _spatialContainer(std::make_unique<GameSpatialContainer>(0, 0, 0))
+        , _spatialContainer(std::make_unique<GameSpatialContainer>(10000, 10000, 250))
+        , _taskScheduler(std::make_unique<GameTaskScheduler>(*this))
     {
     }
 
@@ -23,11 +31,40 @@ namespace zerosugar::xr
     {
     }
 
-    auto GameInstance::Accept(SharedPtrNotNull<GameClient> client) -> Future<void>
+    auto GameInstance::SpawnEntity(SharedPtrNotNull<GameEntity> entity) -> Future<void>
     {
-        (void)client;
+        [[maybe_unused]]
+        auto self = shared_from_this();
 
-        co_return;
+        if (!ExecutionContext::IsEqualTo(*_strand))
+        {
+            co_await *_strand;
+        }
+
+        bool result = _entityContainer->Add(entity);
+        assert(result);
+
+        auto entityView = new GameEntityView(*entity);
+
+        result = _entityViewContainer->Add(std::unique_ptr<GameEntityView>(entityView));
+        assert(result);
+
+        result = co_await _taskScheduler->AddProcess(entity->GetId().Unwrap());
+        assert(result);
+
+        const MovementComponent& movementComponent = entity->GetComponent<MovementComponent>();
+
+        GameSpatialSector& sector = _spatialContainer->GetSector(
+            static_cast<int32_t>(movementComponent.GetX()), static_cast<int32_t>(movementComponent.GetY()));
+        sector.AddEntity(entity->GetId());
+
+        if (entity->GetController().IsSubscriberOf(network::game::sc::EnterGame::opcode))
+        {
+            network::game::sc::EnterGame packet;
+            GamePacketBuilder::Build(packet, *this, *entity, sector);
+
+            entity->GetController().Notify(packet);
+        }
     }
 
     auto GameInstance::GetExecutor() const -> execution::IExecutor&

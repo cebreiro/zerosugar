@@ -18,15 +18,6 @@ namespace zerosugar::xr::service
         int32_t deleted = {};
     };
 
-    struct DTOItemOption
-    {
-        int32_t attack = {};
-        int32_t defence = {};
-        int32_t str = {};
-        int32_t dex = {};
-        int32_t intell = {};
-    };
-
     struct DTOItem
     {
         int64_t itemId = {};
@@ -37,6 +28,12 @@ namespace zerosugar::xr::service
         std::optional<int32_t> str = {};
         std::optional<int32_t> dex = {};
         std::optional<int32_t> intell = {};
+    };
+
+    struct DTOEquipment
+    {
+        int64_t itemId = {};
+        int32_t equipPosition = {};
     };
 
     struct DTOEquipItem
@@ -84,6 +81,25 @@ namespace zerosugar::xr::service
         int32_t hairId = {};
         int32_t zoneId = {};
         std::vector<DTOLobbyItem> items = {};
+    };
+
+    struct DTOCharacter
+    {
+        int64_t characterId = {};
+        std::string name = {};
+        int32_t level = {};
+        int32_t str = {};
+        int32_t dex = {};
+        int32_t intell = {};
+        int32_t job = {};
+        int32_t faceId = {};
+        int32_t hairId = {};
+        int32_t zoneId = {};
+        float x = {};
+        float y = {};
+        float z = {};
+        std::vector<DTOItem> items = {};
+        std::vector<DTOEquipment> equipments = {};
     };
 
 }

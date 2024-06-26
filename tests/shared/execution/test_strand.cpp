@@ -1,7 +1,10 @@
+#include "zerosugar/shared/execution/executor/executor_coroutine_traits.h"
 #include "zerosugar/shared/execution/executor/strand.h"
 #include "zerosugar/shared/execution/executor/static_thread_pool.h"
 #include "zerosugar/shared/execution/executor/operation/dispatch.h"
 #include "zerosugar/shared/execution/executor/operation/post.h"
+#include "zerosugar/shared/execution/future/future.h"
+#include "zerosugar/shared/execution/future/future_coroutine_traits.h"
 
 using zerosugar::execution::IExecutor;
 using zerosugar::Strand;
@@ -85,6 +88,72 @@ TEST(Strand, Dispatch)
     EXPECT_EQ(result[0], 0); // 2
     EXPECT_EQ(result[1], 1); // 0
     EXPECT_EQ(result[2], 2); // 1
+}
+
+TEST(Strand, AwaitStrandExecutor)
+{
+    std::atomic<bool> done = false;
+
+    // arrange
+    auto& executor = static_cast<IExecutor&>(StaticThreadPool::GetInstance());
+    auto strand = std::make_shared<Strand>(executor.SharedFromThis());
+
+    using namespace zerosugar;
+
+    // act
+    Post(*strand, [](SharedPtrNotNull<Strand> strand, std::atomic<bool>& done) -> Future<void>
+        {
+            co_await *strand;
+
+            co_await *strand;
+
+            done.store(true);
+            done.notify_one();
+
+            co_return;
+        }, strand, std::ref(done));
+
+    done.wait(false);
+
+    // assert
+}
+
+TEST(Strand, AwaitStrandMultpleThreads)
+{
+    std::atomic<int64_t> count = 0;
+    std::atomic<bool> done = false;
+
+    // arrange
+    auto& executor = static_cast<IExecutor&>(StaticThreadPool::GetInstance());
+    auto strand = std::make_shared<Strand>(executor.SharedFromThis());
+
+    using namespace zerosugar;
+
+    const auto notify = [&]()
+        {
+            if (count.fetch_add(1) == 999)
+            {
+                done.store(true);
+                done.notify_one();
+            }
+        };
+
+    // act
+    for (size_t i = 0; i < 1000; ++i)
+    {
+        Post(executor, [](SharedPtrNotNull<Strand> strand, auto notify) -> Future<void>
+            {
+                co_await *strand;
+
+                notify();
+
+                co_return;
+            }, strand, notify);
+    }
+
+    done.wait(false);
+
+    // assert
 }
 
 TEST(Strand, HandlersExecuteSequentially)

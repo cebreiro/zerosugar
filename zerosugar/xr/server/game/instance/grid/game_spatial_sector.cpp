@@ -41,6 +41,14 @@ namespace zerosugar::xr
         _cells.insert(iter, cell);
     }
 
+    void GameSpatialSector::AddEntity(game_entity_id_type id)
+    {
+        for (PtrNotNull<GameSpatialCell> cell : _cells)
+        {
+            cell->AddEntity(id);
+        }
+    }
+
     auto GameSpatialSector::Difference(const GameSpatialSector& other) const -> View
     {
         View view;

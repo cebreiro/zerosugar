@@ -4,8 +4,7 @@
 
 namespace zerosugar::xr::db::sp
 {
-    class EquipItemsAdd final
-        : public StoredProcedure
+    class EquipItemsAdd final : public StoredProcedure
     {
     public:
         EquipItemsAdd(zerosugar::db::ConnectionPool::Borrowed& conn,

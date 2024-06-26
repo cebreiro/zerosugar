@@ -2,7 +2,7 @@
 
 #include "zerosugar/shared/execution/executor/impl/asio_strand.h"
 #include "zerosugar/shared/network/session/session.h"
-#include "zerosugar/xr/network/packet_builder.h"
+#include "zerosugar/xr/network/packet.h"
 #include "zerosugar/xr/network/model/generated/login_cs_message.h"
 #include "zerosugar/xr/network/model/generated/login_sc_message.h"
 
@@ -18,7 +18,7 @@ namespace zerosugar::xr
         TransitionGuard& operator=(TransitionGuard&&) noexcept = delete;
 
     public:
-        TransitionGuard(LoginServerSessionStateMachine& stateMachine, LoginSessionState state)
+        TransitionGuard(LoginSessionStateMachine& stateMachine, LoginSessionState state)
             : _stateMachine(stateMachine)
             , _state(state)
         {
@@ -31,15 +31,15 @@ namespace zerosugar::xr
         }
 
     private:
-        LoginServerSessionStateMachine& _stateMachine;
+        LoginSessionStateMachine& _stateMachine;
         LoginSessionState _state = {};
     };
 }
 
 namespace zerosugar::xr::login
 {
-    ConnectedState::ConnectedState(LoginServerSessionStateMachine& stateMachine, ServiceLocator& serviceLocator, Session& session)
-        : LoginServerSessionStateMachine::state_type(LoginSessionState::Connected)
+    ConnectedState::ConnectedState(LoginSessionStateMachine& stateMachine, ServiceLocator& serviceLocator, Session& session)
+        : LoginSessionStateMachine::state_type(LoginSessionState::Connected)
         , _stateMachine(stateMachine)
         , _serviceLocator(serviceLocator)
         , _session(session.weak_from_this())
@@ -80,7 +80,6 @@ namespace zerosugar::xr::login
             };
 
             const LoginResult& serviceResult = co_await service.LoginAsync(std::move(loginParam));
-
             assert(ExecutionContext::IsEqualTo(session->GetStrand()));
 
             sc::LoginResult result;
@@ -107,7 +106,7 @@ namespace zerosugar::xr::login
                 }
             }
 
-            session->Send(PacketBuilder::MakePacket(result));
+            session->Send(Packet::ToBuffer(result));
         }
         break;
         case cs::CreateAccount::opcode:
@@ -129,7 +128,7 @@ namespace zerosugar::xr::login
             sc::CreateAccountResult result;
             result.success = serviceResult.errorCode == LoginServiceErrorCode::LoginErrorNone;
 
-            session->Send(PacketBuilder::MakePacket(result));
+            session->Send(Packet::ToBuffer(result));
 
             co_return;
         }
@@ -145,7 +144,7 @@ namespace zerosugar::xr::login
     }
 
     AuthenticatedState::AuthenticatedState(Session& session)
-        : LoginServerSessionStateMachine::state_type(LoginSessionState::Authenticated)
+        : LoginSessionStateMachine::state_type(LoginSessionState::Authenticated)
         , _session(session.weak_from_this())
     {
     }

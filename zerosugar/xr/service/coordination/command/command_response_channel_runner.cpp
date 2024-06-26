@@ -1,8 +1,8 @@
 #include "command_response_channel_runner.h"
 
 #include "zerosugar/xr/service/coordination/coordination_service.h"
-#include "zerosugar/xr/service/coordination/command/handler/command_response_handler_interface.h"
-#include "zerosugar/xr/service/coordination/command/handler/command_response_handler_factory.h"
+#include "zerosugar/xr/service/coordination/command/command_response_handler_interface.h"
+#include "zerosugar/xr/service/coordination/command/command_response_handler_factory.h"
 #include "zerosugar/xr/service/coordination/node/game_server.h"
 #include "zerosugar/xr/service/coordination/node/node_container.h"
 #include "zerosugar/xr/service/model/generated/coordination_command_response_message_json.h"

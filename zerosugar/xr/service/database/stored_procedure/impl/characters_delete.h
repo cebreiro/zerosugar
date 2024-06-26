@@ -3,8 +3,7 @@
 
 namespace zerosugar::xr::db::sp
 {
-    class CharactersDelete final
-        : public StoredProcedure
+    class CharactersDelete final : public StoredProcedure
     {
     public:
         CharactersDelete(zerosugar::db::ConnectionPool::Borrowed& conn, int64_t characterId);

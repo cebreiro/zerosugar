@@ -17,9 +17,14 @@ namespace zerosugar::xr
     {
     }
 
+    void GameClient::Notify(const IPacket& packet)
+    {
+        Send(Packet::ToBuffer(packet));
+    }
+
     void GameClient::SetSession(WeakPtrNotNull<Session> session)
     {
-        _session = session;
+        _session = std::move(session);
     }
 
     auto GameClient::GetAuthenticationToken() const -> const std::string&
@@ -53,5 +58,12 @@ namespace zerosugar::xr
     auto GameClient::GetGameInstance() const -> SharedPtrNotNull<GameInstance>
     {
         return _gameInstance.lock();
+    }
+
+    bool GameClient::IsSubscriberOf(int32_t opcode) const
+    {
+        (void)opcode;
+
+        return true;
     }
 }

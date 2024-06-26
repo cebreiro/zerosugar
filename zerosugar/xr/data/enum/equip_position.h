@@ -8,5 +8,7 @@ namespace zerosugar::xr::data
         (Gloves)
         (Shoes)
         (Weapon)
+
+        (Count)
     )
 }

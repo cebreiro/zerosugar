@@ -20,11 +20,11 @@ namespace zerosugar::xr
     {
         SharedPtrNotNull<GameEntity> result;
 
-        _concurrentFlatMap.cvisit(id, [&result](SharedPtrNotNull<GameEntity> entity)
+        _concurrentFlatMap.cvisit(id, [&result](const auto& pair) 
             {
-                assert(entity);
+                assert(pair.second);
 
-                result = std::move(entity);
+                result = pair.second;
             });
 
         return result;
@@ -34,11 +34,11 @@ namespace zerosugar::xr
     {
         SharedPtrNotNull<GameEntity> result;
 
-        _concurrentFlatMap.cvisit(id, [&result](SharedPtrNotNull<GameEntity> entity)
+        _concurrentFlatMap.cvisit(id, [&result](const auto& pair)
             {
-                assert(entity);
+                assert(pair.second);
 
-                result = std::move(entity);
+                result = pair.second;
             });
 
         return result;

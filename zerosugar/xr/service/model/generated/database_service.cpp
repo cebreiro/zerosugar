@@ -26,6 +26,11 @@ namespace zerosugar::xr::service
         return _client->CallRemoteProcedure<AddCharacterParam, Future<AddCharacterResult>::value_type>(name, "AddCharacterAsync", std::move(param));
     }
 
+    auto DatabaseServiceProxy::GetCharacterAsync(GetCharacterParam param) -> Future<GetCharacterResult>
+    {
+        return _client->CallRemoteProcedure<GetCharacterParam, Future<GetCharacterResult>::value_type>(name, "GetCharacterAsync", std::move(param));
+    }
+
     auto DatabaseServiceProxy::RemoveCharacterAsync(RemoveCharacterParam param) -> Future<RemoveCharacterResult>
     {
         return _client->CallRemoteProcedure<RemoveCharacterParam, Future<RemoveCharacterResult>::value_type>(name, "RemoveCharacterAsync", std::move(param));
@@ -52,6 +57,11 @@ namespace zerosugar::xr::service
             [service = service](AddCharacterParam param) -> Future<AddCharacterResult>
             {
                 return service->AddCharacterAsync(std::move(param));
+            });
+        rpcClient.RegisterProcedure<false, false>("DatabaseService", "GetCharacterAsync",
+            [service = service](GetCharacterParam param) -> Future<GetCharacterResult>
+            {
+                return service->GetCharacterAsync(std::move(param));
             });
         rpcClient.RegisterProcedure<false, false>("DatabaseService", "RemoveCharacterAsync",
             [service = service](RemoveCharacterParam param) -> Future<RemoveCharacterResult>

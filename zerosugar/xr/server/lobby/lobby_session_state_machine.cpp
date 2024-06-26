@@ -8,7 +8,7 @@
 
 namespace zerosugar::xr
 {
-    LobbyServerSessionStateMachine::LobbyServerSessionStateMachine(ServiceLocator& serviceLocator, IUniqueIDGenerator& idGenerator, Session& session)
+    LobbySessionStateMachine::LobbySessionStateMachine(ServiceLocator& serviceLocator, IUniqueIDGenerator& idGenerator, Session& session)
         : _session(session.weak_from_this())
         , _name(std::format("lobby_session_state_machine[{}]", session.GetId()))
         , _serviceLocator(serviceLocator)
@@ -23,13 +23,13 @@ namespace zerosugar::xr
         AddState<lobby::TransitionToGameState>(false, session);
     }
 
-    void LobbyServerSessionStateMachine::Start()
+    void LobbySessionStateMachine::Start()
     {
         const std::shared_ptr<Session>& session = _session.lock();
         assert(session);
 
         Post(session->GetStrand(),
-            [](SharedPtrNotNull<LobbyServerSessionStateMachine> self, session::id_type id, WeakPtrNotNull<Session> weak) -> Future<void>
+            [](SharedPtrNotNull<LobbySessionStateMachine> self, session::id_type id, WeakPtrNotNull<Session> weak) -> Future<void>
             {
                 try
                 {
@@ -49,24 +49,24 @@ namespace zerosugar::xr
             }, shared_from_this(), session->GetId(), _session);
     }
 
-    void LobbyServerSessionStateMachine::Shutdown()
+    void LobbySessionStateMachine::Shutdown()
     {
         _shutdown.store(true);
 
         _channel->Close();
     }
 
-    void LobbyServerSessionStateMachine::Receive(Buffer buffer)
+    void LobbySessionStateMachine::Receive(Buffer buffer)
     {
         _channel->Send(std::move(buffer), channel::ChannelSignal::NotifyOne);
     }
 
-    auto LobbyServerSessionStateMachine::GetName() const -> std::string_view
+    auto LobbySessionStateMachine::GetName() const -> std::string_view
     {
         return _name;
     }
 
-    auto LobbyServerSessionStateMachine::Run() -> Future<void>
+    auto LobbySessionStateMachine::Run() -> Future<void>
     {
         [[maybe_unused]]
         auto self = shared_from_this();
@@ -134,22 +134,22 @@ namespace zerosugar::xr
         }
     }
 
-    auto LobbyServerSessionStateMachine::GetAccountId() const -> int64_t
+    auto LobbySessionStateMachine::GetAccountId() const -> int64_t
     {
         return _accountId;
     }
 
-    auto LobbyServerSessionStateMachine::GetAuthenticationToken() const -> const std::string&
+    auto LobbySessionStateMachine::GetAuthenticationToken() const -> const std::string&
     {
         return _authenticationToken;
     }
 
-    void LobbyServerSessionStateMachine::SetAuthenticationToken(std::string token)
+    void LobbySessionStateMachine::SetAuthenticationToken(std::string token)
     {
         _authenticationToken = std::move(token);
     }
 
-    void LobbyServerSessionStateMachine::SetAccountId(int64_t accountId)
+    void LobbySessionStateMachine::SetAccountId(int64_t accountId)
     {
         _accountId = accountId;
     }

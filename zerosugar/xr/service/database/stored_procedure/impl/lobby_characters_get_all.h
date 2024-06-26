@@ -4,8 +4,7 @@
 
 namespace zerosugar::xr::db::sp
 {
-    class LobbyCharactersGetAll final
-        : public StoredProcedure
+    class LobbyCharactersGetAll final : public StoredProcedure
     {
     public:
         LobbyCharactersGetAll(zerosugar::db::ConnectionPool::Borrowed& conn, int64_t accountId);

@@ -22,39 +22,42 @@ message Transform
     Rotation rotation = 2;
 }
 
-message CharacterStat
+message PlayerBase
 {
-    int32 hp = 1;
-    int32 maxHP = 2;
-    int32 attackMin = 3;
-    int32 attackMax = 4;
-    int32 attackRange = 5;
-    int32 attackSpeed = 6;
-    int32 defence = 7;
-    string name = 8;
-    int32 level = 9;
-    int32 gender = 10;
-    int32 face = 11;
-    int32 hair = 12;
-    int32 str = 13;
-    int32 dex = 14;
-    int32 intell = 15;
-    float stamina = 16;
-    float staminaMax = 17;
+    float hp = 1;
+    float maxHP = 2;
+    float attack_min = 3;
+    float attack_max = 4;
+    float attack_range = 5;
+    float attack_speed = 6;
+    float speed = 7;
+    float defence = 8;
+
+    string name = 9;
+    int32 level = 10;
+    int32 gender = 11;
+    int32 face = 12;
+    int32 hair = 13;
+    int32 str = 14;
+    int32 dex = 15;
+    int32 intell = 16;
+    float stamina = 17;
+    float stamina_max = 18;
 }
 
 message Equipment
 {
-    int32 type = 1;
-    int32 id = 2;
-    int32 attack = 3;
-    int32 defence = 4;
-    int32 str = 5;
-    int32 dex = 6;
-    int32 intell = 7;
+    int32 id = 1;
+    int32 type = 2;
+    int32 count = 3;
+    int32 attack = 4;
+    int32 defence = 5;
+    int32 str = 6;
+    int32 dex = 7;
+    int32 intell = 8;
 }
 
-message CharacterEquipment
+message PlayerEquipment
 {
     Equipment armor = 1;
     Equipment gloves = 2;
@@ -62,7 +65,7 @@ message CharacterEquipment
     Equipment weapon = 4;
 }
 
-message CharacterInventoryItem
+message PlayerInventoryItem
 {
     int32 id = 1;
     int32 count = 2;
@@ -73,15 +76,23 @@ message CharacterInventoryItem
     int32 intell = 7;
 }
 
-message Character
+message RemotePlayer
 {
-    int64 instance_id = 1;
+    int64 id = 1;
     Transform transform = 2;
-    CharacterStat stat = 3;
-    CharacterEquipment equipment = 4;
+    PlayerBase base = 3;
+    PlayerEquipment equipment = 4;
+}
+
+message Player
+{
+    int64 id = 1;
+    Transform transform = 2;
+    PlayerBase base = 3;
+    PlayerEquipment equipment = 4;
 
     int32 gold = 5;
-    repeated CharacterInventoryItem items = 6;
+    repeated PlayerInventoryItem items = 6;
 }
 
 message Monster

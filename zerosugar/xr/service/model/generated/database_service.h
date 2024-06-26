@@ -21,6 +21,7 @@ namespace zerosugar::xr::service
         virtual auto AddAccountAsync(AddAccountParam param) -> Future<AddAccountResult> = 0;
         virtual auto GetAccountAsync(GetAccountParam param) -> Future<GetAccountResult> = 0;
         virtual auto AddCharacterAsync(AddCharacterParam param) -> Future<AddCharacterResult> = 0;
+        virtual auto GetCharacterAsync(GetCharacterParam param) -> Future<GetCharacterResult> = 0;
         virtual auto RemoveCharacterAsync(RemoveCharacterParam param) -> Future<RemoveCharacterResult> = 0;
         virtual auto GetLobbyCharactersAsync(GetLobbyCharactersParam param) -> Future<GetLobbyCharactersResult> = 0;
         auto GetName() const -> std::string_view override { return "DatabaseService"; }
@@ -36,6 +37,7 @@ namespace zerosugar::xr::service
         auto AddAccountAsync(AddAccountParam param) -> Future<AddAccountResult> override;
         auto GetAccountAsync(GetAccountParam param) -> Future<GetAccountResult> override;
         auto AddCharacterAsync(AddCharacterParam param) -> Future<AddCharacterResult> override;
+        auto GetCharacterAsync(GetCharacterParam param) -> Future<GetCharacterResult> override;
         auto RemoveCharacterAsync(RemoveCharacterParam param) -> Future<RemoveCharacterResult> override;
         auto GetLobbyCharactersAsync(GetLobbyCharactersParam param) -> Future<GetLobbyCharactersResult> override;
     private:

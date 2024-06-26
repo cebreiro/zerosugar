@@ -3,6 +3,7 @@
 #include "zerosugar/shared/execution/executor/impl/asio_executor.h"
 #include "zerosugar/shared/execution/executor/impl/asio_strand.h"
 #include "zerosugar/shared/network/session/session.h"
+#include "zerosugar/xr/server/login/login_session_state_machine.h"
 
 namespace zerosugar::xr
 {
@@ -23,7 +24,7 @@ namespace zerosugar::xr
         ZEROSUGAR_LOG_DEBUG(_serviceLocator,
             std::format("[{}] accept session. session: {}", GetName(), session));
 
-        auto stateMachine = std::make_shared<LoginServerSessionStateMachine>(_serviceLocator, session);
+        auto stateMachine = std::make_shared<LoginSessionStateMachine>(_serviceLocator, session);
         {
             decltype(_stateMachines)::accessor accessor;
 
@@ -48,7 +49,7 @@ namespace zerosugar::xr
     {
         assert(ExecutionContext::IsEqualTo(session.GetStrand()));
 
-        LoginServerSessionStateMachine* stateMachine = nullptr;
+        LoginSessionStateMachine* stateMachine = nullptr;
         {
             decltype(_stateMachines)::accessor accessor;
 
@@ -76,7 +77,7 @@ namespace zerosugar::xr
         ZEROSUGAR_LOG_DEBUG(_serviceLocator,
             std::format("[{}] session io error. session: {}, error: {}", GetName(), session, error.message()));
 
-        std::shared_ptr<LoginServerSessionStateMachine> stateMachine;
+        std::shared_ptr<LoginSessionStateMachine> stateMachine;
         {
             decltype(_stateMachines)::accessor accessor;
 

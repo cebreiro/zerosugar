@@ -51,7 +51,7 @@ namespace zerosugar::xr::network::game
             };
     }
 
-    void from_json(const nlohmann::json& j, CharacterStat& item)
+    void from_json(const nlohmann::json& j, PlayerBase& item)
     {
         j.at("hp").get_to(item.hp);
         j.at("maxHP").get_to(item.maxHP);
@@ -59,6 +59,7 @@ namespace zerosugar::xr::network::game
         j.at("attackMax").get_to(item.attackMax);
         j.at("attackRange").get_to(item.attackRange);
         j.at("attackSpeed").get_to(item.attackSpeed);
+        j.at("speed").get_to(item.speed);
         j.at("defence").get_to(item.defence);
         j.at("name").get_to(item.name);
         j.at("level").get_to(item.level);
@@ -72,7 +73,7 @@ namespace zerosugar::xr::network::game
         j.at("staminaMax").get_to(item.staminaMax);
     }
 
-    void to_json(nlohmann::json& j, const CharacterStat& item)
+    void to_json(nlohmann::json& j, const PlayerBase& item)
     {
         j = nlohmann::json
             {
@@ -82,6 +83,7 @@ namespace zerosugar::xr::network::game
                 { "attackMax", item.attackMax },
                 { "attackRange", item.attackRange },
                 { "attackSpeed", item.attackSpeed },
+                { "speed", item.speed },
                 { "defence", item.defence },
                 { "name", item.name },
                 { "level", item.level },
@@ -98,8 +100,9 @@ namespace zerosugar::xr::network::game
 
     void from_json(const nlohmann::json& j, Equipment& item)
     {
-        j.at("type").get_to(item.type);
         j.at("id").get_to(item.id);
+        j.at("type").get_to(item.type);
+        j.at("count").get_to(item.count);
         j.at("attack").get_to(item.attack);
         j.at("defence").get_to(item.defence);
         j.at("str").get_to(item.str);
@@ -111,8 +114,9 @@ namespace zerosugar::xr::network::game
     {
         j = nlohmann::json
             {
-                { "type", item.type },
                 { "id", item.id },
+                { "type", item.type },
+                { "count", item.count },
                 { "attack", item.attack },
                 { "defence", item.defence },
                 { "str", item.str },
@@ -121,7 +125,7 @@ namespace zerosugar::xr::network::game
             };
     }
 
-    void from_json(const nlohmann::json& j, CharacterEquipment& item)
+    void from_json(const nlohmann::json& j, PlayerEquipment& item)
     {
         j.at("armor").get_to(item.armor);
         j.at("gloves").get_to(item.gloves);
@@ -129,7 +133,7 @@ namespace zerosugar::xr::network::game
         j.at("weapon").get_to(item.weapon);
     }
 
-    void to_json(nlohmann::json& j, const CharacterEquipment& item)
+    void to_json(nlohmann::json& j, const PlayerEquipment& item)
     {
         j = nlohmann::json
             {
@@ -140,7 +144,7 @@ namespace zerosugar::xr::network::game
             };
     }
 
-    void from_json(const nlohmann::json& j, CharacterInventoryItem& item)
+    void from_json(const nlohmann::json& j, PlayerInventoryItem& item)
     {
         j.at("id").get_to(item.id);
         j.at("count").get_to(item.count);
@@ -151,7 +155,7 @@ namespace zerosugar::xr::network::game
         j.at("intell").get_to(item.intell);
     }
 
-    void to_json(nlohmann::json& j, const CharacterInventoryItem& item)
+    void to_json(nlohmann::json& j, const PlayerInventoryItem& item)
     {
         j = nlohmann::json
             {
@@ -165,23 +169,42 @@ namespace zerosugar::xr::network::game
             };
     }
 
-    void from_json(const nlohmann::json& j, Character& item)
+    void from_json(const nlohmann::json& j, RemotePlayer& item)
     {
-        j.at("instanceId").get_to(item.instanceId);
+        j.at("id").get_to(item.id);
         j.at("transform").get_to(item.transform);
-        j.at("stat").get_to(item.stat);
+        j.at("base").get_to(item.base);
+        j.at("equipment").get_to(item.equipment);
+    }
+
+    void to_json(nlohmann::json& j, const RemotePlayer& item)
+    {
+        j = nlohmann::json
+            {
+                { "id", item.id },
+                { "transform", item.transform },
+                { "base", item.base },
+                { "equipment", item.equipment },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, Player& item)
+    {
+        j.at("id").get_to(item.id);
+        j.at("transform").get_to(item.transform);
+        j.at("base").get_to(item.base);
         j.at("equipment").get_to(item.equipment);
         j.at("gold").get_to(item.gold);
         j.at("items").get_to(item.items);
     }
 
-    void to_json(nlohmann::json& j, const Character& item)
+    void to_json(nlohmann::json& j, const Player& item)
     {
         j = nlohmann::json
             {
-                { "instanceId", item.instanceId },
+                { "id", item.id },
                 { "transform", item.transform },
-                { "stat", item.stat },
+                { "base", item.base },
                 { "equipment", item.equipment },
                 { "gold", item.gold },
                 { "items", item.items },

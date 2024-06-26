@@ -68,7 +68,7 @@ namespace zerosugar::xr
         ZEROSUGAR_LOG_DEBUG(_serviceLocator,
             std::format("[{}] accept session. session: {}", GetName(), session));
 
-        auto stateMachine = std::make_shared<LobbyServerSessionStateMachine>(_serviceLocator, *_snowflake, session);
+        auto stateMachine = std::make_shared<LobbySessionStateMachine>(_serviceLocator, *_snowflake, session);
 
         {
             decltype(_stateMachines)::accessor accessor;
@@ -94,7 +94,7 @@ namespace zerosugar::xr
     {
         assert(ExecutionContext::IsEqualTo(session.GetStrand()));
 
-        LobbyServerSessionStateMachine* stateMachine = nullptr;
+        LobbySessionStateMachine* stateMachine = nullptr;
         {
             decltype(_stateMachines)::accessor accessor;
 
@@ -122,7 +122,7 @@ namespace zerosugar::xr
         ZEROSUGAR_LOG_DEBUG(_serviceLocator,
             std::format("[{}] session io error. session: {}, error: {}", GetName(), session, error.message()));
 
-        std::shared_ptr<LobbyServerSessionStateMachine> stateMachine;
+        std::shared_ptr<LobbySessionStateMachine> stateMachine;
         {
             decltype(_stateMachines)::accessor accessor;
 

@@ -6,7 +6,10 @@
 namespace zerosugar::xr
 {
     class GameInstance;
+}
 
+namespace zerosugar::xr
+{
     class GameInstanceContainer
     {
     public:

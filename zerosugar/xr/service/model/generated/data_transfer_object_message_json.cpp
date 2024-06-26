@@ -25,27 +25,6 @@ namespace zerosugar::xr::service
             };
     }
 
-    void from_json(const nlohmann::json& j, DTOItemOption& item)
-    {
-        j.at("attack").get_to(item.attack);
-        j.at("defence").get_to(item.defence);
-        j.at("str").get_to(item.str);
-        j.at("dex").get_to(item.dex);
-        j.at("intell").get_to(item.intell);
-    }
-
-    void to_json(nlohmann::json& j, const DTOItemOption& item)
-    {
-        j = nlohmann::json
-            {
-                { "attack", item.attack },
-                { "defence", item.defence },
-                { "str", item.str },
-                { "dex", item.dex },
-                { "intell", item.intell },
-            };
-    }
-
     void from_json(const nlohmann::json& j, DTOItem& item)
     {
         j.at("itemId").get_to(item.itemId);
@@ -102,6 +81,21 @@ namespace zerosugar::xr::service
         {
             j["intell"] = *item.intell;
         }
+    }
+
+    void from_json(const nlohmann::json& j, DTOEquipment& item)
+    {
+        j.at("itemId").get_to(item.itemId);
+        j.at("equipPosition").get_to(item.equipPosition);
+    }
+
+    void to_json(nlohmann::json& j, const DTOEquipment& item)
+    {
+        j = nlohmann::json
+            {
+                { "itemId", item.itemId },
+                { "equipPosition", item.equipPosition },
+            };
     }
 
     void from_json(const nlohmann::json& j, DTOEquipItem& item)
@@ -207,6 +201,47 @@ namespace zerosugar::xr::service
                 { "hairId", item.hairId },
                 { "zoneId", item.zoneId },
                 { "items", item.items },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, DTOCharacter& item)
+    {
+        j.at("characterId").get_to(item.characterId);
+        j.at("name").get_to(item.name);
+        j.at("level").get_to(item.level);
+        j.at("str").get_to(item.str);
+        j.at("dex").get_to(item.dex);
+        j.at("intell").get_to(item.intell);
+        j.at("job").get_to(item.job);
+        j.at("faceId").get_to(item.faceId);
+        j.at("hairId").get_to(item.hairId);
+        j.at("zoneId").get_to(item.zoneId);
+        j.at("x").get_to(item.x);
+        j.at("y").get_to(item.y);
+        j.at("z").get_to(item.z);
+        j.at("items").get_to(item.items);
+        j.at("equipments").get_to(item.equipments);
+    }
+
+    void to_json(nlohmann::json& j, const DTOCharacter& item)
+    {
+        j = nlohmann::json
+            {
+                { "characterId", item.characterId },
+                { "name", item.name },
+                { "level", item.level },
+                { "str", item.str },
+                { "dex", item.dex },
+                { "intell", item.intell },
+                { "job", item.job },
+                { "faceId", item.faceId },
+                { "hairId", item.hairId },
+                { "zoneId", item.zoneId },
+                { "x", item.x },
+                { "y", item.y },
+                { "z", item.z },
+                { "items", item.items },
+                { "equipments", item.equipments },
             };
     }
 

@@ -8,8 +8,8 @@ namespace zerosugar::xr
     bool GameTaskScheduler::Process::Compare::operator()(
         PtrNotNull<const Process> lhs, PtrNotNull<const Process> rhs) const
     {
-        const auto lvalue = lhs->HasTask() ? lhs->GetTask().GetCreationTimePoint() : std::numeric_limits<int64_t>::max();
-        const auto rvalue = rhs->HasTask() ? rhs->GetTask().GetCreationTimePoint() : std::numeric_limits<int64_t>::max();
+        const auto lvalue = lhs->HasTask() ? lhs->GetTask().GetCreationTimePoint().time_since_epoch().count() : std::numeric_limits<int64_t>::max();
+        const auto rvalue = rhs->HasTask() ? rhs->GetTask().GetCreationTimePoint().time_since_epoch().count() : std::numeric_limits<int64_t>::max();
 
         if (lvalue == rvalue)
         {
@@ -91,6 +91,10 @@ namespace zerosugar::xr
     {
     }
 
+    GameTaskScheduler::~GameTaskScheduler()
+    {
+    }
+
     void GameTaskScheduler::Shutdown()
     {
         _shutdown = true;
@@ -117,37 +121,29 @@ namespace zerosugar::xr
         co_return;
     }
 
-    auto GameTaskScheduler::AddProcess() -> Future<int64_t>
+    auto GameTaskScheduler::AddProcess(int64_t id) -> Future<bool>
     {
-        [[maybe_unused]]
-        auto self = shared_from_this();
-
         if (!ExecutionContext::Contains(_gameInstance.GetStrand()))
         {
             co_await _gameInstance.GetStrand();
         }
 
-        const int64_t taskQueueId = ++_nextTaskQueueId;
-
-        if (_processTaskQueues.try_emplace(taskQueueId, std::vector<GameTask>()).second)
+        if (_processTaskQueues.try_emplace(id, std::queue<UniquePtrNotNull<GameTask>>()).second)
         {
-            Process& process = CreateProcess(taskQueueId);
+            Process& process = CreateProcess(id);
 
-            process.SetTaskQueueId(taskQueueId);
-        }
-        else
-        {
-            assert(false);
+            process.SetTaskQueueId(id);
+
+            co_return true;
         }
 
-        co_return taskQueueId;
+        assert(false);
+
+        co_return false;
     }
 
     auto GameTaskScheduler::RemoveProcess(int64_t id) -> Future<bool>
     {
-        [[maybe_unused]]
-        auto self = shared_from_this();
-
         if (!ExecutionContext::Contains(_gameInstance.GetStrand()))
         {
             co_await _gameInstance.GetStrand();
@@ -158,9 +154,6 @@ namespace zerosugar::xr
 
     auto GameTaskScheduler::AddResource(int64_t id) -> Future<bool>
     {
-        [[maybe_unused]]
-        auto self = shared_from_this();
-
         if (!ExecutionContext::Contains(_gameInstance.GetStrand()))
         {
             co_await _gameInstance.GetStrand();
@@ -171,9 +164,6 @@ namespace zerosugar::xr
 
     auto GameTaskScheduler::RemoveResource(int64_t id) -> Future<bool>
     {
-        [[maybe_unused]]
-        auto self = shared_from_this();
-
         if (!ExecutionContext::Contains(_gameInstance.GetStrand()))
         {
             co_await _gameInstance.GetStrand();
@@ -184,9 +174,9 @@ namespace zerosugar::xr
 
     void GameTaskScheduler::Schedule(std::unique_ptr<GameTask> task, std::optional<int64_t> processId)
     {
-        Dispatch(_gameInstance.GetStrand(), [self = shared_from_this(), task = std::move(task), processId]() mutable
+        Dispatch(_gameInstance.GetStrand(), [this, task = std::move(task), processId]() mutable
             {
-                self->ScheduleImpl(std::move(task), processId);
+                ScheduleImpl(std::move(task), processId);
             });
     }
 
@@ -329,17 +319,17 @@ namespace zerosugar::xr
 
     void GameTaskScheduler::Start(Process& process)
     {
-        Post(_gameInstance.GetExecutor(), [self = shared_from_this(), process = &process]() mutable
+        Post(_gameInstance.GetExecutor(), [this, process = &process]() mutable
             {
-                process->GetTask().Start(self->_gameInstance);
+                process->GetTask().Start(_gameInstance);
 
-                Strand& strand = self->_gameInstance.GetStrand();
+                Strand& strand = _gameInstance.GetStrand();
 
-                Dispatch(strand, [self = std::move(self), process]()
+                Dispatch(strand, [this, process]()
                     {
-                        process->GetTask().Complete(self->_gameInstance);
+                        process->GetTask().Complete(_gameInstance);
                         
-                        self->OnComplete(*process);
+                        OnComplete(*process);
                     });
             });
     }

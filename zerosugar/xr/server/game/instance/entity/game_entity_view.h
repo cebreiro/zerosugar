@@ -4,10 +4,15 @@
 
 namespace zerosugar::xr
 {
+    class GameEntity;
+}
+
+namespace zerosugar::xr
+{
     class GameEntityView
     {
     public:
-        explicit GameEntityView(int64_t id);
+        explicit GameEntityView(const GameEntity& entity);
 
         auto GetId() const -> game_entity_id_type;
         auto GetPosition() const -> const Eigen::Vector3d&;

@@ -1,6 +1,6 @@
 #include "command_handler_factory.h"
 
-#include "zerosugar/xr/server/game/command/handler/command_handler.hpp"
+#include "zerosugar/xr/server/game/command/command_handler.hpp"
 
 namespace zerosugar::xr
 {

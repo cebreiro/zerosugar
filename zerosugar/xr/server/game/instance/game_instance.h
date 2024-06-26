@@ -3,12 +3,15 @@
 
 namespace zerosugar::xr
 {
-    class GameClient;
+    class GameEntity;
     class GameEntityContainer;
     class GameEntityViewContainer;
     class GameSpatialContainer;
     class GameTaskScheduler;
+}
 
+namespace zerosugar::xr
+{
     class GameInstance final
         : public std::enable_shared_from_this<GameInstance>
     {
@@ -20,7 +23,7 @@ namespace zerosugar::xr
             game_instance_id_type id, int32_t zoneId);
         ~GameInstance();
 
-        auto Accept(SharedPtrNotNull<GameClient> client) -> Future<void>;
+        auto SpawnEntity(SharedPtrNotNull<GameEntity> entity) -> Future<void>;
 
         auto GetExecutor() const -> execution::IExecutor&;
         auto GetStrand() const -> Strand&;
@@ -29,7 +32,6 @@ namespace zerosugar::xr
         auto GetId() const -> game_instance_id_type;
         auto GetZoneId() const -> int32_t;
 
-        // TODO: return get_serial_context, get_parallel_context
         auto GetEntityContainer() -> GameEntityContainer&;
         auto GetEntityContainer() const -> const GameEntityContainer&;
         auto GetEntityViewContainer() -> GameEntityViewContainer&;

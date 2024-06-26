@@ -2,6 +2,7 @@
 
 #include "zerosugar/shared/execution/context/execution_context.h"
 #include "zerosugar/shared/execution/executor/operation/post.h"
+#include "zerosugar/shared/execution/executor/operation/dispatch.h"
 
 namespace zerosugar::execution
 {
@@ -12,15 +13,12 @@ namespace zerosugar::execution
 
     bool ExecutorAwaiter::await_ready() const
     {
-        const IExecutor* executor = ExecutionContext::GetExecutor();
-        assert(executor);
-
-        return _executor.get() == executor;
+        return ExecutionContext::IsEqualTo(*_executor);
     }
 
     void ExecutorAwaiter::await_suspend(std::coroutine_handle<> handle)
     {
-        Post(*_executor, [handle]()
+        Dispatch(*_executor, [handle]()
             {
                 handle();
             });

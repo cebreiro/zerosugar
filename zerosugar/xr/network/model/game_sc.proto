@@ -1,10 +1,21 @@
 syntax = "proto3";
 
 import "option.proto";
+import "game.proto";
 
 package zerosugar.xr.network.game.sc;
 
-message Test
+message EnterGame
 {
     option (opcode) = 1000;
+
+    int32 zone_id = 1;
+
+    int32 remote_players_count = 2;
+    repeated RemotePlayer remote_players = 3 [(size_element) = "remote_players_count"];
+    
+    int32 monsters_count = 4;
+    repeated Monster monsters = 5 [(size_element) = "monsters_count"];
+
+    Player local_player = 6;
 }

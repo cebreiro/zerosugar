@@ -50,7 +50,7 @@ namespace zerosugar::xr
 
         _registers[serviceName] = std::move(promise);
 
-        const std::expected<int64_t, IOError> ioResult = co_await _socket->SendAsync(RPCPacketBuilder::MakePacket(request));
+        const std::expected<int64_t, IOError> ioResult = co_await _socket->SendAsync(RPCPacket::ToBuffer(request));
 
         if (ioResult.has_value())
         {
@@ -242,7 +242,7 @@ namespace zerosugar::xr
         packet.rpcName = std::move(rpcName);
         packet.parameter = std::move(param);
 
-        Buffer buffer = RPCPacketBuilder::MakePacket(packet);
+        Buffer buffer = RPCPacket::ToBuffer(packet);
 
         _socket->SendAsync(std::move(buffer));
     }
@@ -261,7 +261,7 @@ namespace zerosugar::xr
         packet.serviceName = serviceName;
         packet.parameter = std::move(param);
 
-        Buffer buffer = RPCPacketBuilder::MakePacket(packet);
+        Buffer buffer = RPCPacket::ToBuffer(packet);
 
         _socket->SendAsync(std::move(buffer));
     }
@@ -279,7 +279,7 @@ namespace zerosugar::xr
         packet.rpcId = rpcId;
         packet.serviceName = serviceName;
 
-        Buffer buffer = RPCPacketBuilder::MakePacket(packet);
+        Buffer buffer = RPCPacket::ToBuffer(packet);
 
         _socket->SendAsync(std::move(buffer));
     }
@@ -298,7 +298,7 @@ namespace zerosugar::xr
         {
             resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorInvalidRpcName;
 
-            _socket->SendAsync(RPCPacketBuilder::MakePacket(resultRPC));
+            _socket->SendAsync(RPCPacket::ToBuffer(resultRPC));
 
             co_return;
         }
@@ -323,7 +323,7 @@ namespace zerosugar::xr
                         request.rpcId, request.serviceName, request.rpcName, e.what()));
             }
 
-            _socket->SendAsync(RPCPacketBuilder::MakePacket(resultRPC));
+            _socket->SendAsync(RPCPacket::ToBuffer(resultRPC));
         }
         else if (std::holds_alternative<std::function<AsyncEnumerable<std::string>(const std::string&)>>(iterProcedure->second))
         {
@@ -342,7 +342,7 @@ namespace zerosugar::xr
                     serverStreaming.rpcResult = co_await enumerable;
                     assert(ExecutionContext::IsEqualTo(*self->_strand));
 
-                    _socket->SendAsync(RPCPacketBuilder::MakePacket(serverStreaming));
+                    _socket->SendAsync(RPCPacket::ToBuffer(serverStreaming));
                 }
 
                 resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorStreamingClosedGracefully;
@@ -365,7 +365,7 @@ namespace zerosugar::xr
                 resultRPC.rpcResult.clear();
             }
 
-            _socket->SendAsync(RPCPacketBuilder::MakePacket(resultRPC));
+            _socket->SendAsync(RPCPacket::ToBuffer(resultRPC));
         }
         else if (std::holds_alternative<std::function<Future<std::string>(SharedPtrNotNull<Channel<std::string>>)>>(iterProcedure->second))
         {
@@ -392,7 +392,7 @@ namespace zerosugar::xr
                     resultRPC.rpcResult.clear();
                 }
 
-                _socket->SendAsync(RPCPacketBuilder::MakePacket(resultRPC));
+                _socket->SendAsync(RPCPacket::ToBuffer(resultRPC));
 
                 _runningClientStreamingProcedures.erase(request.rpcId);
 
@@ -425,7 +425,7 @@ namespace zerosugar::xr
                     {
                         serverStreaming.rpcResult = co_await enumerable;
 
-                        _socket->SendAsync(RPCPacketBuilder::MakePacket(serverStreaming));
+                        _socket->SendAsync(RPCPacket::ToBuffer(serverStreaming));
                     }
 
                     resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorStreamingClosedGracefully;
@@ -448,7 +448,7 @@ namespace zerosugar::xr
                     resultRPC.rpcResult.clear();
                 }
 
-                _socket->SendAsync(RPCPacketBuilder::MakePacket(resultRPC));
+                _socket->SendAsync(RPCPacket::ToBuffer(resultRPC));
 
                 _runningClientStreamingProcedures.erase(request.rpcId);
             }

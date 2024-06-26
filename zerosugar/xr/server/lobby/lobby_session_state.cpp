@@ -4,15 +4,15 @@
 #include "zerosugar/shared/network/session/session.h"
 #include "zerosugar/shared/snowflake/snowflake.h"
 #include "zerosugar/xr/data/enum/equip_position.h"
-#include "zerosugar/xr/network/packet_builder.h"
+#include "zerosugar/xr/network/packet.h"
 #include "zerosugar/xr/network/model/generated/lobby_cs_message.h"
 #include "zerosugar/xr/network/model/generated/lobby_sc_message.h"
 #include "zerosugar/xr/network/model/generated/lobby_cs_message_json.h"
 
 namespace zerosugar::xr::lobby
 {
-    ConnectedState::ConnectedState(LobbyServerSessionStateMachine& stateMachine, ServiceLocator& serviceLocator, Session& session)
-        : LobbyServerSessionStateMachine::state_type(LobbySessionState::Connected)
+    ConnectedState::ConnectedState(LobbySessionStateMachine& stateMachine, ServiceLocator& serviceLocator, Session& session)
+        : LobbySessionStateMachine::state_type(LobbySessionState::Connected)
         , _stateMachine(stateMachine)
         , _serviceLocator(serviceLocator)
         , _session(session.weak_from_this())
@@ -66,8 +66,8 @@ namespace zerosugar::xr::lobby
         throw std::runtime_error(std::format("unhandled packet. opcode: {}", inPacket->GetOpcode()));
     }
 
-    AuthenticatedState::AuthenticatedState(LobbyServerSessionStateMachine& stateMachine, ServiceLocator& serviceLocator, IUniqueIDGenerator& idGenerator, Session& session)
-        : LobbyServerSessionStateMachine::state_type(LobbySessionState::Authenticated)
+    AuthenticatedState::AuthenticatedState(LobbySessionStateMachine& stateMachine, ServiceLocator& serviceLocator, IUniqueIDGenerator& idGenerator, Session& session)
+        : LobbySessionStateMachine::state_type(LobbySessionState::Authenticated)
         , _stateMachine(stateMachine)
         , _serviceLocator(serviceLocator)
         , _idGenerator(idGenerator)
@@ -145,7 +145,7 @@ namespace zerosugar::xr::lobby
                                 return notify;
                             }();
 
-                        session->Send(PacketBuilder::MakePacket(notifyCharacterList));
+                        session->Send(Packet::ToBuffer(notifyCharacterList));
                     }
                     else
                     {
@@ -240,7 +240,7 @@ namespace zerosugar::xr::lobby
             network::lobby::sc::ResultCreateCharacter outPacket;
             outPacket.success = false;
 
-            session.Send(PacketBuilder::MakePacket(outPacket));
+            session.Send(Packet::ToBuffer(outPacket));
 
             co_return;
         }
@@ -281,6 +281,7 @@ namespace zerosugar::xr::lobby
                 service::DTOEquipItem& equipItem = param.equipItems.emplace_back();
                 equipItem.item.itemId = static_cast<int64_t>(_idGenerator.Generate());
                 equipItem.item.itemDataId = itemId;
+                equipItem.item.quantity = 1;
                 equipItem.equipPosition = static_cast<int32_t>(equipPosition);
             }
         }
@@ -313,7 +314,7 @@ namespace zerosugar::xr::lobby
             outPacket.character.z = param.characterAdd.z;
         }
 
-        session.Send(PacketBuilder::MakePacket(outPacket));
+        session.Send(Packet::ToBuffer(outPacket));
     }
 
     auto AuthenticatedState::HandlePacket(Session& session, const network::lobby::cs::DeleteCharacter& packet) -> Future<void>
@@ -345,7 +346,7 @@ namespace zerosugar::xr::lobby
         network::lobby::sc::SuccessDeleteCharacter outPacket;
         outPacket.slot = packet.slot;
 
-        session.Send(PacketBuilder::MakePacket(outPacket));
+        session.Send(Packet::ToBuffer(outPacket));
 
         co_return;
     }
@@ -381,7 +382,7 @@ namespace zerosugar::xr::lobby
             outPacket.ip = result.ip;
             outPacket.port = result.port;
 
-            session.Send(PacketBuilder::MakePacket(outPacket));
+            session.Send(Packet::ToBuffer(outPacket));
 
             _stateMachine.Transition(LobbySessionState::TransitionToGame);
 
@@ -395,7 +396,7 @@ namespace zerosugar::xr::lobby
     }
 
     TransitionToGameState::TransitionToGameState(Session& session)
-        : LobbyServerSessionStateMachine::state_type(LobbySessionState::TransitionToGame)
+        : LobbySessionStateMachine::state_type(LobbySessionState::TransitionToGame)
         , _session(session.weak_from_this())
     {
     }

@@ -7,7 +7,6 @@ namespace zerosugar::xr
 {
     class Entity;
     class GameInstance;
-    class GameTaskTargetInformationProvider;
 
     class GameTask
     {
@@ -23,13 +22,13 @@ namespace zerosugar::xr
         void Complete(GameInstance& gameInstance);
 
         auto GetCreationTimePoint() const -> std::chrono::system_clock::time_point;
+        auto GetBaseTime() const -> std::chrono::system_clock::time_point;
         auto GetTargetIds() const -> const boost::container::small_vector<int64_t, 8>&;
 
+        static bool IsInExecution();
         static auto GetLocalInstance() -> GameTask&;
 
     protected:
-        auto GetBaseTime() const -> std::chrono::system_clock::time_point;
-
         template <typename TRange> requires std::same_as<std::ranges::range_value_t<TRange>, const game_entity_id_type>
         void SetTargetIds(TRange&& range)
         {

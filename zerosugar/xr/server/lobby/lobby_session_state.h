@@ -13,21 +13,21 @@ namespace zerosugar::xr::network::lobby::cs
 
 namespace zerosugar::xr::lobby
 {
-    class ConnectedState final : public LobbyServerSessionStateMachine::state_type
+    class ConnectedState final : public LobbySessionStateMachine::state_type
     {
     public:
-        ConnectedState(LobbyServerSessionStateMachine& stateMachine, ServiceLocator& serviceLocator, Session& session);
+        ConnectedState(LobbySessionStateMachine& stateMachine, ServiceLocator& serviceLocator, Session& session);
 
         auto OnEvent(UniquePtrNotNull<IPacket> inPacket) -> Future<void> override;
 
     private:
-        LobbyServerSessionStateMachine& _stateMachine;
+        LobbySessionStateMachine& _stateMachine;
         ServiceLocatorT<ILogService, service::ILoginService> _serviceLocator;
         WeakPtrNotNull<Session> _session;
     };
 
     class AuthenticatedState final
-        : public LobbyServerSessionStateMachine::state_type
+        : public LobbySessionStateMachine::state_type
         , public std::enable_shared_from_this<AuthenticatedState>
     {
     public:
@@ -38,7 +38,7 @@ namespace zerosugar::xr::lobby
         };
 
     public:
-        AuthenticatedState(LobbyServerSessionStateMachine& stateMachine, ServiceLocator& serviceLocator, IUniqueIDGenerator& idGenerator, Session& session);
+        AuthenticatedState(LobbySessionStateMachine& stateMachine, ServiceLocator& serviceLocator, IUniqueIDGenerator& idGenerator, Session& session);
 
         void OnEnter() override;
         auto OnEvent(UniquePtrNotNull<IPacket> inPacket) -> Future<void> override;
@@ -56,7 +56,7 @@ namespace zerosugar::xr::lobby
         auto HandlePacket(Session& session, const network::lobby::cs::SelectCharacter& packet) -> Future<void>;
 
     private:
-        LobbyServerSessionStateMachine& _stateMachine;
+        LobbySessionStateMachine& _stateMachine;
         ServiceLocatorT<ILogService, service::ICoordinationService, service::IDatabaseService> _serviceLocator;
         IUniqueIDGenerator& _idGenerator;
         WeakPtrNotNull<Session> _session;
@@ -65,7 +65,7 @@ namespace zerosugar::xr::lobby
         std::unordered_map<int32_t, CharacterCache> _characters;
     };
 
-    class TransitionToGameState final : public LobbyServerSessionStateMachine::state_type
+    class TransitionToGameState final : public LobbySessionStateMachine::state_type
     {
     public:
         explicit TransitionToGameState(Session& session);

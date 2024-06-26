@@ -1,11 +1,11 @@
-#include "packet_builder.h"
+#include "packet.h"
 
 #include "zerosugar/xr/network/packet_writer.h"
 #include "zerosugar/xr/network/packet_interface.h"
 
 namespace zerosugar::xr
 {
-    auto PacketBuilder::MakePacket(const IPacket& packet) -> Buffer
+    auto Packet::ToBuffer(const IPacket& packet) -> Buffer
     {
         using length_type = int16_t;
         using opcode_type = int16_t;

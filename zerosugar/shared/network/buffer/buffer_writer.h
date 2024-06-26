@@ -63,12 +63,7 @@ namespace zerosugar
         auto GetWriteSize() const -> int64_t;
 
     private:
-        void ExpandIfNoSpace(int64_t requiredSize);
-        void Expand(int64_t minRequiredSize);
-
-    private:
         Buffer& _buffer;
-        int64_t _remainSize = 0;
         detail::BufferStreamAdapter _adapter;
         StreamWriter<detail::BufferStreamAdapter> _streamWriter;
     };
@@ -76,8 +71,6 @@ namespace zerosugar
     template <std::integral U>
     void BufferWriter::Write(U value)
     {
-        ExpandIfNoSpace(sizeof(value));
-
         _streamWriter.Write(value);
     }
 
@@ -98,8 +91,6 @@ namespace zerosugar
     template <std::floating_point U>
     void BufferWriter::Write(U value)
     {
-        ExpandIfNoSpace(sizeof(value));
-
         _streamWriter.Write(value);
     }
 

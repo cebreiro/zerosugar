@@ -3,8 +3,7 @@
 
 namespace zerosugar::xr::db::sp
 {
-    class AccountsAdd final
-        : public StoredProcedure
+    class AccountsAdd final : public StoredProcedure
     {
     public:
         AccountsAdd(zerosugar::db::ConnectionPool::Borrowed& conn, std::string account, std::string password);

@@ -162,6 +162,34 @@ namespace zerosugar::xr
         co_return result;
     }
 
+    auto DatabaseService::GetCharacterAsync(service::GetCharacterParam param) -> Future<service::GetCharacterResult>
+    {
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
+        co_await *_executor;
+        assert(ExecutionContext::IsEqualTo(*_executor));
+
+        ConnectionPool::Borrowed conn = co_await _connectionPool->Pop();
+        sp::CharactersGet storedProcedure(conn, param.characterId);
+
+        service::GetCharacterResult result;
+
+        const DatabaseError error = co_await storedProcedure.ExecuteAsync();
+        if (!error)
+        {
+            result.character = storedProcedure.GetResult();
+        }
+        else
+        {
+            result.errorCode = service::DatabaseServiceErrorCode::DatabaseErrorInternalError;
+
+            LogError(__FUNCTION__, error);
+        }
+
+        co_return result;
+    }
+
     auto DatabaseService::RemoveCharacterAsync(service::RemoveCharacterParam param) -> Future<service::RemoveCharacterResult>
     {
         [[maybe_unused]]

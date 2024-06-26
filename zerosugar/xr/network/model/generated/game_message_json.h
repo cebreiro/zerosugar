@@ -18,20 +18,23 @@ namespace zerosugar::xr::network::game
     void from_json(const nlohmann::json& j, Transform& item);
     void to_json(nlohmann::json& j, const Transform& item);
 
-    void from_json(const nlohmann::json& j, CharacterStat& item);
-    void to_json(nlohmann::json& j, const CharacterStat& item);
+    void from_json(const nlohmann::json& j, PlayerBase& item);
+    void to_json(nlohmann::json& j, const PlayerBase& item);
 
     void from_json(const nlohmann::json& j, Equipment& item);
     void to_json(nlohmann::json& j, const Equipment& item);
 
-    void from_json(const nlohmann::json& j, CharacterEquipment& item);
-    void to_json(nlohmann::json& j, const CharacterEquipment& item);
+    void from_json(const nlohmann::json& j, PlayerEquipment& item);
+    void to_json(nlohmann::json& j, const PlayerEquipment& item);
 
-    void from_json(const nlohmann::json& j, CharacterInventoryItem& item);
-    void to_json(nlohmann::json& j, const CharacterInventoryItem& item);
+    void from_json(const nlohmann::json& j, PlayerInventoryItem& item);
+    void to_json(nlohmann::json& j, const PlayerInventoryItem& item);
 
-    void from_json(const nlohmann::json& j, Character& item);
-    void to_json(nlohmann::json& j, const Character& item);
+    void from_json(const nlohmann::json& j, RemotePlayer& item);
+    void to_json(nlohmann::json& j, const RemotePlayer& item);
+
+    void from_json(const nlohmann::json& j, Player& item);
+    void to_json(nlohmann::json& j, const Player& item);
 
     void from_json(const nlohmann::json& j, Monster& item);
     void to_json(nlohmann::json& j, const Monster& item);

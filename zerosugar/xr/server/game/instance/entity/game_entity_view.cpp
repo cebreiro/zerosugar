@@ -1,10 +1,15 @@
 #include "game_entity_view.h"
 
+#include "zerosugar/xr/server/game/instance/entity/game_entity.h"
+#include "zerosugar/xr/server/game/instance/component/movement_component.h"
+
 namespace zerosugar::xr
 {
-    GameEntityView::GameEntityView(int64_t id)
-        : _id(id)
+    GameEntityView::GameEntityView(const GameEntity& entity)
+        : _id(entity.GetId())
     {
+        const MovementComponent& movementComponent = entity.GetComponent<MovementComponent>();
+        SetPosition(movementComponent.GetPosition());
     }
 
     auto GameEntityView::GetId() const -> game_entity_id_type

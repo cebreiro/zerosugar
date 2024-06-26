@@ -4,8 +4,7 @@
 
 namespace zerosugar::xr::db::sp
 {
-    class CharactersAdd final
-        : public StoredProcedure
+    class CharactersAdd final : public StoredProcedure
     {
     public:
         CharactersAdd(zerosugar::db::ConnectionPool::Borrowed& conn, const service::DTOCharacterAdd& input);

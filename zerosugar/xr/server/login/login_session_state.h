@@ -5,20 +5,20 @@
 
 namespace zerosugar::xr::login
 {
-    class ConnectedState final : public LoginServerSessionStateMachine::state_type
+    class ConnectedState final : public LoginSessionStateMachine::state_type
     {
     public:
-        ConnectedState(LoginServerSessionStateMachine& stateMachine, ServiceLocator& serviceLocator, Session& session);
+        ConnectedState(LoginSessionStateMachine& stateMachine, ServiceLocator& serviceLocator, Session& session);
 
         auto OnEvent(UniquePtrNotNull<IPacket> inPacket) -> Future<void> override;
 
     private:
-        LoginServerSessionStateMachine& _stateMachine;
+        LoginSessionStateMachine& _stateMachine;
         ServiceLocatorT<service::ILoginService, service::IGatewayService> _serviceLocator;
         WeakPtrNotNull<Session> _session;
     };
 
-    class AuthenticatedState final : public LoginServerSessionStateMachine::state_type
+    class AuthenticatedState final : public LoginSessionStateMachine::state_type
     {
     public:
         explicit AuthenticatedState(Session& session);

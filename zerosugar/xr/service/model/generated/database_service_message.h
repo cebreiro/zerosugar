@@ -48,6 +48,17 @@ namespace zerosugar::xr::service
         std::vector<DTOItem> items = {};
     };
 
+    struct GetCharacterParam
+    {
+        int64_t characterId = {};
+    };
+
+    struct GetCharacterResult
+    {
+        DatabaseServiceErrorCode errorCode = {};
+        DTOCharacter character = {};
+    };
+
     struct RemoveCharacterParam
     {
         int64_t characterId = {};

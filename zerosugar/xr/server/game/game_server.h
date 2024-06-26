@@ -14,8 +14,13 @@ namespace zerosugar::xr
     class GameClient;
     class CommandChannelRunner;
     class GameInstanceContainer;
+    class IGamePacketHandlerFactory;
     class ICommandHandlerFactory;
+    class IGameEntitySerializer;
+}
 
+namespace zerosugar::xr
+{
     class GameServer final
         : public Server
     {
@@ -29,6 +34,7 @@ namespace zerosugar::xr
         void Shutdown() override;
 
         bool HasClient(session::id_type id) const;
+        bool AddClient(session::id_type id, SharedPtrNotNull<GameClient> client);
 
         template <typename T> requires std::derived_from<T, IPacket>
         void SendCommandResponse(int64_t responseId, const T& item);
@@ -38,6 +44,7 @@ namespace zerosugar::xr
         auto GetServiceLocator() -> ServiceLocator&;
         auto GetGameInstanceContainer() -> GameInstanceContainer&;
         auto GetCommandHandlerFactory() -> ICommandHandlerFactory&;
+        auto GetGameEntitySerializer() const -> IGameEntitySerializer&;
 
         void SetPublicIP(std::string ip);
 
@@ -68,7 +75,9 @@ namespace zerosugar::xr
         tbb::concurrent_hash_map<session::id_type, SharedPtrNotNull<GameClient>> _clients;
 
         std::unique_ptr<GameInstanceContainer> _gameInstanceContainer;
+        std::unique_ptr<IGamePacketHandlerFactory> _gamePacketHandlerFactory;
         std::unique_ptr<ICommandHandlerFactory> _commandHandlerFactory;
+        std::unique_ptr<IGameEntitySerializer> _gameEntitySerializer;
     };
 
     template <typename T> requires std::derived_from<T, IPacket>

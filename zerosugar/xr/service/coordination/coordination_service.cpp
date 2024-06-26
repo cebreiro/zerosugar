@@ -4,7 +4,7 @@
 #include "zerosugar/shared/snowflake/snowflake.h"
 #include "zerosugar/xr/network/rpc/rpc_client.h"
 #include "zerosugar/xr/service/coordination/command/command_response_channel_runner.h"
-#include "zerosugar/xr/service/coordination/command/handler/command_response_handler_factory.h"
+#include "zerosugar/xr/service/coordination/command/command_response_handler_factory.h"
 #include "zerosugar/xr/service/coordination/load_balance/load_balancer.h"
 #include "zerosugar/xr/service/coordination/node/game_instance.h"
 #include "zerosugar/xr/service/coordination/node/game_server.h"

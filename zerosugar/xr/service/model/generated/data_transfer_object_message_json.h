@@ -12,11 +12,11 @@ namespace zerosugar::xr::service
     void from_json(const nlohmann::json& j, DTOAccount& item);
     void to_json(nlohmann::json& j, const DTOAccount& item);
 
-    void from_json(const nlohmann::json& j, DTOItemOption& item);
-    void to_json(nlohmann::json& j, const DTOItemOption& item);
-
     void from_json(const nlohmann::json& j, DTOItem& item);
     void to_json(nlohmann::json& j, const DTOItem& item);
+
+    void from_json(const nlohmann::json& j, DTOEquipment& item);
+    void to_json(nlohmann::json& j, const DTOEquipment& item);
 
     void from_json(const nlohmann::json& j, DTOEquipItem& item);
     void to_json(nlohmann::json& j, const DTOEquipItem& item);
@@ -29,5 +29,8 @@ namespace zerosugar::xr::service
 
     void from_json(const nlohmann::json& j, DTOLobbyCharacter& item);
     void to_json(nlohmann::json& j, const DTOLobbyCharacter& item);
+
+    void from_json(const nlohmann::json& j, DTOCharacter& item);
+    void to_json(nlohmann::json& j, const DTOCharacter& item);
 
 }

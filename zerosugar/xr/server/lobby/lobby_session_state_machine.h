@@ -16,12 +16,12 @@ namespace zerosugar::xr
         (TransitionToGame)
     )
 
-    class LobbyServerSessionStateMachine final
+    class LobbySessionStateMachine final
         : public StateMachine<LobbySessionState, StateEvent<UniquePtrNotNull<IPacket>, Future<void>>>
-        , public std::enable_shared_from_this<LobbyServerSessionStateMachine>
+        , public std::enable_shared_from_this<LobbySessionStateMachine>
     {
     public:
-        LobbyServerSessionStateMachine(ServiceLocator& serviceLocator, IUniqueIDGenerator& idGenerator, Session& session);
+        LobbySessionStateMachine(ServiceLocator& serviceLocator, IUniqueIDGenerator& idGenerator, Session& session);
 
         void Start();
         void Shutdown();

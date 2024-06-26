@@ -8,7 +8,7 @@
 
 namespace zerosugar::xr
 {
-        LoginServerSessionStateMachine::LoginServerSessionStateMachine(ServiceLocator& serviceLocator, Session& session)
+    LoginSessionStateMachine::LoginSessionStateMachine(ServiceLocator& serviceLocator, Session& session)
         : _session(session.weak_from_this())
         , _name(std::format("login_session_state_machine[{}]", session.GetId()))
         , _serviceLocator(serviceLocator)
@@ -20,13 +20,13 @@ namespace zerosugar::xr
         AddState<login::AuthenticatedState>(false, session);
     }
 
-    void LoginServerSessionStateMachine::Start()
+    void LoginSessionStateMachine::Start()
     {
         const std::shared_ptr<Session>& session = _session.lock();
         assert(session);
 
         Post(session->GetStrand(),
-            [](SharedPtrNotNull<LoginServerSessionStateMachine> self, session::id_type id, WeakPtrNotNull<Session> weak) -> Future<void>
+            [](SharedPtrNotNull<LoginSessionStateMachine> self, session::id_type id, WeakPtrNotNull<Session> weak) -> Future<void>
             {
                 try
                 {
@@ -46,24 +46,24 @@ namespace zerosugar::xr
             }, shared_from_this(), session->GetId(), _session);
     }
 
-    void LoginServerSessionStateMachine::Shutdown()
+    void LoginSessionStateMachine::Shutdown()
     {
         _shutdown.store(true);
 
         _channel->Close();
     }
 
-    void LoginServerSessionStateMachine::Receive(Buffer buffer)
+    void LoginSessionStateMachine::Receive(Buffer buffer)
     {
         _channel->Send(std::move(buffer), channel::ChannelSignal::NotifyOne);
     }
 
-    auto LoginServerSessionStateMachine::GetName() const -> std::string_view
+    auto LoginSessionStateMachine::GetName() const -> std::string_view
     {
         return _name;
     }
 
-    auto LoginServerSessionStateMachine::Run() -> Future<void>
+    auto LoginSessionStateMachine::Run() -> Future<void>
     {
         [[maybe_unused]]
         auto self = shared_from_this();

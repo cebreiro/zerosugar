@@ -4,8 +4,7 @@
 
 namespace zerosugar::xr::db::sp
 {
-    class AccountsGet final
-        : public StoredProcedure
+    class AccountsGet final : public StoredProcedure
     {
     public:
         AccountsGet(zerosugar::db::ConnectionPool::Borrowed& conn, std::string account);

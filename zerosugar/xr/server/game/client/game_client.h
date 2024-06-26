@@ -1,6 +1,7 @@
 #pragma once
-#include "zerosugar/xr/network/packet_builder.h"
+#include "zerosugar/xr/network/packet.h"
 #include "zerosugar/xr/network/packet_interface.h"
+#include "zerosugar/xr/server/game/instance/controller/game_entity_controller_interface.h"
 
 namespace zerosugar
 {
@@ -11,15 +12,17 @@ namespace zerosugar::xr
 {
     class GameInstance;
 
-    class GameClient final
+    class GameClient final : public IGameEntityController
     {
     public:
         GameClient(WeakPtrNotNull<Session> session, std::string authenticationToken, int64_t accountId, int64_t characterId,
             WeakPtrNotNull<GameInstance> gameInstance);
-        ~GameClient();
+        ~GameClient() override;
 
-        template <typename T> requires std::derived_from<T, IPacket>
-        void Send(const T& item);
+
+        bool IsSubscriberOf(int32_t opcode) const override;
+
+        void Notify(const IPacket& packet) override;
 
         void SetSession(WeakPtrNotNull<Session> session);
 
@@ -40,10 +43,4 @@ namespace zerosugar::xr
         int64_t _characterId = 0;
         WeakPtrNotNull<GameInstance> _gameInstance;
     };
-
-    template <typename T> requires std::derived_from<T, IPacket>
-    void GameClient::Send(const T& item)
-    {
-        this->Send(PacketBuilder::MakePacket(item));
-    }
 }

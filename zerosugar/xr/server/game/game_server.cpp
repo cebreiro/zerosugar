@@ -9,9 +9,12 @@
 #include "zerosugar/xr/network/model/generated/game_cs_message.h"
 #include "zerosugar/xr/server/game/client/game_client.h"
 #include "zerosugar/xr/server/game/command/command_channel_runner.h"
-#include "zerosugar/xr/server/game/command/handler/command_handler_factory.h"
+#include "zerosugar/xr/server/game/command/command_handler_factory.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/game_instance_container.h"
+#include "zerosugar/xr/server/game/instance/entity/game_entity_serializer.h"
+#include "zerosugar/xr/server/game/packet/packet_handler_factory.h"
+#include "zerosugar/xr/server/game/packet/packet_handler_interface.h"
 #include "zerosugar/xr/service/model/generated/coordination_service.h"
 
 namespace zerosugar::xr
@@ -19,7 +22,9 @@ namespace zerosugar::xr
     GameServer::GameServer(execution::AsioExecutor& executor)
         : Server("game_server", executor)
         , _gameInstanceContainer(std::make_unique<GameInstanceContainer>())
+        , _gamePacketHandlerFactory(std::make_unique<GamePacketHandlerFactory>())
         , _commandHandlerFactory(std::make_unique<CommandHandlerFactory>())
+        , _gameEntitySerializer(std::make_unique<GameEntitySerializer>())
     {
     }
 
@@ -42,7 +47,7 @@ namespace zerosugar::xr
 
         RegisterToCoordinationService();
         OpenCoordinationCommandChannel();
-        ScheduleServerStatusReport();
+        //ScheduleServerStatusReport();
     }
 
     void GameServer::Shutdown()
@@ -58,6 +63,23 @@ namespace zerosugar::xr
     bool GameServer::HasClient(session::id_type id) const
     {
         return _clients.count(id) > 0;
+    }
+
+    bool GameServer::AddClient(session::id_type id, SharedPtrNotNull<GameClient> client)
+    {
+        decltype(_clients)::accessor accessor;
+        if (_clients.insert(accessor, id))
+        {
+            accessor->second = std::move(client);
+
+            return true;
+        }
+        else
+        {
+            assert(false);
+
+            return false;
+        }
     }
 
     void GameServer::SendCommandResponse(const service::CoordinationCommandResponse& response)
@@ -83,6 +105,11 @@ namespace zerosugar::xr
     auto GameServer::GetCommandHandlerFactory() -> ICommandHandlerFactory&
     {
         return *_commandHandlerFactory;
+    }
+
+    auto GameServer::GetGameEntitySerializer() const -> IGameEntitySerializer&
+    {
+        return *_gameEntitySerializer;
     }
 
     void GameServer::SetPublicIP(std::string ip)
@@ -204,112 +231,17 @@ namespace zerosugar::xr
                     return;
                 }
 
-                switch (packet->GetOpcode())
+                if (const auto& handler = _gamePacketHandlerFactory->CreateHandler(packet->GetOpcode());
+                    handler)
                 {
-                case network::game::cs::Authenticate::opcode:
-                {
-                    const network::game::cs::Authenticate* auth = packet->Cast<network::game::cs::Authenticate>();
-                    assert(auth);
-
-                    Post(session.GetStrand(),
-                        [](SharedPtrNotNull<GameServer> self,
-                            SharedPtrNotNull<Session> session, std::string token) -> Future<void>
-                        {
-                            if (self->HasClient(session->GetId()))
-                            {
-                                ZEROSUGAR_LOG_WARN(self->_serviceLocator,
-                                    std::format("[{}] authenticate - invalid request. session: {}, error: {}", self->GetName(), *session));
-
-                                session->Close();
-
-                                co_return;
-                            }
-
-                            service::AuthenticatePlayerParam param;
-                            param.serverId = self->GetServerId();
-                            param.authenticationToken = std::move(token);
-
-                            auto result = co_await self->_serviceLocator.Get<service::ICoordinationService>().AuthenticatePlayerAsync(param);
-
-                            if (result.errorCode != service::CoordinationServiceErrorCode::CoordinationErrorNone)
-                            {
-                                ZEROSUGAR_LOG_WARN(self->_serviceLocator,
-                                    std::format("[{}] fail to authenticate session. session: {}, error: {}",
-                                        self->GetName(), *session, GetEnumName(result.errorCode)));
-
-                                session->Close();
-
-                                co_return;
-                            }
-
-                            SharedPtrNotNull<GameInstance> gameInstance =
-                                self->_gameInstanceContainer->Find(game_instance_id_type(result.gameInstanceId));
-                            if (!gameInstance)
-                            {
-                                ZEROSUGAR_LOG_CRITICAL(self->_serviceLocator,
-                                    std::format("[{}] fail to find game instance. session: {}",
-                                        self->GetName(), *session, GetEnumName(result.errorCode)));
-
-                                session->Close();
-
-                                co_return;
-                            }
-
-                            auto client = std::make_shared<GameClient>(
-                                session->weak_from_this(), param.authenticationToken,
-                                result.accountId, result.characterId, gameInstance->weak_from_this());
-                            {
-                                decltype(_clients)::accessor accessor;
-                                if (self->_clients.insert(accessor, session->GetId()))
-                                {
-                                    accessor->second = std::move(client);
-                                }
-                                else
-                                {
-                                    assert(false);
-                                }
-                            }
-
-                            gameInstance->Accept(std::move(client));
-
-                            co_return;
-                        }, SharedFromThis(), session.shared_from_this(), auth->authenticationToken);
+                    handler->Handle(*this, session.shared_from_this(), std::move(packet));
                 }
-                break;
-                default:
+                else
                 {
-                    std::shared_ptr<GameInstance> instance;
-                    {
-                        {
-                            decltype(_clients)::const_accessor accessor;
-                            if (_clients.find(accessor, session.GetId()))
-                            {
-                                instance = accessor->second->GetGameInstance();
-                            }
-                            else
-                            {
-                                ZEROSUGAR_LOG_WARN(_serviceLocator,
-                                    std::format("[{}] unauthenticate session request. session: {}", GetName(), session));
+                    ZEROSUGAR_LOG_WARN(_serviceLocator,
+                        std::format("[{}] unnkown packet. session: {}, opcode: {}", GetName(), session, packet->GetOpcode()));
 
-                                session.Close();
-
-                                return;
-                            }
-                        }
-                    }
-
-                    if (!instance)
-                    {
-                        ZEROSUGAR_LOG_ERROR(_serviceLocator,
-                            std::format("[{}] game instance is null. session: {}", GetName(), session));
-
-                        session.Close();
-
-                        return;
-                    }
-
-                    // instance->Post(std::move(packet));
-                }
+                    session.Close();
                 }
             }
         }

@@ -14,12 +14,12 @@ namespace zerosugar::xr
         (Authenticated)
     )
 
-    class LoginServerSessionStateMachine
+    class LoginSessionStateMachine
         : public StateMachine<LoginSessionState, StateEvent<UniquePtrNotNull<IPacket>, Future<void>>>
-        , public std::enable_shared_from_this<LoginServerSessionStateMachine>
+        , public std::enable_shared_from_this<LoginSessionStateMachine>
     {
     public:
-        LoginServerSessionStateMachine(ServiceLocator& serviceLocator, Session& session);
+        LoginSessionStateMachine(ServiceLocator& serviceLocator, Session& session);
 
         void Start();
         void Shutdown();

@@ -6,7 +6,10 @@
 namespace zerosugar::xr
 {
     class GameSpatialCell;
+}
 
+namespace zerosugar::xr
+{
     class GameSpatialSector
     {
     public:
@@ -41,6 +44,7 @@ namespace zerosugar::xr
         bool HasCell(game_spatial_cell_id_type id) const;
 
         void AddCell(PtrNotNull<GameSpatialCell> cell);
+        void AddEntity(game_entity_id_type id);
 
         auto Difference(const GameSpatialSector& other) const -> View;
         auto Intersect(const GameSpatialSector& other) const -> View;

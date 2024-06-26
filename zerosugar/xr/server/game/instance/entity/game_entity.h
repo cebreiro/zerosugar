@@ -5,10 +5,15 @@
 
 namespace zerosugar::xr
 {
+    class IGameEntityController;
+}
+
+namespace zerosugar::xr
+{
     class GameEntity
     {
     public:
-        explicit GameEntity(game_entity_id_type id);
+        GameEntity() = default;
 
         template <typename T> requires std::derived_from<T, GameComponent>
         bool AddComponent(UniquePtrNotNull<T> component);
@@ -28,10 +33,22 @@ namespace zerosugar::xr
         template <typename T> requires std::derived_from<T, GameComponent>
         bool FindAndThen(const std::function<void(const T&)>& func) const;
 
+        template <typename T> requires std::derived_from<T, GameComponent>
+        auto GetComponent() -> T&;
+
+        template <typename T> requires std::derived_from<T, GameComponent>
+        auto GetComponent() const -> const T&;
+
+
         auto GetId() const -> game_entity_id_type;
+        auto GetController() const->IGameEntityController&;
+
+        void SetId(game_entity_id_type id);
+        void SetController(SharedPtrNotNull<IGameEntityController> controller);
 
     private:
         game_entity_id_type _id;
+        SharedPtrNotNull<IGameEntityController> _controller;
         boost::unordered::unordered_flat_map<game_component_id_type, UniquePtrNotNull<GameComponent>> _components;
     };
 
@@ -125,5 +142,23 @@ namespace zerosugar::xr
         }
 
         return false;
+    }
+
+    template <typename T> requires std::derived_from<T, GameComponent>
+    auto GameEntity::GetComponent() -> T&
+    {
+        T* component = FindComponent<T>();
+        assert(component);
+
+        return *component;
+    }
+
+    template <typename T> requires std::derived_from<T, GameComponent>
+    auto GameEntity::GetComponent() const -> const T&
+    {
+        const T* component = FindComponent<T>();
+        assert(component);
+
+        return *component;
     }
 }
