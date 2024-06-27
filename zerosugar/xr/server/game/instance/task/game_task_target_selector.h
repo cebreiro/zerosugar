@@ -4,17 +4,21 @@
 namespace zerosugar::xr
 {
     class GameEntity;
-    class GameInstance;
+    class GameExecutionParallel;
+    class GameExecutionSerial;
+}
 
+namespace zerosugar::xr
+{
     template <typename T>
-    concept game_task_target_selector_concept = requires (T t, GameInstance& gameInstance)
+    concept game_task_target_selector_concept = requires (T t, const GameExecutionParallel& parallel, const GameExecutionSerial& serial)
     {
         typename T::target_type;
 
-        { t.SelectEntityId(static_cast<const GameInstance&>(gameInstance)) } -> std::same_as<bool>;
+        { t.SelectEntityId(serial) } -> std::same_as<bool>;
         { t.GetTargetId() } -> std::same_as<std::span<const game_entity_id_type>>;
 
-        { t.SelectEntity(static_cast<const GameInstance&>(gameInstance)) } -> std::same_as<bool>;
+        { t.SelectEntity(parallel) } -> std::same_as<bool>;
         { static_cast<const T&>(t).GetTarget() } -> std::same_as<typename T::target_type>;
     };
 }
@@ -28,10 +32,10 @@ namespace zerosugar::xr::game_task
 
         explicit MainTargetSelector(game_entity_id_type targetId);
 
-        bool SelectEntityId(const GameInstance& gameInstance);
+        bool SelectEntityId(const GameExecutionSerial& serial);
         auto GetTargetId() const -> std::span<const game_entity_id_type>;
 
-        bool SelectEntity(const GameInstance& gameInstance);
+        bool SelectEntity(const GameExecutionParallel& parallel);
         auto GetTarget() const -> target_type;
 
     private:

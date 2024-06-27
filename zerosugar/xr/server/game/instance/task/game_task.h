@@ -5,6 +5,12 @@
 
 namespace zerosugar::xr
 {
+    class GameExecutionParallel;
+    class GameExecutionSerial;
+}
+
+namespace zerosugar::xr
+{
     class Entity;
     class GameInstance;
 
@@ -16,10 +22,10 @@ namespace zerosugar::xr
 
         virtual ~GameTask();
 
-        virtual bool SelectTargetIds(const GameInstance& gameInstance) = 0;
+        virtual bool SelectTargetIds(const GameExecutionSerial& serialContext) = 0;
 
-        void Start(GameInstance& gameInstance);
-        void Complete(GameInstance& gameInstance);
+        void Start(GameExecutionParallel& parallelContext);
+        void Complete(GameExecutionSerial& serialContext);
 
         auto GetCreationTimePoint() const -> std::chrono::system_clock::time_point;
         auto GetBaseTime() const -> std::chrono::system_clock::time_point;
@@ -39,9 +45,9 @@ namespace zerosugar::xr
         }
 
     private:
-        virtual bool SelectTarget(const GameInstance& gameInstance) = 0;
-        virtual void StartExecution(GameInstance& gameInstance) = 0;
-        virtual void OnComplete(GameInstance& gameInstance) = 0;
+        virtual bool SelectTarget(const GameExecutionParallel& parallelContext) = 0;
+        virtual void StartExecution(GameExecutionParallel& parallelContext) = 0;
+        virtual void OnComplete(GameExecutionSerial& serialContext) = 0;
 
     private:
         std::chrono::system_clock::time_point _creationTimePoint;
@@ -75,11 +81,11 @@ namespace zerosugar::xr
         {
         }
 
-        bool SelectTargetIds(const GameInstance& gameInstance) final
+        bool SelectTargetIds(const GameExecutionSerial& serialContext) final
         {
-            const auto select = [&gameInstance]<typename T, size_t... I>(T && tuple, std::index_sequence<I...>)
+            const auto select = [&serialContext]<typename T, size_t... I>(T && tuple, std::index_sequence<I...>)
             {
-                return (... & std::get<I>(tuple).SelectEntityId(gameInstance));
+                return (... & std::get<I>(tuple).SelectEntityId(serialContext));
             };
 
             const bool success = select(_tuple, sequence);
@@ -98,11 +104,11 @@ namespace zerosugar::xr
             return true;
         }
 
-        bool SelectTarget(const GameInstance& gameInstance) final
+        bool SelectTarget(const GameExecutionParallel& parallelContext) final
         {
-            const auto select = [&gameInstance]<typename T, size_t... I>(T && tuple, std::index_sequence<I...>)
+            const auto select = [&parallelContext]<typename T, size_t... I>(T && tuple, std::index_sequence<I...>)
             {
-                return (... & std::get<I>(tuple).SelectEntity(gameInstance));
+                return (... & std::get<I>(tuple).SelectEntity(parallelContext));
             };
 
             const bool success = select(_tuple, sequence);
@@ -110,17 +116,17 @@ namespace zerosugar::xr
             return success;
         }
 
-        void StartExecution(GameInstance& gameInstance) final
+        void StartExecution(GameExecutionParallel& parallelContext) final
         {
             constexpr auto getTarget = []<typename T, size_t... I>(T&& tuple, std::index_sequence<I...>)
             {
                 return std::tuple{ std::get<I>(tuple).GetTarget()... };
             };
 
-            std::apply(std::bind_front(&GameTaskT::Execute, this, std::ref(gameInstance)), getTarget(_tuple, sequence));
+            std::apply(std::bind_front(&GameTaskT::Execute, this, std::ref(parallelContext)), getTarget(_tuple, sequence));
         }
 
-        virtual void Execute(GameInstance& gameInstance, typename TSelector::target_type...) = 0;
+        virtual void Execute(GameExecutionParallel& parallelContext, typename TSelector::target_type...) = 0;
 
     protected:
         auto GetParam() const -> const TParam&

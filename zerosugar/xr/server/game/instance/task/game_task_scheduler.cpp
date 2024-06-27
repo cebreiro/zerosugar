@@ -332,13 +332,13 @@ namespace zerosugar::xr
     {
         Post(_gameInstance.GetExecutor(), [this, process = &process]() mutable
             {
-                process->GetTask().Start(_gameInstance);
+                process->GetTask().Start(_gameInstance.GetParallelContext());
 
                 Strand& strand = _gameInstance.GetStrand();
 
                 Dispatch(strand, [this, process]()
                     {
-                        process->GetTask().Complete(_gameInstance);
+                        process->GetTask().Complete(_gameInstance.GetSerialContext());
                         
                         OnComplete(*process);
                     });

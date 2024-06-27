@@ -15,9 +15,9 @@ namespace zerosugar::xr
     {
     }
 
-    void GameTask::Start(GameInstance& gameInstance) 
+    void GameTask::Start(GameExecutionParallel& parallelContext)
     {
-        if (!this->SelectTarget(gameInstance))
+        if (!this->SelectTarget(parallelContext))
         {
             return;
         }
@@ -33,12 +33,12 @@ namespace zerosugar::xr
 
         _baseTimePoint = std::chrono::system_clock::now();
 
-        this->StartExecution(gameInstance);
+        this->StartExecution(parallelContext);
     }
 
-    void GameTask::Complete(GameInstance& gameInstance)
+    void GameTask::Complete(GameExecutionSerial& serialContext)
     {
-        this->OnComplete(gameInstance);
+        this->OnComplete(serialContext);
     }
 
     auto GameTask::GetCreationTimePoint() const -> std::chrono::system_clock::time_point

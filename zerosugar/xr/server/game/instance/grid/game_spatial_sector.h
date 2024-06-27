@@ -29,6 +29,9 @@ namespace zerosugar::xr
         public:
             View() = default;
 
+            void AddEntity(game_entity_id_type id);
+            void RemoveEntity(game_entity_id_type id);
+
             auto GetEntities() const -> entity_id_view_type;
 
         private:
@@ -49,7 +52,11 @@ namespace zerosugar::xr
         auto Difference(const GameSpatialSector& other) const -> View;
         auto Intersect(const GameSpatialSector& other) const -> View;
 
+        auto GetId() const -> game_spatial_sector_id_type;
         auto GetEntities() const -> entity_id_view_type;
+
+    public:
+        friend auto operator-(const GameSpatialSector& lhs, const GameSpatialSector& rhs) -> View;
 
     private:
         game_spatial_sector_id_type _id;

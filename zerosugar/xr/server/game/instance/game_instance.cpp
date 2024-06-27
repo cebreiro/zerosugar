@@ -21,10 +21,12 @@ namespace zerosugar::xr
         , _serviceLocator(std::move(serviceLocator))
         , _id(id)
         , _zoneId(zoneId)
+        , _parallel(*this)
+        , _serial(*this)
+        , _taskScheduler(std::make_unique<GameTaskScheduler>(*this))
         , _entityContainer(std::make_unique<GameEntityContainer>())
         , _entityViewContainer(std::make_unique<GameEntityViewContainer>())
         , _spatialContainer(std::make_unique<GameSpatialContainer>(100000, 100000, 900))
-        , _taskScheduler(std::make_unique<GameTaskScheduler>(*this))
     {
     }
 
@@ -73,6 +75,8 @@ namespace zerosugar::xr
     {
         Dispatch(*_strand, [self = shared_from_this(), task = std::move(task), controllerId]() mutable
             {
+                task->SelectTargetIds(self->GetSerialContext());
+
                 self->_taskScheduler->Schedule(std::move(task), controllerId);
             });
     }
@@ -105,6 +109,36 @@ namespace zerosugar::xr
     auto GameInstance::GetZoneId() const -> int32_t
     {
         return _zoneId;
+    }
+
+    auto GameInstance::GetParallelContext() -> GameExecutionParallel&
+    {
+        return _parallel;
+    }
+
+    auto GameInstance::GetParallelContext() const -> const GameExecutionParallel&
+    {
+        return _parallel;
+    }
+
+    auto GameInstance::GetSerialContext() -> GameExecutionSerial&
+    {
+        return _serial;
+    }
+
+    auto GameInstance::GetSerialContext() const -> const GameExecutionSerial&
+    {
+        return _serial;
+    }
+
+    auto GameInstance::GetTaskScheduler() -> GameTaskScheduler&
+    {
+        return *_taskScheduler;
+    }
+
+    auto GameInstance::GetTaskScheduler() const -> const GameTaskScheduler&
+    {
+        return *_taskScheduler;
     }
 
     auto GameInstance::GetEntityContainer() -> GameEntityContainer&

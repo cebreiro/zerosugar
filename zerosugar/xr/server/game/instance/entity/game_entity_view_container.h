@@ -12,6 +12,13 @@ namespace zerosugar::xr
     class GameEntityViewContainer
     {
     public:
+        GameEntityViewContainer(const GameEntityViewContainer& other) = delete;
+        GameEntityViewContainer(GameEntityViewContainer&& other) noexcept = delete;
+        GameEntityViewContainer& operator=(const GameEntityViewContainer& other) = delete;
+        GameEntityViewContainer& operator=(GameEntityViewContainer&& other) noexcept = delete;
+
+    public:
+        GameEntityViewContainer() = default;
         ~GameEntityViewContainer();
 
         bool Has(game_entity_id_type id) const;

@@ -1,5 +1,7 @@
 #pragma once
 #include "zerosugar/xr/server/game/instance/game_instance_id.h"
+#include "zerosugar/xr/server/game/instance/execution/game_execution_parallel.h"
+#include "zerosugar/xr/server/game/instance/execution/game_execution_serial.h"
 
 namespace zerosugar::xr
 {
@@ -30,6 +32,7 @@ namespace zerosugar::xr
 
         auto PublishControllerId() -> int64_t;
 
+    public:
         auto GetExecutor() const -> execution::IExecutor&;
         auto GetStrand() const -> Strand&;
         auto GetServiceLocator() -> service_locator_type&;
@@ -37,6 +40,13 @@ namespace zerosugar::xr
         auto GetId() const -> game_instance_id_type;
         auto GetZoneId() const -> int32_t;
 
+        auto GetParallelContext() -> GameExecutionParallel&;
+        auto GetParallelContext() const -> const GameExecutionParallel&;
+        auto GetSerialContext() -> GameExecutionSerial&;
+        auto GetSerialContext() const -> const GameExecutionSerial&;
+
+        auto GetTaskScheduler() -> GameTaskScheduler&;
+        auto GetTaskScheduler() const -> const GameTaskScheduler&;
         auto GetEntityContainer() -> GameEntityContainer&;
         auto GetEntityContainer() const -> const GameEntityContainer&;
         auto GetEntityViewContainer() -> GameEntityViewContainer&;
@@ -55,9 +65,12 @@ namespace zerosugar::xr
         std::atomic<int64_t> _nextControllerId = 0;
         int64_t _nextEntityId = 0;
 
+        GameExecutionParallel _parallel;
+        GameExecutionSerial _serial;
+
+        std::unique_ptr<GameTaskScheduler> _taskScheduler;
         std::unique_ptr<GameEntityContainer> _entityContainer;
         std::unique_ptr<GameEntityViewContainer> _entityViewContainer;
         std::unique_ptr<GameSpatialContainer> _spatialContainer;
-        std::unique_ptr<GameTaskScheduler> _taskScheduler;
     };
 }

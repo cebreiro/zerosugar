@@ -38,9 +38,17 @@ namespace zerosugar::xr
         }
 
     protected:
-        UniquePtrNotNull<IPacket> _packet;
+        auto ReleasePacket() -> UniquePtrNotNull<IPacket>
+        {
+            assert(_packet);
+
+            return std::move(_packet);
+        }
 
     private:
         virtual auto HandlePacket(GameServer& server, Session& session, const T& packet) -> Future<void> = 0;
+
+    private:
+        UniquePtrNotNull<IPacket> _packet;
     };
 }

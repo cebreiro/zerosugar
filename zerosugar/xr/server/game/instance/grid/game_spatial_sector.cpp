@@ -67,6 +67,27 @@ namespace zerosugar::xr
         return view;
     }
 
+    auto GameSpatialSector::GetId() const -> game_spatial_sector_id_type
+    {
+        return _id;
+    }
+
+    void GameSpatialSector::View::AddEntity(game_entity_id_type id)
+    {
+        for (PtrNotNull<GameSpatialCell> cell : _cells)
+        {
+            cell->AddEntity(id);
+        }
+    }
+
+    void GameSpatialSector::View::RemoveEntity(game_entity_id_type id)
+    {
+        for (PtrNotNull<GameSpatialCell> cell : _cells)
+        {
+            cell->RemoveEntity(id);
+        }
+    }
+
     auto GameSpatialSector::View::GetEntities() const -> entity_id_view_type
     {
         return _cells | std::views::transform(Transform()) | std::views::join;
@@ -75,5 +96,10 @@ namespace zerosugar::xr
     auto GameSpatialSector::GetEntities() const -> entity_id_view_type
     {
         return _cells | std::views::transform(Transform()) | std::views::join;
+    }
+
+    auto operator-(const GameSpatialSector& lhs, const GameSpatialSector& rhs) -> GameSpatialSector::View
+    {
+        return lhs.Difference(rhs);
     }
 }

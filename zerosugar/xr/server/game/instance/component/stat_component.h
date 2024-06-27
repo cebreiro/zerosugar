@@ -1,6 +1,6 @@
 #pragma once
 #include "zerosugar/xr/server/game/instance/component/game_component.h"
-#include "zerosugar/xr/server/game/instance/task/game_execution_environment.h"
+#include "zerosugar/xr/server/game/instance/execution/game_execution_parallel.h"
 
 namespace zerosugar::xr
 {
@@ -102,17 +102,17 @@ namespace zerosugar::xr
         void AddItemStat(StatType type, StatValue value);
         void SubItemStat(StatType type, StatValue value);
 
-        auto GetHP(std::chrono::system_clock::time_point now = GameExecutionEnvironment::GetCurrentTimePoint()) const -> StatValue;
-        auto GetMP(std::chrono::system_clock::time_point now = GameExecutionEnvironment::GetCurrentTimePoint()) const-> StatValue;
-        auto GetStamina(std::chrono::system_clock::time_point now = GameExecutionEnvironment::GetCurrentTimePoint()) const-> StatValue;
+        auto GetHP(std::chrono::system_clock::time_point now = GameExecutionParallel::GetBaseTimePoint()) const -> StatValue;
+        auto GetMP(std::chrono::system_clock::time_point now = GameExecutionParallel::GetBaseTimePoint()) const-> StatValue;
+        auto GetStamina(std::chrono::system_clock::time_point now = GameExecutionParallel::GetBaseTimePoint()) const-> StatValue;
         auto Get(StatType type) const->StatValue;
 
         auto GetMaxHP() const->StatValue;
         auto GetMaxMP() const->StatValue;
         auto GetMaxStamina() const-> StatValue;
 
-        void SetHP(StatValue value, std::chrono::system_clock::time_point now = GameExecutionEnvironment::GetCurrentTimePoint());
-        void SetMP(StatValue value, std::chrono::system_clock::time_point now = GameExecutionEnvironment::GetCurrentTimePoint());
+        void SetHP(StatValue value, std::chrono::system_clock::time_point now = GameExecutionParallel::GetBaseTimePoint());
+        void SetMP(StatValue value, std::chrono::system_clock::time_point now = GameExecutionParallel::GetBaseTimePoint());
 
     private:
         auto GetFixedStat(StatType type) -> FixedStat&;

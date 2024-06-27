@@ -1,8 +1,10 @@
 #include "game_task_target_selector.h"
 
-#include "zerosugar/xr/server/game/instance/game_instance.h"
+
 #include "zerosugar/xr/server/game/instance/entity/game_entity_container.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_view_container.h"
+#include "zerosugar/xr/server/game/instance/execution/game_execution_parallel.h"
+#include "zerosugar/xr/server/game/instance/execution/game_execution_serial.h"
 
 namespace zerosugar::xr::game_task
 {
@@ -11,9 +13,9 @@ namespace zerosugar::xr::game_task
     {
     }
 
-    bool MainTargetSelector::SelectEntityId(const GameInstance& gameInstance)
+    bool MainTargetSelector::SelectEntityId(const GameExecutionSerial& serial)
     {
-        return gameInstance.GetEntityViewContainer().Has(_mainTargetId);
+        return serial.GetEntityViewContainer().Has(_mainTargetId);
     }
 
     auto MainTargetSelector::GetTargetId() const -> std::span<const game_entity_id_type>
@@ -21,9 +23,9 @@ namespace zerosugar::xr::game_task
         return std::span(&_mainTargetId, 1);
     }
 
-    bool MainTargetSelector::SelectEntity(const GameInstance& gameInstance)
+    bool MainTargetSelector::SelectEntity(const GameExecutionParallel& parallel)
     {
-        _entity = gameInstance.GetEntityContainer().Find(_mainTargetId);
+        _entity = parallel.GetEntityContainer().Find(_mainTargetId);
 
         return _entity.operator bool();
     }
