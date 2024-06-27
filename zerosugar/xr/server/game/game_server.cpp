@@ -82,6 +82,17 @@ namespace zerosugar::xr
         }
     }
 
+    auto GameServer::FindClient(session::id_type id) const -> SharedPtrNotNull<GameClient>
+    {
+        decltype(_clients)::const_accessor accessor;
+        if (_clients.find(accessor, id))
+        {
+            return accessor->second;
+        }
+
+        return {};
+    }
+
     void GameServer::SendCommandResponse(const service::CoordinationCommandResponse& response)
     {
         _responseChannel->Send(response, channel::ChannelSignal::NotifyOne);
@@ -201,7 +212,7 @@ namespace zerosugar::xr
             receiveBuffer->MergeBack(std::move(buffer));
 
             while (true)
-             {
+            {
                 if (receiveBuffer->GetSize() < 2)
                 {
                     break;
@@ -226,7 +237,7 @@ namespace zerosugar::xr
                     ZEROSUGAR_LOG_WARN(_serviceLocator,
                         std::format("[{}] unnkown packet. session: {}", GetName(), session));
 
-                    session.Close();
+                    //session.Close();
 
                     return;
                 }
@@ -241,7 +252,7 @@ namespace zerosugar::xr
                     ZEROSUGAR_LOG_WARN(_serviceLocator,
                         std::format("[{}] unnkown packet. session: {}, opcode: {}", GetName(), session, packet->GetOpcode()));
 
-                    session.Close();
+                    //session.Close();
                 }
             }
         }

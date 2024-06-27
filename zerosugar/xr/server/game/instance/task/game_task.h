@@ -29,18 +29,18 @@ namespace zerosugar::xr
         static auto GetLocalInstance() -> GameTask&;
 
     protected:
-        template <typename TRange> requires std::same_as<std::ranges::range_value_t<TRange>, const game_entity_id_type>
+        template <typename TRange>
         void SetTargetIds(TRange&& range)
         {
-            std::ranges::copy(std::forward<TRange>(range) | std::transform([](const game_entity_id_type id)
-                {
-                    return id.Unwrap();
-                }), std::back_inserter(_targetIds));
+            for (const game_entity_id_type id : range)
+            {
+                _targetIds.push_back(id.Unwrap());
+            }
         }
 
     private:
         virtual bool SelectTarget(const GameInstance& gameInstance) = 0;
-        virtual void Execute(GameInstance& gameInstance) = 0;
+        virtual void StartExecution(GameInstance& gameInstance) = 0;
         virtual void OnComplete(GameInstance& gameInstance) = 0;
 
     private:
@@ -51,7 +51,15 @@ namespace zerosugar::xr
         static thread_local GameTask* _localInstance;
     };
 
-    template <typename TParam, game_task_target_selector_concept... TSelector>
+    template <typename TBase, typename TParam>
+    concept game_task_param_concept = requires (TBase& base)
+    {
+        requires std::derived_from<TParam, TBase>;
+        { base.template Cast<TParam>() } -> std::same_as<const TParam*>;
+    };
+
+    template <typename TBase, typename TParam, game_task_target_selector_concept... TSelector>
+         requires game_task_param_concept<TBase, TParam>
     class GameTaskT : public GameTask
     {
         static_assert(sizeof...(TSelector) > 0);
@@ -60,7 +68,7 @@ namespace zerosugar::xr
         static constexpr int64_t selector_count = sizeof...(TSelector);
 
     public:
-        GameTaskT(std::chrono::system_clock::time_point creationTimePoint, TParam param, TSelector&&... selector)
+        GameTaskT(std::chrono::system_clock::time_point creationTimePoint, UniquePtrNotNull<TBase> param, TSelector&&... selector)
             : GameTask(creationTimePoint)
             , _param(std::move(param))
             , _tuple({ std::forward<TSelector>(selector)... })
@@ -85,10 +93,7 @@ namespace zerosugar::xr
                 return std::array<std::span<const game_entity_id_type>, selector_count>{ std::get<I>(tuple).GetTargetId()... };
             };
 
-            const auto array = getTargetIds(_tuple, sequence);
-            auto range = array | std::views::join;
-
-            this->SetTargetIds(std::move(range));
+            this->SetTargetIds(getTargetIds(_tuple, sequence) | std::views::join);
 
             return true;
         }
@@ -105,7 +110,7 @@ namespace zerosugar::xr
             return success;
         }
 
-        void Execute(GameInstance& gameInstance) final
+        void StartExecution(GameInstance& gameInstance) final
         {
             constexpr auto getTarget = []<typename T, size_t... I>(T&& tuple, std::index_sequence<I...>)
             {
@@ -120,11 +125,14 @@ namespace zerosugar::xr
     protected:
         auto GetParam() const -> const TParam&
         {
-            return _param;
+            const TParam* param = _param->template Cast<TParam>();
+            assert(param);
+
+            return *param;
         }
 
     private:
-        TParam _param;
+        UniquePtrNotNull<TBase> _param;
         std::tuple<TSelector...> _tuple;
     };
 }

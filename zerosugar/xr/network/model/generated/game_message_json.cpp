@@ -195,6 +195,7 @@ namespace zerosugar::xr::network::game
         j.at("base").get_to(item.base);
         j.at("equipment").get_to(item.equipment);
         j.at("gold").get_to(item.gold);
+        j.at("itemsCount").get_to(item.itemsCount);
         j.at("items").get_to(item.items);
     }
 
@@ -207,6 +208,7 @@ namespace zerosugar::xr::network::game
                 { "base", item.base },
                 { "equipment", item.equipment },
                 { "gold", item.gold },
+                { "itemsCount", item.itemsCount },
                 { "items", item.items },
             };
     }

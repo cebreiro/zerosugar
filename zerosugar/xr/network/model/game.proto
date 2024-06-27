@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "option.proto";
+
 package zerosugar.xr.network.game;
 
 message Position
@@ -92,7 +94,9 @@ message Player
     PlayerEquipment equipment = 4;
 
     int32 gold = 5;
-    repeated PlayerInventoryItem items = 6;
+
+    int32 items_count = 6;
+    repeated PlayerInventoryItem items = 7 [(size_element) = "items_count"];
 }
 
 message Monster

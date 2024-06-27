@@ -33,7 +33,7 @@ namespace zerosugar::xr
 
         _baseTimePoint = std::chrono::system_clock::now();
 
-        this->Execute(gameInstance);
+        this->StartExecution(gameInstance);
     }
 
     void GameTask::Complete(GameInstance& gameInstance)

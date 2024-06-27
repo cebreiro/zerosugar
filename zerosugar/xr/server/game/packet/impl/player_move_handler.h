@@ -4,10 +4,10 @@
 
 namespace zerosugar::xr
 {
-    class AuthenticateHandler final : public IGamePacketHandlerT<network::game::cs::Authenticate>
+    class PlayerMoveHandler final : public IGamePacketHandlerT<network::game::cs::PlayerMove>
     {
     public:
         auto HandlePacket(GameServer& server, Session& session,
-            const network::game::cs::Authenticate& packet) -> Future<void> override;
+            const network::game::cs::PlayerMove& packet) ->Future<void> override;
     };
 }

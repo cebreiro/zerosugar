@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "option.proto";
+import "game.proto";
 
 package zerosugar.xr.network.game.cs;
 
@@ -9,4 +10,19 @@ message Authenticate
     option (opcode) = 1000;
 
     string authentication_token = 1;
+}
+
+message PlayerMove
+{
+    option (opcode) = 1001;
+
+    Position position = 1;
+}
+
+message PlayerStopMovement
+{
+    option (opcode) = 1020;
+
+    int64 id = 1;
+    Position position = 2;
 }

@@ -172,7 +172,8 @@ namespace zerosugar::xr::network::game
         reader.Read(base);
         reader.Read(equipment);
         gold = reader.Read<int32_t>();
-        reader.Read(items, reader.Read<int16_t>());
+        itemsCount = reader.Read<int32_t>();
+        reader.Read(items, itemsCount);
     }
 
     void Player::Serialize(BufferWriter& writer) const
@@ -182,7 +183,7 @@ namespace zerosugar::xr::network::game
         writer.Write(base);
         writer.Write(equipment);
         writer.Write<int32_t>(gold);
-        writer.Write<int16_t>((int16_t)std::ssize(items) + 1);
+        writer.Write<int32_t>(itemsCount);
         writer.Write(items);
     }
 

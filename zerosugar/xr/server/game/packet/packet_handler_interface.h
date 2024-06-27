@@ -27,7 +27,9 @@ namespace zerosugar::xr
     public:
         auto Handle(GameServer& server, SharedPtrNotNull<Session> session, UniquePtrNotNull<IPacket> packet) -> Future<void> final
         {
-            const T* casted = packet->Cast<T>();
+            _packet = std::move(packet);
+
+            const T* casted = _packet->Cast<T>();
             assert(casted);
 
             co_await this->HandlePacket(server, *session, *casted);
@@ -35,7 +37,10 @@ namespace zerosugar::xr
             co_return;
         }
 
+    protected:
+        UniquePtrNotNull<IPacket> _packet;
+
     private:
-        virtual auto HandlePacket(GameServer& server, Session& session, const T& packet) const -> Future<void> = 0;
+        virtual auto HandlePacket(GameServer& server, Session& session, const T& packet) -> Future<void> = 0;
     };
 }

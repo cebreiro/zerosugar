@@ -61,6 +61,8 @@ namespace zerosugar::xr
                 {
                     auto& inventoryComponent = entity.GetComponent<InventoryComponent>();
 
+                    player.gold = 123123;
+
                     const auto make = [](const InventoryItem& item)
                         {
                             network::game::PlayerInventoryItem result;
@@ -78,6 +80,7 @@ namespace zerosugar::xr
                     for (const InventoryItem& item : inventoryComponent.GetInventoryItems())
                     {
                         player.items.emplace_back(make(item));
+                        ++player.itemsCount;
                     }
                 }
 
@@ -90,8 +93,8 @@ namespace zerosugar::xr
         auto& playerComponent = entity.GetComponent<PlayerComponent>();
         auto& statComponent = entity.GetComponent<StatComponent>();
 
-        base.hp = statComponent.GetHP().As<float>();
-        base.maxHP = statComponent.GetMaxHP().As<float>();
+        base.hp = 100;// statComponent.GetHP().As<float>();
+        base.maxHP = 100;// statComponent.GetMaxHP().As<float>();
         base.attackMin = statComponent.Get(StatType::Attack).As<float>();
         base.attackMax = statComponent.Get(StatType::Attack).As<float>();
         base.speed = 10.f;

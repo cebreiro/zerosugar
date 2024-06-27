@@ -161,7 +161,14 @@ namespace zerosugar
                         }
                         else if (type.starts_with("std::vector"))
                         {
-                            _cxxPrinter.AddLine(fieldIndent, "reader.Read({}, reader.Read<int16_t>());", field.name);
+                            if (field.option.sizeElement)
+                            {
+                                _cxxPrinter.AddLine(fieldIndent, "reader.Read({}, {});", field.name, *field.option.sizeElement);
+                            }
+                            else
+                            {
+                                _cxxPrinter.AddLine(fieldIndent, "reader.Read({}, reader.Read<int16_t>());", field.name);
+                            }
                         }
                         else if (type.starts_with("std::string"))
                         {
@@ -199,8 +206,15 @@ namespace zerosugar
                         }
                         else if (type.starts_with("std::vector"))
                         {
-                            _cxxPrinter.AddLine(fieldIndent, "writer.Write<int16_t>((int16_t)std::ssize({}) + 1);", field.name);
-                            _cxxPrinter.AddLine(fieldIndent, "writer.Write({});", field.name);
+                            if (field.option.sizeElement)
+                            {
+                                _cxxPrinter.AddLine(fieldIndent, "writer.Write({});", field.name);
+                            }
+                            else
+                            {
+                                _cxxPrinter.AddLine(fieldIndent, "writer.Write<int16_t>((int16_t)std::ssize({}));", field.name);
+                                _cxxPrinter.AddLine(fieldIndent, "writer.Write({});", field.name);
+                            }
                         }
                         else if (type.starts_with("std::string"))
                         {

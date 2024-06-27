@@ -299,8 +299,10 @@ namespace zerosugar::xr
 
         // iter is invalidate so can't use ++iter
         auto iter = readyProcesses.begin();
-        for (auto next = std::next(iter); iter != readyProcesses.end(); iter = next++)
+        while (iter != readyProcesses.end())
         {
+            auto next = std::next(iter);
+
             Process* process = *iter;
             assert(process->HasTask());
 
@@ -313,6 +315,15 @@ namespace zerosugar::xr
             else if (process->AddStarvationCount(); process->GetStarvationCount() > 10)
             {
                 ReserveResource(*process);
+            }
+
+            if (next == readyProcesses.end())
+            {
+                break;
+            }
+            else
+            {
+                iter = next++;
             }
         }
     }

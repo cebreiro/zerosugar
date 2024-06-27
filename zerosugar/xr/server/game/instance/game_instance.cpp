@@ -9,6 +9,7 @@
 #include "zerosugar/xr/server/game/instance/entity/game_entity_view_container.h"
 #include "zerosugar/xr/server/game/instance/grid/game_spatial_container.h"
 #include "zerosugar/xr/server/game/instance/task/game_task_scheduler.h"
+#include "zerosugar/xr/server/game/instance/task/game_task.h"
 #include "zerosugar/xr/server/game/packet/packet_builder.h"
 
 namespace zerosugar::xr
@@ -16,13 +17,13 @@ namespace zerosugar::xr
     GameInstance::GameInstance(SharedPtrNotNull<execution::IExecutor> executor, service_locator_type serviceLocator,
         game_instance_id_type id, int32_t zoneId)
         : _executor(std::move(executor))
-        , _strand(std::make_shared<Strand>(std::move(_executor)))
+        , _strand(std::make_shared<Strand>(_executor))
         , _serviceLocator(std::move(serviceLocator))
         , _id(id)
         , _zoneId(zoneId)
         , _entityContainer(std::make_unique<GameEntityContainer>())
         , _entityViewContainer(std::make_unique<GameEntityViewContainer>())
-        , _spatialContainer(std::make_unique<GameSpatialContainer>(10000, 10000, 250))
+        , _spatialContainer(std::make_unique<GameSpatialContainer>(100000, 100000, 900))
         , _taskScheduler(std::make_unique<GameTaskScheduler>(*this))
     {
     }
@@ -31,7 +32,7 @@ namespace zerosugar::xr
     {
     }
 
-    auto GameInstance::SpawnEntity(SharedPtrNotNull<GameEntity> entity) -> Future<void>
+    auto GameInstance::SpawnEntity(SharedPtrNotNull<GameEntity> entity, int64_t controllerId) -> Future<void>
     {
         [[maybe_unused]]
         auto self = shared_from_this();
@@ -41,6 +42,8 @@ namespace zerosugar::xr
             co_await *_strand;
         }
 
+        entity->SetId(game_entity_id_type(++_nextEntityId));
+
         bool result = _entityContainer->Add(entity);
         assert(result);
 
@@ -49,13 +52,12 @@ namespace zerosugar::xr
         result = _entityViewContainer->Add(std::unique_ptr<GameEntityView>(entityView));
         assert(result);
 
-        result = co_await _taskScheduler->AddProcess(entity->GetId().Unwrap());
+        result = co_await _taskScheduler->AddProcess(controllerId);
         assert(result);
 
         const MovementComponent& movementComponent = entity->GetComponent<MovementComponent>();
 
-        GameSpatialSector& sector = _spatialContainer->GetSector(
-            static_cast<int32_t>(movementComponent.GetX()), static_cast<int32_t>(movementComponent.GetY()));
+        GameSpatialSector& sector = _spatialContainer->GetSector(movementComponent.GetX(), movementComponent.GetY());
         sector.AddEntity(entity->GetId());
 
         if (entity->GetController().IsSubscriberOf(network::game::sc::EnterGame::opcode))
@@ -65,6 +67,19 @@ namespace zerosugar::xr
 
             entity->GetController().Notify(packet);
         }
+    }
+
+    void GameInstance::Summit(UniquePtrNotNull<GameTask> task, std::optional<int64_t> controllerId)
+    {
+        Dispatch(*_strand, [self = shared_from_this(), task = std::move(task), controllerId]() mutable
+            {
+                self->_taskScheduler->Schedule(std::move(task), controllerId);
+            });
+    }
+
+    auto GameInstance::PublishControllerId() -> int64_t
+    {
+        return _nextControllerId.fetch_add(1);
     }
 
     auto GameInstance::GetExecutor() const -> execution::IExecutor&

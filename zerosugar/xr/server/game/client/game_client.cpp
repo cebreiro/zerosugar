@@ -22,9 +22,29 @@ namespace zerosugar::xr
         Send(Packet::ToBuffer(packet));
     }
 
+    auto GameClient::GetControllerId() const -> int64_t
+    {
+        return _controllerId;
+    }
+
+    void GameClient::SetControllerId(int64_t id)
+    {
+        _controllerId = id;
+    }
+
     void GameClient::SetSession(WeakPtrNotNull<Session> session)
     {
         _session = std::move(session);
+    }
+
+    void GameClient::SetGameInstance(WeakPtrNotNull<GameInstance> gameInstance)
+    {
+        _gameInstance = std::move(gameInstance);
+    }
+
+    void GameClient::SetGameEntityId(game_entity_id_type id)
+    {
+        _entityId = id;
     }
 
     auto GameClient::GetAuthenticationToken() const -> const std::string&
@@ -58,6 +78,11 @@ namespace zerosugar::xr
     auto GameClient::GetGameInstance() const -> SharedPtrNotNull<GameInstance>
     {
         return _gameInstance.lock();
+    }
+
+    auto GameClient::GetGameEntityId() const -> game_entity_id_type
+    {
+        return _entityId;
     }
 
     bool GameClient::IsSubscriberOf(int32_t opcode) const

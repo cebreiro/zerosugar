@@ -122,6 +122,7 @@ namespace zerosugar::xr::network::game
         PlayerBase base = {};
         PlayerEquipment equipment = {};
         int32_t gold = {};
+        int32_t itemsCount = {};
         std::vector<PlayerInventoryItem> items = {};
     };
 

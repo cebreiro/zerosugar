@@ -7,6 +7,7 @@ namespace zerosugar::xr
     GamePacketHandlerFactory::GamePacketHandlerFactory()
     {
         Register<AuthenticateHandler>();
+        Register<PlayerMoveHandler>();
     }
 
     GamePacketHandlerFactory::~GamePacketHandlerFactory()

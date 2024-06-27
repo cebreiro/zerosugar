@@ -13,9 +13,8 @@
 
 namespace zerosugar::xr
 {
-    auto AuthenticateHandler::HandlePacket(
-        GameServer& server, Session& session,
-        const network::game::cs::Authenticate& packet) const -> Future<void>
+    auto AuthenticateHandler::HandlePacket(GameServer& server, Session& session,
+        const network::game::cs::Authenticate& packet) -> Future<void>
     {
         using namespace service;
 
@@ -89,6 +88,11 @@ namespace zerosugar::xr
         SharedPtrNotNull<GameEntity> entity = server.GetGameEntitySerializer().Deserialize(getCharacterResult.character);
         entity->SetController(client);
 
-        gameInstance->SpawnEntity(std::move(entity));
+        const int64_t controllerId = gameInstance->PublishControllerId();
+        co_await gameInstance->SpawnEntity(entity, controllerId);
+
+        client->SetGameInstance(gameInstance);
+        client->SetControllerId(controllerId);
+        client->SetGameEntityId(entity->GetId());
     }
 }

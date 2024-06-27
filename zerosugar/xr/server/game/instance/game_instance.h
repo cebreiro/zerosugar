@@ -7,6 +7,7 @@ namespace zerosugar::xr
     class GameEntityContainer;
     class GameEntityViewContainer;
     class GameSpatialContainer;
+    class GameTask;
     class GameTaskScheduler;
 }
 
@@ -23,7 +24,11 @@ namespace zerosugar::xr
             game_instance_id_type id, int32_t zoneId);
         ~GameInstance();
 
-        auto SpawnEntity(SharedPtrNotNull<GameEntity> entity) -> Future<void>;
+        auto SpawnEntity(SharedPtrNotNull<GameEntity> entity, int64_t controllerId) -> Future<void>;
+
+        void Summit(UniquePtrNotNull<GameTask> task, std::optional<int64_t> controllerId);
+
+        auto PublishControllerId() -> int64_t;
 
         auto GetExecutor() const -> execution::IExecutor&;
         auto GetStrand() const -> Strand&;
@@ -46,6 +51,9 @@ namespace zerosugar::xr
 
         game_instance_id_type _id;
         int32_t _zoneId = 0;
+
+        std::atomic<int64_t> _nextControllerId = 0;
+        int64_t _nextEntityId = 0;
 
         std::unique_ptr<GameEntityContainer> _entityContainer;
         std::unique_ptr<GameEntityViewContainer> _entityViewContainer;
