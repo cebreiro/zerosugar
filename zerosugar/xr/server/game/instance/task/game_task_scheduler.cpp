@@ -206,7 +206,7 @@ namespace zerosugar::xr
 
         if (!process)
         {
-            process = &CreateProcess(++_nextProcessId);
+            process = &CreateProcess(--_nextTempProcessId);
         }
 
         switch (process->GetState())

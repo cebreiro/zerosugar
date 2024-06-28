@@ -2,5 +2,61 @@
 
 namespace zerosugar::xr
 {
-    using game_entity_id_type = ValueType<int64_t, class GameEntityIdTag>;
+    ENUM_CLASS(GameEntityType, int16_t,
+        (Player, 0)
+        (Monster)
+
+        (Count)
+    )
+
+    namespace detail::game
+    {
+        class GameEntityId
+        {
+        public:
+            GameEntityId() = default;
+            GameEntityId(GameEntityType type, int32_t value);
+
+            auto GetType() const -> GameEntityType;
+            auto GetValue() const -> int32_t;
+
+            auto Unwrap() const -> int64_t;
+
+            friend bool operator<(GameEntityId lhs, GameEntityId rhs);
+            friend bool operator==(GameEntityId lhs, GameEntityId rhs);
+            friend bool operator!=(GameEntityId lhs, GameEntityId rhs);
+
+            friend auto hash_value(GameEntityId item) -> size_t;
+
+        private:
+            GameEntityType _type = GameEntityType::Player;
+            int16_t _reserved = 0;
+            int32_t _value = 0;
+        };
+
+    }
+
+    using game_entity_id_type = detail::game::GameEntityId;
+}
+
+namespace std
+{
+    template <>
+    struct hash<zerosugar::xr::detail::game::GameEntityId>
+    {
+        size_t operator()(zerosugar::xr::detail::game::GameEntityId value) const noexcept {
+            return std::hash<int64_t>{}(value.Unwrap());
+        }
+    };
+
+    template <>
+    struct formatter<zerosugar::xr::detail::game::GameEntityId> : std::formatter<std::string>
+    {
+        auto format(zerosugar::xr::detail::game::GameEntityId value, std::format_context& context) const
+            -> std::format_context::iterator
+        {
+            return std::formatter<std::string>::format(std::format("[{}, {}]",
+                ToString(value.GetType()), value.GetValue()), context);
+        }
+    };
 }

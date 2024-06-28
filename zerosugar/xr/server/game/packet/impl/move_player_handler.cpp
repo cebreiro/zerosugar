@@ -1,4 +1,4 @@
-#include "player_move_handler.h"
+#include "move_player_handler.h"
 
 #include "zerosugar/shared/network/session/session.h"
 #include "zerosugar/xr/server/game/game_server.h"
@@ -8,7 +8,7 @@
 
 namespace zerosugar::xr
 {
-    auto PlayerMoveHandler::HandlePacket(GameServer& server, Session& session, const network::game::cs::PlayerMove& packet)
+    auto MovePlayerHandler::HandlePacket(GameServer& server, Session& session, const network::game::cs::MovePlayer& packet)
         -> Future<void>
     {
         SharedPtrNotNull<GameClient> client = server.FindClient(session.GetId());

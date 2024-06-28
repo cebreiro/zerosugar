@@ -19,3 +19,25 @@ message EnterGame
 
     Player local_player = 6;
 }
+
+message AddRemotePlayer
+{
+    option (opcode) = 1001;
+
+    RemotePlayer player = 1;
+}
+
+message RemoveRemotePlayer
+{
+    option (opcode) = 1002;
+
+    int64 id = 1;
+}
+
+message MoveRemotePlayer
+{
+    option (opcode) = 1007;
+
+    int64 id = 1;
+    Position position = 2;
+}

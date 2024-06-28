@@ -15,12 +15,12 @@ namespace zerosugar::xr::network::game::cs
             };
     }
 
-    void from_json(const nlohmann::json& j, PlayerMove& item)
+    void from_json(const nlohmann::json& j, MovePlayer& item)
     {
         j.at("position").get_to(item.position);
     }
 
-    void to_json(nlohmann::json& j, const PlayerMove& item)
+    void to_json(nlohmann::json& j, const MovePlayer& item)
     {
         j = nlohmann::json
             {
@@ -28,13 +28,13 @@ namespace zerosugar::xr::network::game::cs
             };
     }
 
-    void from_json(const nlohmann::json& j, PlayerStopMovement& item)
+    void from_json(const nlohmann::json& j, StopPlayerMovement& item)
     {
         j.at("id").get_to(item.id);
         j.at("position").get_to(item.position);
     }
 
-    void to_json(nlohmann::json& j, const PlayerStopMovement& item)
+    void to_json(nlohmann::json& j, const StopPlayerMovement& item)
     {
         j = nlohmann::json
             {

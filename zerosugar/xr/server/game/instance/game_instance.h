@@ -1,13 +1,13 @@
 #pragma once
 #include "zerosugar/xr/server/game/instance/game_instance_id.h"
-#include "zerosugar/xr/server/game/instance/execution/game_execution_parallel.h"
-#include "zerosugar/xr/server/game/instance/execution/game_execution_serial.h"
+#include "zerosugar/xr/server/game/instance/task/execution/game_execution_parallel.h"
+#include "zerosugar/xr/server/game/instance/task/execution/game_execution_serial.h"
 
 namespace zerosugar::xr
 {
     class GameEntity;
     class GameEntityContainer;
-    class GameEntityViewContainer;
+    class GameViewModelContainer;
     class GameSpatialContainer;
     class GameTask;
     class GameTaskScheduler;
@@ -15,8 +15,7 @@ namespace zerosugar::xr
 
 namespace zerosugar::xr
 {
-    class GameInstance final
-        : public std::enable_shared_from_this<GameInstance>
+    class GameInstance final : public std::enable_shared_from_this<GameInstance>
     {
     public:
         using service_locator_type = ServiceLocatorT<ILogService>;
@@ -26,7 +25,7 @@ namespace zerosugar::xr
             game_instance_id_type id, int32_t zoneId);
         ~GameInstance();
 
-        auto SpawnEntity(SharedPtrNotNull<GameEntity> entity, int64_t controllerId) -> Future<void>;
+        auto SpawnEntity(SharedPtrNotNull<GameEntity> entity) -> Future<void>;
 
         void Summit(UniquePtrNotNull<GameTask> task, std::optional<int64_t> controllerId);
 
@@ -49,8 +48,8 @@ namespace zerosugar::xr
         auto GetTaskScheduler() const -> const GameTaskScheduler&;
         auto GetEntityContainer() -> GameEntityContainer&;
         auto GetEntityContainer() const -> const GameEntityContainer&;
-        auto GetEntityViewContainer() -> GameEntityViewContainer&;
-        auto GetEntityViewContainer() const -> const GameEntityViewContainer&;
+        auto GetEntityViewModelContainer() -> GameViewModelContainer&;
+        auto GetEntityViewModelContainer() const -> const GameViewModelContainer&;
         auto GetSpatialContainer() -> GameSpatialContainer&;
         auto GetSpatialContainer() const -> const GameSpatialContainer&;
 
@@ -63,14 +62,14 @@ namespace zerosugar::xr
         int32_t _zoneId = 0;
 
         std::atomic<int64_t> _nextControllerId = 0;
-        int64_t _nextEntityId = 0;
+        int32_t _nextPlayerId = 0;
 
         GameExecutionParallel _parallel;
         GameExecutionSerial _serial;
 
         std::unique_ptr<GameTaskScheduler> _taskScheduler;
         std::unique_ptr<GameEntityContainer> _entityContainer;
-        std::unique_ptr<GameEntityViewContainer> _entityViewContainer;
+        std::unique_ptr<GameViewModelContainer> _entityViewContainer;
         std::unique_ptr<GameSpatialContainer> _spatialContainer;
     };
 }

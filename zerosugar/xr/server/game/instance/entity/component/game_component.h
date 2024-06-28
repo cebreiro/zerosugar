@@ -1,6 +1,6 @@
 #pragma once
 #include "zerosugar/shared/type/runtime_type_id.h"
-#include "zerosugar/xr/server/game/instance/component/game_component_id.h"
+#include "zerosugar/xr/server/game/instance/entity/component/game_component_id.h"
 
 namespace zerosugar::xr
 {

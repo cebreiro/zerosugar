@@ -2,7 +2,7 @@
 
 namespace zerosugar::xr
 {
-    auto GameEntity::GetController() const -> IGameEntityController&
+    auto GameEntity::GetController() const -> IGameController&
     {
         assert(_controller);
 
@@ -19,7 +19,7 @@ namespace zerosugar::xr
         _id = id;
     }
 
-    void GameEntity::SetController(SharedPtrNotNull<IGameEntityController> controller)
+    void GameEntity::SetController(SharedPtrNotNull<IGameController> controller)
     {
         _controller = std::move(controller);
     }

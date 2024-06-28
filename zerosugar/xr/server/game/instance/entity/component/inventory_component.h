@@ -1,6 +1,6 @@
 #pragma once
 #include "zerosugar/xr/data/enum/equip_position.h"
-#include "zerosugar/xr/server/game/instance/component/game_component.h"
+#include "zerosugar/xr/server/game/instance/entity/component/game_component.h"
 
 namespace zerosugar::xr
 {

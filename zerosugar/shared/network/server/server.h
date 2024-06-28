@@ -77,7 +77,6 @@ namespace zerosugar
 
         std::atomic<int64_t> _sessionCount = 0;
         std::atomic<session::id_type::value_type> _nextSessionId = session::id_type::Default().Unwrap();
-        tbb::concurrent_queue<session::id_type::value_type> _sessionIdRecycleQueue;
         mutable std::mutex _sessionMutex;
         tbb::concurrent_hash_map<session::id_type, SharedPtrNotNull<Session>> _sessions;
     };

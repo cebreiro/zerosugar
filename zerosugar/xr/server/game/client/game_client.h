@@ -1,7 +1,5 @@
 #pragma once
-#include "zerosugar/xr/network/packet.h"
-#include "zerosugar/xr/network/packet_interface.h"
-#include "zerosugar/xr/server/game/instance/controller/game_entity_controller_interface.h"
+#include "zerosugar/xr/server/game/controller/game_entity_controller_interface.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_id.h"
 
 namespace zerosugar
@@ -13,7 +11,7 @@ namespace zerosugar::xr
 {
     class GameInstance;
 
-    class GameClient final : public IGameEntityController
+    class GameClient final : public IGameController
     {
     public:
         GameClient(WeakPtrNotNull<Session> session, std::string authenticationToken, int64_t accountId, int64_t characterId,

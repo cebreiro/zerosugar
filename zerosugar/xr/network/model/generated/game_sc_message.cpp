@@ -37,6 +37,38 @@ namespace zerosugar::xr::network::game::sc
         writer.Write(localPlayer);
     }
 
+    void AddRemotePlayer::Deserialize(PacketReader& reader)
+    {
+        player = reader.Read<RemotePlayer>();
+    }
+
+    void AddRemotePlayer::Serialize(PacketWriter& writer) const
+    {
+        writer.Write(player);
+    }
+
+    void RemoveRemotePlayer::Deserialize(PacketReader& reader)
+    {
+        id = reader.Read<int64_t>();
+    }
+
+    void RemoveRemotePlayer::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int64_t>(id);
+    }
+
+    void MoveRemotePlayer::Deserialize(PacketReader& reader)
+    {
+        id = reader.Read<int64_t>();
+        position = reader.Read<Position>();
+    }
+
+    void MoveRemotePlayer::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int64_t>(id);
+        writer.Write(position);
+    }
+
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>
     {
         const int16_t opcode = reader.Read<int16_t>();
@@ -45,6 +77,27 @@ namespace zerosugar::xr::network::game::sc
             case EnterGame::opcode:
             {
                 auto item = std::make_unique<EnterGame>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case AddRemotePlayer::opcode:
+            {
+                auto item = std::make_unique<AddRemotePlayer>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case RemoveRemotePlayer::opcode:
+            {
+                auto item = std::make_unique<RemoveRemotePlayer>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case MoveRemotePlayer::opcode:
+            {
+                auto item = std::make_unique<MoveRemotePlayer>();
                 item->Deserialize(reader);
 
                 return item;

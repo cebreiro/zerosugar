@@ -15,23 +15,23 @@ namespace zerosugar::xr::network::game::cs
         writer.Write(authenticationToken);
     }
 
-    void PlayerMove::Deserialize(PacketReader& reader)
+    void MovePlayer::Deserialize(PacketReader& reader)
     {
         position = reader.Read<Position>();
     }
 
-    void PlayerMove::Serialize(PacketWriter& writer) const
+    void MovePlayer::Serialize(PacketWriter& writer) const
     {
         writer.Write(position);
     }
 
-    void PlayerStopMovement::Deserialize(PacketReader& reader)
+    void StopPlayerMovement::Deserialize(PacketReader& reader)
     {
         id = reader.Read<int64_t>();
         position = reader.Read<Position>();
     }
 
-    void PlayerStopMovement::Serialize(PacketWriter& writer) const
+    void StopPlayerMovement::Serialize(PacketWriter& writer) const
     {
         writer.Write<int64_t>(id);
         writer.Write(position);
@@ -49,16 +49,16 @@ namespace zerosugar::xr::network::game::cs
 
                 return item;
             }
-            case PlayerMove::opcode:
+            case MovePlayer::opcode:
             {
-                auto item = std::make_unique<PlayerMove>();
+                auto item = std::make_unique<MovePlayer>();
                 item->Deserialize(reader);
 
                 return item;
             }
-            case PlayerStopMovement::opcode:
+            case StopPlayerMovement::opcode:
             {
-                auto item = std::make_unique<PlayerStopMovement>();
+                auto item = std::make_unique<StopPlayerMovement>();
                 item->Deserialize(reader);
 
                 return item;

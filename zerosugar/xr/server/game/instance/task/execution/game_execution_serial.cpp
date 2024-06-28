@@ -15,14 +15,14 @@ namespace zerosugar::xr
         return *_serviceLocator;
     }
 
-    auto GameExecutionSerial::GetEntityViewContainer() -> GameEntityViewContainer&
+    auto GameExecutionSerial::GetEntityViewContainer() -> GameViewModelContainer&
     {
         assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
 
         return _gameInstance.GetEntityViewContainer();
     }
 
-    auto GameExecutionSerial::GetEntityViewContainer() const -> const GameEntityViewContainer&
+    auto GameExecutionSerial::GetEntityViewContainer() const -> const GameViewModelContainer&
     {
         assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
 

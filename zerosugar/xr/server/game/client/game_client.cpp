@@ -1,6 +1,7 @@
 #include "game_client.h"
 
 #include "zerosugar/shared/network/session/session.h"
+#include "zerosugar/xr/network/packet.h"
 
 namespace zerosugar::xr
 {

@@ -1,11 +1,11 @@
 #pragma once
 #include <boost/unordered/unordered_flat_map.hpp>
 #include "zerosugar/xr/server/game/instance/entity/game_entity_id.h"
-#include "zerosugar/xr/server/game/instance/component/game_component.h"
+#include "zerosugar/xr/server/game/instance/entity/component/game_component.h"
 
 namespace zerosugar::xr
 {
-    class IGameEntityController;
+    class IGameController;
 }
 
 namespace zerosugar::xr
@@ -41,14 +41,14 @@ namespace zerosugar::xr
 
 
         auto GetId() const -> game_entity_id_type;
-        auto GetController() const->IGameEntityController&;
+        auto GetController() const->IGameController&;
 
         void SetId(game_entity_id_type id);
-        void SetController(SharedPtrNotNull<IGameEntityController> controller);
+        void SetController(SharedPtrNotNull<IGameController> controller);
 
     private:
         game_entity_id_type _id;
-        SharedPtrNotNull<IGameEntityController> _controller;
+        SharedPtrNotNull<IGameController> _controller;
         boost::unordered::unordered_flat_map<game_component_id_type, UniquePtrNotNull<GameComponent>> _components;
     };
 

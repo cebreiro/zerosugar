@@ -1,15 +1,15 @@
 #include "game_instance.h"
 
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
-#include "zerosugar/xr/server/game/instance/component/movement_component.h"
-#include "zerosugar/xr/server/game/instance/controller/game_entity_controller_interface.h"
+#include "zerosugar/xr/server/game/controller/game_entity_controller_interface.h"
+#include "zerosugar/xr/server/game/instance/entity/component/movement_component.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_container.h"
-#include "zerosugar/xr/server/game/instance/entity/game_entity_view.h"
-#include "zerosugar/xr/server/game/instance/entity/game_entity_view_container.h"
-#include "zerosugar/xr/server/game/instance/grid/game_spatial_container.h"
-#include "zerosugar/xr/server/game/instance/task/game_task_scheduler.h"
+#include "zerosugar/xr/server/game/instance/view/game_view_model_container.h"
+#include "zerosugar/xr/server/game/instance/view/game_player_view_model.h"
+#include "zerosugar/xr/server/game/instance/view/grid/game_spatial_container.h"
 #include "zerosugar/xr/server/game/instance/task/game_task.h"
+#include "zerosugar/xr/server/game/instance/task/game_task_scheduler.h"
 #include "zerosugar/xr/server/game/packet/packet_builder.h"
 
 namespace zerosugar::xr
@@ -25,8 +25,8 @@ namespace zerosugar::xr
         , _serial(*this)
         , _taskScheduler(std::make_unique<GameTaskScheduler>(*this))
         , _entityContainer(std::make_unique<GameEntityContainer>())
-        , _entityViewContainer(std::make_unique<GameEntityViewContainer>())
-        , _spatialContainer(std::make_unique<GameSpatialContainer>(100000, 100000, 900))
+        , _entityViewContainer(std::make_unique<GameViewModelContainer>())
+        , _spatialContainer(std::make_unique<GameSpatialContainer>(100000, 100000, 300))
     {
     }
 
@@ -34,8 +34,9 @@ namespace zerosugar::xr
     {
     }
 
-    auto GameInstance::SpawnEntity(SharedPtrNotNull<GameEntity> entity, int64_t controllerId) -> Future<void>
+    auto GameInstance::SpawnEntity(SharedPtrNotNull<GameEntity> entity) -> Future<void>
     {
+        // TODO: transform to player spawn task 
         [[maybe_unused]]
         auto self = shared_from_this();
 
@@ -44,23 +45,23 @@ namespace zerosugar::xr
             co_await *_strand;
         }
 
-        entity->SetId(game_entity_id_type(++_nextEntityId));
+        entity->SetId(game_entity_id_type(GameEntityType::Player, ++_nextPlayerId));
 
         bool result = _entityContainer->Add(entity);
         assert(result);
 
-        auto entityView = new GameEntityView(*entity);
+        auto playerView = new GamePlayerViewModel(entity->GetController());
+        playerView->Initialize(*entity);
 
-        result = _entityViewContainer->Add(std::unique_ptr<GameEntityView>(entityView));
+        result = _entityViewContainer->Add(std::unique_ptr<GamePlayerViewModel>(playerView));
         assert(result);
 
-        result = co_await _taskScheduler->AddProcess(controllerId);
+        result = co_await _taskScheduler->AddProcess(entity->GetController().GetControllerId());
         assert(result);
 
         const MovementComponent& movementComponent = entity->GetComponent<MovementComponent>();
 
         GameSpatialSector& sector = _spatialContainer->GetSector(movementComponent.GetX(), movementComponent.GetY());
-        sector.AddEntity(entity->GetId());
 
         if (entity->GetController().IsSubscriberOf(network::game::sc::EnterGame::opcode))
         {
@@ -69,6 +70,22 @@ namespace zerosugar::xr
 
             entity->GetController().Notify(packet);
         }
+
+        if (auto range = sector.GetEntities(GameEntityType::Player); range.begin() != range.end())
+        {
+            network::game::sc::AddRemotePlayer packet;
+            GamePacketBuilder::Build(packet, *playerView);
+
+            for (const game_entity_id_type id : range)
+            {
+                GamePlayerViewModel* remote = _entityViewContainer->FindPlayer(id);
+                assert(remote);
+
+                remote->GetController().Notify(packet);
+            }
+        }
+
+        sector.AddEntity(entity->GetId());
     }
 
     void GameInstance::Summit(UniquePtrNotNull<GameTask> task, std::optional<int64_t> controllerId)
@@ -151,12 +168,12 @@ namespace zerosugar::xr
         return *_entityContainer;
     }
 
-    auto GameInstance::GetEntityViewContainer() -> GameEntityViewContainer&
+    auto GameInstance::GetEntityViewContainer() -> GameViewModelContainer&
     {
         return *_entityViewContainer;
     }
 
-    auto GameInstance::GetEntityViewContainer() const -> const GameEntityViewContainer&
+    auto GameInstance::GetEntityViewContainer() const -> const GameViewModelContainer&
     {
         return *_entityViewContainer;
     }

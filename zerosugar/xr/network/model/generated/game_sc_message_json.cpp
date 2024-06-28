@@ -25,4 +25,45 @@ namespace zerosugar::xr::network::game::sc
             };
     }
 
+    void from_json(const nlohmann::json& j, AddRemotePlayer& item)
+    {
+        j.at("player").get_to(item.player);
+    }
+
+    void to_json(nlohmann::json& j, const AddRemotePlayer& item)
+    {
+        j = nlohmann::json
+            {
+                { "player", item.player },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, RemoveRemotePlayer& item)
+    {
+        j.at("id").get_to(item.id);
+    }
+
+    void to_json(nlohmann::json& j, const RemoveRemotePlayer& item)
+    {
+        j = nlohmann::json
+            {
+                { "id", item.id },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, MoveRemotePlayer& item)
+    {
+        j.at("id").get_to(item.id);
+        j.at("position").get_to(item.position);
+    }
+
+    void to_json(nlohmann::json& j, const MoveRemotePlayer& item)
+    {
+        j = nlohmann::json
+            {
+                { "id", item.id },
+                { "position", item.position },
+            };
+    }
+
 }

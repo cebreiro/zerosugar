@@ -270,8 +270,8 @@ namespace zerosugar::xr
         ZEROSUGAR_LOG_DEBUG(_serviceLocator,
             std::format("[{}] session io error. session: {}, error: {}", GetName(), session, error.message()));
 
-        (void)session;
-        (void)error;
+        _sessionReceiveBuffers.erase(session.GetId());
+        _clients.erase(session.GetId());
     }
 
     void GameServer::RegisterToCoordinationService()

@@ -12,14 +12,14 @@ message Authenticate
     string authentication_token = 1;
 }
 
-message PlayerMove
+message MovePlayer
 {
     option (opcode) = 1001;
 
     Position position = 1;
 }
 
-message PlayerStopMovement
+message StopPlayerMovement
 {
     option (opcode) = 1020;
 

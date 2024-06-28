@@ -89,10 +89,12 @@ namespace zerosugar::xr
         entity->SetController(client);
 
         const int64_t controllerId = gameInstance->PublishControllerId();
-        co_await gameInstance->SpawnEntity(entity, controllerId);
-
         client->SetGameInstance(gameInstance);
         client->SetControllerId(controllerId);
+
+        co_await gameInstance->SpawnEntity(entity);
         client->SetGameEntityId(entity->GetId());
+
+        co_return;
     }
 }

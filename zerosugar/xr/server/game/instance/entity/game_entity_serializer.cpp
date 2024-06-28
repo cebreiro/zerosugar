@@ -1,9 +1,9 @@
 #include "game_entity_serializer.h"
 
-#include "zerosugar/xr/server/game/instance/component/player_component.h"
-#include "zerosugar/xr/server/game/instance/component/inventory_component.h"
-#include "zerosugar/xr/server/game/instance/component/movement_component.h"
-#include "zerosugar/xr/server/game/instance/component/stat_component.h"
+#include "zerosugar/xr/server/game/instance/entity/component/player_component.h"
+#include "zerosugar/xr/server/game/instance/entity/component/inventory_component.h"
+#include "zerosugar/xr/server/game/instance/entity/component/movement_component.h"
+#include "zerosugar/xr/server/game/instance/entity/component/stat_component.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
 
 namespace zerosugar::xr

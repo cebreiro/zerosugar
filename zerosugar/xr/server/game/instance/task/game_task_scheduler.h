@@ -121,7 +121,7 @@ namespace zerosugar::xr
         std::optional<Promise<void>> _shutdownJoinPromise;
 
         int64_t _nextTaskQueueId = 0;
-        int64_t _nextProcessId = 0;
+        int64_t _nextTempProcessId = -1;
         int64_t _nextRecycleProcessId = 0;
 
         std::unordered_map<int64_t, Resource> _resources;

@@ -2,9 +2,9 @@
 
 
 #include "zerosugar/xr/server/game/instance/entity/game_entity_container.h"
-#include "zerosugar/xr/server/game/instance/entity/game_entity_view_container.h"
-#include "zerosugar/xr/server/game/instance/execution/game_execution_parallel.h"
-#include "zerosugar/xr/server/game/instance/execution/game_execution_serial.h"
+#include "zerosugar/xr/server/game/instance/view/game_view_model_container.h"
+#include "zerosugar/xr/server/game/instance/task/execution/game_execution_parallel.h"
+#include "zerosugar/xr/server/game/instance/task/execution/game_execution_serial.h"
 
 namespace zerosugar::xr::game_task
 {

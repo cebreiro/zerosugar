@@ -5,7 +5,7 @@
 
 namespace zerosugar::xr::game_task
 {
-    class EntityPositionUpdate : public GameTaskT<IPacket, network::game::cs::PlayerMove, MainTargetSelector>
+    class EntityPositionUpdate : public GameTaskT<IPacket, network::game::cs::MovePlayer, MainTargetSelector>
     {
     public:
         EntityPositionUpdate(UniquePtrNotNull<IPacket> param, game_entity_id_type targetId);

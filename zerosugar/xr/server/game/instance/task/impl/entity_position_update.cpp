@@ -1,11 +1,14 @@
 #include "entity_position_update.h"
 
+#include "zerosugar/xr/network/model/generated/game_sc_message.h"
+#include "zerosugar/xr/server/game/controller/game_entity_controller_interface.h"
+#include "zerosugar/xr/server/game/instance/entity/component/movement_component.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
-#include "zerosugar/xr/server/game/instance/component/movement_component.h"
-#include "zerosugar/xr/server/game/instance/entity/game_entity_view.h"
-#include "zerosugar/xr/server/game/instance/entity/game_entity_view_container.h"
-#include "zerosugar/xr/server/game/instance/execution/game_execution_serial.h"
-#include "zerosugar/xr/server/game/instance/grid/game_spatial_container.h"
+#include "zerosugar/xr/server/game/instance/view/game_view_model_container.h"
+#include "zerosugar/xr/server/game/instance/view/game_player_view_model.h"
+#include "zerosugar/xr/server/game/instance/task/execution/game_execution_serial.h"
+#include "zerosugar/xr/server/game/instance/view/grid/game_spatial_container.h"
+#include "zerosugar/xr/server/game/packet/packet_builder.h"
 
 namespace zerosugar::xr::game_task
 {
@@ -20,7 +23,7 @@ namespace zerosugar::xr::game_task
 
         _id = target->GetId();
 
-        const network::game::cs::PlayerMove& param = GetParam();
+        const network::game::cs::MovePlayer& param = GetParam();
         auto& movementComponent = target->GetComponent<MovementComponent>();
 
         _oldPosition = movementComponent.GetPosition();
@@ -34,8 +37,9 @@ namespace zerosugar::xr::game_task
 
     void EntityPositionUpdate::OnComplete(GameExecutionSerial& serial)
     {
-        GameEntityViewContainer& viewContainer = serial.GetEntityViewContainer();
-        GameEntityView* view = viewContainer.Find(_id);
+        GameViewModelContainer& viewContainer = serial.GetEntityViewContainer();
+
+        GamePlayerViewModel* view = viewContainer.FindPlayer(_id);
         if (!view)
         {
             return;
@@ -50,37 +54,93 @@ namespace zerosugar::xr::game_task
         {
             if (oldSector.GetId() == newSector.GetId())
             {
+                if (auto range = oldSector.GetEntities(GameEntityType::Player); range.begin() != range.end())
+                {
+                    network::game::sc::MoveRemotePlayer packet;
+                    GamePacketBuilder::Build(packet, *view);
+
+                    for (const game_entity_id_type id : range)
+                    {
+                        if (id == _id)
+                        {
+                            continue;
+                        }
+
+                        GamePlayerViewModel* remote = viewContainer.FindPlayer(id);
+                        assert(remote);
+
+                        if (IGameController& controller = remote->GetController();
+                            controller.IsSubscriberOf(decltype(packet)::opcode))
+                        {
+                            controller.Notify(packet);
+                        }
+                    }
+                }
+
                 return;
             }
 
-            GameSpatialSector::View oldView = (oldSector - newSector);
-            oldView.RemoveEntity(_id);
+            oldSector.RemoveEntity(_id);
+            GameSpatialSector::Subset outs = (oldSector - newSector);
 
-            if (auto range = oldView.GetEntities(); range.begin() != range.end())
+            if (auto range = outs.GetEntities(GameEntityType::Player); range.begin() != range.end())
             {
-                for (const game_entity_id_type id : oldView.GetEntities())
+                network::game::sc::RemoveRemotePlayer packet;
+                GamePacketBuilder::Build(packet, *view);
+
+                for (const game_entity_id_type id : range)
                 {
-                    (void)id;
+                    GamePlayerViewModel* remote = viewContainer.FindPlayer(id);
+                    assert(remote);
+
+                    if (IGameController& controller = remote->GetController();
+                        controller.IsSubscriberOf(decltype(packet)::opcode))
+                    {
+                        controller.Notify(packet);
+                    }
                 }
             }
 
-            GameSpatialSector::View newView = (newSector - oldSector);
-            if (auto range = newView.GetEntities(); range.begin() != range.end())
+            GameSpatialSector::Subset unchanged = (newSector & oldSector);
+            if (auto range = unchanged.GetEntities(GameEntityType::Player);
+                range.begin() != range.end() && ++range.begin() != range.end())
             {
-                for (const game_entity_id_type id : newView.GetEntities())
+                network::game::sc::MoveRemotePlayer packet;
+                GamePacketBuilder::Build(packet, *view);
+
+                for (const game_entity_id_type id : range)
                 {
-                    (void)id;
+                    GamePlayerViewModel* remote = viewContainer.FindPlayer(id);
+                    assert(remote);
+
+                    if (IGameController& controller = remote->GetController();
+                        controller.IsSubscriberOf(decltype(packet)::opcode))
+                    {
+                        controller.Notify(packet);
+                    }
                 }
             }
 
-            newView.AddEntity(_id);
+            GameSpatialSector::Subset ins = (newSector - oldSector);
+            if (auto range = ins.GetEntities(GameEntityType::Player); range.begin() != range.end())
+            {
+                network::game::sc::AddRemotePlayer packet;
+                GamePacketBuilder::Build(packet, *view);
+
+                for (const game_entity_id_type id : range)
+                {
+                    GamePlayerViewModel* remote = viewContainer.FindPlayer(id);
+                    assert(remote);
+
+                    if (IGameController& controller = remote->GetController();
+                        controller.IsSubscriberOf(decltype(packet)::opcode))
+                    {
+                        controller.Notify(packet);
+                    }
+                }
+            }
+
+            newSector.AddEntity(_id);
         }
-
-        ZEROSUGAR_LOG_DEBUG(serial.GetServiceLocator(),
-            std::format("movement: old[{}, {}] new[{}, [{}], old_sector[{}, {}], new_sector[{}, {}]",
-                _oldPosition.x(), _oldPosition.y(),
-                _newPosition.x(), _newPosition.y(),
-                oldSector.GetId().GetX(), oldSector.GetId().GetY(),
-                newSector.GetId().GetX(), newSector.GetId().GetY()));
     }
 }

@@ -284,18 +284,14 @@ namespace zerosugar
 
     void Server::HandleSessionDestruct(session::DestructEvent event)
     {
-        _sessionIdRecycleQueue.push(event.id.Unwrap());
-        --_sessionCount;
+        const int64_t prev = _sessionCount.fetch_sub(1);
+
+        ZEROSUGAR_LOG_DEBUG(_locator,
+            std::format("[{}] session[{}] destured. current session count: {}", GetName(), event.id, prev - 1));
     }
 
     auto Server::PublishSessionId() -> session::id_type
     {
-        session::id_type::value_type result = session::id_type::Default().Unwrap();
-        if (_sessionIdRecycleQueue.try_pop(result))
-        {
-            return session::id_type(result);
-        }
-
         return session::id_type(++_nextSessionId);
     }
 }

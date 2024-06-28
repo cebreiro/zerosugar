@@ -8,10 +8,10 @@ namespace zerosugar::xr
 
 namespace zerosugar::xr
 {
-    class IGameEntityController
+    class IGameController
     {
     public:
-        virtual ~IGameEntityController() = default;
+        virtual ~IGameController() = default;
 
         virtual bool IsSubscriberOf(int32_t opcode) const = 0;
         virtual void Notify(const IPacket& packet) = 0;

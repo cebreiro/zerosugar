@@ -1,6 +1,6 @@
 #pragma once
-#include "zerosugar/xr/server/game/instance/component/game_component.h"
-#include "zerosugar/xr/server/game/instance/execution/game_execution_parallel.h"
+#include "zerosugar/xr/server/game/instance/entity/component/game_component.h"
+#include "zerosugar/xr/server/game/instance/task/execution/game_execution_parallel.h"
 
 namespace zerosugar::xr
 {

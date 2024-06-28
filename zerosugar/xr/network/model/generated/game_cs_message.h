@@ -18,7 +18,7 @@ namespace zerosugar::xr::network::game::cs
         std::string authenticationToken = {};
     };
 
-    struct PlayerMove final : IPacket
+    struct MovePlayer final : IPacket
     {
         static constexpr int32_t opcode = 1001;
 
@@ -29,7 +29,7 @@ namespace zerosugar::xr::network::game::cs
         Position position = {};
     };
 
-    struct PlayerStopMovement final : IPacket
+    struct StopPlayerMovement final : IPacket
     {
         static constexpr int32_t opcode = 1020;
 
