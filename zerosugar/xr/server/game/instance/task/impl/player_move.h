@@ -5,10 +5,11 @@
 
 namespace zerosugar::xr::game_task
 {
-    class PlayerMove : public GameTaskT<IPacket, network::game::cs::MovePlayer, MainTargetSelector>
+    class PlayerMove final : public GameTaskBaseParamT<IPacket, network::game::cs::MovePlayer, MainTargetSelector>
     {
     public:
-        PlayerMove(UniquePtrNotNull<IPacket> param, game_entity_id_type targetId);
+        PlayerMove(UniquePtrNotNull<IPacket> param, game_entity_id_type targetId,
+            std::chrono::system_clock::time_point creationTimePoint = std::chrono::system_clock::now());
 
     private:
         void Execute(GameExecutionParallel& parallel, MainTargetSelector::target_type target) override;

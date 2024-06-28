@@ -3,6 +3,7 @@
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
 #include "zerosugar/xr/server/game/controller/game_entity_controller_interface.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
+#include "zerosugar/xr/server/game/instance/entity/game_entity.h"
 #include "zerosugar/xr/server/game/instance/view/game_player_view_model.h"
 #include "zerosugar/xr/server/game/instance/view/game_view_model_container.h"
 #include "zerosugar/xr/server/game/instance/view/grid/game_spatial_container.h"
@@ -18,6 +19,33 @@ namespace zerosugar::xr
 
     GameViewController::~GameViewController()
     {
+    }
+
+    void GameViewController::ProcessPlayerSpawn(const GameEntity& entity)
+    {
+        GameViewModelContainer& viewModelContainer = _gameInstance.GetViewModelContainer();
+        GameSpatialContainer& spatialContainer = _gameInstance.GetSpatialContainer();
+
+        GamePlayerViewModel* viewModel = viewModelContainer.FindPlayer(entity.GetId());
+        assert(viewModel);
+
+        GameSpatialSector& sector = spatialContainer.GetSector(viewModel->GetPosition().x(), viewModel->GetPosition().y());
+        {
+            network::game::sc::EnterGame packet;
+            GamePacketBuilder::Build(packet, _gameInstance, entity, sector);
+
+            Send(packet, viewModel->GetController());
+        }
+
+        if (!sector.Empty() && sector.HasEntitiesAtLeast(GameEntityType::Player, 0))
+        {
+            network::game::sc::AddRemotePlayer packet;
+            GamePacketBuilder::Build(packet, *viewModel);
+
+            Broadcast(packet, sector, GameEntityType::Player);
+        }
+
+        sector.AddEntity(viewModel->GetId());
     }
 
     void GameViewController::ProcessMovement(game_entity_id_type id, const Eigen::Vector3d& position)

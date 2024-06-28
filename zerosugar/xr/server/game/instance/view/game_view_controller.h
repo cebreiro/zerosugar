@@ -6,6 +6,7 @@ namespace zerosugar::xr
 {
     class IPacket;
     class IGameController;
+    class GameEntity;
     class GameInstance;
     class GameSpatialSector;
 }
@@ -24,8 +25,8 @@ namespace zerosugar::xr
         explicit GameViewController(GameInstance& instance);
         ~GameViewController();
 
+        void ProcessPlayerSpawn(const GameEntity& entity);
         void ProcessMovement(game_entity_id_type id, const Eigen::Vector3d& position);
-
 
     private:
         template <typename T>

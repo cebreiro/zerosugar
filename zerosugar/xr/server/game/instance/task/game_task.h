@@ -24,6 +24,9 @@ namespace zerosugar::xr
 
         virtual bool SelectTargetIds(const GameExecutionSerial& serialContext) = 0;
 
+        virtual bool ShouldPrepareBeforeScheduled() const;
+        virtual void Prepare(GameExecutionSerial& serialContext);
+
         void Start(GameExecutionParallel& parallelContext);
         void Complete(GameExecutionSerial& serialContext);
 
@@ -64,8 +67,7 @@ namespace zerosugar::xr
         { base.template Cast<TParam>() } -> std::same_as<const TParam*>;
     };
 
-    template <typename TBase, typename TParam, game_task_target_selector_concept... TSelector>
-         requires game_task_param_concept<TBase, TParam>
+    template <game_task_target_selector_concept... TSelector>
     class GameTaskT : public GameTask
     {
         static_assert(sizeof...(TSelector) > 0);
@@ -74,9 +76,8 @@ namespace zerosugar::xr
         static constexpr int64_t selector_count = sizeof...(TSelector);
 
     public:
-        GameTaskT(std::chrono::system_clock::time_point creationTimePoint, UniquePtrNotNull<TBase> param, TSelector&&... selector)
+        GameTaskT(std::chrono::system_clock::time_point creationTimePoint, TSelector&&... selector)
             : GameTask(creationTimePoint)
-            , _param(std::move(param))
             , _tuple({ std::forward<TSelector>(selector)... })
         {
         }
@@ -126,7 +127,43 @@ namespace zerosugar::xr
             std::apply(std::bind_front(&GameTaskT::Execute, this, std::ref(parallelContext)), getTarget(_tuple, sequence));
         }
 
+    private:
         virtual void Execute(GameExecutionParallel& parallelContext, typename TSelector::target_type...) = 0;
+
+    private:
+        std::tuple<TSelector...> _tuple;
+    };
+
+    template <typename TParam, game_task_target_selector_concept... TSelector>
+    class GameTaskParamT : public GameTaskT<TSelector...>
+    {
+    public:
+        GameTaskParamT(std::chrono::system_clock::time_point creationTimePoint, TParam param, TSelector&&... selector)
+            : GameTaskT<TSelector...>(creationTimePoint, std::forward<TSelector>(selector)...)
+            , _param(std::move(param))
+        {
+        }
+
+    protected:
+        auto GetParam() const -> const TParam&
+        {
+            return _param;
+        }
+
+    private:
+        TParam _param;
+    };
+
+    template <typename TBase, typename TParam, game_task_target_selector_concept... TSelector>
+        requires game_task_param_concept<TBase, TParam>
+    class GameTaskBaseParamT : public GameTaskT<TSelector...>
+    {
+    public:
+        GameTaskBaseParamT(std::chrono::system_clock::time_point creationTimePoint, UniquePtrNotNull<TBase> param, TSelector&&... selector)
+            : GameTaskT<TSelector...>(creationTimePoint, std::forward<TSelector>(selector)...)
+            , _param(std::move(param))
+        {
+        }
 
     protected:
         auto GetParam() const -> const TParam&
@@ -139,6 +176,5 @@ namespace zerosugar::xr
 
     private:
         UniquePtrNotNull<TBase> _param;
-        std::tuple<TSelector...> _tuple;
     };
 }

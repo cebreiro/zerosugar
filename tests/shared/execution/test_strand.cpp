@@ -11,7 +11,7 @@ using zerosugar::Strand;
 using zerosugar::StaticThreadPool;
 
 
-TEST(Strand, SimpleArithmeticAdd)
+TEST(Strand, PostSimpleArithmeticAdd)
 {
     // arrange
     auto& executor = static_cast<IExecutor&>(StaticThreadPool::GetInstance());
@@ -25,6 +25,34 @@ TEST(Strand, SimpleArithmeticAdd)
     for (int32_t i = 0; i < expected; ++i)
     {
         Post(*strand, [&result, &counter]()
+            {
+                ++result;
+                counter.fetch_add(1);
+            });
+    }
+
+    while (counter.load() != expected)
+    {
+    }
+
+    // assert
+    EXPECT_EQ(result, expected);
+}
+
+TEST(Strand, DispatchSimpleArithmeticAdd)
+{
+    // arrange
+    auto& executor = static_cast<IExecutor&>(StaticThreadPool::GetInstance());
+    auto strand = std::make_shared<Strand>(executor.SharedFromThis());
+
+    int32_t expected = 100000;
+    int32_t result = 0;
+    std::atomic<int32_t> counter = 0;
+
+    // act
+    for (int32_t i = 0; i < expected; ++i)
+    {
+        Dispatch(*strand, [&result, &counter]()
             {
                 ++result;
                 counter.fetch_add(1);

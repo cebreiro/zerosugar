@@ -15,6 +15,16 @@ namespace zerosugar::xr
         return *_serviceLocator;
     }
 
+    auto GameExecutionSerial::GetTaskScheduler() -> GameTaskScheduler&
+    {
+        return _gameInstance.GetTaskScheduler();
+    }
+
+    auto GameExecutionSerial::GetTaskScheduler() const -> const GameTaskScheduler&
+    {
+        return _gameInstance.GetTaskScheduler();
+    }
+
     auto GameExecutionSerial::GetViewController() -> GameViewController&
     {
         return _gameInstance.GetViewController();

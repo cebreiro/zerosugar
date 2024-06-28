@@ -25,6 +25,23 @@ namespace zerosugar::xr
 
 namespace zerosugar::xr::game_task
 {
+    struct DummyTarget{};
+
+    class NullSelector
+    {
+    public:
+        using target_type = DummyTarget;
+
+        bool SelectEntityId(const GameExecutionSerial& serial);
+        auto GetTargetId() const -> std::span<const game_entity_id_type>;
+
+        bool SelectEntity(const GameExecutionParallel& parallel);
+        auto GetTarget() const -> target_type;
+
+    private:
+        game_entity_id_type _id = game_entity_id_type::Null();
+    };
+
     class MainTargetSelector
     {
     public:

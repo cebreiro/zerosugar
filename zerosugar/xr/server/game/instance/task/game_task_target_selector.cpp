@@ -8,6 +8,30 @@
 
 namespace zerosugar::xr::game_task
 {
+    bool NullSelector::SelectEntityId(const GameExecutionSerial& serial)
+    {
+        (void)serial;
+
+        return true;
+    }
+
+    auto NullSelector::GetTargetId() const -> std::span<const game_entity_id_type>
+    {
+        return std::span(&_id, 1);
+    }
+
+    bool NullSelector::SelectEntity(const GameExecutionParallel& parallel)
+    {
+        (void)parallel;
+
+        return true;
+    }
+
+    auto NullSelector::GetTarget() const -> target_type
+    {
+        return DummyTarget{};
+    }
+
     MainTargetSelector::MainTargetSelector(game_entity_id_type targetId)
         : _mainTargetId(targetId)
     {

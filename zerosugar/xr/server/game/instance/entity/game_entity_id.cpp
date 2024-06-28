@@ -32,6 +32,16 @@ namespace zerosugar::xr::detail::game
         return std::bit_cast<int64_t>(*this);
     }
 
+    auto GameEntityId::Null() -> GameEntityId
+    {
+        GameEntityId result;
+
+        *reinterpret_cast<int64_t*>(&result) = int64_t{ -1 };
+        static_assert(sizeof(int64_t) == sizeof(result));
+
+        return result;
+    }
+
     bool operator<(GameEntityId lhs, GameEntityId rhs)
     {
         return lhs.Unwrap() < rhs.Unwrap();

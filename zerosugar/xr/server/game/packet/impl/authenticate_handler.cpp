@@ -7,6 +7,7 @@
 #include "zerosugar/xr/server/game/instance/game_instance_container.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_serializer_interface.h"
+#include "zerosugar/xr/server/game/instance/task/impl/player_spawn.h"
 #include "zerosugar/xr/service/model/generated/coordination_service.h"
 #include "zerosugar/xr/service/model/generated/coordination_service_message.h"
 #include "zerosugar/xr/service/model/generated/database_service.h"
@@ -78,22 +79,26 @@ namespace zerosugar::xr
             co_return;
         }
 
-        auto client = std::make_shared<GameClient>(session.weak_from_this(), authParam.authenticationToken,
-            authResult.accountId, authResult.characterId, gameInstance);
+        const int64_t controllerId = gameInstance->PublishControllerId();
+        const game_entity_id_type entityId = gameInstance->PublishPlayerId();
+
+        auto client = std::make_shared<GameClient>(session.weak_from_this(),
+            authParam.authenticationToken, authResult.accountId, authResult.characterId, gameInstance);
 
         [[maybe_unused]]
         const bool added = server.AddClient(session.GetId(), client);
         assert(added);
 
         SharedPtrNotNull<GameEntity> entity = server.GetGameEntitySerializer().Deserialize(getCharacterResult.character);
+        entity->SetId(entityId);
         entity->SetController(client);
 
-        const int64_t controllerId = gameInstance->PublishControllerId();
         client->SetGameInstance(gameInstance);
         client->SetControllerId(controllerId);
-
-        co_await gameInstance->SpawnEntity(entity);
         client->SetGameEntityId(entity->GetId());
+
+        auto task = std::make_unique<game_task::PlayerSpawn>(std::move(entity));
+        gameInstance->Summit(std::move(task), controllerId);
 
         co_return;
     }

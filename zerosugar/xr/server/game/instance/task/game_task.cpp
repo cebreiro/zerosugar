@@ -15,6 +15,16 @@ namespace zerosugar::xr
     {
     }
 
+    bool GameTask::ShouldPrepareBeforeScheduled() const
+    {
+        return false;
+    }
+
+    void GameTask::Prepare(GameExecutionSerial& serialContext)
+    {
+        (void)serialContext;
+    }
+
     void GameTask::Start(GameExecutionParallel& parallelContext)
     {
         if (!this->SelectTarget(parallelContext))

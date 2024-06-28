@@ -28,8 +28,8 @@ namespace zerosugar::xr
 
     void GameSpatialContainer::Initialize()
     {
-        _xSize = _width / _lengthPerGrid;
-        _ySize = _height / _lengthPerGrid;
+        _xSize = (_width / _lengthPerGrid) + 1;
+        _ySize = (_height / _lengthPerGrid) + 1;
 
         const int32_t size = _xSize * _ySize;
 

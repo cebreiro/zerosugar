@@ -34,66 +34,21 @@ namespace zerosugar::xr
 
     GameInstance::~GameInstance()
     {
-    }
-
-    auto GameInstance::SpawnEntity(SharedPtrNotNull<GameEntity> entity) -> Future<void>
-    {
-        // TODO: transform to player spawn task 
-        [[maybe_unused]]
-        auto self = shared_from_this();
-
-        if (!ExecutionContext::IsEqualTo(*_strand))
-        {
-            co_await *_strand;
-        }
-
-        entity->SetId(game_entity_id_type(GameEntityType::Player, ++_nextPlayerId));
-
-        bool result = _entityContainer->Add(entity);
-        assert(result);
-
-        auto playerView = new GamePlayerViewModel(entity->GetController());
-        playerView->Initialize(*entity);
-
-        result = _viewModelContainer->Add(std::unique_ptr<GamePlayerViewModel>(playerView));
-        assert(result);
-
-        result = co_await _taskScheduler->AddProcess(entity->GetController().GetControllerId());
-        assert(result);
-
-        const MovementComponent& movementComponent = entity->GetComponent<MovementComponent>();
-
-        GameSpatialSector& sector = _spatialContainer->GetSector(movementComponent.GetX(), movementComponent.GetY());
-
-        if (entity->GetController().IsSubscriberOf(network::game::sc::EnterGame::opcode))
-        {
-            network::game::sc::EnterGame packet;
-            GamePacketBuilder::Build(packet, *this, *entity, sector);
-
-            entity->GetController().Notify(packet);
-        }
-
-        if (auto range = sector.GetEntities(GameEntityType::Player); range.begin() != range.end())
-        {
-            network::game::sc::AddRemotePlayer packet;
-            GamePacketBuilder::Build(packet, *playerView);
-
-            for (const game_entity_id_type id : range)
-            {
-                GamePlayerViewModel* remote = _viewModelContainer->FindPlayer(id);
-                assert(remote);
-
-                remote->GetController().Notify(packet);
-            }
-        }
-
-        sector.AddEntity(entity->GetId());
+        _taskScheduler->Shutdown();
+        _taskScheduler->Join();
     }
 
     void GameInstance::Summit(UniquePtrNotNull<GameTask> task, std::optional<int64_t> controllerId)
     {
-        Dispatch(*_strand, [self = shared_from_this(), task = std::move(task), controllerId]() mutable
+        assert(task);
+
+        Post(*_strand, [self = shared_from_this(), task = std::move(task), controllerId]() mutable
             {
+                if (task->ShouldPrepareBeforeScheduled())
+                {
+                    task->Prepare(self->GetSerialContext());
+                }
+
                 task->SelectTargetIds(self->GetSerialContext());
 
                 self->_taskScheduler->Schedule(std::move(task), controllerId);
@@ -103,6 +58,11 @@ namespace zerosugar::xr
     auto GameInstance::PublishControllerId() -> int64_t
     {
         return _nextControllerId.fetch_add(1);
+    }
+
+    auto GameInstance::PublishPlayerId() -> game_entity_id_type
+    {
+        return game_entity_id_type(GameEntityType::Player, _nextPlayerId.fetch_add(1));
     }
 
     auto GameInstance::GetExecutor() const -> execution::IExecutor&

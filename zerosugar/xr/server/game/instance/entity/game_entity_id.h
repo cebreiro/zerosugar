@@ -22,6 +22,9 @@ namespace zerosugar::xr
 
             auto Unwrap() const -> int64_t;
 
+            static auto Null() -> GameEntityId;
+
+        public:
             friend bool operator<(GameEntityId lhs, GameEntityId rhs);
             friend bool operator==(GameEntityId lhs, GameEntityId rhs);
             friend bool operator!=(GameEntityId lhs, GameEntityId rhs);

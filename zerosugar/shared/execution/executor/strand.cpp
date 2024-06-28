@@ -73,15 +73,15 @@ namespace zerosugar
         {
             std::lock_guard lock(_spinMutex);
 
-            if (_owner.has_value() && *_owner == threadId)
+            if (!_owner.empty() && _owner.back() != threadId)
             {
-                shouldInvokeImmediately = true;
+                shouldInvokeImmediately = false;
             }
-            else if (!_owner.has_value())
+            else
             {
-                _owner = threadId;
-
                 shouldInvokeImmediately = true;
+
+                _owner.push_back(threadId);
             }
         }
 
@@ -99,7 +99,9 @@ namespace zerosugar
             bool shouldPost = false;
             {
                 std::lock_guard lock(_spinMutex);
-                _owner.reset();
+
+                assert(!_owner.empty());
+                _owner.pop_back();
 
                 shouldPost = _taskCount > 0;
             }
@@ -130,18 +132,12 @@ namespace zerosugar
         {
             std::lock_guard lock(_spinMutex);
 
-            if (_owner.has_value())
+            if (!_owner.empty() && _owner.back() != threadId)
             {
-                if (*_owner != threadId)
-                {
-                    return;
-                }
-            }
-            else
-            {
-                _owner = threadId;
+                return;
             }
 
+            _owner.push_back(threadId);
             taskCount = _taskCount;
         }
 
@@ -169,7 +165,8 @@ namespace zerosugar
         {
             std::lock_guard lock(_spinMutex);
 
-            _owner.reset();
+            assert(!_owner.empty());
+            _owner.pop_back();
 
             _taskCount -= taskCount;
             shouldContinue = _taskCount > 0;

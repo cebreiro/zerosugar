@@ -79,13 +79,15 @@ namespace zerosugar::xr
         void Shutdown();
         auto Join() -> Future<void>;
 
-        auto AddProcess(int64_t id) -> Future<bool>;
-        auto RemoveProcess(int64_t id) -> Future<bool>;
+        void AddProcess(int64_t id);
+        void RemoveProcess(int64_t id);
 
-        auto AddResource(int64_t id) -> Future<bool>;
-        auto RemoveResource(int64_t id) -> Future<bool>;
+        void AddResource(int64_t id);
+        void RemoveResource(int64_t id);
 
         void Schedule(std::unique_ptr<GameTask> task, std::optional<int64_t> processId = std::nullopt);
+
+        auto GetScheduledTaskCount() const -> int64_t;
 
     private:
         void ScheduleImpl(std::unique_ptr<GameTask> task, std::optional<int64_t> processId);
@@ -104,7 +106,7 @@ namespace zerosugar::xr
         void AllocateResource(const Process& process);
         void DeallocateResource(const Process& process);
 
-        void ChangeState(Process& process, Process::State newState);
+        void ChangeState(Process& process, Process::State newState, std::optional<std::unique_ptr<GameTask>> newTask = std::nullopt);
 
         auto CreateProcess(int64_t id) -> Process&;
         void ExitProcess(Process& process);
@@ -119,6 +121,7 @@ namespace zerosugar::xr
 
         bool _shutdown = false;
         std::optional<Promise<void>> _shutdownJoinPromise;
+        std::atomic<int64_t> _scheduledTaskCount = 0;
 
         int64_t _nextTaskQueueId = 0;
         int64_t _nextTempProcessId = -1;

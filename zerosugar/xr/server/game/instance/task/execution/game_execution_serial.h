@@ -3,6 +3,7 @@
 namespace zerosugar::xr
 {
     class GameInstance;
+    class GameTaskScheduler;
     class GameViewController;
     class GameViewModelContainer;
     class GameSpatialContainer;
@@ -21,6 +22,9 @@ namespace zerosugar::xr
         explicit GameExecutionSerial(GameInstance& gameInstance);
 
         auto GetServiceLocator() const -> service_locator_type&;
+
+        auto GetTaskScheduler() -> GameTaskScheduler&;
+        auto GetTaskScheduler() const -> const GameTaskScheduler&;
 
         auto GetViewController() -> GameViewController&;
 

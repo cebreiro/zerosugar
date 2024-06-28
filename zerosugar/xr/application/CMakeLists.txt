@@ -1,1 +1,2 @@
 add_subdirectory(all_in_one_app)
+add_subdirectory(benchmark_game_instance)

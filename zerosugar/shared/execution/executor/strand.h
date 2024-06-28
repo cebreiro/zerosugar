@@ -43,7 +43,7 @@ namespace zerosugar
 
         tbb::spin_mutex _spinMutex;
         bool _posted = false;
-        std::optional<std::thread::id> _owner = std::nullopt;
+        std::vector<std::thread::id> _owner;
         int32_t _taskCount = 0;
 
         tbb::concurrent_queue<task_type> _tasks;

@@ -17,6 +17,8 @@ namespace zerosugar
         const std::string& str = results.at(1);
 
         int32_t converted = 0;
+
+        [[maybe_unused]]
         const std::errc ec = std::from_chars(str.data(), str.data() + str.size(), converted).ec;
         assert(ec == std::errc());
 
@@ -34,6 +36,8 @@ namespace zerosugar
         const std::string& str = results.at(1);
 
         double conv = 0;
+
+        [[maybe_unused]]
         const std::errc ec = std::from_chars(str.data(), str.data() + str.size(), conv).ec;
         assert(ec == std::errc());
 
