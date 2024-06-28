@@ -4,7 +4,7 @@
 #include "zerosugar/xr/server/game/game_server.h"
 #include "zerosugar/xr/server/game/client/game_client.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
-#include "zerosugar/xr/server/game/instance/task/impl/entity_position_update.h"
+#include "zerosugar/xr/server/game/instance/task/impl/player_move.h"
 
 namespace zerosugar::xr
 {
@@ -19,7 +19,7 @@ namespace zerosugar::xr
             co_return;
         }
 
-        std::shared_ptr<GameInstance> instance = client->GetGameInstance();
+        const std::shared_ptr<GameInstance> instance = client->GetGameInstance();
         if (!instance)
         {
             session.Close();
@@ -27,7 +27,7 @@ namespace zerosugar::xr
             co_return;
         }
 
-        auto task = std::make_unique<game_task::EntityPositionUpdate>(this->ReleasePacket(), client->GetGameEntityId());
+        auto task = std::make_unique<game_task::PlayerMove>(this->ReleasePacket(), client->GetGameEntityId());
 
         instance->Summit(std::move(task), client->GetControllerId());
 

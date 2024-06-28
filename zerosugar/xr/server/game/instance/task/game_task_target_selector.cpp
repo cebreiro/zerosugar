@@ -15,7 +15,7 @@ namespace zerosugar::xr::game_task
 
     bool MainTargetSelector::SelectEntityId(const GameExecutionSerial& serial)
     {
-        return serial.GetEntityViewContainer().Has(_mainTargetId);
+        return serial.GetViewModelContainer().Has(_mainTargetId);
     }
 
     auto MainTargetSelector::GetTargetId() const -> std::span<const game_entity_id_type>

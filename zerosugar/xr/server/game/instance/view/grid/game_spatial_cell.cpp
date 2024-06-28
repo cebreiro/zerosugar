@@ -47,9 +47,9 @@ namespace zerosugar::xr
 
     auto GameSpatialCell::GetSize() const -> int64_t
     {
-        return std::accumulate(_entities.begin(), _entities.end(), 0, [](const auto& container)
+        return std::accumulate(_entities.begin(), _entities.end(), int64_t{ 0 }, [](int64_t sum, const auto& container)
             {
-                return std::ssize(container);
+                return sum + std::ssize(container);
             });
     }
 

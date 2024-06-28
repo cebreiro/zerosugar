@@ -7,8 +7,11 @@ namespace zerosugar::xr
 {
     class GameEntity;
     class GameEntityContainer;
-    class GameViewModelContainer;
+
     class GameSpatialContainer;
+    class GameViewController;
+    class GameViewModelContainer;
+
     class GameTask;
     class GameTaskScheduler;
 }
@@ -41,17 +44,23 @@ namespace zerosugar::xr
 
         auto GetParallelContext() -> GameExecutionParallel&;
         auto GetParallelContext() const -> const GameExecutionParallel&;
+
         auto GetSerialContext() -> GameExecutionSerial&;
         auto GetSerialContext() const -> const GameExecutionSerial&;
 
         auto GetTaskScheduler() -> GameTaskScheduler&;
         auto GetTaskScheduler() const -> const GameTaskScheduler&;
+
         auto GetEntityContainer() -> GameEntityContainer&;
         auto GetEntityContainer() const -> const GameEntityContainer&;
-        auto GetEntityViewModelContainer() -> GameViewModelContainer&;
-        auto GetEntityViewModelContainer() const -> const GameViewModelContainer&;
+
         auto GetSpatialContainer() -> GameSpatialContainer&;
         auto GetSpatialContainer() const -> const GameSpatialContainer&;
+
+        auto GetViewController() -> GameViewController&;
+
+        auto GetViewModelContainer() -> GameViewModelContainer&;
+        auto GetViewModelContainer() const -> const GameViewModelContainer&;
 
     private:
         SharedPtrNotNull<execution::IExecutor> _executor;
@@ -69,7 +78,8 @@ namespace zerosugar::xr
 
         std::unique_ptr<GameTaskScheduler> _taskScheduler;
         std::unique_ptr<GameEntityContainer> _entityContainer;
-        std::unique_ptr<GameViewModelContainer> _entityViewContainer;
         std::unique_ptr<GameSpatialContainer> _spatialContainer;
+        std::unique_ptr<GameViewController> _gameViewController;
+        std::unique_ptr<GameViewModelContainer> _viewModelContainer;
     };
 }

@@ -17,7 +17,7 @@ namespace zerosugar::xr
     {
         result.zoneId = gameInstance.GetZoneId();
 
-        const GameViewModelContainer& viewContainer = gameInstance.GetEntityViewModelContainer();
+        const GameViewModelContainer& viewContainer = gameInstance.GetViewModelContainer();
         {
             for (game_entity_id_type id : sector.GetEntities())
             {

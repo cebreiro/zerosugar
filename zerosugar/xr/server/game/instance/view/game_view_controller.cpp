@@ -16,9 +16,13 @@ namespace zerosugar::xr
     {
     }
 
+    GameViewController::~GameViewController()
+    {
+    }
+
     void GameViewController::ProcessMovement(game_entity_id_type id, const Eigen::Vector3d& position)
     {
-        GameViewModelContainer& viewModelContainer = _gameInstance.GetEntityViewModelContainer();
+        GameViewModelContainer& viewModelContainer = _gameInstance.GetViewModelContainer();
         GameSpatialContainer& spatialContainer = _gameInstance.GetSpatialContainer();
 
         GamePlayerViewModel* viewModel = viewModelContainer.FindPlayer(id);
@@ -101,7 +105,7 @@ namespace zerosugar::xr
 
     void GameViewController::Broadcast(const IPacket& packet, int32_t opcode, const detail::game::GameSpatialSet& set, std::optional<game_entity_id_type> excluded)
     {
-        GameViewModelContainer& viewModelContainer = _gameInstance.GetEntityViewModelContainer();
+        GameViewModelContainer& viewModelContainer = _gameInstance.GetViewModelContainer();
 
         for (const game_entity_id_type id : set.GetEntities())
         {
@@ -119,7 +123,7 @@ namespace zerosugar::xr
 
     void GameViewController::Broadcast(const IPacket& packet, int32_t opcode, const detail::game::GameSpatialSet& set, GameEntityType type, std::optional<game_entity_id_type> excluded)
     {
-        GameViewModelContainer& viewModelContainer = _gameInstance.GetEntityViewModelContainer();
+        GameViewModelContainer& viewModelContainer = _gameInstance.GetViewModelContainer();
 
         for (const game_entity_id_type id : set.GetEntities(type))
         {

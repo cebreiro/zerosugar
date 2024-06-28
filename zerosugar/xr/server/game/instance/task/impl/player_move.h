@@ -5,10 +5,10 @@
 
 namespace zerosugar::xr::game_task
 {
-    class EntityPositionUpdate : public GameTaskT<IPacket, network::game::cs::MovePlayer, MainTargetSelector>
+    class PlayerMove : public GameTaskT<IPacket, network::game::cs::MovePlayer, MainTargetSelector>
     {
     public:
-        EntityPositionUpdate(UniquePtrNotNull<IPacket> param, game_entity_id_type targetId);
+        PlayerMove(UniquePtrNotNull<IPacket> param, game_entity_id_type targetId);
 
     private:
         void Execute(GameExecutionParallel& parallel, MainTargetSelector::target_type target) override;
@@ -16,7 +16,6 @@ namespace zerosugar::xr::game_task
 
     private:
         game_entity_id_type _id;
-        Eigen::Vector3d _oldPosition;
         Eigen::Vector3d _newPosition;
     };
 }

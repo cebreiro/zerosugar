@@ -15,18 +15,23 @@ namespace zerosugar::xr
         return *_serviceLocator;
     }
 
-    auto GameExecutionSerial::GetEntityViewContainer() -> GameViewModelContainer&
+    auto GameExecutionSerial::GetViewController() -> GameViewController&
     {
-        assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
-
-        return _gameInstance.GetEntityViewContainer();
+        return _gameInstance.GetViewController();
     }
 
-    auto GameExecutionSerial::GetEntityViewContainer() const -> const GameViewModelContainer&
+    auto GameExecutionSerial::GetViewModelContainer() -> GameViewModelContainer&
     {
         assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
 
-        return _gameInstance.GetEntityViewContainer();
+        return _gameInstance.GetViewModelContainer();
+    }
+
+    auto GameExecutionSerial::GetViewModelContainer() const -> const GameViewModelContainer&
+    {
+        assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
+
+        return _gameInstance.GetViewModelContainer();
     }
 
     auto GameExecutionSerial::GetSpatialContainer() -> GameSpatialContainer&

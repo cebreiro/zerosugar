@@ -22,6 +22,7 @@ namespace zerosugar::xr
     public:
         GameViewController() = delete;
         explicit GameViewController(GameInstance& instance);
+        ~GameViewController();
 
         void ProcessMovement(game_entity_id_type id, const Eigen::Vector3d& position);
 

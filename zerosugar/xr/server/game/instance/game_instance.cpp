@@ -10,6 +10,7 @@
 #include "zerosugar/xr/server/game/instance/view/grid/game_spatial_container.h"
 #include "zerosugar/xr/server/game/instance/task/game_task.h"
 #include "zerosugar/xr/server/game/instance/task/game_task_scheduler.h"
+#include "zerosugar/xr/server/game/instance/view/game_view_controller.h"
 #include "zerosugar/xr/server/game/packet/packet_builder.h"
 
 namespace zerosugar::xr
@@ -25,8 +26,9 @@ namespace zerosugar::xr
         , _serial(*this)
         , _taskScheduler(std::make_unique<GameTaskScheduler>(*this))
         , _entityContainer(std::make_unique<GameEntityContainer>())
-        , _entityViewContainer(std::make_unique<GameViewModelContainer>())
         , _spatialContainer(std::make_unique<GameSpatialContainer>(100000, 100000, 300))
+        , _gameViewController(std::make_unique<GameViewController>(*this))
+        , _viewModelContainer(std::make_unique<GameViewModelContainer>())
     {
     }
 
@@ -53,7 +55,7 @@ namespace zerosugar::xr
         auto playerView = new GamePlayerViewModel(entity->GetController());
         playerView->Initialize(*entity);
 
-        result = _entityViewContainer->Add(std::unique_ptr<GamePlayerViewModel>(playerView));
+        result = _viewModelContainer->Add(std::unique_ptr<GamePlayerViewModel>(playerView));
         assert(result);
 
         result = co_await _taskScheduler->AddProcess(entity->GetController().GetControllerId());
@@ -78,7 +80,7 @@ namespace zerosugar::xr
 
             for (const game_entity_id_type id : range)
             {
-                GamePlayerViewModel* remote = _entityViewContainer->FindPlayer(id);
+                GamePlayerViewModel* remote = _viewModelContainer->FindPlayer(id);
                 assert(remote);
 
                 remote->GetController().Notify(packet);
@@ -168,16 +170,6 @@ namespace zerosugar::xr
         return *_entityContainer;
     }
 
-    auto GameInstance::GetEntityViewContainer() -> GameViewModelContainer&
-    {
-        return *_entityViewContainer;
-    }
-
-    auto GameInstance::GetEntityViewContainer() const -> const GameViewModelContainer&
-    {
-        return *_entityViewContainer;
-    }
-
     auto GameInstance::GetSpatialContainer() -> GameSpatialContainer&
     {
         return *_spatialContainer;
@@ -186,5 +178,20 @@ namespace zerosugar::xr
     auto GameInstance::GetSpatialContainer() const -> const GameSpatialContainer&
     {
         return *_spatialContainer;
+    }
+
+    auto GameInstance::GetViewController() -> GameViewController&
+    {
+        return *_gameViewController;
+    }
+
+    auto GameInstance::GetViewModelContainer() -> GameViewModelContainer&
+    {
+        return *_viewModelContainer;
+    }
+
+    auto GameInstance::GetViewModelContainer() const -> const GameViewModelContainer&
+    {
+        return *_viewModelContainer;
     }
 }

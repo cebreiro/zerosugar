@@ -3,6 +3,7 @@
 namespace zerosugar::xr
 {
     class GameInstance;
+    class GameViewController;
     class GameViewModelContainer;
     class GameSpatialContainer;
 }
@@ -21,8 +22,10 @@ namespace zerosugar::xr
 
         auto GetServiceLocator() const -> service_locator_type&;
 
-        auto GetEntityViewContainer() -> GameViewModelContainer&;
-        auto GetEntityViewContainer() const -> const GameViewModelContainer&;
+        auto GetViewController() -> GameViewController&;
+
+        auto GetViewModelContainer() -> GameViewModelContainer&;
+        auto GetViewModelContainer() const -> const GameViewModelContainer&;
 
         auto GetSpatialContainer() -> GameSpatialContainer&;
         auto GetSpatialContainer() const -> const GameSpatialContainer&;
