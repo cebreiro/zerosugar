@@ -18,23 +18,57 @@ namespace zerosugar::xr::network::game::cs
     void MovePlayer::Deserialize(PacketReader& reader)
     {
         position = reader.Read<Position>();
+        rotation = reader.Read<Rotation>();
     }
 
     void MovePlayer::Serialize(PacketWriter& writer) const
     {
         writer.Write(position);
+        writer.Write(rotation);
     }
 
-    void StopPlayerMovement::Deserialize(PacketReader& reader)
+    void StopPlayer::Deserialize(PacketReader& reader)
     {
         id = reader.Read<int64_t>();
         position = reader.Read<Position>();
     }
 
-    void StopPlayerMovement::Serialize(PacketWriter& writer) const
+    void StopPlayer::Serialize(PacketWriter& writer) const
     {
         writer.Write<int64_t>(id);
         writer.Write(position);
+    }
+
+    void SprintPlayer::Deserialize(PacketReader& reader)
+    {
+        id = reader.Read<int64_t>();
+    }
+
+    void SprintPlayer::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int64_t>(id);
+    }
+
+    void RollDodgePlayer::Deserialize(PacketReader& reader)
+    {
+        id = reader.Read<int64_t>();
+        rotation = reader.Read<Rotation>();
+    }
+
+    void RollDodgePlayer::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int64_t>(id);
+        writer.Write(rotation);
+    }
+
+    void Chat::Deserialize(PacketReader& reader)
+    {
+        message = reader.ReadString();
+    }
+
+    void Chat::Serialize(PacketWriter& writer) const
+    {
+        writer.Write(message);
     }
 
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>
@@ -56,9 +90,30 @@ namespace zerosugar::xr::network::game::cs
 
                 return item;
             }
-            case StopPlayerMovement::opcode:
+            case StopPlayer::opcode:
             {
-                auto item = std::make_unique<StopPlayerMovement>();
+                auto item = std::make_unique<StopPlayer>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case SprintPlayer::opcode:
+            {
+                auto item = std::make_unique<SprintPlayer>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case RollDodgePlayer::opcode:
+            {
+                auto item = std::make_unique<RollDodgePlayer>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case Chat::opcode:
+            {
+                auto item = std::make_unique<Chat>();
                 item->Deserialize(reader);
 
                 return item;

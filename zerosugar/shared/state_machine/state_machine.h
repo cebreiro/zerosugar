@@ -130,7 +130,7 @@ namespace zerosugar
             return true;
         }
 
-        virtual auto OnEvent(event_param_type event) -> event_result_type
+        auto OnEvent(event_param_type event) -> event_result_type
         {
             assert(_currentState);
 

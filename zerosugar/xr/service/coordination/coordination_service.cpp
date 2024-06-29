@@ -310,6 +310,54 @@ namespace zerosugar::xr
         co_return{};
     }
 
+    auto CoordinationService::BroadcastChattingAsync(service::BroadcastChattingParam param) -> Future<service::BroadcastChattingResult>
+    {
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
+        co_await *_strand;
+        assert(ExecutionContext::IsEqualTo(*_strand));
+
+        service::BroadcastChattingResult result;
+
+        do
+        {
+            const coordination::GameUser* user = _nodeContainer->FindGameUser(param.authenticationToken);
+            if (!user)
+            {
+                result.errorCode = service::CoordinationServiceErrorCode::CoordinationErrorInternalError;
+
+                break;
+            }
+
+            const coordination::GameInstance* instance = user->GetParent();
+            if (!instance || instance->GetId().Unwrap() != param.gameInstanceId)
+            {
+                result.errorCode = service::CoordinationServiceErrorCode::CoordinationErrorInternalError;
+
+                break;
+            }
+
+            if (const coordination::GameServer* server = instance->GetParent(); !server || server->GetId().Unwrap() != param.serverId)
+            {
+                result.errorCode = service::CoordinationServiceErrorCode::CoordinationErrorInternalError;
+
+                break;
+            }
+
+            coordination::command::BroadcastChatting command;
+            command.message = std::move(param.message);
+
+            for (PtrNotNull<coordination::GameServer> server : _nodeContainer->GetServerRange())
+            {
+                server->SendCommand(command);
+            }
+            
+        } while (false);
+
+        co_return result;
+    }
+
     auto CoordinationService::GetStrand() -> Strand&
     {
         return *_strand;

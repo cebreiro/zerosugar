@@ -12,4 +12,7 @@ namespace zerosugar::xr::coordination::command
     void from_json(const nlohmann::json& j, LaunchGameInstance& item);
     void to_json(nlohmann::json& j, const LaunchGameInstance& item);
 
+    void from_json(const nlohmann::json& j, BroadcastChatting& item);
+    void to_json(nlohmann::json& j, const BroadcastChatting& item);
+
 }

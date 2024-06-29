@@ -46,10 +46,19 @@ namespace zerosugar::xr
             {
                 if (task->ShouldPrepareBeforeScheduled())
                 {
-                    task->Prepare(self->GetSerialContext());
+                    bool quickExit = false;
+                    task->Prepare(self->GetSerialContext(), quickExit);
+
+                    if (quickExit)
+                    {
+                        return;
+                    }
                 }
 
-                task->SelectTargetIds(self->GetSerialContext());
+                if (!task->SelectTargetIds(self->GetSerialContext()))
+                {
+                    return;
+                }
 
                 self->_taskScheduler->Schedule(std::move(task), controllerId);
             });

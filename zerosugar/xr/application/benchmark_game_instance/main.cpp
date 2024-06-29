@@ -145,20 +145,20 @@ auto MakeTestData(GameInstance& gameInstance) -> std::vector<std::pair<std::uniq
     return result;
 }
 
-void TestDataBench(GameInstance& instance)
+void TestDataBench(GameInstance& instance, const std::string& executorName)
 {
-    ankerl::nanobench::Bench().run("test", [&]()
+    ankerl::nanobench::Bench().run(std::format("{}) make simulation data", executorName), [&]()
         {
             auto testData = MakeTestData(instance);
             ankerl::nanobench::doNotOptimizeAway(testData);
         });
 }
 
-void StartBench(GameInstance& instance)
+void StartBench(GameInstance& instance, const std::string& executorName)
 {
     auto testData = MakeTestData(instance);
 
-    ankerl::nanobench::Bench().run("test", [&]()
+    ankerl::nanobench::Bench().run(std::format("{}) simulate movement", executorName), [&]()
         {
             for (auto& [task, controllerId] : MakeTestData(instance))
             {
@@ -175,21 +175,247 @@ void StartBench(GameInstance& instance)
         });
 }
 
-auto executor = std::make_shared<execution::AsioExecutor>(std::thread::hardware_concurrency());
+class PollingExecutor final : public execution::IExecutor, public std::enable_shared_from_this<PollingExecutor>
+{
+private:
+    using task_type = std::variant<std::function<void()>, std::move_only_function<void()>>;
+
+    struct Context
+    {
+        std::jthread worker;
+
+        std::condition_variable condVar;
+
+        std::mutex mutex;
+        bool running = false;
+        bool shutdown = false;
+        std::vector<task_type> front;
+        std::vector<task_type> back;
+    };
+
+public:
+    explicit PollingExecutor(int64_t workerCount)
+        : _workerCount(std::max<int64_t>(1, workerCount))
+    {
+        for (int64_t i = 0; i < workerCount; ++i)
+        {
+            Context& context = *_workContexts.emplace_back(std::make_unique<Context>());
+
+            context.worker = std::jthread([&context]()
+                {
+                    PollingExecutor::Run(context);
+                });
+        }
+    }
+
+    void Stop() override
+    {
+        for (auto& work : _workContexts)
+        {
+            {
+                std::lock_guard lock(work->mutex);
+
+                work->shutdown = true;
+            }
+
+            work->condVar.notify_one();
+        }
+
+        _workContexts.clear();
+    }
+
+    void Post(const std::function<void()>& function) override
+    {
+        Post(task_type(function));
+    }
+
+    void Post(std::move_only_function<void()> function) override
+    {
+        Post(task_type(std::move(function)));
+    }
+
+    void Dispatch(const std::function<void()>& function) override
+    {
+        Dispatch(task_type(function));
+    }
+
+    void Dispatch(std::move_only_function<void()> function) override
+    {
+        Dispatch(task_type(std::move(function)));
+    }
+
+    auto SharedFromThis() -> SharedPtrNotNull<IExecutor> override
+    {
+        return shared_from_this();
+    }
+
+    auto SharedFromThis() const -> SharedPtrNotNull<const IExecutor> override
+    {
+        return shared_from_this();
+    }
+
+private:
+    void Post(task_type task)
+    {
+        Context& context = *_workContexts[_count.fetch_add(1) % std::ssize(_workContexts)];
+
+        bool notify = false;
+        {
+            std::lock_guard lock(context.mutex);
+
+            context.back.push_back(std::move(task));
+
+            //notify = std::exchange(context.running, true) == false;
+        }
+
+        if (notify)
+        {
+            //context.condVar.notify_one();
+        }
+    }
+
+    void Dispatch(task_type task)
+    {
+        if (ExecutionContext::GetExecutor() == this)
+        {
+            std::visit([]<typename T>(T& item)
+            {
+                item();
+
+                std::atomic_thread_fence(std::memory_order::release);
+
+            }, task);
+
+            return;
+        }
+
+        Post(std::move(task));
+    }
+
+    static void Run(Context& context)
+    {
+        while (true)
+        {
+            {
+                std::unique_lock lock(context.mutex);
+
+                assert(context.running);
+
+                if (context.back.empty())
+                {
+                    context.running = false;
+
+                    context.condVar.wait(lock, [&]()
+                        {
+                            return !context.back.empty() || context.shutdown;
+                        });
+                }
+
+                context.front.swap(context.back);
+
+                if (context.shutdown)
+                {
+                    return;
+                }
+            }
+
+            assert(!context.front.empty());
+
+            for (task_type& task : context.front)
+            {
+                std::visit([]<typename T>(T& item)
+                {
+                    item();
+
+                    std::atomic_thread_fence(std::memory_order::release);
+
+                }, task);
+            }
+
+            context.front.clear();
+        }
+    }
+
+    static void RunPoll(Context& context)
+    {
+        while (true)
+        {
+            while (true)
+            {
+                std::unique_lock lock(context.mutex);
+
+                if (context.shutdown)
+                {
+                    return;
+                }
+
+                if (context.back.empty())
+                {
+                    lock.unlock();
+
+                    std::this_thread::yield();
+                }
+                else
+                {
+                    context.front.swap(context.back);
+
+                    break;
+                }
+            }
+
+            assert(!context.front.empty());
+
+            for (task_type& task : context.front)
+            {
+                std::visit([]<typename T>(T & item)
+                {
+                    item();
+
+                    std::atomic_thread_fence(std::memory_order::release);
+
+                }, task);
+            }
+
+            context.front.clear();
+        }
+    }
+
+private:
+    int64_t _workerCount = 0;
+    std::atomic<int64_t> _count = 0;
+    std::vector<std::unique_ptr<Context>> _workContexts;
+};
+
+auto asioExecutor = std::make_shared<execution::AsioExecutor>(std::thread::hardware_concurrency());
+auto gameExecutor = std::make_shared<PollingExecutor>(std::thread::hardware_concurrency());
 
 int main()
 {
-    executor->Run();
+    asioExecutor->Run();
+    {
+        ExecutionContext::ExecutorGuard guard(asioExecutor.get());
 
-    ExecutionContext::PushExecutor(executor.get());
+        ServiceLocator locator;
 
-    ServiceLocator locator;
+        auto instance1 = std::make_shared<GameInstance>(asioExecutor, locator, game_instance_id_type{}, 0);
+        TestDataBench(*instance1, "asio executor");
 
-    auto instance1 = std::make_shared<GameInstance>(executor, locator, game_instance_id_type{}, 0);
-    TestDataBench(*instance1);
+        auto instance2 = std::make_shared<GameInstance>(asioExecutor, locator, game_instance_id_type{}, 0);
+        StartBench(*instance2, "asio executor");
+    }
+    {
+        ExecutionContext::ExecutorGuard guard(gameExecutor.get());
 
-    auto instance2 = std::make_shared<GameInstance>(executor, locator, game_instance_id_type{}, 0);
-    StartBench(*instance2);
+        ServiceLocator locator;
+
+        auto instance1 = std::make_shared<GameInstance>(gameExecutor, locator, game_instance_id_type{}, 0);
+        TestDataBench(*instance1, "poll executor");
+
+        auto instance2 = std::make_shared<GameInstance>(gameExecutor, locator, game_instance_id_type{}, 0);
+        StartBench(*instance2, "poll executor");
+    }
+
+    gameExecutor->Stop();
 
     return 0;
 }

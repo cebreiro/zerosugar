@@ -13,8 +13,8 @@ message Position
 
 message Rotation
 {
-    float yaw = 1;
-    float pitch = 2;
+    float pitch = 1;
+    float yaw = 2;
     float roll = 3;
 }
 
@@ -67,6 +67,18 @@ message PlayerEquipment
     Equipment weapon = 4;
 }
 
+message PlayerQuickSlot
+{
+    int32 index = 1;
+    int32 type = 2;
+    int32 id = 3;
+}
+
+message PlayerSkill
+{
+    int32 id = 1;
+}
+
 message PlayerInventoryItem
 {
     int32 id = 1;
@@ -97,6 +109,15 @@ message Player
 
     int32 items_count = 6;
     repeated PlayerInventoryItem items = 7 [(size_element) = "items_count"];
+
+    int32 quick_slot_count = 8;
+    repeated PlayerQuickSlot quick_slots = 9 [(size_element) = "quick_slot_count"];
+
+    int32 skills_count = 10;
+    repeated PlayerSkill skills = 11 [(size_element) = "skills_count"];
+
+    int32 exp = 12;
+    int32 exp_max = 13;
 }
 
 message Monster

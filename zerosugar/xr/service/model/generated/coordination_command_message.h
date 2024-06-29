@@ -18,5 +18,16 @@ namespace zerosugar::xr::coordination::command
         int32_t zoneId = {};
     };
 
+    struct BroadcastChatting final : IPacket
+    {
+        static constexpr int32_t opcode = 1;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        std::string message = {};
+    };
+
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>;
 }

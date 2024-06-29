@@ -73,15 +73,18 @@ namespace zerosugar
         {
             std::lock_guard lock(_spinMutex);
 
-            if (!_owner.empty() && _owner.back() != threadId)
+            if (ExecutionContext::GetExecutor() == this)
             {
-                shouldInvokeImmediately = false;
-            }
-            else
-            {
-                shouldInvokeImmediately = true;
+                if (!_owner.empty() && _owner.back() != threadId)
+                {
+                    shouldInvokeImmediately = false;
+                }
+                else
+                {
+                    shouldInvokeImmediately = true;
 
-                _owner.push_back(threadId);
+                    _owner.push_back(threadId);
+                }
             }
         }
 

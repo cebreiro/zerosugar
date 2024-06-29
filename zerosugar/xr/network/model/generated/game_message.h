@@ -22,8 +22,8 @@ namespace zerosugar::xr::network::game
         void Deserialize(BufferReader& reader) final;
         void Serialize(BufferWriter& writer) const final;
 
-        float yaw = {};
         float pitch = {};
+        float yaw = {};
         float roll = {};
     };
 
@@ -87,6 +87,24 @@ namespace zerosugar::xr::network::game
         Equipment weapon = {};
     };
 
+    struct PlayerQuickSlot : IBufferDeserializable, IBufferSerializable
+    {
+        void Deserialize(BufferReader& reader) final;
+        void Serialize(BufferWriter& writer) const final;
+
+        int32_t index = {};
+        int32_t type = {};
+        int32_t id = {};
+    };
+
+    struct PlayerSkill : IBufferDeserializable, IBufferSerializable
+    {
+        void Deserialize(BufferReader& reader) final;
+        void Serialize(BufferWriter& writer) const final;
+
+        int32_t id = {};
+    };
+
     struct PlayerInventoryItem : IBufferDeserializable, IBufferSerializable
     {
         void Deserialize(BufferReader& reader) final;
@@ -124,6 +142,12 @@ namespace zerosugar::xr::network::game
         int32_t gold = {};
         int32_t itemsCount = {};
         std::vector<PlayerInventoryItem> items = {};
+        int32_t quickSlotCount = {};
+        std::vector<PlayerQuickSlot> quickSlots = {};
+        int32_t skillsCount = {};
+        std::vector<PlayerSkill> skills = {};
+        int32_t exp = {};
+        int32_t expMax = {};
     };
 
     struct Monster : IBufferDeserializable, IBufferSerializable

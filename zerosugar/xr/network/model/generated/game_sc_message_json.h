@@ -23,4 +23,16 @@ namespace zerosugar::xr::network::game::sc
     void from_json(const nlohmann::json& j, MoveRemotePlayer& item);
     void to_json(nlohmann::json& j, const MoveRemotePlayer& item);
 
+    void from_json(const nlohmann::json& j, StopRemotePlayer& item);
+    void to_json(nlohmann::json& j, const StopRemotePlayer& item);
+
+    void from_json(const nlohmann::json& j, SprintRemotePlayer& item);
+    void to_json(nlohmann::json& j, const SprintRemotePlayer& item);
+
+    void from_json(const nlohmann::json& j, RollDodgeRemotePlayer& item);
+    void to_json(nlohmann::json& j, const RollDodgeRemotePlayer& item);
+
+    void from_json(const nlohmann::json& j, NotifyChattingMessage& item);
+    void to_json(nlohmann::json& j, const NotifyChattingMessage& item);
+
 }

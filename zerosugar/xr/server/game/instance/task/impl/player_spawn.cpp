@@ -22,8 +22,10 @@ namespace zerosugar::xr::game_task
         return true;
     }
 
-    void PlayerSpawn::Prepare(GameExecutionSerial& serialContext)
+    void PlayerSpawn::Prepare(GameExecutionSerial& serialContext, bool& quickExit)
     {
+        quickExit = false;
+
         const int64_t controllerId = GetParam()->GetController().GetControllerId();
         const game_entity_id_type entityId = GetParam()->GetId();
 

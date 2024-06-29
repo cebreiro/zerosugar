@@ -17,12 +17,35 @@ message MovePlayer
     option (opcode) = 1001;
 
     Position position = 1;
+    Rotation rotation = 2;
 }
 
-message StopPlayerMovement
+message StopPlayer
 {
     option (opcode) = 1020;
 
     int64 id = 1;
     Position position = 2;
+}
+
+message SprintPlayer
+{
+    option (opcode) = 1021;
+
+    int64 id = 1;
+}
+
+message RollDodgePlayer
+{
+    option (opcode) = 1023;
+
+    int64 id = 1;
+    Rotation rotation = 2;
+}
+
+message Chat
+{
+    option (opcode) = 1011;
+
+    string message = 1;
 }

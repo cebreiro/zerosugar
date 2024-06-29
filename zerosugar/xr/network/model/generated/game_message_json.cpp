@@ -21,8 +21,8 @@ namespace zerosugar::xr::network::game
 
     void from_json(const nlohmann::json& j, Rotation& item)
     {
-        j.at("yaw").get_to(item.yaw);
         j.at("pitch").get_to(item.pitch);
+        j.at("yaw").get_to(item.yaw);
         j.at("roll").get_to(item.roll);
     }
 
@@ -30,8 +30,8 @@ namespace zerosugar::xr::network::game
     {
         j = nlohmann::json
             {
-                { "yaw", item.yaw },
                 { "pitch", item.pitch },
+                { "yaw", item.yaw },
                 { "roll", item.roll },
             };
     }
@@ -144,6 +144,36 @@ namespace zerosugar::xr::network::game
             };
     }
 
+    void from_json(const nlohmann::json& j, PlayerQuickSlot& item)
+    {
+        j.at("index").get_to(item.index);
+        j.at("type").get_to(item.type);
+        j.at("id").get_to(item.id);
+    }
+
+    void to_json(nlohmann::json& j, const PlayerQuickSlot& item)
+    {
+        j = nlohmann::json
+            {
+                { "index", item.index },
+                { "type", item.type },
+                { "id", item.id },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, PlayerSkill& item)
+    {
+        j.at("id").get_to(item.id);
+    }
+
+    void to_json(nlohmann::json& j, const PlayerSkill& item)
+    {
+        j = nlohmann::json
+            {
+                { "id", item.id },
+            };
+    }
+
     void from_json(const nlohmann::json& j, PlayerInventoryItem& item)
     {
         j.at("id").get_to(item.id);
@@ -197,6 +227,12 @@ namespace zerosugar::xr::network::game
         j.at("gold").get_to(item.gold);
         j.at("itemsCount").get_to(item.itemsCount);
         j.at("items").get_to(item.items);
+        j.at("quickSlotCount").get_to(item.quickSlotCount);
+        j.at("quickSlots").get_to(item.quickSlots);
+        j.at("skillsCount").get_to(item.skillsCount);
+        j.at("skills").get_to(item.skills);
+        j.at("exp").get_to(item.exp);
+        j.at("expMax").get_to(item.expMax);
     }
 
     void to_json(nlohmann::json& j, const Player& item)
@@ -210,6 +246,12 @@ namespace zerosugar::xr::network::game
                 { "gold", item.gold },
                 { "itemsCount", item.itemsCount },
                 { "items", item.items },
+                { "quickSlotCount", item.quickSlotCount },
+                { "quickSlots", item.quickSlots },
+                { "skillsCount", item.skillsCount },
+                { "skills", item.skills },
+                { "exp", item.exp },
+                { "expMax", item.expMax },
             };
     }
 

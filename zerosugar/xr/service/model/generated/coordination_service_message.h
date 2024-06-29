@@ -126,4 +126,17 @@ namespace zerosugar::xr::service
         int64_t gameInstanceId = {};
     };
 
+    struct BroadcastChattingParam
+    {
+        int64_t serverId = {};
+        int64_t gameInstanceId = {};
+        std::string authenticationToken = {};
+        std::string message = {};
+    };
+
+    struct BroadcastChattingResult
+    {
+        CoordinationServiceErrorCode errorCode = {};
+    };
+
 }

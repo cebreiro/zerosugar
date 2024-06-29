@@ -55,6 +55,7 @@ namespace zerosugar::xr::network::game::sc
     {
         j.at("id").get_to(item.id);
         j.at("position").get_to(item.position);
+        j.at("rotation").get_to(item.rotation);
     }
 
     void to_json(nlohmann::json& j, const MoveRemotePlayer& item)
@@ -63,6 +64,65 @@ namespace zerosugar::xr::network::game::sc
             {
                 { "id", item.id },
                 { "position", item.position },
+                { "rotation", item.rotation },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, StopRemotePlayer& item)
+    {
+        j.at("id").get_to(item.id);
+        j.at("position").get_to(item.position);
+    }
+
+    void to_json(nlohmann::json& j, const StopRemotePlayer& item)
+    {
+        j = nlohmann::json
+            {
+                { "id", item.id },
+                { "position", item.position },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, SprintRemotePlayer& item)
+    {
+        j.at("id").get_to(item.id);
+    }
+
+    void to_json(nlohmann::json& j, const SprintRemotePlayer& item)
+    {
+        j = nlohmann::json
+            {
+                { "id", item.id },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, RollDodgeRemotePlayer& item)
+    {
+        j.at("id").get_to(item.id);
+        j.at("rotation").get_to(item.rotation);
+    }
+
+    void to_json(nlohmann::json& j, const RollDodgeRemotePlayer& item)
+    {
+        j = nlohmann::json
+            {
+                { "id", item.id },
+                { "rotation", item.rotation },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, NotifyChattingMessage& item)
+    {
+        j.at("type").get_to(item.type);
+        j.at("message").get_to(item.message);
+    }
+
+    void to_json(nlohmann::json& j, const NotifyChattingMessage& item)
+    {
+        j = nlohmann::json
+            {
+                { "type", item.type },
+                { "message", item.message },
             };
     }
 

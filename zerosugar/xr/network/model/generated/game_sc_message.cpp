@@ -61,12 +61,60 @@ namespace zerosugar::xr::network::game::sc
     {
         id = reader.Read<int64_t>();
         position = reader.Read<Position>();
+        rotation = reader.Read<Rotation>();
     }
 
     void MoveRemotePlayer::Serialize(PacketWriter& writer) const
     {
         writer.Write<int64_t>(id);
         writer.Write(position);
+        writer.Write(rotation);
+    }
+
+    void StopRemotePlayer::Deserialize(PacketReader& reader)
+    {
+        id = reader.Read<int64_t>();
+        position = reader.Read<Position>();
+    }
+
+    void StopRemotePlayer::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int64_t>(id);
+        writer.Write(position);
+    }
+
+    void SprintRemotePlayer::Deserialize(PacketReader& reader)
+    {
+        id = reader.Read<int64_t>();
+    }
+
+    void SprintRemotePlayer::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int64_t>(id);
+    }
+
+    void RollDodgeRemotePlayer::Deserialize(PacketReader& reader)
+    {
+        id = reader.Read<int64_t>();
+        rotation = reader.Read<Rotation>();
+    }
+
+    void RollDodgeRemotePlayer::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int64_t>(id);
+        writer.Write(rotation);
+    }
+
+    void NotifyChattingMessage::Deserialize(PacketReader& reader)
+    {
+        type = reader.Read<int32_t>();
+        message = reader.ReadString();
+    }
+
+    void NotifyChattingMessage::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int32_t>(type);
+        writer.Write(message);
     }
 
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>
@@ -98,6 +146,34 @@ namespace zerosugar::xr::network::game::sc
             case MoveRemotePlayer::opcode:
             {
                 auto item = std::make_unique<MoveRemotePlayer>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case StopRemotePlayer::opcode:
+            {
+                auto item = std::make_unique<StopRemotePlayer>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case SprintRemotePlayer::opcode:
+            {
+                auto item = std::make_unique<SprintRemotePlayer>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case RollDodgeRemotePlayer::opcode:
+            {
+                auto item = std::make_unique<RollDodgeRemotePlayer>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case NotifyChattingMessage::opcode:
+            {
+                auto item = std::make_unique<NotifyChattingMessage>();
                 item->Deserialize(reader);
 
                 return item;

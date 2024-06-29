@@ -17,6 +17,16 @@ namespace zerosugar::xr::coordination::command
         writer.Write<int32_t>(zoneId);
     }
 
+    void BroadcastChatting::Deserialize(PacketReader& reader)
+    {
+        message = reader.ReadString();
+    }
+
+    void BroadcastChatting::Serialize(PacketWriter& writer) const
+    {
+        writer.Write(message);
+    }
+
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>
     {
         const int16_t opcode = reader.Read<int16_t>();
@@ -25,6 +35,13 @@ namespace zerosugar::xr::coordination::command
             case LaunchGameInstance::opcode:
             {
                 auto item = std::make_unique<LaunchGameInstance>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case BroadcastChatting::opcode:
+            {
+                auto item = std::make_unique<BroadcastChatting>();
                 item->Deserialize(reader);
 
                 return item;

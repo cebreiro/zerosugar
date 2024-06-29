@@ -41,7 +41,7 @@ namespace zerosugar::xr
         static void Build(network::game::sc::RemoveRemotePlayer& result, const GamePlayerViewModel& playerView);
         static void Build(network::game::sc::MoveRemotePlayer& result, const GamePlayerViewModel& playerView);
 
-    private:
+    public:
         static void Build(network::game::Player& result, const GameEntity& entity);
         static void Build(network::game::RemotePlayer& result, const GamePlayerViewModel& playerView);
         static void Build(network::game::PlayerBase& result, const GameEntity& entity);

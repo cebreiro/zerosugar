@@ -18,15 +18,15 @@ namespace zerosugar::xr::network::game
 
     void Rotation::Deserialize(BufferReader& reader)
     {
-        yaw = reader.Read<float>();
         pitch = reader.Read<float>();
+        yaw = reader.Read<float>();
         roll = reader.Read<float>();
     }
 
     void Rotation::Serialize(BufferWriter& writer) const
     {
-        writer.Write<float>(yaw);
         writer.Write<float>(pitch);
+        writer.Write<float>(yaw);
         writer.Write<float>(roll);
     }
 
@@ -127,6 +127,30 @@ namespace zerosugar::xr::network::game
         writer.Write(weapon);
     }
 
+    void PlayerQuickSlot::Deserialize(BufferReader& reader)
+    {
+        index = reader.Read<int32_t>();
+        type = reader.Read<int32_t>();
+        id = reader.Read<int32_t>();
+    }
+
+    void PlayerQuickSlot::Serialize(BufferWriter& writer) const
+    {
+        writer.Write<int32_t>(index);
+        writer.Write<int32_t>(type);
+        writer.Write<int32_t>(id);
+    }
+
+    void PlayerSkill::Deserialize(BufferReader& reader)
+    {
+        id = reader.Read<int32_t>();
+    }
+
+    void PlayerSkill::Serialize(BufferWriter& writer) const
+    {
+        writer.Write<int32_t>(id);
+    }
+
     void PlayerInventoryItem::Deserialize(BufferReader& reader)
     {
         id = reader.Read<int32_t>();
@@ -174,6 +198,12 @@ namespace zerosugar::xr::network::game
         gold = reader.Read<int32_t>();
         itemsCount = reader.Read<int32_t>();
         reader.Read(items, itemsCount);
+        quickSlotCount = reader.Read<int32_t>();
+        reader.Read(quickSlots, quickSlotCount);
+        skillsCount = reader.Read<int32_t>();
+        reader.Read(skills, skillsCount);
+        exp = reader.Read<int32_t>();
+        expMax = reader.Read<int32_t>();
     }
 
     void Player::Serialize(BufferWriter& writer) const
@@ -185,6 +215,12 @@ namespace zerosugar::xr::network::game
         writer.Write<int32_t>(gold);
         writer.Write<int32_t>(itemsCount);
         writer.Write(items);
+        writer.Write<int32_t>(quickSlotCount);
+        writer.Write(quickSlots);
+        writer.Write<int32_t>(skillsCount);
+        writer.Write(skills);
+        writer.Write<int32_t>(exp);
+        writer.Write<int32_t>(expMax);
     }
 
     void Monster::Deserialize(BufferReader& reader)

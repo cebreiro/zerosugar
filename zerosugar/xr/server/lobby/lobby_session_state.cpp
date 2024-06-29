@@ -264,9 +264,9 @@ namespace zerosugar::xr::lobby
             addParam.hairId = request.hairId;
             addParam.gold = 0;
             addParam.zoneId = 100;
-            addParam.x = 0;
-            addParam.y = 0;
-            addParam.z = 0;
+            addParam.x = -1800.f;
+            addParam.y = 100.f;
+            addParam.z = 250.f;
         }
         {
             constexpr std::array equipItems{

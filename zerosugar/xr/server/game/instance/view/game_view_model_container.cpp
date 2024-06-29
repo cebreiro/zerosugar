@@ -38,4 +38,9 @@ namespace zerosugar::xr
 
         return iter != _playerViews.end() ? iter->second.get() : nullptr;
     }
+
+    auto GameViewModelContainer::GetPlayerRange() const -> std::ranges::values_view<std::ranges::ref_view<const container_type>>
+    {
+        return _playerViews | std::views::values;
+    }
 }

@@ -36,7 +36,7 @@ namespace zerosugar::xr::network::game::sc
 
     struct RemoveRemotePlayer final : IPacket
     {
-        static constexpr int32_t opcode = 1002;
+        static constexpr int32_t opcode = 1016;
 
         void Deserialize(PacketReader& reader) final;
         void Serialize(PacketWriter& writer) const final;
@@ -55,6 +55,54 @@ namespace zerosugar::xr::network::game::sc
 
         int64_t id = {};
         Position position = {};
+        Rotation rotation = {};
+    };
+
+    struct StopRemotePlayer final : IPacket
+    {
+        static constexpr int32_t opcode = 1020;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        int64_t id = {};
+        Position position = {};
+    };
+
+    struct SprintRemotePlayer final : IPacket
+    {
+        static constexpr int32_t opcode = 1021;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        int64_t id = {};
+    };
+
+    struct RollDodgeRemotePlayer final : IPacket
+    {
+        static constexpr int32_t opcode = 1004;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        int64_t id = {};
+        Rotation rotation = {};
+    };
+
+    struct NotifyChattingMessage final : IPacket
+    {
+        static constexpr int32_t opcode = 1014;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        int32_t type = {};
+        std::string message = {};
     };
 
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>;

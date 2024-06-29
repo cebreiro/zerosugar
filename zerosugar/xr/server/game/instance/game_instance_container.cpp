@@ -10,46 +10,59 @@ namespace zerosugar::xr
 
     bool GameInstanceContainer::Add(SharedPtrNotNull<GameInstance> instance)
     {
-        decltype(_gameInstances)::accessor accessor;
+        const auto id = instance->GetId();
 
-        if (_gameInstances.insert(accessor, instance->GetId()))
-        {
-            accessor->second = std::move(instance);
+        std::unique_lock lock(_mutex);
 
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        return _gameInstances.try_emplace(id, std::move(instance)).second;
     }
 
     bool GameInstanceContainer::Remove(game_instance_id_type id)
     {
+        std::unique_lock lock(_mutex);
+
         return _gameInstances.erase(id);
     }
 
     auto GameInstanceContainer::Find(game_instance_id_type id) -> SharedPtrNotNull<GameInstance>
     {
-        decltype(_gameInstances)::const_accessor accessor;
+        std::shared_lock lock(_mutex);
 
-        if (_gameInstances.find(accessor, id))
-        {
-            return accessor->second;
-        }
+        const auto iter = _gameInstances.find(id);
 
-        return nullptr;
+        return iter != _gameInstances.end() ? iter->second : nullptr;
     }
 
     auto GameInstanceContainer::Find(game_instance_id_type id) const -> SharedPtrNotNull<const GameInstance>
     {
-        decltype(_gameInstances)::const_accessor accessor;
+        std::shared_lock lock(_mutex);
 
-        if (_gameInstances.find(accessor, id))
+        const auto iter = _gameInstances.find(id);
+
+        return iter != _gameInstances.end() ? iter->second : nullptr;
+    }
+
+    void GameInstanceContainer::Visit(const std::function<void(GameInstance&)>& function) const
+    {
+        assert(function);
+
+        std::shared_lock lock(_mutex);
+
+        for (const SharedPtrNotNull<GameInstance>& gameInstance : _gameInstances | std::views::values)
         {
-            return accessor->second;
+            function(*gameInstance);
         }
+    }
 
-        return nullptr;
+    void GameInstanceContainer::CVisit(const std::function<void(GameInstance&)>& function) const
+    {
+        assert(function);
+
+        std::shared_lock lock(_mutex);
+
+        for (const SharedPtrNotNull<GameInstance>& gameInstance : _gameInstances | std::views::values)
+        {
+            function(*gameInstance);
+        }
     }
 }

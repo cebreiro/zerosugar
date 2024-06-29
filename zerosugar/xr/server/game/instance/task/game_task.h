@@ -25,7 +25,7 @@ namespace zerosugar::xr
         virtual bool SelectTargetIds(const GameExecutionSerial& serialContext) = 0;
 
         virtual bool ShouldPrepareBeforeScheduled() const;
-        virtual void Prepare(GameExecutionSerial& serialContext);
+        virtual void Prepare(GameExecutionSerial& serialContext, bool& quickExit);
 
         void Start(GameExecutionParallel& parallelContext);
         void Complete(GameExecutionSerial& serialContext);

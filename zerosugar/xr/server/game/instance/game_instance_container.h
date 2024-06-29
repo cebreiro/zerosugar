@@ -1,6 +1,5 @@
 #pragma once
-#include <tbb/concurrent_hash_map.h>
-
+#include <boost/unordered/unordered_flat_map.hpp>
 #include "zerosugar/xr/server/game/instance/game_instance_id.h"
 
 namespace zerosugar::xr
@@ -21,7 +20,11 @@ namespace zerosugar::xr
         auto Find(game_instance_id_type id) -> SharedPtrNotNull<GameInstance>;
         auto Find(game_instance_id_type id) const -> SharedPtrNotNull<const GameInstance>;
 
+        void Visit(const std::function<void(GameInstance&)>& function) const;
+        void CVisit(const std::function<void(GameInstance&)>& function) const;
+
     private:
-        tbb::concurrent_hash_map<game_instance_id_type, SharedPtrNotNull<GameInstance>> _gameInstances;
+        mutable std::shared_mutex _mutex;
+        boost::unordered::unordered_flat_map<game_instance_id_type, SharedPtrNotNull<GameInstance>> _gameInstances;
     };
 }

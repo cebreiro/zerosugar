@@ -8,6 +8,10 @@ namespace zerosugar::xr
     {
         Register<AuthenticateHandler>();
         Register<MovePlayerHandler>();
+        Register<StopPlayerHandler>();
+        Register<SprintPlayerHandler>();
+        Register<RollDodgePlayerHandler>();
+        Register<ChatHandler>();
     }
 
     GamePacketHandlerFactory::~GamePacketHandlerFactory()

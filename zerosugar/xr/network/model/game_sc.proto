@@ -29,7 +29,7 @@ message AddRemotePlayer
 
 message RemoveRemotePlayer
 {
-    option (opcode) = 1002;
+    option (opcode) = 1016;
 
     int64 id = 1;
 }
@@ -40,4 +40,36 @@ message MoveRemotePlayer
 
     int64 id = 1;
     Position position = 2;
+    Rotation rotation = 3;
+}
+
+message StopRemotePlayer
+{
+    option (opcode) = 1020;
+
+    int64 id = 1;
+    Position position = 2;
+}
+
+message SprintRemotePlayer
+{
+    option (opcode) = 1021;
+
+    int64 id = 1;
+}
+
+message RollDodgeRemotePlayer
+{
+    option (opcode) = 1004;
+
+    int64 id = 1;
+    Rotation rotation = 2;
+}
+
+message NotifyChattingMessage
+{
+    option (opcode) = 1014;
+
+    int32 type = 1;
+    string message = 2;
 }

@@ -9,6 +9,7 @@ namespace zerosugar::xr
     class GameEntity;
     class GameInstance;
     class GameSpatialSector;
+    class GamePlayerViewModel;
 }
 
 namespace zerosugar::xr::detail::game
@@ -27,21 +28,16 @@ namespace zerosugar::xr
 
         void ProcessPlayerSpawn(const GameEntity& entity);
         void ProcessMovement(game_entity_id_type id, const Eigen::Vector3d& position);
+        void ProcessStop(game_entity_id_type id, const Eigen::Vector3d& position);
+        void ProcessSprint(game_entity_id_type id);
+        void ProcessRollDodge(game_entity_id_type id, const Eigen::Vector3d& rotation);
 
-    private:
-        template <typename T>
-        void Broadcast(const T& packet, const detail::game::GameSpatialSet& set, std::optional<game_entity_id_type> excluded = std::nullopt);
+        void Broadcast(const IPacket& packet, std::optional<game_entity_id_type> excluded = std::nullopt);
+        void Broadcast(const IPacket& packet, const GamePlayerViewModel& middle, std::optional<game_entity_id_type> excluded = std::nullopt);
+        void Broadcast(const IPacket& packet, const detail::game::GameSpatialSet& set, std::optional<game_entity_id_type> excluded = std::nullopt);
+        void Broadcast(const IPacket& packet, const detail::game::GameSpatialSet& set, GameEntityType type, std::optional<game_entity_id_type> excluded = std::nullopt);
 
-        template <typename T>
-        void Broadcast(const T& packet, const detail::game::GameSpatialSet& set, GameEntityType type, std::optional<game_entity_id_type> excluded = std::nullopt);
-
-        void Broadcast(const IPacket& packet, int32_t opcode, const detail::game::GameSpatialSet& set, std::optional<game_entity_id_type> excluded);
-        void Broadcast(const IPacket& packet, int32_t opcode, const detail::game::GameSpatialSet& set, GameEntityType type, std::optional<game_entity_id_type> excluded);
-
-        template <typename T>
-        void Send(const T& packet, IGameController& controller);
-
-        void Send(const IPacket& packet, int32_t opcode, IGameController& controller);
+        void Send(const IPacket& packet, IGameController& controller);
 
     private:
         GameInstance& _gameInstance;

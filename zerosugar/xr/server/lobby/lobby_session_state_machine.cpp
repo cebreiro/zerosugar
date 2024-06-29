@@ -88,48 +88,44 @@ namespace zerosugar::xr
 
             assert(ExecutionContext::IsEqualTo(session->GetStrand()));
 
-            try
+            receiveBuffer.MergeBack(std::move(buffer));
+
+            while (receiveBuffer.GetSize() >= 2)
             {
-                receiveBuffer.MergeBack(std::move(buffer));
+                PacketReader reader(receiveBuffer.cbegin(), receiveBuffer.cend());
 
-                while (true)
+                const int64_t packetSize = reader.Read<int16_t>();
+                if (receiveBuffer.GetSize() < packetSize)
                 {
-                    if (receiveBuffer.GetSize() < 2)
-                    {
-                        break;
-                    }
+                    break;
+                }
 
-                    PacketReader reader(receiveBuffer.cbegin(), receiveBuffer.cend());
+                std::unique_ptr<IPacket> packet = network::lobby::cs::CreateFrom(reader);
 
-                    const int64_t packetSize = reader.Read<int16_t>();
-                    if (receiveBuffer.GetSize() < packetSize)
-                    {
-                        break;
-                    }
+                Buffer temp;
+                [[maybe_unused]] bool sliced = receiveBuffer.SliceFront(temp, packetSize);
+                assert(sliced);
 
-                    std::unique_ptr<IPacket> packet = network::lobby::cs::CreateFrom(reader);
+                if (!packet)
+                {
+                    ZEROSUGAR_LOG_WARN(_serviceLocator,
+                        std::format("[{}] unnkown packet. session: {}", GetName(), *session));
 
-                    Buffer temp;
-                    [[maybe_unused]] bool sliced = receiveBuffer.SliceFront(temp, packetSize);
-                    assert(sliced);
+                    session->Close();
 
-                    if (!packet)
-                    {
-                        ZEROSUGAR_LOG_WARN(_serviceLocator,
-                            std::format("[{}] unnkown packet. session: {}", GetName(), *session));
+                    co_return;
+                }
 
-                        session->Close();
-
-                        co_return;
-                    }
-
+                try
+                {
                     co_await OnEvent(std::move(packet));
                 }
-            }
-            catch (const std::exception& e)
-            {
-                ZEROSUGAR_LOG_WARN(self->_serviceLocator, std::format("[{}] throws. session: {}, exsception: {}",
-                    self->GetName(), *session, e.what()));
+                catch (const std::exception& e)
+                {
+                    ZEROSUGAR_LOG_WARN(self->_serviceLocator,
+                        std::format("[{}] throws. session: {}, exsception: {}",
+                            self->GetName(), *session, e.what()));
+                }
             }
         }
     }

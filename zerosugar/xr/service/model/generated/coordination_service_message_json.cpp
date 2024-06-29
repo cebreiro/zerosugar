@@ -259,4 +259,36 @@ namespace zerosugar::xr::service
             };
     }
 
+    void from_json(const nlohmann::json& j, BroadcastChattingParam& item)
+    {
+        j.at("serverId").get_to(item.serverId);
+        j.at("gameInstanceId").get_to(item.gameInstanceId);
+        j.at("authenticationToken").get_to(item.authenticationToken);
+        j.at("message").get_to(item.message);
+    }
+
+    void to_json(nlohmann::json& j, const BroadcastChattingParam& item)
+    {
+        j = nlohmann::json
+            {
+                { "serverId", item.serverId },
+                { "gameInstanceId", item.gameInstanceId },
+                { "authenticationToken", item.authenticationToken },
+                { "message", item.message },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, BroadcastChattingResult& item)
+    {
+        j.at("errorCode").get_to(item.errorCode);
+    }
+
+    void to_json(nlohmann::json& j, const BroadcastChattingResult& item)
+    {
+        j = nlohmann::json
+            {
+                { "errorCode", item.errorCode },
+            };
+    }
+
 }

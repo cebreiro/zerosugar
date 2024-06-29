@@ -27,6 +27,12 @@ namespace zerosugar::xr::network::game
     void from_json(const nlohmann::json& j, PlayerEquipment& item);
     void to_json(nlohmann::json& j, const PlayerEquipment& item);
 
+    void from_json(const nlohmann::json& j, PlayerQuickSlot& item);
+    void to_json(nlohmann::json& j, const PlayerQuickSlot& item);
+
+    void from_json(const nlohmann::json& j, PlayerSkill& item);
+    void to_json(nlohmann::json& j, const PlayerSkill& item);
+
     void from_json(const nlohmann::json& j, PlayerInventoryItem& item);
     void to_json(nlohmann::json& j, const PlayerInventoryItem& item);
 

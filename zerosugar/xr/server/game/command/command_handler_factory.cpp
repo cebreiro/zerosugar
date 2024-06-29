@@ -7,6 +7,7 @@ namespace zerosugar::xr
     CommandHandlerFactory::CommandHandlerFactory()
     {
         Register<LaunchGameInstanceHandler>();
+        Register<BroadcastChattingHandler>();
     }
 
     CommandHandlerFactory::~CommandHandlerFactory()

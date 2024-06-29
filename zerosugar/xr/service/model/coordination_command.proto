@@ -11,3 +11,10 @@ message LaunchGameInstance
     int64 game_instance_id = 1;
     int32 zone_id = 2;
 }
+
+message BroadcastChatting
+{
+    option (opcode) = 1;
+
+    string message = 1;
+}

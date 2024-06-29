@@ -17,4 +17,17 @@ namespace zerosugar::xr::coordination::command
             };
     }
 
+    void from_json(const nlohmann::json& j, BroadcastChatting& item)
+    {
+        j.at("message").get_to(item.message);
+    }
+
+    void to_json(nlohmann::json& j, const BroadcastChatting& item)
+    {
+        j = nlohmann::json
+            {
+                { "message", item.message },
+            };
+    }
+
 }

@@ -20,9 +20,10 @@ namespace zerosugar::xr
         return false;
     }
 
-    void GameTask::Prepare(GameExecutionSerial& serialContext)
+    void GameTask::Prepare(GameExecutionSerial& serialContext, bool& quickExit)
     {
         (void)serialContext;
+        (void)quickExit;
     }
 
     void GameTask::Start(GameExecutionParallel& parallelContext)
