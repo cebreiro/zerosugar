@@ -1,8 +1,0 @@
-add_subdirectory(pch)
-add_subdirectory(gamedata)
-add_subdirectory(database)
-add_subdirectory(protocol)
-add_subdirectory(service)
-add_subdirectory(server)
-add_subdirectory(executable)
-add_subdirectory(tool)

@@ -1,1 +1,0 @@
-add_subdirectory(sox_code_generator)

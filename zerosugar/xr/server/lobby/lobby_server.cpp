@@ -24,9 +24,6 @@ namespace zerosugar::xr
     {
         Server::StartUp(listenPort);
 
-        execution::IExecutor* executor = ExecutionContext::GetExecutor();
-        assert(executor);
-
         service::ICoordinationService& coordinationService = _serviceLocator.Get<service::ICoordinationService>();
 
         service::RequestSnowflakeKeyParam requestSnowflakeKeyParam;

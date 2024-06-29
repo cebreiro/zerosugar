@@ -1,2 +1,0 @@
-add_subdirectory(monolithic_server)
-add_subdirectory(database_initializer)
