@@ -2,12 +2,11 @@
 
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
 #include "zerosugar/xr/server/game/instance/task/execution/game_execution_serial.h"
-#include "zerosugar/xr/server/game/instance/view/game_view_controller.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_controller.h"
 
 namespace zerosugar::xr::game_task
 {
-    PlayerGlobalChat::PlayerGlobalChat(const std::pair<game_constans::ChattingType, std::string>& param,
-        std::chrono::system_clock::time_point creationTimePoint)
+    PlayerGlobalChat::PlayerGlobalChat(const std::pair<ChattingType, std::string>& param, game_time_point_type creationTimePoint)
         : GameTaskParamT(creationTimePoint, param, NullSelector{})
     {
     }

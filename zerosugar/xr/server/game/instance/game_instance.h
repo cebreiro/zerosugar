@@ -10,8 +10,8 @@ namespace zerosugar::xr
     class GameEntityContainer;
 
     class GameSpatialContainer;
-    class GameViewController;
-    class GameViewModelContainer;
+    class GameSnapshotController;
+    class GameSnapshotModelContainer;
 
     class GameTask;
     class GameTaskScheduler;
@@ -57,10 +57,10 @@ namespace zerosugar::xr
         auto GetSpatialContainer() -> GameSpatialContainer&;
         auto GetSpatialContainer() const -> const GameSpatialContainer&;
 
-        auto GetViewController() -> GameViewController&;
+        auto GetViewController() -> GameSnapshotController&;
 
-        auto GetViewModelContainer() -> GameViewModelContainer&;
-        auto GetViewModelContainer() const -> const GameViewModelContainer&;
+        auto GetSnapshotContainer() -> GameSnapshotModelContainer&;
+        auto GetSnapshotContainer() const -> const GameSnapshotModelContainer&;
 
     private:
         SharedPtrNotNull<execution::IExecutor> _executor;
@@ -79,7 +79,7 @@ namespace zerosugar::xr
         std::unique_ptr<GameTaskScheduler> _taskScheduler;
         std::unique_ptr<GameEntityContainer> _entityContainer;
         std::unique_ptr<GameSpatialContainer> _spatialContainer;
-        std::unique_ptr<GameViewController> _gameViewController;
-        std::unique_ptr<GameViewModelContainer> _viewModelContainer;
+        std::unique_ptr<GameSnapshotController> _snapshotController;
+        std::unique_ptr<GameSnapshotModelContainer> _snapshotContainer;
     };
 }

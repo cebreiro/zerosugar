@@ -4,8 +4,8 @@ namespace zerosugar::xr
 {
     class GameInstance;
     class GameTaskScheduler;
-    class GameViewController;
-    class GameViewModelContainer;
+    class GameSnapshotController;
+    class GameSnapshotModelContainer;
     class GameSpatialContainer;
 }
 
@@ -26,10 +26,10 @@ namespace zerosugar::xr
         auto GetTaskScheduler() -> GameTaskScheduler&;
         auto GetTaskScheduler() const -> const GameTaskScheduler&;
 
-        auto GetViewController() -> GameViewController&;
+        auto GetViewController() -> GameSnapshotController&;
 
-        auto GetViewModelContainer() -> GameViewModelContainer&;
-        auto GetViewModelContainer() const -> const GameViewModelContainer&;
+        auto GetSnapshotContainer() -> GameSnapshotModelContainer&;
+        auto GetSnapshotContainer() const -> const GameSnapshotModelContainer&;
 
         auto GetSpatialContainer() -> GameSpatialContainer&;
         auto GetSpatialContainer() const -> const GameSpatialContainer&;

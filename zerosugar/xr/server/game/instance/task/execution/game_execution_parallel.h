@@ -1,4 +1,5 @@
 #pragma once
+#include "zerosugar/xr/server/game/instance/game_type.h"
 
 namespace zerosugar::xr
 {
@@ -27,7 +28,7 @@ namespace zerosugar::xr
         auto GetEntityContainer() const -> const GameEntityContainer&;
 
     public:
-        static auto GetBaseTimePoint() -> std::chrono::system_clock::time_point;
+        static auto GetBaseTimePoint() -> game_time_point_type;
 
     private:
         GameInstance& _gameInstance;

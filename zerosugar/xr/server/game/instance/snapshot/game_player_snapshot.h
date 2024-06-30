@@ -12,11 +12,11 @@ namespace zerosugar::xr
 
 namespace zerosugar::xr
 {
-    class GamePlayerViewModel
+    class GamePlayerSnapshot
     {
     public:
-        GamePlayerViewModel() = default;
-        explicit GamePlayerViewModel(IGameController& controller);
+        GamePlayerSnapshot() = default;
+        explicit GamePlayerSnapshot(IGameController& controller);
 
         void Initialize(const GameEntity& entity);
 

@@ -1,17 +1,14 @@
 #include "game_instance.h"
 
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
-#include "zerosugar/xr/server/game/controller/game_entity_controller_interface.h"
-#include "zerosugar/xr/server/game/instance/entity/component/movement_component.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_container.h"
-#include "zerosugar/xr/server/game/instance/view/game_view_model_container.h"
-#include "zerosugar/xr/server/game/instance/view/game_player_view_model.h"
-#include "zerosugar/xr/server/game/instance/view/grid/game_spatial_container.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_container.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_player_snapshot.h"
+#include "zerosugar/xr/server/game/instance/snapshot/grid/game_spatial_container.h"
 #include "zerosugar/xr/server/game/instance/task/game_task.h"
 #include "zerosugar/xr/server/game/instance/task/game_task_scheduler.h"
-#include "zerosugar/xr/server/game/instance/view/game_view_controller.h"
-#include "zerosugar/xr/server/game/packet/packet_builder.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_controller.h"
 
 namespace zerosugar::xr
 {
@@ -27,8 +24,8 @@ namespace zerosugar::xr
         , _taskScheduler(std::make_unique<GameTaskScheduler>(*this))
         , _entityContainer(std::make_unique<GameEntityContainer>())
         , _spatialContainer(std::make_unique<GameSpatialContainer>(100000, 100000, 300))
-        , _gameViewController(std::make_unique<GameViewController>(*this))
-        , _viewModelContainer(std::make_unique<GameViewModelContainer>())
+        , _snapshotController(std::make_unique<GameSnapshotController>(*this))
+        , _snapshotContainer(std::make_unique<GameSnapshotModelContainer>())
     {
     }
 
@@ -149,18 +146,18 @@ namespace zerosugar::xr
         return *_spatialContainer;
     }
 
-    auto GameInstance::GetViewController() -> GameViewController&
+    auto GameInstance::GetViewController() -> GameSnapshotController&
     {
-        return *_gameViewController;
+        return *_snapshotController;
     }
 
-    auto GameInstance::GetViewModelContainer() -> GameViewModelContainer&
+    auto GameInstance::GetSnapshotContainer() -> GameSnapshotModelContainer&
     {
-        return *_viewModelContainer;
+        return *_snapshotContainer;
     }
 
-    auto GameInstance::GetViewModelContainer() const -> const GameViewModelContainer&
+    auto GameInstance::GetSnapshotContainer() const -> const GameSnapshotModelContainer&
     {
-        return *_viewModelContainer;
+        return *_snapshotContainer;
     }
 }

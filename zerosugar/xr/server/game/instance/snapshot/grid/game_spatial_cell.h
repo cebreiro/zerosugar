@@ -1,6 +1,6 @@
 #pragma once
 #include "zerosugar/xr/server/game/instance/entity/game_entity_id.h"
-#include "zerosugar/xr/server/game/instance/view/grid/game_spatial_id.h"
+#include "zerosugar/xr/server/game/instance/snapshot/grid/game_spatial_id.h"
 
 namespace zerosugar::xr
 {

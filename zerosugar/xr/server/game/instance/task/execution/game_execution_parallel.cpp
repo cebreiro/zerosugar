@@ -1,6 +1,7 @@
 #include "game_execution_parallel.h"
 
 #include "zerosugar/xr/server/game/instance/game_instance.h"
+#include "zerosugar/xr/server/game/instance/game_constants.h"
 #include "zerosugar/xr/server/game/instance/task/game_task.h"
 
 namespace zerosugar::xr
@@ -36,13 +37,13 @@ namespace zerosugar::xr
         return _gameInstance.GetEntityContainer();
     }
 
-    auto GameExecutionParallel::GetBaseTimePoint() -> std::chrono::system_clock::time_point
+    auto GameExecutionParallel::GetBaseTimePoint() -> game_time_point_type
     {
         if (GameTask::IsInExecution())
         {
             return GameTask::GetLocalInstance().GetBaseTime();
         }
 
-        return std::chrono::system_clock::time_point::min();
+        return game_constant::null_time_point;
     }
 }

@@ -15,7 +15,7 @@ namespace zerosugar::xr
         server.GetGameInstanceContainer().Visit([message = command.message](GameInstance& instance)
             {
                 auto task = std::make_unique<game_task::PlayerGlobalChat>(
-                    std::make_pair(game_constans::ChattingType::Global, message));
+                    std::make_pair(ChattingType::Global, message));
 
                 instance.Summit(std::move(task), std::nullopt);
             });

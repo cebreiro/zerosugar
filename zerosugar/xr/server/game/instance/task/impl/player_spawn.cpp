@@ -6,13 +6,13 @@
 #include "zerosugar/xr/server/game/instance/task/game_task_scheduler.h"
 #include "zerosugar/xr/server/game/instance/task/execution/game_execution_parallel.h"
 #include "zerosugar/xr/server/game/instance/task/execution/game_execution_serial.h"
-#include "zerosugar/xr/server/game/instance/view/game_player_view_model.h"
-#include "zerosugar/xr/server/game/instance/view/game_view_controller.h"
-#include "zerosugar/xr/server/game/instance/view/game_view_model_container.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_player_snapshot.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_controller.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_container.h"
 
 namespace zerosugar::xr::game_task
 {
-    PlayerSpawn::PlayerSpawn(SharedPtrNotNull<GameEntity> player, std::chrono::system_clock::time_point creationTimePoint)
+    PlayerSpawn::PlayerSpawn(SharedPtrNotNull<GameEntity> player, game_time_point_type creationTimePoint)
         : GameTaskParamT(creationTimePoint, std::move(player), NullSelector{})
     {
     }
@@ -42,11 +42,11 @@ namespace zerosugar::xr::game_task
 
     void PlayerSpawn::OnComplete(GameExecutionSerial& serialContext)
     {
-        auto playerView = std::make_unique<GamePlayerViewModel>(GetParam()->GetController());
+        auto playerView = std::make_unique<GamePlayerSnapshot>(GetParam()->GetController());
         playerView->Initialize(*GetParam());
 
         [[maybe_unused]]
-        const bool result = serialContext.GetViewModelContainer().Add(std::move(playerView));
+        const bool result = serialContext.GetSnapshotContainer().Add(std::move(playerView));
         assert(result);
 
         serialContext.GetViewController().ProcessPlayerSpawn(*GetParam());

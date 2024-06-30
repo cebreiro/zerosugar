@@ -25,23 +25,23 @@ namespace zerosugar::xr
         return _gameInstance.GetTaskScheduler();
     }
 
-    auto GameExecutionSerial::GetViewController() -> GameViewController&
+    auto GameExecutionSerial::GetViewController() -> GameSnapshotController&
     {
         return _gameInstance.GetViewController();
     }
 
-    auto GameExecutionSerial::GetViewModelContainer() -> GameViewModelContainer&
+    auto GameExecutionSerial::GetSnapshotContainer() -> GameSnapshotModelContainer&
     {
         assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
 
-        return _gameInstance.GetViewModelContainer();
+        return _gameInstance.GetSnapshotContainer();
     }
 
-    auto GameExecutionSerial::GetViewModelContainer() const -> const GameViewModelContainer&
+    auto GameExecutionSerial::GetSnapshotContainer() const -> const GameSnapshotModelContainer&
     {
         assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
 
-        return _gameInstance.GetViewModelContainer();
+        return _gameInstance.GetSnapshotContainer();
     }
 
     auto GameExecutionSerial::GetSpatialContainer() -> GameSpatialContainer&

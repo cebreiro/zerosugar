@@ -1,4 +1,4 @@
-#include "game_player_view_model.h"
+#include "game_player_snapshot.h"
 
 #include "zerosugar/xr/server/game/instance/entity/component/movement_component.h"
 #include "zerosugar/xr/server/game/instance/entity/component/player_component.h"
@@ -7,12 +7,12 @@
 
 namespace zerosugar::xr
 {
-    GamePlayerViewModel::GamePlayerViewModel(IGameController& controller)
+    GamePlayerSnapshot::GamePlayerSnapshot(IGameController& controller)
         : _controller(controller)
     {
     }
 
-    void GamePlayerViewModel::Initialize(const GameEntity& entity)
+    void GamePlayerSnapshot::Initialize(const GameEntity& entity)
     {
         _id = entity.GetId();
 
@@ -55,222 +55,222 @@ namespace zerosugar::xr
         }
     }
 
-    auto GamePlayerViewModel::GetController() const -> IGameController&
+    auto GamePlayerSnapshot::GetController() const -> IGameController&
     {
         return _controller;
     }
 
-    auto GamePlayerViewModel::GetId() const -> game_entity_id_type
+    auto GamePlayerSnapshot::GetId() const -> game_entity_id_type
     {
         return _id;
     }
 
-    auto GamePlayerViewModel::GetPosition() const -> const Eigen::Vector3d&
+    auto GamePlayerSnapshot::GetPosition() const -> const Eigen::Vector3d&
     {
         return _position;
     }
 
-    auto GamePlayerViewModel::GetYaw() const -> float
+    auto GamePlayerSnapshot::GetYaw() const -> float
     {
         return _yaw;
     }
 
-    auto GamePlayerViewModel::GetHp() const -> float
+    auto GamePlayerSnapshot::GetHp() const -> float
     {
         return _hp;
     }
 
-    auto GamePlayerViewModel::GetMaxHp() const -> float
+    auto GamePlayerSnapshot::GetMaxHp() const -> float
     {
         return _maxHP;
     }
 
-    auto GamePlayerViewModel::GetAttackMin() const -> float
+    auto GamePlayerSnapshot::GetAttackMin() const -> float
     {
         return _attackMin;
     }
 
-    auto GamePlayerViewModel::GetAttackMax() const -> float
+    auto GamePlayerSnapshot::GetAttackMax() const -> float
     {
         return _attackMax;
     }
 
-    auto GamePlayerViewModel::GetAttackRange() const -> float
+    auto GamePlayerSnapshot::GetAttackRange() const -> float
     {
         return _attackRange;
     }
 
-    auto GamePlayerViewModel::GetAttackSpeed() const -> float
+    auto GamePlayerSnapshot::GetAttackSpeed() const -> float
     {
         return _attackSpeed;
     }
 
-    auto GamePlayerViewModel::GetSpeed() const -> float
+    auto GamePlayerSnapshot::GetSpeed() const -> float
     {
         return _speed;
     }
 
-    auto GamePlayerViewModel::GetDefence() const -> float
+    auto GamePlayerSnapshot::GetDefence() const -> float
     {
         return _defence;
     }
 
-    auto GamePlayerViewModel::GetName() const -> const std::string&
+    auto GamePlayerSnapshot::GetName() const -> const std::string&
     {
         return _name;
     }
 
-    auto GamePlayerViewModel::GetLevel() const -> int32_t
+    auto GamePlayerSnapshot::GetLevel() const -> int32_t
     {
         return _level;
     }
 
-    auto GamePlayerViewModel::GetGender() const -> int32_t
+    auto GamePlayerSnapshot::GetGender() const -> int32_t
     {
         return _gender;
     }
 
-    auto GamePlayerViewModel::GetFace() const -> int32_t
+    auto GamePlayerSnapshot::GetFace() const -> int32_t
     {
         return _face;
     }
 
-    auto GamePlayerViewModel::GetHair() const -> int32_t
+    auto GamePlayerSnapshot::GetHair() const -> int32_t
     {
         return _hair;
     }
 
-    auto GamePlayerViewModel::GetStr() const -> int32_t
+    auto GamePlayerSnapshot::GetStr() const -> int32_t
     {
         return _str;
     }
 
-    auto GamePlayerViewModel::GetDex() const -> int32_t
+    auto GamePlayerSnapshot::GetDex() const -> int32_t
     {
         return _dex;
     }
 
-    auto GamePlayerViewModel::GetIntell() const -> int32_t
+    auto GamePlayerSnapshot::GetIntell() const -> int32_t
     {
         return _intell;
     }
 
-    auto GamePlayerViewModel::GetStamina() const -> float
+    auto GamePlayerSnapshot::GetStamina() const -> float
     {
         return _stamina;
     }
 
-    auto GamePlayerViewModel::GetStaminaMax() const -> float
+    auto GamePlayerSnapshot::GetStaminaMax() const -> float
     {
         return _staminaMax;
     }
 
-    auto GamePlayerViewModel::GetEquipment() const -> const std::array<std::optional<InventoryItem>, static_cast<int32_t>(data::EquipPosition::Count)>&
+    auto GamePlayerSnapshot::GetEquipment() const -> const std::array<std::optional<InventoryItem>, static_cast<int32_t>(data::EquipPosition::Count)>&
     {
         return _equipItems;
     }
 
-    void GamePlayerViewModel::SetPosition(const Eigen::Vector3d& position)
+    void GamePlayerSnapshot::SetPosition(const Eigen::Vector3d& position)
     {
         _position = position;
     }
 
-    void GamePlayerViewModel::SetYaw(float yaw)
+    void GamePlayerSnapshot::SetYaw(float yaw)
     {
         _yaw = yaw;
     }
 
-    void GamePlayerViewModel::SetHp(float hp)
+    void GamePlayerSnapshot::SetHp(float hp)
     {
         _hp = hp;
     }
 
-    void GamePlayerViewModel::SetMaxHp(float maxHp)
+    void GamePlayerSnapshot::SetMaxHp(float maxHp)
     {
         _maxHP = maxHp;
     }
 
-    void GamePlayerViewModel::SetAttackMin(float attackMin)
+    void GamePlayerSnapshot::SetAttackMin(float attackMin)
     {
         _attackMin = attackMin;
     }
 
-    void GamePlayerViewModel::SetAttackMax(float attackMax)
+    void GamePlayerSnapshot::SetAttackMax(float attackMax)
     {
         _attackMax = attackMax;
     }
 
-    void GamePlayerViewModel::SetAttackRange(float attackRange)
+    void GamePlayerSnapshot::SetAttackRange(float attackRange)
     {
         _attackRange = attackRange;
     }
 
-    void GamePlayerViewModel::SetAttackSpeed(float attackSpeed)
+    void GamePlayerSnapshot::SetAttackSpeed(float attackSpeed)
     {
         _attackSpeed = attackSpeed;
     }
 
-    void GamePlayerViewModel::SetSpeed(float speed)
+    void GamePlayerSnapshot::SetSpeed(float speed)
     {
         _speed = speed;
     }
 
-    void GamePlayerViewModel::SetDefence(float defence)
+    void GamePlayerSnapshot::SetDefence(float defence)
     {
         _defence = defence;
     }
 
-    void GamePlayerViewModel::SetName(const std::string& name)
+    void GamePlayerSnapshot::SetName(const std::string& name)
     {
         _name = name;
     }
 
-    void GamePlayerViewModel::SetLevel(int32_t level)
+    void GamePlayerSnapshot::SetLevel(int32_t level)
     {
         _level = level;
     }
 
-    void GamePlayerViewModel::SetGender(int32_t gender)
+    void GamePlayerSnapshot::SetGender(int32_t gender)
     {
         _gender = gender;
     }
 
-    void GamePlayerViewModel::SetFace(int32_t face)
+    void GamePlayerSnapshot::SetFace(int32_t face)
     {
         _face = face;
     }
 
-    void GamePlayerViewModel::SetHair(int32_t hair)
+    void GamePlayerSnapshot::SetHair(int32_t hair)
     {
         _hair = hair;
     }
 
-    void GamePlayerViewModel::SetStr(int32_t str)
+    void GamePlayerSnapshot::SetStr(int32_t str)
     {
         _str = str;
     }
 
-    void GamePlayerViewModel::SetDex(int32_t dex)
+    void GamePlayerSnapshot::SetDex(int32_t dex)
     {
         _dex = dex;
     }
 
-    void GamePlayerViewModel::SetIntell(int32_t intell)
+    void GamePlayerSnapshot::SetIntell(int32_t intell)
     {
         _intell = intell;
     }
 
-    void GamePlayerViewModel::SetStamina(float stamina)
+    void GamePlayerSnapshot::SetStamina(float stamina)
     {
         _stamina = stamina;
     }
 
-    void GamePlayerViewModel::SetStaminaMax(float staminaMax)
+    void GamePlayerSnapshot::SetStaminaMax(float staminaMax)
     {
         _staminaMax = staminaMax;
     }
 
-    void GamePlayerViewModel::SetEquipment(data::EquipPosition position, std::optional<InventoryItem> item)
+    void GamePlayerSnapshot::SetEquipment(data::EquipPosition position, std::optional<InventoryItem> item)
     {
         _equipItems[static_cast<int32_t>(position)] = item;
     }

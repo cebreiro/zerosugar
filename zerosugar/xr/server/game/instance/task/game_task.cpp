@@ -6,7 +6,7 @@ namespace zerosugar::xr
 {
     thread_local GameTask* GameTask::_localInstance = nullptr;
 
-    GameTask::GameTask(std::chrono::system_clock::time_point creationTimePoint)
+    GameTask::GameTask(game_time_point_type creationTimePoint)
         : _creationTimePoint(creationTimePoint)
     {
     }
@@ -42,7 +42,7 @@ namespace zerosugar::xr
                 _localInstance = nullptr;
             });
 
-        _baseTimePoint = std::chrono::system_clock::now();
+        _baseTimePoint = game_clock_type::now();
 
         this->StartExecution(parallelContext);
     }
@@ -52,7 +52,7 @@ namespace zerosugar::xr
         this->OnComplete(serialContext);
     }
 
-    auto GameTask::GetCreationTimePoint() const -> std::chrono::system_clock::time_point
+    auto GameTask::GetCreationTimePoint() const -> game_time_point_type
     {
         return _creationTimePoint;
     }
@@ -74,7 +74,7 @@ namespace zerosugar::xr
         return *_localInstance;
     }
 
-    auto GameTask::GetBaseTime() const -> std::chrono::system_clock::time_point
+    auto GameTask::GetBaseTime() const -> game_time_point_type
     {
         return _baseTimePoint;
     }

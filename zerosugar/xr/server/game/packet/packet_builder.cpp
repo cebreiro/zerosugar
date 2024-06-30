@@ -6,9 +6,9 @@
 #include "zerosugar/xr/server/game/instance/entity/component/player_component.h"
 #include "zerosugar/xr/server/game/instance/entity/component/stat_component.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
-#include "zerosugar/xr/server/game/instance/view/game_view_model_container.h"
-#include "zerosugar/xr/server/game/instance/view/game_player_view_model.h"
-#include "zerosugar/xr/server/game/instance/view/grid/game_spatial_container.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_container.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_player_snapshot.h"
+#include "zerosugar/xr/server/game/instance/snapshot/grid/game_spatial_container.h"
 
 namespace zerosugar::xr
 {
@@ -17,7 +17,7 @@ namespace zerosugar::xr
     {
         result.zoneId = gameInstance.GetZoneId();
 
-        const GameViewModelContainer& viewContainer = gameInstance.GetViewModelContainer();
+        const GameSnapshotModelContainer& viewContainer = gameInstance.GetSnapshotContainer();
         {
             for (game_entity_id_type id : sector.GetEntities())
             {
@@ -26,7 +26,7 @@ namespace zerosugar::xr
                     continue;
                 }
 
-                if (const GamePlayerViewModel* playerView = viewContainer.FindPlayer(id); playerView)
+                if (const GamePlayerSnapshot* playerView = viewContainer.FindPlayer(id); playerView)
                 {
                     network::game::RemotePlayer& item = result.remotePlayers.emplace_back();
                     Build(item.base, *playerView);
@@ -46,17 +46,17 @@ namespace zerosugar::xr
         Build(result.localPlayer, entity);
     }
 
-    void GamePacketBuilder::Build(network::game::sc::AddRemotePlayer& result, const GamePlayerViewModel& playerView)
+    void GamePacketBuilder::Build(network::game::sc::AddRemotePlayer& result, const GamePlayerSnapshot& playerView)
     {
         Build(result.player, playerView);
     }
 
-    void GamePacketBuilder::Build(network::game::sc::RemoveRemotePlayer& result, const GamePlayerViewModel& playerView)
+    void GamePacketBuilder::Build(network::game::sc::RemoveRemotePlayer& result, const GamePlayerSnapshot& playerView)
     {
         result.id = playerView.GetId().Unwrap();
     }
 
-    void GamePacketBuilder::Build(network::game::sc::MoveRemotePlayer& result, const GamePlayerViewModel& playerView)
+    void GamePacketBuilder::Build(network::game::sc::MoveRemotePlayer& result, const GamePlayerSnapshot& playerView)
     {
         result.id = playerView.GetId().Unwrap();
         Build(result.position, playerView);
@@ -107,7 +107,7 @@ namespace zerosugar::xr
         }
     }
 
-    void GamePacketBuilder::Build(network::game::RemotePlayer& result, const GamePlayerViewModel& playerView)
+    void GamePacketBuilder::Build(network::game::RemotePlayer& result, const GamePlayerSnapshot& playerView)
     {
         result.id = playerView.GetId().Unwrap();
 
@@ -138,7 +138,7 @@ namespace zerosugar::xr
         result.staminaMax = statComponent.GetMaxStamina().As<float>();
     }
 
-    void GamePacketBuilder::Build(network::game::PlayerBase& result, const GamePlayerViewModel& playerView)
+    void GamePacketBuilder::Build(network::game::PlayerBase& result, const GamePlayerSnapshot& playerView)
     {
         result.hp = playerView.GetHp();
         result.maxHP = playerView.GetMaxHp();
@@ -192,7 +192,7 @@ namespace zerosugar::xr
         }
     }
 
-    void GamePacketBuilder::Build(network::game::PlayerEquipment& result, const GamePlayerViewModel& playerView)
+    void GamePacketBuilder::Build(network::game::PlayerEquipment& result, const GamePlayerSnapshot& playerView)
     {
         const auto& equipItems = playerView.GetEquipment();
 
@@ -236,7 +236,7 @@ namespace zerosugar::xr
         result.intell = item.attack.value_or(0);
     }
 
-    void GamePacketBuilder::Build(network::game::Position& position, const GamePlayerViewModel& playerView)
+    void GamePacketBuilder::Build(network::game::Position& position, const GamePlayerSnapshot& playerView)
     {
         position.x = static_cast<float>(playerView.GetPosition().x());
         position.y = static_cast<float>(playerView.GetPosition().y());

@@ -1,66 +1,66 @@
-#include "game_view_controller.h"
+#include "game_snapshot_controller.h"
 
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
 #include "zerosugar/xr/server/game/controller/game_entity_controller_interface.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
-#include "zerosugar/xr/server/game/instance/view/game_player_view_model.h"
-#include "zerosugar/xr/server/game/instance/view/game_view_model_container.h"
-#include "zerosugar/xr/server/game/instance/view/grid/game_spatial_container.h"
-#include "zerosugar/xr/server/game/instance/view/grid/game_spatial_sector.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_player_snapshot.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_container.h"
+#include "zerosugar/xr/server/game/instance/snapshot/grid/game_spatial_container.h"
+#include "zerosugar/xr/server/game/instance/snapshot/grid/game_spatial_sector.h"
 #include "zerosugar/xr/server/game/packet/packet_builder.h"
 
 namespace zerosugar::xr
 {
-    GameViewController::GameViewController(GameInstance& instance)
+    GameSnapshotController::GameSnapshotController(GameInstance& instance)
         : _gameInstance(instance)
     {
     }
 
-    GameViewController::~GameViewController()
+    GameSnapshotController::~GameSnapshotController()
     {
     }
 
-    void GameViewController::ProcessPlayerSpawn(const GameEntity& entity)
+    void GameSnapshotController::ProcessPlayerSpawn(const GameEntity& entity)
     {
-        GameViewModelContainer& viewModelContainer = _gameInstance.GetViewModelContainer();
+        GameSnapshotModelContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
         GameSpatialContainer& spatialContainer = _gameInstance.GetSpatialContainer();
 
-        GamePlayerViewModel* viewModel = viewModelContainer.FindPlayer(entity.GetId());
-        assert(viewModel);
+        GamePlayerSnapshot* snapshot = snapshotContainer.FindPlayer(entity.GetId());
+        assert(snapshot);
 
-        GameSpatialSector& sector = spatialContainer.GetSector(viewModel->GetPosition().x(), viewModel->GetPosition().y());
+        GameSpatialSector& sector = spatialContainer.GetSector(snapshot->GetPosition().x(), snapshot->GetPosition().y());
         {
             network::game::sc::EnterGame packet;
             GamePacketBuilder::Build(packet, _gameInstance, entity, sector);
 
-            Send(packet, viewModel->GetController());
+            Send(packet, snapshot->GetController());
         }
 
         if (!sector.Empty() && sector.HasEntitiesAtLeast(GameEntityType::Player, 0))
         {
             network::game::sc::AddRemotePlayer packet;
-            GamePacketBuilder::Build(packet, *viewModel);
+            GamePacketBuilder::Build(packet, *snapshot);
 
             Broadcast(packet, sector, GameEntityType::Player);
         }
 
-        sector.AddEntity(viewModel->GetId());
+        sector.AddEntity(snapshot->GetId());
     }
 
-    void GameViewController::ProcessMovement(game_entity_id_type id, const Eigen::Vector3d& position)
+    void GameSnapshotController::ProcessMovement(game_entity_id_type id, const Eigen::Vector3d& position)
     {
-        GameViewModelContainer& viewModelContainer = _gameInstance.GetViewModelContainer();
+        GameSnapshotModelContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
         GameSpatialContainer& spatialContainer = _gameInstance.GetSpatialContainer();
 
-        GamePlayerViewModel* viewModel = viewModelContainer.FindPlayer(id);
-        if (!viewModel)
+        GamePlayerSnapshot* snapshot = snapshotContainer.FindPlayer(id);
+        if (!snapshot)
         {
             return;
         }
 
-        const Eigen::Vector3d oldPosition = viewModel->GetPosition();
-        viewModel->SetPosition(position);
+        const Eigen::Vector3d oldPosition = snapshot->GetPosition();
+        snapshot->SetPosition(position);
 
         GameSpatialSector& oldSector = spatialContainer.GetSector(oldPosition.x(), oldPosition.y());
         GameSpatialSector& newSector = spatialContainer.GetSector(position.x(), position.y());
@@ -73,7 +73,7 @@ namespace zerosugar::xr
             }
 
             network::game::sc::MoveRemotePlayer packet;
-            GamePacketBuilder::Build(packet, *viewModel);
+            GamePacketBuilder::Build(packet, *snapshot);
 
             Broadcast(packet, oldSector, id);
 
@@ -86,7 +86,7 @@ namespace zerosugar::xr
             !outs.Empty() && outs.HasEntitiesAtLeast(GameEntityType::Player, 0))
         {
             network::game::sc::RemoveRemotePlayer packet;
-            GamePacketBuilder::Build(packet, *viewModel);
+            GamePacketBuilder::Build(packet, *snapshot);
 
             Broadcast(packet, outs, GameEntityType::Player);
         }
@@ -95,7 +95,7 @@ namespace zerosugar::xr
             !unchanged.Empty() && unchanged.HasEntitiesAtLeast(GameEntityType::Player, 1))
         {
             network::game::sc::MoveRemotePlayer packet;
-            GamePacketBuilder::Build(packet, *viewModel);
+            GamePacketBuilder::Build(packet, *snapshot);
 
             Broadcast(packet, unchanged, GameEntityType::Player, id);
         }
@@ -104,7 +104,7 @@ namespace zerosugar::xr
             !ins.Empty() && ins.HasEntitiesAtLeast(GameEntityType::Player, 0))
         {
             network::game::sc::AddRemotePlayer packet;
-            GamePacketBuilder::Build(packet, *viewModel);
+            GamePacketBuilder::Build(packet, *snapshot);
 
             Broadcast(packet, ins, GameEntityType::Player);
         }
@@ -119,19 +119,19 @@ namespace zerosugar::xr
                 newSector.GetId().GetX(), newSector.GetId().GetY()));
     }
 
-    void GameViewController::ProcessStop(game_entity_id_type id, const Eigen::Vector3d& position)
+    void GameSnapshotController::ProcessStop(game_entity_id_type id, const Eigen::Vector3d& position)
     {
-        GameViewModelContainer& viewModelContainer = _gameInstance.GetViewModelContainer();
+        GameSnapshotModelContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
         GameSpatialContainer& spatialContainer = _gameInstance.GetSpatialContainer();
 
-        GamePlayerViewModel* viewModel = viewModelContainer.FindPlayer(id);
-        if (!viewModel)
+        GamePlayerSnapshot* snapshot = snapshotContainer.FindPlayer(id);
+        if (!snapshot)
         {
             return;
         }
 
-        const Eigen::Vector3d oldPosition = viewModel->GetPosition();
-        viewModel->SetPosition(position);
+        const Eigen::Vector3d oldPosition = snapshot->GetPosition();
+        snapshot->SetPosition(position);
 
         GameSpatialSector& oldSector = spatialContainer.GetSector(oldPosition.x(), oldPosition.y());
         GameSpatialSector& newSector = spatialContainer.GetSector(position.x(), position.y());
@@ -145,7 +145,7 @@ namespace zerosugar::xr
 
             network::game::sc::StopRemotePlayer packet;
             packet.id = id.Unwrap();
-            GamePacketBuilder::Build(packet.position, *viewModel);
+            GamePacketBuilder::Build(packet.position, *snapshot);
 
             Broadcast(packet, oldSector, id);
 
@@ -158,7 +158,7 @@ namespace zerosugar::xr
             !outs.Empty() && outs.HasEntitiesAtLeast(GameEntityType::Player, 0))
         {
             network::game::sc::RemoveRemotePlayer packet;
-            GamePacketBuilder::Build(packet, *viewModel);
+            GamePacketBuilder::Build(packet, *snapshot);
 
             Broadcast(packet, outs, GameEntityType::Player);
         }
@@ -168,7 +168,7 @@ namespace zerosugar::xr
         {
             network::game::sc::StopRemotePlayer packet;
             packet.id = id.Unwrap();
-            GamePacketBuilder::Build(packet.position, *viewModel);
+            GamePacketBuilder::Build(packet.position, *snapshot);
 
             Broadcast(packet, unchanged, GameEntityType::Player, id);
         }
@@ -177,7 +177,7 @@ namespace zerosugar::xr
             !ins.Empty() && ins.HasEntitiesAtLeast(GameEntityType::Player, 0))
         {
             network::game::sc::AddRemotePlayer packet;
-            GamePacketBuilder::Build(packet, *viewModel);
+            GamePacketBuilder::Build(packet, *snapshot);
 
             Broadcast(packet, ins, GameEntityType::Player);
         }
@@ -192,16 +192,16 @@ namespace zerosugar::xr
                 newSector.GetId().GetX(), newSector.GetId().GetY()));
     }
 
-    void GameViewController::ProcessSprint(game_entity_id_type id)
+    void GameSnapshotController::ProcessSprint(game_entity_id_type id)
     {
-        GameViewModelContainer& viewModelContainer = _gameInstance.GetViewModelContainer();
+        GameSnapshotModelContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
         GameSpatialContainer& spatialContainer = _gameInstance.GetSpatialContainer();
 
-        GamePlayerViewModel* viewModel = viewModelContainer.FindPlayer(id);
-        assert(viewModel);
+        GamePlayerSnapshot* snapshot = snapshotContainer.FindPlayer(id);
+        assert(snapshot);
 
         GameSpatialSector& sector = spatialContainer.GetSector(
-            viewModel->GetPosition().x(), viewModel->GetPosition().y());
+            snapshot->GetPosition().x(), snapshot->GetPosition().y());
 
         network::game::sc::SprintRemotePlayer packet;
         packet.id = id.Unwrap();
@@ -209,16 +209,16 @@ namespace zerosugar::xr
         Broadcast(packet, sector, id);
     }
 
-    void GameViewController::ProcessRollDodge(game_entity_id_type id, const Eigen::Vector3d& rotation)
+    void GameSnapshotController::ProcessRollDodge(game_entity_id_type id, const Eigen::Vector3d& rotation)
     {
-        GameViewModelContainer& viewModelContainer = _gameInstance.GetViewModelContainer();
+        GameSnapshotModelContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
         GameSpatialContainer& spatialContainer = _gameInstance.GetSpatialContainer();
 
-        GamePlayerViewModel* viewModel = viewModelContainer.FindPlayer(id);
-        assert(viewModel);
+        GamePlayerSnapshot* snapshot = snapshotContainer.FindPlayer(id);
+        assert(snapshot);
 
         GameSpatialSector& sector = spatialContainer.GetSector(
-            viewModel->GetPosition().x(), viewModel->GetPosition().y());
+            snapshot->GetPosition().x(), snapshot->GetPosition().y());
 
         network::game::sc::RollDodgeRemotePlayer packet;
         packet.id = id.Unwrap();
@@ -229,29 +229,29 @@ namespace zerosugar::xr
         Broadcast(packet, sector, id);
     }
 
-    void GameViewController::Broadcast(const IPacket& packet, std::optional<game_entity_id_type> excluded)
+    void GameSnapshotController::Broadcast(const IPacket& packet, std::optional<game_entity_id_type> excluded)
     {
-        for (const std::unique_ptr<GamePlayerViewModel>& viewModel : _gameInstance.GetViewModelContainer().GetPlayerRange())
+        for (const std::unique_ptr<GamePlayerSnapshot>& snapshot : _gameInstance.GetSnapshotContainer().GetPlayerRange())
         {
-            if (excluded.has_value() && *excluded == viewModel->GetId())
+            if (excluded.has_value() && *excluded == snapshot->GetId())
             {
                 continue;;
             }
 
-            Send(packet, viewModel->GetController());
+            Send(packet, snapshot->GetController());
         }
     }
 
-    void GameViewController::Broadcast(const IPacket& packet, const GamePlayerViewModel& middle, std::optional<game_entity_id_type> excluded)
+    void GameSnapshotController::Broadcast(const IPacket& packet, const GamePlayerSnapshot& middle, std::optional<game_entity_id_type> excluded)
     {
         GameSpatialSector& sector = _gameInstance.GetSpatialContainer().GetSector(middle.GetPosition().x(), middle.GetPosition().y());
 
         Broadcast(packet, sector, excluded);
     }
 
-    void GameViewController::Broadcast(const IPacket& packet, const detail::game::GameSpatialSet& set, std::optional<game_entity_id_type> excluded)
+    void GameSnapshotController::Broadcast(const IPacket& packet, const detail::game::GameSpatialSet& set, std::optional<game_entity_id_type> excluded)
     {
-        GameViewModelContainer& viewModelContainer = _gameInstance.GetViewModelContainer();
+        GameSnapshotModelContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
 
         for (const game_entity_id_type id : set.GetEntities())
         {
@@ -260,16 +260,16 @@ namespace zerosugar::xr
                 continue;
             }
 
-            GamePlayerViewModel* viewModel = viewModelContainer.FindPlayer(id);
-            assert(viewModel);
+            GamePlayerSnapshot* snapshot = snapshotContainer.FindPlayer(id);
+            assert(snapshot);
 
-            Send(packet, viewModel->GetController());
+            Send(packet, snapshot->GetController());
         }
     }
 
-    void GameViewController::Broadcast(const IPacket& packet, const detail::game::GameSpatialSet& set, GameEntityType type, std::optional<game_entity_id_type> excluded)
+    void GameSnapshotController::Broadcast(const IPacket& packet, const detail::game::GameSpatialSet& set, GameEntityType type, std::optional<game_entity_id_type> excluded)
     {
-        GameViewModelContainer& viewModelContainer = _gameInstance.GetViewModelContainer();
+        GameSnapshotModelContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
 
         for (const game_entity_id_type id : set.GetEntities(type))
         {
@@ -278,14 +278,14 @@ namespace zerosugar::xr
                 continue;
             }
 
-            GamePlayerViewModel* viewModel = viewModelContainer.FindPlayer(id);
-            assert(viewModel);
+            GamePlayerSnapshot* snapshot = snapshotContainer.FindPlayer(id);
+            assert(snapshot);
 
-            Send(packet, viewModel->GetController());
+            Send(packet, snapshot->GetController());
         }
     }
 
-    void GameViewController::Send(const IPacket& packet, IGameController& controller)
+    void GameSnapshotController::Send(const IPacket& packet, IGameController& controller)
     {
         if (controller.IsSubscriberOf(packet.GetOpcode()))
         {

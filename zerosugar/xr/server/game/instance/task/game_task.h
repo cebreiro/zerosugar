@@ -1,5 +1,6 @@
 #pragma once
 #include <boost/container/small_vector.hpp>
+#include "zerosugar/xr/server/game/instance/game_type.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_id.h"
 #include "zerosugar/xr/server/game/instance/task/game_task_target_selector.h"
 
@@ -18,7 +19,7 @@ namespace zerosugar::xr
     {
     public:
         GameTask() = delete;
-        explicit GameTask(std::chrono::system_clock::time_point creationTimePoint);
+        explicit GameTask(game_time_point_type creationTimePoint);
 
         virtual ~GameTask();
 
@@ -30,8 +31,8 @@ namespace zerosugar::xr
         void Start(GameExecutionParallel& parallelContext);
         void Complete(GameExecutionSerial& serialContext);
 
-        auto GetCreationTimePoint() const -> std::chrono::system_clock::time_point;
-        auto GetBaseTime() const -> std::chrono::system_clock::time_point;
+        auto GetCreationTimePoint() const -> game_time_point_type;
+        auto GetBaseTime() const -> game_time_point_type;
         auto GetTargetIds() const -> const boost::container::small_vector<int64_t, 8>&;
 
         static bool IsInExecution();
@@ -53,8 +54,8 @@ namespace zerosugar::xr
         virtual void OnComplete(GameExecutionSerial& serialContext) = 0;
 
     private:
-        std::chrono::system_clock::time_point _creationTimePoint;
-        std::chrono::system_clock::time_point _baseTimePoint;
+        game_time_point_type _creationTimePoint;
+        game_time_point_type _baseTimePoint;
         boost::container::small_vector<int64_t, 8> _targetIds;
 
         static thread_local GameTask* _localInstance;
@@ -76,7 +77,7 @@ namespace zerosugar::xr
         static constexpr int64_t selector_count = sizeof...(TSelector);
 
     public:
-        GameTaskT(std::chrono::system_clock::time_point creationTimePoint, TSelector&&... selector)
+        GameTaskT(game_time_point_type creationTimePoint, TSelector&&... selector)
             : GameTask(creationTimePoint)
             , _tuple({ std::forward<TSelector>(selector)... })
         {
@@ -138,7 +139,7 @@ namespace zerosugar::xr
     class GameTaskParamT : public GameTaskT<TSelector...>
     {
     public:
-        GameTaskParamT(std::chrono::system_clock::time_point creationTimePoint, TParam param, TSelector&&... selector)
+        GameTaskParamT(game_time_point_type creationTimePoint, TParam param, TSelector&&... selector)
             : GameTaskT<TSelector...>(creationTimePoint, std::forward<TSelector>(selector)...)
             , _param(std::move(param))
         {
@@ -159,7 +160,7 @@ namespace zerosugar::xr
     class GameTaskBaseParamT : public GameTaskT<TSelector...>
     {
     public:
-        GameTaskBaseParamT(std::chrono::system_clock::time_point creationTimePoint, UniquePtrNotNull<TBase> param, TSelector&&... selector)
+        GameTaskBaseParamT(game_time_point_type creationTimePoint, UniquePtrNotNull<TBase> param, TSelector&&... selector)
             : GameTaskT<TSelector...>(creationTimePoint, std::forward<TSelector>(selector)...)
             , _param(std::move(param))
         {

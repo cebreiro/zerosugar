@@ -1,16 +1,15 @@
 #include "player_local_chat.h"
 
 #include "zerosugar/xr/server/game/instance/task/execution/game_execution_serial.h"
-#include "zerosugar/xr/server/game/instance/view/game_player_view_model.h"
-#include "zerosugar/xr/server/game/instance/view/game_view_model_container.h"
-#include "zerosugar/xr/server/game/instance/contents/game_constants.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_player_snapshot.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_container.h"
+#include "zerosugar/xr/server/game/instance/game_type.h"
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
-#include "zerosugar/xr/server/game/instance/view/game_view_controller.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_controller.h"
 
 namespace zerosugar::xr::game_task
 {
-    PlayerLocalChat::PlayerLocalChat(UniquePtrNotNull<IPacket> param, game_entity_id_type targetId,
-        std::chrono::system_clock::time_point creationTimePoint)
+    PlayerLocalChat::PlayerLocalChat(UniquePtrNotNull<IPacket> param, game_entity_id_type targetId, game_time_point_type creationTimePoint)
         : GameTaskBaseParamT(creationTimePoint, std::move(param), NullSelector{})
         , _id(targetId)
     {
@@ -25,16 +24,16 @@ namespace zerosugar::xr::game_task
     {
         quickExit = true;
 
-        const GamePlayerViewModel* viewModel = serialContext.GetViewModelContainer().FindPlayer(_id);
-        assert(viewModel);
+        const GamePlayerSnapshot* snapshot = serialContext.GetSnapshotContainer().FindPlayer(_id);
+        assert(snapshot);
 
-        std::string chatMessage = std::format("[{}] : {}", viewModel->GetName(), GetParam().message);
+        std::string chatMessage = std::format("[{}] : {}", snapshot->GetName(), GetParam().message);
 
         network::game::sc::NotifyChattingMessage packet;
-        packet.type = static_cast<int32_t>(game_constans::ChattingType::Local);
+        packet.type = static_cast<int32_t>(ChattingType::Local);
         packet.message = std::move(chatMessage);
 
-        serialContext.GetViewController().Broadcast(packet, *viewModel);
+        serialContext.GetViewController().Broadcast(packet, *snapshot);
     }
 
     void PlayerLocalChat::Execute(GameExecutionParallel& parallelContext, NullSelector::target_type)

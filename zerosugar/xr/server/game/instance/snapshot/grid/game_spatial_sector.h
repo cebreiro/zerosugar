@@ -1,7 +1,7 @@
 #pragma once
 #include <boost/container/static_vector.hpp>
-#include "zerosugar/xr/server/game/instance/view/grid/game_spatial_cell.h"
-#include "zerosugar/xr/server/game/instance/view/grid/game_spatial_id.h"
+#include "zerosugar/xr/server/game/instance/snapshot/grid/game_spatial_cell.h"
+#include "zerosugar/xr/server/game/instance/snapshot/grid/game_spatial_id.h"
 
 namespace zerosugar::xr
 {

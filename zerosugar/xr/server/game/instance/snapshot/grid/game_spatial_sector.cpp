@@ -1,6 +1,6 @@
 #include "game_spatial_sector.h"
 
-#include "zerosugar/xr/server/game/instance/view/grid/game_spatial_cell.h"
+#include "zerosugar/xr/server/game/instance/snapshot/grid/game_spatial_cell.h"
 
 namespace zerosugar::xr
 {

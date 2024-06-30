@@ -8,7 +8,7 @@ namespace zerosugar::xr::game_task
     {
     public:
         PlayerSprint(UniquePtrNotNull<IPacket> param, game_entity_id_type targetId,
-            std::chrono::system_clock::time_point creationTimePoint = std::chrono::system_clock::now());
+            game_time_point_type creationTimePoint = game_clock_type::now());
 
     private:
         void Execute(GameExecutionParallel& parallelContext, MainTargetSelector::target_type) override;

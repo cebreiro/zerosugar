@@ -2,7 +2,7 @@
 
 
 #include "zerosugar/xr/server/game/instance/entity/game_entity_container.h"
-#include "zerosugar/xr/server/game/instance/view/game_view_model_container.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_container.h"
 #include "zerosugar/xr/server/game/instance/task/execution/game_execution_parallel.h"
 #include "zerosugar/xr/server/game/instance/task/execution/game_execution_serial.h"
 
@@ -39,7 +39,7 @@ namespace zerosugar::xr::game_task
 
     bool MainTargetSelector::SelectEntityId(const GameExecutionSerial& serial)
     {
-        return serial.GetViewModelContainer().Has(_mainTargetId);
+        return serial.GetSnapshotContainer().Has(_mainTargetId);
     }
 
     auto MainTargetSelector::GetTargetId() const -> std::span<const game_entity_id_type>

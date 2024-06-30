@@ -21,7 +21,7 @@ namespace zerosugar::xr::network::game::sc
 namespace zerosugar::xr
 {
     class GameEntity;
-    class GamePlayerViewModel;
+    class GamePlayerSnapshot;
     class GameInstance;
     class GameSpatialSector;
 
@@ -37,19 +37,19 @@ namespace zerosugar::xr
 
         static void Build(network::game::sc::EnterGame& result,
             const GameInstance& gameInstance, const GameEntity& entity, const GameSpatialSector& sector);
-        static void Build(network::game::sc::AddRemotePlayer& result, const GamePlayerViewModel& playerView);
-        static void Build(network::game::sc::RemoveRemotePlayer& result, const GamePlayerViewModel& playerView);
-        static void Build(network::game::sc::MoveRemotePlayer& result, const GamePlayerViewModel& playerView);
+        static void Build(network::game::sc::AddRemotePlayer& result, const GamePlayerSnapshot& playerView);
+        static void Build(network::game::sc::RemoveRemotePlayer& result, const GamePlayerSnapshot& playerView);
+        static void Build(network::game::sc::MoveRemotePlayer& result, const GamePlayerSnapshot& playerView);
 
     public:
         static void Build(network::game::Player& result, const GameEntity& entity);
-        static void Build(network::game::RemotePlayer& result, const GamePlayerViewModel& playerView);
+        static void Build(network::game::RemotePlayer& result, const GamePlayerSnapshot& playerView);
         static void Build(network::game::PlayerBase& result, const GameEntity& entity);
-        static void Build(network::game::PlayerBase& result, const GamePlayerViewModel& playerView);
+        static void Build(network::game::PlayerBase& result, const GamePlayerSnapshot& playerView);
         static void Build(network::game::PlayerEquipment& result, const GameEntity& entity);
-        static void Build(network::game::PlayerEquipment& result, const GamePlayerViewModel& playerView);
+        static void Build(network::game::PlayerEquipment& result, const GamePlayerSnapshot& playerView);
 
         static void Build(network::game::Equipment& result, const InventoryItem& item, int32_t type);
-        static void Build(network::game::Position& position, const GamePlayerViewModel& playerView);
+        static void Build(network::game::Position& position, const GamePlayerSnapshot& playerView);
     };
 }

@@ -1,12 +1,12 @@
 #include "player_roll_dodge.h"
 
 #include "zerosugar/xr/server/game/instance/task/execution/game_execution_serial.h"
-#include "zerosugar/xr/server/game/instance/view/game_view_controller.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_controller.h"
 
 namespace zerosugar::xr::game_task
 {
     PlayerRollDodge::PlayerRollDodge(UniquePtrNotNull<IPacket> param, game_entity_id_type targetId,
-        std::chrono::system_clock::time_point creationTimePoint)
+        game_time_point_type creationTimePoint)
         : GameTaskBaseParamT(creationTimePoint, std::move(param), MainTargetSelector(targetId))
         , _id(targetId)
     {
