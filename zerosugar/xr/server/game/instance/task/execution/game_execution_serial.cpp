@@ -25,9 +25,14 @@ namespace zerosugar::xr
         return _gameInstance.GetTaskScheduler();
     }
 
-    auto GameExecutionSerial::GetViewController() -> GameSnapshotController&
+    auto GameExecutionSerial::GetSnapshotController() -> GameSnapshotController&
     {
-        return _gameInstance.GetViewController();
+        return _gameInstance.GetSnapshotController();
+    }
+
+    auto GameExecutionSerial::GetSnapshotView() -> GameSnapshotView&
+    {
+        return _gameInstance.GetSnapshotView();
     }
 
     auto GameExecutionSerial::GetSnapshotContainer() -> GameSnapshotModelContainer&

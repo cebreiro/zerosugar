@@ -86,4 +86,23 @@ namespace zerosugar::xr::network::game::cs
             };
     }
 
+    void from_json(const nlohmann::json& j, SwapItem& item)
+    {
+        j.at("destEquipped").get_to(item.destEquipped);
+        j.at("destPosition").get_to(item.destPosition);
+        j.at("srcEquipped").get_to(item.srcEquipped);
+        j.at("srcPosition").get_to(item.srcPosition);
+    }
+
+    void to_json(nlohmann::json& j, const SwapItem& item)
+    {
+        j = nlohmann::json
+            {
+                { "destEquipped", item.destEquipped },
+                { "destPosition", item.destPosition },
+                { "srcEquipped", item.srcEquipped },
+                { "srcPosition", item.srcPosition },
+            };
+    }
+
 }

@@ -117,6 +117,76 @@ namespace zerosugar::xr::network::game::sc
         writer.Write(message);
     }
 
+    void AddInventory::Deserialize(PacketReader& reader)
+    {
+        itemsCount = reader.Read<int32_t>();
+        for (int32_t i = 0; i < itemsCount; ++i)
+        {
+            items.emplace_back(reader.Read<PlayerInventoryItem>());
+        }
+    }
+
+    void AddInventory::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int32_t>(itemsCount);
+        for (const auto& item : items)
+        {
+            writer.WriteObject(item);
+        }
+    }
+
+    void RemoveInventory::Deserialize(PacketReader& reader)
+    {
+        slotsCount = reader.Read<int32_t>();
+        for (int32_t i = 0; i < slotsCount; ++i)
+        {
+            slots.emplace_back(reader.Read<int32_t>());
+        }
+    }
+
+    void RemoveInventory::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int32_t>(slotsCount);
+        for (const auto& item : slots)
+        {
+            writer.WriteObject(item);
+        }
+    }
+
+    void NotifySwapItemResult::Deserialize(PacketReader& reader)
+    {
+        srcEquipment = reader.Read<bool>();
+        srcHasItem = reader.Read<bool>();
+        srcItem = reader.Read<PlayerInventoryItem>();
+        destEquipment = reader.Read<bool>();
+        destHasItem = reader.Read<bool>();
+        destItem = reader.Read<PlayerInventoryItem>();
+    }
+
+    void NotifySwapItemResult::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<bool>(srcEquipment);
+        writer.Write<bool>(srcHasItem);
+        writer.Write(srcItem);
+        writer.Write<bool>(destEquipment);
+        writer.Write<bool>(destHasItem);
+        writer.Write(destItem);
+    }
+
+    void ChangeRemotePlayerEquipItem::Deserialize(PacketReader& reader)
+    {
+        id = reader.Read<int64_t>();
+        equipPosition = reader.Read<int32_t>();
+        itemId = reader.Read<int32_t>();
+    }
+
+    void ChangeRemotePlayerEquipItem::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int64_t>(id);
+        writer.Write<int32_t>(equipPosition);
+        writer.Write<int32_t>(itemId);
+    }
+
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>
     {
         const int16_t opcode = reader.Read<int16_t>();
@@ -174,6 +244,34 @@ namespace zerosugar::xr::network::game::sc
             case NotifyChattingMessage::opcode:
             {
                 auto item = std::make_unique<NotifyChattingMessage>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case AddInventory::opcode:
+            {
+                auto item = std::make_unique<AddInventory>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case RemoveInventory::opcode:
+            {
+                auto item = std::make_unique<RemoveInventory>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case NotifySwapItemResult::opcode:
+            {
+                auto item = std::make_unique<NotifySwapItemResult>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case ChangeRemotePlayerEquipItem::opcode:
+            {
+                auto item = std::make_unique<ChangeRemotePlayerEquipItem>();
                 item->Deserialize(reader);
 
                 return item;

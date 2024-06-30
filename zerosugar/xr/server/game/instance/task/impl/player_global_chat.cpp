@@ -2,7 +2,7 @@
 
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
 #include "zerosugar/xr/server/game/instance/task/execution/game_execution_serial.h"
-#include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_controller.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_view.h"
 
 namespace zerosugar::xr::game_task
 {
@@ -24,7 +24,7 @@ namespace zerosugar::xr::game_task
         packet.type = static_cast<int32_t>(GetParam().first);
         packet.message = GetParam().second;
 
-        serialContext.GetViewController().Broadcast(packet);
+        serialContext.GetSnapshotView().Broadcast(packet);
     }
 
     void PlayerGlobalChat::Execute(GameExecutionParallel& parallelContext, NullSelector::target_type)

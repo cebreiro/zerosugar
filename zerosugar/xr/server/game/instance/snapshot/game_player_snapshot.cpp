@@ -165,7 +165,16 @@ namespace zerosugar::xr
         return _staminaMax;
     }
 
-    auto GamePlayerSnapshot::GetEquipment() const -> const std::array<std::optional<InventoryItem>, static_cast<int32_t>(data::EquipPosition::Count)>&
+    auto GamePlayerSnapshot::GetEquipment(data::EquipPosition position) const -> const InventoryItem*
+    {
+        assert(IsValid(position));
+
+        const std::optional<InventoryItem>& item = _equipItems[static_cast<int32_t>(position)];
+
+        return item.has_value() ? &item.value() : nullptr;
+    }
+
+    auto GamePlayerSnapshot::GetEquipments() const -> const std::array<std::optional<InventoryItem>, static_cast<int32_t>(data::EquipPosition::Count)>&
     {
         return _equipItems;
     }

@@ -28,6 +28,6 @@ namespace zerosugar::xr::game_task
 
     void PlayerRollDodge::OnComplete(GameExecutionSerial& serialContext)
     {
-        serialContext.GetViewController().ProcessRollDodge(_id, _rotation);
+        serialContext.GetSnapshotController().ProcessRollDodge(_id, _rotation);
     }
 }

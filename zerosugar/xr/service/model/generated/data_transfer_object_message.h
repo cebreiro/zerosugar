@@ -23,6 +23,7 @@ namespace zerosugar::xr::service
         int64_t itemId = {};
         int32_t itemDataId = {};
         int32_t quantity = {};
+        std::optional<int32_t> slot = {};
         std::optional<int32_t> attack = {};
         std::optional<int32_t> defence = {};
         std::optional<int32_t> str = {};

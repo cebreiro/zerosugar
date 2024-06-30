@@ -81,6 +81,6 @@ namespace zerosugar::xr::coordination
         item.opcode = T::opcode;
         item.contents = nlohmann::json(command).dump();
 
-        this->Send(item, responseCompletionToken);;
+        this->Send(item, responseCompletionToken);
     }
 }

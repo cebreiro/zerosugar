@@ -30,6 +30,10 @@ namespace zerosugar::xr::service
         j.at("itemId").get_to(item.itemId);
         j.at("itemDataId").get_to(item.itemDataId);
         j.at("quantity").get_to(item.quantity);
+        if (const auto iter = j.find("slot"); iter != j.end())
+        {
+            item.slot.emplace(*iter);
+        }
         if (const auto iter = j.find("attack"); iter != j.end())
         {
             item.attack.emplace(*iter);
@@ -61,6 +65,10 @@ namespace zerosugar::xr::service
                 { "quantity", item.quantity },
             };
 
+        if (item.slot.has_value())
+        {
+            j["slot"] = *item.slot;
+        }
         if (item.attack.has_value())
         {
             j["attack"] = *item.attack;

@@ -1,4 +1,5 @@
 #pragma once
+#include "zerosugar/xr/server/game/controller/game_controller_id.h"
 #include "zerosugar/xr/server/game/instance/game_instance_id.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_id.h"
 #include "zerosugar/xr/server/game/instance/task/execution/game_execution_parallel.h"
@@ -10,8 +11,9 @@ namespace zerosugar::xr
     class GameEntityContainer;
 
     class GameSpatialContainer;
-    class GameSnapshotController;
     class GameSnapshotModelContainer;
+    class GameSnapshotView;
+    class GameSnapshotController;
 
     class GameTask;
     class GameTaskScheduler;
@@ -29,9 +31,9 @@ namespace zerosugar::xr
             game_instance_id_type id, int32_t zoneId);
         ~GameInstance();
 
-        void Summit(UniquePtrNotNull<GameTask> task, std::optional<int64_t> controllerId);
+        void Summit(UniquePtrNotNull<GameTask> task, std::optional<game_controller_id_type> controllerId);
 
-        auto PublishControllerId() -> int64_t;
+        auto PublishControllerId() -> game_controller_id_type;
         auto PublishPlayerId() -> game_entity_id_type;
 
     public:
@@ -57,10 +59,11 @@ namespace zerosugar::xr
         auto GetSpatialContainer() -> GameSpatialContainer&;
         auto GetSpatialContainer() const -> const GameSpatialContainer&;
 
-        auto GetViewController() -> GameSnapshotController&;
-
         auto GetSnapshotContainer() -> GameSnapshotModelContainer&;
         auto GetSnapshotContainer() const -> const GameSnapshotModelContainer&;
+
+        auto GetSnapshotController() -> GameSnapshotController&;
+        auto GetSnapshotView() -> GameSnapshotView&;
 
     private:
         SharedPtrNotNull<execution::IExecutor> _executor;
@@ -78,8 +81,10 @@ namespace zerosugar::xr
 
         std::unique_ptr<GameTaskScheduler> _taskScheduler;
         std::unique_ptr<GameEntityContainer> _entityContainer;
+
         std::unique_ptr<GameSpatialContainer> _spatialContainer;
-        std::unique_ptr<GameSnapshotController> _snapshotController;
         std::unique_ptr<GameSnapshotModelContainer> _snapshotContainer;
+        std::unique_ptr<GameSnapshotView> _snapshotView;
+        std::unique_ptr<GameSnapshotController> _snapshotController;
     };
 }

@@ -1,9 +1,12 @@
 #pragma once
 #include <Eigen/Dense>
+#include "zerosugar/xr/data/enum/equip_position.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_id.h"
 
 namespace zerosugar::xr
 {
+    struct InventoryItem;
+
     class IPacket;
     class IGameController;
     class GameEntity;
@@ -23,6 +26,7 @@ namespace zerosugar::xr
     {
     public:
         GameSnapshotController() = delete;
+
         explicit GameSnapshotController(GameInstance& instance);
         ~GameSnapshotController();
 
@@ -32,12 +36,7 @@ namespace zerosugar::xr
         void ProcessSprint(game_entity_id_type id);
         void ProcessRollDodge(game_entity_id_type id, const Eigen::Vector3d& rotation);
 
-        void Broadcast(const IPacket& packet, std::optional<game_entity_id_type> excluded = std::nullopt);
-        void Broadcast(const IPacket& packet, const GamePlayerSnapshot& middle, std::optional<game_entity_id_type> excluded = std::nullopt);
-        void Broadcast(const IPacket& packet, const detail::game::GameSpatialSet& set, std::optional<game_entity_id_type> excluded = std::nullopt);
-        void Broadcast(const IPacket& packet, const detail::game::GameSpatialSet& set, GameEntityType type, std::optional<game_entity_id_type> excluded = std::nullopt);
-
-        void Send(const IPacket& packet, IGameController& controller);
+        void ProcessPlayerEquipItemChange(game_entity_id_type id, data::EquipPosition pos, const InventoryItem* item);
 
     private:
         GameInstance& _gameInstance;

@@ -126,4 +126,74 @@ namespace zerosugar::xr::network::game::sc
             };
     }
 
+    void from_json(const nlohmann::json& j, AddInventory& item)
+    {
+        j.at("itemsCount").get_to(item.itemsCount);
+        j.at("items").get_to(item.items);
+    }
+
+    void to_json(nlohmann::json& j, const AddInventory& item)
+    {
+        j = nlohmann::json
+            {
+                { "itemsCount", item.itemsCount },
+                { "items", item.items },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, RemoveInventory& item)
+    {
+        j.at("slotsCount").get_to(item.slotsCount);
+        j.at("slots").get_to(item.slots);
+    }
+
+    void to_json(nlohmann::json& j, const RemoveInventory& item)
+    {
+        j = nlohmann::json
+            {
+                { "slotsCount", item.slotsCount },
+                { "slots", item.slots },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, NotifySwapItemResult& item)
+    {
+        j.at("srcEquipment").get_to(item.srcEquipment);
+        j.at("srcHasItem").get_to(item.srcHasItem);
+        j.at("srcItem").get_to(item.srcItem);
+        j.at("destEquipment").get_to(item.destEquipment);
+        j.at("destHasItem").get_to(item.destHasItem);
+        j.at("destItem").get_to(item.destItem);
+    }
+
+    void to_json(nlohmann::json& j, const NotifySwapItemResult& item)
+    {
+        j = nlohmann::json
+            {
+                { "srcEquipment", item.srcEquipment },
+                { "srcHasItem", item.srcHasItem },
+                { "srcItem", item.srcItem },
+                { "destEquipment", item.destEquipment },
+                { "destHasItem", item.destHasItem },
+                { "destItem", item.destItem },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, ChangeRemotePlayerEquipItem& item)
+    {
+        j.at("id").get_to(item.id);
+        j.at("equipPosition").get_to(item.equipPosition);
+        j.at("itemId").get_to(item.itemId);
+    }
+
+    void to_json(nlohmann::json& j, const ChangeRemotePlayerEquipItem& item)
+    {
+        j = nlohmann::json
+            {
+                { "id", item.id },
+                { "equipPosition", item.equipPosition },
+                { "itemId", item.itemId },
+            };
+    }
+
 }

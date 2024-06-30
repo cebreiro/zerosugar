@@ -176,6 +176,7 @@ namespace zerosugar::xr::network::game
 
     void from_json(const nlohmann::json& j, PlayerInventoryItem& item)
     {
+        j.at("slot").get_to(item.slot);
         j.at("id").get_to(item.id);
         j.at("count").get_to(item.count);
         j.at("attack").get_to(item.attack);
@@ -189,6 +190,7 @@ namespace zerosugar::xr::network::game
     {
         j = nlohmann::json
             {
+                { "slot", item.slot },
                 { "id", item.id },
                 { "count", item.count },
                 { "attack", item.attack },

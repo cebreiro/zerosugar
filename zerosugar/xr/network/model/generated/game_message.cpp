@@ -153,6 +153,7 @@ namespace zerosugar::xr::network::game
 
     void PlayerInventoryItem::Deserialize(BufferReader& reader)
     {
+        slot = reader.Read<int32_t>();
         id = reader.Read<int32_t>();
         count = reader.Read<int32_t>();
         attack = reader.Read<int32_t>();
@@ -164,6 +165,7 @@ namespace zerosugar::xr::network::game
 
     void PlayerInventoryItem::Serialize(BufferWriter& writer) const
     {
+        writer.Write<int32_t>(slot);
         writer.Write<int32_t>(id);
         writer.Write<int32_t>(count);
         writer.Write<int32_t>(attack);

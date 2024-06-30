@@ -23,12 +23,12 @@ namespace zerosugar::xr
         Send(Packet::ToBuffer(packet));
     }
 
-    auto GameClient::GetControllerId() const -> int64_t
+    auto GameClient::GetControllerId() const -> game_controller_id_type
     {
         return _controllerId;
     }
 
-    void GameClient::SetControllerId(int64_t id)
+    void GameClient::SetControllerId(game_controller_id_type id)
     {
         _controllerId = id;
     }

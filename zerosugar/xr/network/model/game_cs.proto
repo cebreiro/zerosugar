@@ -49,3 +49,13 @@ message Chat
 
     string message = 1;
 }
+
+message SwapItem
+{
+    option (opcode) = 1003;
+
+    bool dest_equipped = 1;
+    int32 dest_position = 2;
+    bool src_equipped = 3;
+    int32 src_position = 4;
+}

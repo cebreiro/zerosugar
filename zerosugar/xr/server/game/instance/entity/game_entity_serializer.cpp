@@ -35,63 +35,10 @@ namespace zerosugar::xr
         }
         {
             auto& inventory = entity->GetComponent<InventoryComponent>();
-            auto& statComponent = entity->GetComponent<StatComponent>();
 
-            for (const service::DTOItem& item : character.items)
-            {
-                InventoryItem inventoryItem;
-                inventoryItem.itemId = item.itemId;
-                inventoryItem.itemDataId = item.itemDataId;
-                inventoryItem.quantity = item.quantity;
-                inventoryItem.attack = item.attack;
-                inventoryItem.defence = item.defence;
-                inventoryItem.str = item.str;
-                inventoryItem.dex = item.dex;
-                inventoryItem.intell = item.intell;
-
-                [[maybe_unused]]
-                const bool added = inventory.AddItem(inventoryItem);
-                assert(added);
-            }
-
-            for (const service::DTOEquipment& equipment : character.equipments)
-            {
-                const bool equipped = inventory.Equip(static_cast<data::EquipPosition>(equipment.equipPosition), equipment.itemId);
-                if (equipped)
-                {
-                    if (const InventoryItem* equipItem = inventory.FindItem(equipment.itemId); equipItem)
-                    {
-                        if (equipItem->attack)
-                        {
-                            statComponent.AddItemStat(StatType::Attack, StatValue(*equipItem->str));
-                        }
-
-                        if (equipItem->defence)
-                        {
-                            statComponent.AddItemStat(StatType::Attack, StatValue(*equipItem->defence));
-                        }
-
-                        if (equipItem->str)
-                        {
-                            statComponent.AddItemStat(StatType::Str, StatValue(*equipItem->str));
-                        }
-
-                        if (equipItem->dex)
-                        {
-                            statComponent.AddItemStat(StatType::Str, StatValue(*equipItem->dex));
-                        }
-
-                        if (equipItem->intell)
-                        {
-                            statComponent.AddItemStat(StatType::Str, StatValue(*equipItem->intell));
-                        }
-                    }
-                    else
-                    {
-                        assert(false);
-                    }
-                }
-            }
+            [[maybe_unused]]
+            const bool success = inventory.Initialize(character.items, character.equipments);
+            assert(success);
         }
 
         return entity;

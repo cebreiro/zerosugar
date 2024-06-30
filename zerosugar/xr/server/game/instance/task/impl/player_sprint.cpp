@@ -22,6 +22,6 @@ namespace zerosugar::xr::game_task
 
     void PlayerSprint::OnComplete(GameExecutionSerial& serialContext)
     {
-        serialContext.GetViewController().ProcessSprint(_id);
+        serialContext.GetSnapshotController().ProcessSprint(_id);
     }
 }

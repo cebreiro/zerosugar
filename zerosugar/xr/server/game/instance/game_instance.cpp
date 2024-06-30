@@ -1,14 +1,16 @@
 #include "game_instance.h"
+#include "zerosugar/xr/server/game/instance/game_instance.h"
 
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_container.h"
-#include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_container.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_player_snapshot.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_container.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_controller.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_view.h"
 #include "zerosugar/xr/server/game/instance/snapshot/grid/game_spatial_container.h"
 #include "zerosugar/xr/server/game/instance/task/game_task.h"
 #include "zerosugar/xr/server/game/instance/task/game_task_scheduler.h"
-#include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_controller.h"
 
 namespace zerosugar::xr
 {
@@ -24,8 +26,9 @@ namespace zerosugar::xr
         , _taskScheduler(std::make_unique<GameTaskScheduler>(*this))
         , _entityContainer(std::make_unique<GameEntityContainer>())
         , _spatialContainer(std::make_unique<GameSpatialContainer>(100000, 100000, 300))
-        , _snapshotController(std::make_unique<GameSnapshotController>(*this))
         , _snapshotContainer(std::make_unique<GameSnapshotModelContainer>())
+        , _snapshotView(std::make_unique<GameSnapshotView>(*this))
+        , _snapshotController(std::make_unique<GameSnapshotController>(*this))
     {
     }
 
@@ -35,7 +38,7 @@ namespace zerosugar::xr
         _taskScheduler->Join();
     }
 
-    void GameInstance::Summit(UniquePtrNotNull<GameTask> task, std::optional<int64_t> controllerId)
+    void GameInstance::Summit(UniquePtrNotNull<GameTask> task, std::optional<game_controller_id_type> controllerId)
     {
         assert(task);
 
@@ -61,9 +64,9 @@ namespace zerosugar::xr
             });
     }
 
-    auto GameInstance::PublishControllerId() -> int64_t
+    auto GameInstance::PublishControllerId() -> game_controller_id_type
     {
-        return _nextControllerId.fetch_add(1);
+        return game_controller_id_type(_nextControllerId.fetch_add(1));
     }
 
     auto GameInstance::PublishPlayerId() -> game_entity_id_type
@@ -146,9 +149,14 @@ namespace zerosugar::xr
         return *_spatialContainer;
     }
 
-    auto GameInstance::GetViewController() -> GameSnapshotController&
+    auto GameInstance::GetSnapshotController() -> GameSnapshotController&
     {
         return *_snapshotController;
+    }
+
+    auto GameInstance::GetSnapshotView() -> GameSnapshotView&
+    {
+        return *_snapshotView;
     }
 
     auto GameInstance::GetSnapshotContainer() -> GameSnapshotModelContainer&

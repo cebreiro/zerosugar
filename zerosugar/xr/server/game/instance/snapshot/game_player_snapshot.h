@@ -42,7 +42,8 @@ namespace zerosugar::xr
         auto GetIntell() const -> int32_t;
         auto GetStamina() const -> float;
         auto GetStaminaMax() const -> float;
-        auto GetEquipment() const -> const std::array<std::optional<InventoryItem>, static_cast<int32_t>(data::EquipPosition::Count)>&;
+        auto GetEquipment(data::EquipPosition position) const -> const InventoryItem*;
+        auto GetEquipments() const -> const std::array<std::optional<InventoryItem>, static_cast<int32_t>(data::EquipPosition::Count)>&;
 
         void SetPosition(const Eigen::Vector3d& position);
         void SetYaw(float yaw);

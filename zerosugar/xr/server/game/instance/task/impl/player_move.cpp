@@ -28,6 +28,6 @@ namespace zerosugar::xr::game_task
 
     void PlayerMove::OnComplete(GameExecutionSerial& serial)
     {
-        serial.GetViewController().ProcessMovement(_id, _newPosition);
+        serial.GetSnapshotController().ProcessMovement(_id, _newPosition);
     }
 }

@@ -6,6 +6,7 @@ namespace zerosugar::xr::network::game
     struct RemotePlayer;
     struct PlayerBase;
     struct PlayerEquipment;
+    struct PlayerInventoryItem;
     struct Equipment;
     struct Position;
 }
@@ -40,6 +41,8 @@ namespace zerosugar::xr
         static void Build(network::game::sc::AddRemotePlayer& result, const GamePlayerSnapshot& playerView);
         static void Build(network::game::sc::RemoveRemotePlayer& result, const GamePlayerSnapshot& playerView);
         static void Build(network::game::sc::MoveRemotePlayer& result, const GamePlayerSnapshot& playerView);
+
+        static void Build(network::game::PlayerInventoryItem& result, const InventoryItem& item);
 
     public:
         static void Build(network::game::Player& result, const GameEntity& entity);

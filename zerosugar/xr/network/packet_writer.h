@@ -14,6 +14,9 @@ namespace zerosugar::xr
         void Write(std::string_view str);
         void WriteBytes(std::span<const char> buffer);
         void Write(const IBufferSerializable& object);
+
+        template <typename T> requires std::integral<T> || std::floating_point<T>
+        void WriteObject(T value);
         void WriteObject(const IBufferSerializable& object);
 
         auto GetBuffer() const -> std::span<const char>;
@@ -37,5 +40,11 @@ namespace zerosugar::xr
         using underlying_type = std::underlying_type_t<T>;
 
         Write<underlying_type>(static_cast<underlying_type>(value));
+    }
+
+    template <typename T> requires std::integral<T> || std::floating_point<T>
+    void PacketWriter::WriteObject(T value)
+    {
+        Write<T>(value);
     }
 }

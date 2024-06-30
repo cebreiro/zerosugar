@@ -3,11 +3,10 @@
 namespace zerosugar::xr::data
 {
     ENUM_CLASS(EquipPosition, int32_t,
-        (None)
-        (Armor)
-        (Gloves)
-        (Shoes)
-        (Weapon)
+        (Armor, 0)
+        (Gloves, 1)
+        (Shoes, 2)
+        (Weapon, 3)
 
         (Count)
     )

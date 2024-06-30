@@ -1,5 +1,5 @@
 #pragma once
-#include "zerosugar/xr/server/game/controller/game_entity_controller_interface.h"
+#include "zerosugar/xr/server/game/controller/game_controller_interface.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_id.h"
 
 namespace zerosugar
@@ -22,8 +22,8 @@ namespace zerosugar::xr
 
         void Notify(const IPacket& packet) override;
 
-        auto GetControllerId() const -> int64_t override;
-        void SetControllerId(int64_t id) override;
+        auto GetControllerId() const -> game_controller_id_type override;
+        void SetControllerId(game_controller_id_type id) override;
 
         void SetSession(WeakPtrNotNull<Session> session);
         void SetGameInstance(WeakPtrNotNull<GameInstance> gameInstance);
@@ -46,7 +46,7 @@ namespace zerosugar::xr
         int64_t _accountId = 0;
         int64_t _characterId = 0;
         WeakPtrNotNull<GameInstance> _gameInstance;
-        int64_t _controllerId = 0;
+        game_controller_id_type _controllerId;
         game_entity_id_type _entityId;
     };
 }

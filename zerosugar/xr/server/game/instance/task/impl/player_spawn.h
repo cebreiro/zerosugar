@@ -16,5 +16,8 @@ namespace zerosugar::xr::game_task
 
         void Execute(GameExecutionParallel& parallelContext, NullSelector::target_type) override;
         void OnComplete(GameExecutionSerial& serialContext) override;
+
+    private:
+        static void ConfigureStat(GameEntity& entity);
     };
 }

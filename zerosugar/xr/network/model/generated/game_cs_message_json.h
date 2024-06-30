@@ -29,4 +29,7 @@ namespace zerosugar::xr::network::game::cs
     void from_json(const nlohmann::json& j, Chat& item);
     void to_json(nlohmann::json& j, const Chat& item);
 
+    void from_json(const nlohmann::json& j, SwapItem& item);
+    void to_json(nlohmann::json& j, const SwapItem& item);
+
 }

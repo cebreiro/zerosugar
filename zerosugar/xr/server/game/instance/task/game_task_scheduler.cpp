@@ -121,9 +121,9 @@ namespace zerosugar::xr
         co_return;
     }
 
-    void GameTaskScheduler::AddProcess(int64_t id)
+    void GameTaskScheduler::AddController(game_controller_id_type id)
     {
-        Dispatch(_gameInstance.GetStrand(), [this, id]()
+        Dispatch(_gameInstance.GetStrand(), [this, id = id.Unwrap()]()
             {
                 if (_processTaskQueues.try_emplace(id, std::queue<UniquePtrNotNull<GameTask>>()).second)
                 {
@@ -138,9 +138,9 @@ namespace zerosugar::xr
             });
     }
 
-    void GameTaskScheduler::RemoveProcess(int64_t id)
+    void GameTaskScheduler::RemoveController(game_controller_id_type id)
     {
-        Dispatch(_gameInstance.GetStrand(), [this, id]()
+        Dispatch(_gameInstance.GetStrand(), [this, id = id.Unwrap()]()
             {
                 [[maybe_unused]]
                 const size_t erased = _processTaskQueues.erase(id);
@@ -148,9 +148,9 @@ namespace zerosugar::xr
             });
     }
 
-    void GameTaskScheduler::AddResource(int64_t id)
+    void GameTaskScheduler::AddEntity(game_entity_id_type id)
     {
-        Dispatch(_gameInstance.GetStrand(), [this, id]()
+        Dispatch(_gameInstance.GetStrand(), [this, id = id.Unwrap()]()
             {
                 [[maybe_unused]]
                 const bool inserted = _resources.try_emplace(id, Resource{}).second;
@@ -158,9 +158,9 @@ namespace zerosugar::xr
             });
     }
 
-    void GameTaskScheduler::RemoveResource(int64_t id)
+    void GameTaskScheduler::RemoveEntity(game_entity_id_type id)
     {
-        Dispatch(_gameInstance.GetStrand(), [this, id]()
+        Dispatch(_gameInstance.GetStrand(), [this, id = id.Unwrap()]()
             {
                 [[maybe_unused]]
                 const size_t erased = _resources.erase(id);
@@ -168,13 +168,13 @@ namespace zerosugar::xr
             });
     }
 
-    void GameTaskScheduler::Schedule(std::unique_ptr<GameTask> task, std::optional<int64_t> processId)
+    void GameTaskScheduler::Schedule(std::unique_ptr<GameTask> task, std::optional<game_controller_id_type> controllerId)
     {
         _scheduledTaskCount.fetch_add(1);
 
-        Dispatch(_gameInstance.GetStrand(), [this, task = std::move(task), processId]() mutable
+        Dispatch(_gameInstance.GetStrand(), [this, task = std::move(task), controllerId = controllerId]() mutable
             {
-                ScheduleImpl(std::move(task), processId);
+                ScheduleImpl(std::move(task), controllerId ? controllerId->Unwrap() : std::optional<int64_t>{});
             });
     }
 

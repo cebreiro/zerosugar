@@ -1,7 +1,7 @@
 #define ANKERL_NANOBENCH_IMPLEMENT
 #include <nanobench.h>
 #include "zerosugar/shared/execution/executor/impl/asio_executor.h"
-#include "zerosugar/xr/server/game/controller/game_entity_controller_interface.h"
+#include "zerosugar/xr/server/game/controller/game_controller_interface.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_serializer.h"
@@ -59,21 +59,21 @@ public:
         (void)packet;
     }
 
-    auto GetControllerId() const -> int64_t override
+    auto GetControllerId() const -> game_controller_id_type override
     {
         return _id;
     }
 
-    void SetControllerId(int64_t id) override
+    void SetControllerId(game_controller_id_type id) override
     {
         _id = id;
     }
 
 private:
-    int64_t _id = 0;
+    game_controller_id_type _id;
 };
 
-auto MakeTestData(GameInstance& gameInstance) -> std::vector<std::pair<std::unique_ptr<GameTask>, int64_t>>
+auto MakeTestData(GameInstance& gameInstance) -> std::vector<std::pair<std::unique_ptr<GameTask>, game_controller_id_type>>
 {
     std::chrono::system_clock::time_point simulationStartTime = std::chrono::system_clock::now();
 
@@ -81,8 +81,8 @@ auto MakeTestData(GameInstance& gameInstance) -> std::vector<std::pair<std::uniq
     std::uniform_real_distribution dist1(positionRange.first, positionRange.second);
     std::uniform_real_distribution dist2(-5.f, 5.f);
 
-    std::unordered_map<int64_t, std::vector<std::pair<std::unique_ptr<GameTask>, int64_t>>> tempMoveTasks;
-    std::vector<std::pair<std::unique_ptr<GameTask>, int64_t>> result;
+    std::unordered_map<int64_t, std::vector<std::pair<std::unique_ptr<GameTask>, game_controller_id_type>>> tempMoveTasks;
+    std::vector<std::pair<std::unique_ptr<GameTask>, game_controller_id_type>> result;
     result.reserve(playerCount + playerCount * moveTaskCount);
 
     for (int64_t i = 0; i < playerCount; ++i)
@@ -97,7 +97,7 @@ auto MakeTestData(GameInstance& gameInstance) -> std::vector<std::pair<std::uniq
         auto controller = std::make_shared<DummyController>();
         controller->SetControllerId(gameInstance.PublishControllerId());
 
-        const int64_t controllerId = controller->GetControllerId();
+        const game_controller_id_type controllerId = controller->GetControllerId();
         const game_entity_id_type entityId = gameInstance.PublishPlayerId();
 
         entity->SetController(std::move(controller));

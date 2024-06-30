@@ -76,5 +76,19 @@ namespace zerosugar::xr::network::game::cs
         std::string message = {};
     };
 
+    struct SwapItem final : IPacket
+    {
+        static constexpr int32_t opcode = 1003;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        bool destEquipped = {};
+        int32_t destPosition = {};
+        bool srcEquipped = {};
+        int32_t srcPosition = {};
+    };
+
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>;
 }

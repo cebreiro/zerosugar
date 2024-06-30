@@ -5,7 +5,7 @@
 #include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_container.h"
 #include "zerosugar/xr/server/game/instance/game_type.h"
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
-#include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_controller.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_view.h"
 
 namespace zerosugar::xr::game_task
 {
@@ -33,7 +33,7 @@ namespace zerosugar::xr::game_task
         packet.type = static_cast<int32_t>(ChattingType::Local);
         packet.message = std::move(chatMessage);
 
-        serialContext.GetViewController().Broadcast(packet, *snapshot);
+        serialContext.GetSnapshotView().Broadcast(packet, *snapshot);
     }
 
     void PlayerLocalChat::Execute(GameExecutionParallel& parallelContext, NullSelector::target_type)

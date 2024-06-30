@@ -1,5 +1,7 @@
 #pragma once
 #include <boost/unordered/unordered_flat_set.hpp>
+#include "zerosugar/xr/server/game/controller/game_controller_id.h"
+#include "zerosugar/xr/server/game/instance/entity/game_entity_id.h"
 
 namespace zerosugar::xr
 {
@@ -79,13 +81,13 @@ namespace zerosugar::xr
         void Shutdown();
         auto Join() -> Future<void>;
 
-        void AddProcess(int64_t id);
-        void RemoveProcess(int64_t id);
+        void AddController(game_controller_id_type id);
+        void RemoveController(game_controller_id_type id);
 
-        void AddResource(int64_t id);
-        void RemoveResource(int64_t id);
+        void AddEntity(game_entity_id_type id);
+        void RemoveEntity(game_entity_id_type id);
 
-        void Schedule(std::unique_ptr<GameTask> task, std::optional<int64_t> processId = std::nullopt);
+        void Schedule(std::unique_ptr<GameTask> task, std::optional<game_controller_id_type> controllerId = std::nullopt);
 
         auto GetScheduledTaskCount() const -> int64_t;
 

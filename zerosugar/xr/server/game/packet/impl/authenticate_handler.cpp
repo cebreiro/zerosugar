@@ -79,15 +79,15 @@ namespace zerosugar::xr
             co_return;
         }
 
-        const int64_t controllerId = gameInstance->PublishControllerId();
-        const game_entity_id_type entityId = gameInstance->PublishPlayerId();
-
         auto client = std::make_shared<GameClient>(session.weak_from_this(),
             authParam.authenticationToken, authResult.accountId, authResult.characterId, gameInstance);
 
         [[maybe_unused]]
         const bool added = server.AddClient(session.GetId(), client);
         assert(added);
+
+        const game_controller_id_type controllerId = gameInstance->PublishControllerId();
+        const game_entity_id_type entityId = gameInstance->PublishPlayerId();
 
         SharedPtrNotNull<GameEntity> entity = server.GetGameEntitySerializer().Deserialize(getCharacterResult.character);
         entity->SetId(entityId);

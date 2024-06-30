@@ -81,13 +81,15 @@ message PlayerSkill
 
 message PlayerInventoryItem
 {
-    int32 id = 1;
-    int32 count = 2;
-    int32 attack = 3;
-    int32 defence = 4;
-    int32 str = 5;
-    int32 dex = 6;
-    int32 intell = 7;
+    int32 slot = 1;
+
+    int32 id = 2;
+    int32 count = 3;
+    int32 attack = 4;
+    int32 defence = 5;
+    int32 str = 6;
+    int32 dex = 7;
+    int32 intell = 8;
 }
 
 message RemotePlayer

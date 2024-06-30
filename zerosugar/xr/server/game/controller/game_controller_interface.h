@@ -1,4 +1,5 @@
 #pragma once
+#include "zerosugar/xr/server/game/controller/game_controller_id.h"
 
 namespace zerosugar::xr
 {
@@ -16,7 +17,7 @@ namespace zerosugar::xr
         virtual bool IsSubscriberOf(int32_t opcode) const = 0;
         virtual void Notify(const IPacket& packet) = 0;
 
-        virtual auto GetControllerId() const -> int64_t = 0;
-        virtual void SetControllerId(int64_t id) = 0;
+        virtual auto GetControllerId() const -> game_controller_id_type = 0;
+        virtual void SetControllerId(game_controller_id_type id) = 0;
     };
 }

@@ -110,6 +110,7 @@ namespace zerosugar::xr::network::game
         void Deserialize(BufferReader& reader) final;
         void Serialize(BufferWriter& writer) const final;
 
+        int32_t slot = {};
         int32_t id = {};
         int32_t count = {};
         int32_t attack = {};

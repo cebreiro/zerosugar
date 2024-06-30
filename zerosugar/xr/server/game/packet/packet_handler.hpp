@@ -5,3 +5,4 @@
 #include "zerosugar/xr/server/game/packet/impl/sprint_player_handler.h"
 #include "zerosugar/xr/server/game/packet/impl/roll_dodge_player_handler.h"
 #include "zerosugar/xr/server/game/packet/impl/chat_handler.h"
+#include "zerosugar/xr/server/game/packet/impl/swap_item.h"

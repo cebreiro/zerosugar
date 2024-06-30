@@ -92,6 +92,8 @@ namespace zerosugar::xr::db::sp
                 item.itemId = row.at(index++).as_int64();
                 item.itemDataId = static_cast<int32_t>(row.at(index++).as_int64());
                 item.quantity = static_cast<int32_t>(row.at(index++).as_int64());
+                item.slot = makeOptional(row.at(index++), int8_t{});
+
                 item.attack = makeOptional(row.at(index++), int32_t{});
                 item.defence = makeOptional(row.at(index++), int32_t{});
                 item.str = makeOptional(row.at(index++), int32_t{});

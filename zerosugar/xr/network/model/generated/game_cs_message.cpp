@@ -71,6 +71,22 @@ namespace zerosugar::xr::network::game::cs
         writer.Write(message);
     }
 
+    void SwapItem::Deserialize(PacketReader& reader)
+    {
+        destEquipped = reader.Read<bool>();
+        destPosition = reader.Read<int32_t>();
+        srcEquipped = reader.Read<bool>();
+        srcPosition = reader.Read<int32_t>();
+    }
+
+    void SwapItem::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<bool>(destEquipped);
+        writer.Write<int32_t>(destPosition);
+        writer.Write<bool>(srcEquipped);
+        writer.Write<int32_t>(srcPosition);
+    }
+
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>
     {
         const int16_t opcode = reader.Read<int16_t>();
@@ -114,6 +130,13 @@ namespace zerosugar::xr::network::game::cs
             case Chat::opcode:
             {
                 auto item = std::make_unique<Chat>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case SwapItem::opcode:
+            {
+                auto item = std::make_unique<SwapItem>();
                 item->Deserialize(reader);
 
                 return item;

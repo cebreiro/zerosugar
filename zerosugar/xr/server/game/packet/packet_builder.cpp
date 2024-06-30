@@ -62,6 +62,18 @@ namespace zerosugar::xr
         Build(result.position, playerView);
     }
 
+    void GamePacketBuilder::Build(network::game::PlayerInventoryItem& result, const InventoryItem& item)
+    {
+        result.slot = item.slot;
+        result.id = item.itemDataId;
+        result.count = item.quantity;
+        result.attack = item.attack.value_or(0);
+        result.defence = item.attack.value_or(0);
+        result.str = item.attack.value_or(0);
+        result.dex = item.attack.value_or(0);
+        result.intell = item.attack.value_or(0);
+    }
+
     void GamePacketBuilder::Build(network::game::Player& player, const GameEntity& entity)
     {
         player.id = entity.GetId().Unwrap();
@@ -85,23 +97,11 @@ namespace zerosugar::xr
 
             player.gold = 123123;
 
-            const auto make = [](const InventoryItem& item)
-                {
-                    network::game::PlayerInventoryItem result;
-                    result.id = item.itemDataId;
-                    result.count = item.quantity;
-                    result.attack = item.attack.value_or(0);
-                    result.defence = item.attack.value_or(0);
-                    result.str = item.attack.value_or(0);
-                    result.dex = item.attack.value_or(0);
-                    result.intell = item.attack.value_or(0);
-
-                    return result;
-                };
-
-            for (const InventoryItem& item : inventoryComponent.GetInventoryItems())
+            for (const InventoryItem& item : inventoryComponent.GetInventoryItemsRange())
             {
-                player.items.emplace_back(make(item));
+                network::game::PlayerInventoryItem& result = player.items.emplace_back();
+                Build(result, item);
+
                 ++player.itemsCount;
             }
         }
@@ -186,7 +186,6 @@ namespace zerosugar::xr
                 Build(result.weapon, *item, i);
                 break;
             case data::EquipPosition::Count:
-            case data::EquipPosition::None:
                 break;
             }
         }
@@ -194,7 +193,7 @@ namespace zerosugar::xr
 
     void GamePacketBuilder::Build(network::game::PlayerEquipment& result, const GamePlayerSnapshot& playerView)
     {
-        const auto& equipItems = playerView.GetEquipment();
+        const auto& equipItems = playerView.GetEquipments();
 
         for (int32_t i = 0; i < static_cast<int32_t>(std::ssize(equipItems)); ++i)
         {
@@ -219,7 +218,6 @@ namespace zerosugar::xr
                 Build(result.weapon , *item, i);
                 break;
             case data::EquipPosition::Count:
-            case data::EquipPosition::None:
                 break;
             }
         }

@@ -105,5 +105,58 @@ namespace zerosugar::xr::network::game::sc
         std::string message = {};
     };
 
+    struct AddInventory final : IPacket
+    {
+        static constexpr int32_t opcode = 2001;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        int32_t itemsCount = {};
+        std::vector<PlayerInventoryItem> items = {};
+    };
+
+    struct RemoveInventory final : IPacket
+    {
+        static constexpr int32_t opcode = 2002;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        int32_t slotsCount = {};
+        std::vector<int32_t> slots = {};
+    };
+
+    struct NotifySwapItemResult final : IPacket
+    {
+        static constexpr int32_t opcode = 2003;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        bool srcEquipment = {};
+        bool srcHasItem = {};
+        PlayerInventoryItem srcItem = {};
+        bool destEquipment = {};
+        bool destHasItem = {};
+        PlayerInventoryItem destItem = {};
+    };
+
+    struct ChangeRemotePlayerEquipItem final : IPacket
+    {
+        static constexpr int32_t opcode = 1026;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        int64_t id = {};
+        int32_t equipPosition = {};
+        int32_t itemId = {};
+    };
+
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>;
 }
