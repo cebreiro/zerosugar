@@ -6,6 +6,7 @@ target_link_libraries(zerosugar_xr_server_game PRIVATE
     zerosugar_xr_pch
     zerosugar_xr_network
     zerosugar_xr_data
+    zerosugar_xr_service_model
     Eigen3::Eigen
 )
 

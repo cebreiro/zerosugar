@@ -305,9 +305,12 @@ namespace zerosugar::xr
 
         auto& readyProcesses = GetProcessesBy(Process::State::Ready);
 
+        const int64_t maxConcurrency = std::min<int64_t>(1, _gameInstance.GetExecutor().GetConcurrency() * 2);
+        int64_t concurrency = std::ssize(GetProcessesBy(Process::State::Running));
+
         // iter is invalidate so can't use ++iter
         auto iter = readyProcesses.begin();
-        while (iter != readyProcesses.end())
+        while (concurrency <= maxConcurrency && iter != readyProcesses.end())
         {
             auto next = std::next(iter);
 
@@ -319,6 +322,8 @@ namespace zerosugar::xr
                 ChangeState(*process, Process::State::Running);
 
                 Start(*process);
+
+                ++concurrency;
             }
             else if (process->AddStarvationCount(); process->GetStarvationCount() > 10)
             {

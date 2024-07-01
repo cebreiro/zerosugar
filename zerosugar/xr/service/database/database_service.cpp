@@ -214,6 +214,31 @@ namespace zerosugar::xr
         co_return result;
     }
 
+    auto DatabaseService::SaveCharacterItemChangeAsync(service::CharacterItemChangeParam param)
+        -> Future<service::CharacterItemChangeResult>
+    {
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
+        co_await *_executor;
+        assert(ExecutionContext::IsEqualTo(*_executor));
+
+        ConnectionPool::Borrowed conn = co_await _connectionPool->Pop();
+        sp::ItemsUpdate storedProcedure(conn, param.itemChangeLogs);
+
+        service::CharacterItemChangeResult result;
+
+        const DatabaseError error = co_await storedProcedure.ExecuteAsync();
+        if (error)
+        {
+            result.errorCode = service::DatabaseServiceErrorCode::DatabaseErrorInternalError;
+
+            LogError(__FUNCTION__, error, std::format("param: {}", param.itemChangeLogs));
+        }
+
+        co_return result;
+    }
+
     auto DatabaseService::GetLobbyCharactersAsync(service::GetLobbyCharactersParam param)
         -> Future<service::GetLobbyCharactersResult>
     {
@@ -244,9 +269,17 @@ namespace zerosugar::xr
         co_return result;
     }
 
-    void DatabaseService::LogError(std::string_view function, const DatabaseError& error)
+    void DatabaseService::LogError(std::string_view function, const DatabaseError& error, const std::optional<std::string>& additionalLog)
     {
-        ZEROSUGAR_LOG_ERROR(_serviceLocator,
-            std::format("[{}] {} query error. error: {}", name, function, error.What()));
+        if (additionalLog.has_value())
+        {
+            ZEROSUGAR_LOG_ERROR(_serviceLocator,
+                std::format("[{}] {} query error. {}, error: {}", name, function, *additionalLog, error.What()));
+        }
+        else
+        {
+            ZEROSUGAR_LOG_ERROR(_serviceLocator,
+                std::format("[{}] {} query error. error: {}", name, function, error.What()));
+        }
     }
 }

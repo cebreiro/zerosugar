@@ -21,7 +21,7 @@ namespace zerosugar::xr::service
     void from_json(const nlohmann::json& j, DiscardItemLog& item);
     void to_json(nlohmann::json& j, const DiscardItemLog& item);
 
-    void from_json(const nlohmann::json& j, UseItemLog& item);
-    void to_json(nlohmann::json& j, const UseItemLog& item);
+    void from_json(const nlohmann::json& j, ChangeItemQuantityLog& item);
+    void to_json(nlohmann::json& j, const ChangeItemQuantityLog& item);
 
 }

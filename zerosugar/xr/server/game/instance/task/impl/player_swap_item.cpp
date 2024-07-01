@@ -33,8 +33,8 @@ namespace zerosugar::xr::game_task
                 break;
             }
 
-            _packet.srcEquipment = param.srcEquipped;
-            _packet.destEquipment = param.destEquipped;
+            _sync.srcEquipment = param.srcEquipped;
+            _sync.destEquipment = param.destEquipped;
 
             if (param.srcEquipped)
             {
@@ -81,26 +81,31 @@ namespace zerosugar::xr::game_task
                 }
             }
 
-            std::ranges::copy(inventoryComponent.GetChangeLogs(), std::back_inserter(_changeLogs));
-
-            inventoryComponent.ClearChangeLogs();
-
             if (const auto* srcPosItem = inventoryComponent.FindItemBySlot(
-                _packet.srcEquipment ? InventoryItemSlotType::Equipment : InventoryItemSlotType::Inventory, param.srcPosition))
+                _sync.srcEquipment ? InventoryItemSlotType::Equipment : InventoryItemSlotType::Inventory, param.srcPosition))
             {
-                _packet.srcHasItem = true;
-                GamePacketBuilder::Build(_packet.srcItem, *srcPosItem);
+                _sync.srcHasItem = true;
+                GamePacketBuilder::Build(_sync.srcItem, *srcPosItem);
             }
 
             if (const auto* destPosItem = inventoryComponent.FindItemBySlot(
-                _packet.destEquipment ? InventoryItemSlotType::Equipment : InventoryItemSlotType::Inventory, param.destPosition))
+                _sync.destEquipment ? InventoryItemSlotType::Equipment : InventoryItemSlotType::Inventory, param.destPosition))
             {
-                _packet.destHasItem = true;
-                GamePacketBuilder::Build(_packet.destItem, *destPosItem);
+                _sync.destHasItem = true;
+                GamePacketBuilder::Build(_sync.destItem, *destPosItem);
             }
 
-            _packet.srcItem.slot = param.srcPosition;
-            _packet.destItem.slot = param.destPosition;
+            _sync.srcItem.slot = param.srcPosition;
+            _sync.destItem.slot = param.destPosition;
+
+            InventoryChangeTransaction transaction;
+            transaction.SetCharacterId(inventoryComponent.GetCharacterId());
+            transaction.InsertRange(inventoryComponent.GetChangeLogs());
+
+            inventoryComponent.ClearChangeLogs();
+            assert(!transaction.Empty());
+
+            parallelContext.GetServiceLocator().Get<IGameRepository>().SaveChanges(std::move(transaction));
 
             return;
             
@@ -113,7 +118,7 @@ namespace zerosugar::xr::game_task
 
         ZEROSUGAR_LOG_WARN(parallelContext.GetServiceLocator(),
             std::format("[player_swap_equip_item] invalid request. cid: {}, name: {}, param: {}",
-                playerComponent.GetCharacterId(), playerComponent.GetLevel(), j.dump()));
+                playerComponent.GetCharacterId(), playerComponent.GetName(), j.dump()));
     }
 
     void PlayerSwapItem::OnComplete(GameExecutionSerial& serialContext)
@@ -123,11 +128,12 @@ namespace zerosugar::xr::game_task
         GamePlayerSnapshot* snapshot = serialContext.GetSnapshotContainer().FindPlayer(_id);
         assert(snapshot);
 
-        serialContext.GetSnapshotView().Send(_packet, snapshot->GetController());
+        serialContext.GetSnapshotView().Send(_sync, snapshot->GetController());
 
         if (_equipPosition)
         {
-            serialContext.GetSnapshotController().ProcessPlayerEquipItemChange(_id, *_equipPosition, _newEquipment ? &_newEquipment.value() : nullptr);
+            serialContext.GetSnapshotController().ProcessPlayerEquipItemChange(_id, *_equipPosition,
+                _newEquipment ? &_newEquipment.value() : nullptr);
         }
     }
 }

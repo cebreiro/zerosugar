@@ -244,6 +244,11 @@ public:
         Dispatch(task_type(std::move(function)));
     }
 
+    auto GetConcurrency() const -> int64_t override
+    {
+        return _workerCount;
+    }
+
     auto SharedFromThis() -> SharedPtrNotNull<IExecutor> override
     {
         return shared_from_this();

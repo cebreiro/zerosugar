@@ -1,5 +1,6 @@
 #include "game_execution_parallel.h"
 
+#include "zerosugar/xr/server/game/repository/game_repository_interface.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/game_constants.h"
 #include "zerosugar/xr/server/game/instance/task/game_task.h"

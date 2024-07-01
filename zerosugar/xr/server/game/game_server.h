@@ -16,13 +16,13 @@ namespace zerosugar::xr
     class GameInstanceContainer;
     class IGamePacketHandlerFactory;
     class ICommandHandlerFactory;
+    class IGameRepository;
     class IGameEntitySerializer;
 }
 
 namespace zerosugar::xr
 {
-    class GameServer final
-        : public Server
+    class GameServer final : public Server
     {
     public:
         GameServer(execution::AsioExecutor& executor);
@@ -75,10 +75,12 @@ namespace zerosugar::xr
         tbb::concurrent_hash_map<session::id_type, Buffer> _sessionReceiveBuffers;
         tbb::concurrent_hash_map<session::id_type, SharedPtrNotNull<GameClient>> _clients;
 
-        std::unique_ptr<GameInstanceContainer> _gameInstanceContainer;
-        std::unique_ptr<IGamePacketHandlerFactory> _gamePacketHandlerFactory;
-        std::unique_ptr<ICommandHandlerFactory> _commandHandlerFactory;
-        std::unique_ptr<IGameEntitySerializer> _gameEntitySerializer;
+        SharedPtrNotNull<IGameRepository> _gameRepository;
+
+        UniquePtrNotNull<GameInstanceContainer> _gameInstanceContainer;
+        UniquePtrNotNull<IGamePacketHandlerFactory> _gamePacketHandlerFactory;
+        UniquePtrNotNull<ICommandHandlerFactory> _commandHandlerFactory;
+        UniquePtrNotNull<IGameEntitySerializer> _gameEntitySerializer;
     };
 
     template <typename T> requires std::derived_from<T, IPacket>

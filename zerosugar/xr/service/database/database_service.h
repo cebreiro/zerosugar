@@ -30,10 +30,13 @@ namespace zerosugar::xr
         auto AddCharacterAsync(service::AddCharacterParam param) -> Future<service::AddCharacterResult> override;
         auto GetCharacterAsync(service::GetCharacterParam param) -> Future<service::GetCharacterResult> override;
         auto RemoveCharacterAsync(service::RemoveCharacterParam param) -> Future<service::RemoveCharacterResult> override;
+
+        auto SaveCharacterItemChangeAsync(service::CharacterItemChangeParam param) -> Future<service::CharacterItemChangeResult> override;
+
         auto GetLobbyCharactersAsync(service::GetLobbyCharactersParam param) -> Future<service::GetLobbyCharactersResult> override;
 
     private:
-        void LogError(std::string_view function, const DatabaseError& error);
+        void LogError(std::string_view function, const DatabaseError& error, const std::optional<std::string>& additionalLog = std::nullopt);
 
     private:
         SharedPtrNotNull<execution::IExecutor> _executor;

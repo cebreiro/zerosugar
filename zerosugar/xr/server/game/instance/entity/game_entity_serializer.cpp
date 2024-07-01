@@ -37,7 +37,7 @@ namespace zerosugar::xr
             auto& inventory = entity->GetComponent<InventoryComponent>();
 
             [[maybe_unused]]
-            const bool success = inventory.Initialize(character.items, character.equipments);
+            const bool success = inventory.Initialize(character.characterId, character.items, character.equipments);
             assert(success);
         }
 

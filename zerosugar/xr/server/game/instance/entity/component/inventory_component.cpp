@@ -5,13 +5,19 @@
 
 namespace zerosugar::xr
 {
-    bool InventoryComponent::Initialize(const std::vector<service::DTOItem>& items, const std::vector<service::DTOEquipment>& equipments)
+    bool InventoryComponent::Initialize(int64_t cid, const std::vector<service::DTOItem>& items, const std::vector<service::DTOEquipment>& equipments)
     {
+        _characterId = cid;
+
         bool success = true;
 
         for (const service::DTOItem& dto : items)
         {
-            InventoryItem item;
+            [[maybe_unused]]
+            const auto& [iter, inserted] = _items.try_emplace(game_item_id_type(dto.itemId), InventoryItem{});
+            success &= inserted;
+
+            InventoryItem& item = iter->second;
             item.itemId = game_item_id_type(dto.itemId);
             item.itemDataId = dto.itemDataId;
             item.quantity = dto.quantity;
@@ -22,8 +28,6 @@ namespace zerosugar::xr
             item.str = dto.str;
             item.dex = dto.dex;
             item.intell = dto.intell;
-
-            success &= _items.try_emplace(item.itemId, item).second;
 
             if (dto.slot.has_value())
             {
@@ -212,6 +216,11 @@ namespace zerosugar::xr
         return nullptr;
     }
 
+    auto InventoryComponent::GetCharacterId() const -> int64_t
+    {
+        return _characterId;
+    }
+
     auto InventoryComponent::GetEquipments() const -> std::array<const InventoryItem*, static_cast<int32_t>(data::EquipPosition::Count)>
     {
         std::array<const InventoryItem*, static_cast<int32_t>(data::EquipPosition::Count)> result;
@@ -273,6 +282,7 @@ namespace zerosugar::xr
     void InventoryComponent::AddEquipLog(game_item_id_type itemId, data::EquipPosition position)
     {
         service::EquipItemLog log;
+        log.characterId = _characterId;
         log.itemId = itemId.Unwrap();
         log.equipPosition = static_cast<int32_t>(position);
 
@@ -283,7 +293,7 @@ namespace zerosugar::xr
     {
         service::UnequipItemLog log;
         log.itemId = itemId.Unwrap();
-        log.invenotrySlot = slot;
+        log.inventorySlot = slot;
 
         _itemLogs.emplace_back(log);
     }
@@ -292,7 +302,7 @@ namespace zerosugar::xr
     {
         service::ShiftItemLog log;
         log.itemId = itemId.Unwrap();
-        log.invenotrySlot = slot;
+        log.inventorySlot = slot;
 
         _itemLogs.emplace_back(log);
     }
@@ -307,7 +317,7 @@ namespace zerosugar::xr
 
     void InventoryComponent::AddUseItemLog(game_item_id_type itemId, int32_t quantity)
     {
-        service::UseItemLog log;
+        service::ChangeItemQuantityLog log;
         log.itemId = itemId.Unwrap();
         log.quantity = quantity;
 

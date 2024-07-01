@@ -7,12 +7,14 @@ namespace zerosugar::xr::service
 {
     void EquipItemLog::Deserialize(PacketReader& reader)
     {
+        characterId = reader.Read<int64_t>();
         itemId = reader.Read<int64_t>();
         equipPosition = reader.Read<int32_t>();
     }
 
     void EquipItemLog::Serialize(PacketWriter& writer) const
     {
+        writer.Write<int64_t>(characterId);
         writer.Write<int64_t>(itemId);
         writer.Write<int32_t>(equipPosition);
     }
@@ -20,25 +22,25 @@ namespace zerosugar::xr::service
     void UnequipItemLog::Deserialize(PacketReader& reader)
     {
         itemId = reader.Read<int64_t>();
-        invenotrySlot = reader.Read<int32_t>();
+        inventorySlot = reader.Read<int32_t>();
     }
 
     void UnequipItemLog::Serialize(PacketWriter& writer) const
     {
         writer.Write<int64_t>(itemId);
-        writer.Write<int32_t>(invenotrySlot);
+        writer.Write<int32_t>(inventorySlot);
     }
 
     void ShiftItemLog::Deserialize(PacketReader& reader)
     {
         itemId = reader.Read<int64_t>();
-        invenotrySlot = reader.Read<int32_t>();
+        inventorySlot = reader.Read<int32_t>();
     }
 
     void ShiftItemLog::Serialize(PacketWriter& writer) const
     {
         writer.Write<int64_t>(itemId);
-        writer.Write<int32_t>(invenotrySlot);
+        writer.Write<int32_t>(inventorySlot);
     }
 
     void DiscardItemLog::Deserialize(PacketReader& reader)
@@ -51,13 +53,13 @@ namespace zerosugar::xr::service
         writer.Write<int64_t>(itemId);
     }
 
-    void UseItemLog::Deserialize(PacketReader& reader)
+    void ChangeItemQuantityLog::Deserialize(PacketReader& reader)
     {
         itemId = reader.Read<int64_t>();
         quantity = reader.Read<int32_t>();
     }
 
-    void UseItemLog::Serialize(PacketWriter& writer) const
+    void ChangeItemQuantityLog::Serialize(PacketWriter& writer) const
     {
         writer.Write<int64_t>(itemId);
         writer.Write<int32_t>(quantity);
@@ -96,9 +98,9 @@ namespace zerosugar::xr::service
 
                 return item;
             }
-            case UseItemLog::opcode:
+            case ChangeItemQuantityLog::opcode:
             {
-                auto item = std::make_unique<UseItemLog>();
+                auto item = std::make_unique<ChangeItemQuantityLog>();
                 item->Deserialize(reader);
 
                 return item;

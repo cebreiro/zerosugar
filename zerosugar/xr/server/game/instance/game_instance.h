@@ -24,7 +24,7 @@ namespace zerosugar::xr
     class GameInstance final : public std::enable_shared_from_this<GameInstance>
     {
     public:
-        using service_locator_type = ServiceLocatorT<ILogService>;
+        using service_locator_type = ServiceLocatorT<ILogService, IGameRepository>;
 
     public:
         GameInstance(SharedPtrNotNull<execution::IExecutor> executor, service_locator_type serviceLocator,
@@ -79,12 +79,12 @@ namespace zerosugar::xr
         GameExecutionParallel _parallel;
         GameExecutionSerial _serial;
 
-        std::unique_ptr<GameTaskScheduler> _taskScheduler;
-        std::unique_ptr<GameEntityContainer> _entityContainer;
+        UniquePtrNotNull<GameTaskScheduler> _taskScheduler;
+        UniquePtrNotNull<GameEntityContainer> _entityContainer;
 
-        std::unique_ptr<GameSpatialContainer> _spatialContainer;
-        std::unique_ptr<GameSnapshotModelContainer> _snapshotContainer;
-        std::unique_ptr<GameSnapshotView> _snapshotView;
-        std::unique_ptr<GameSnapshotController> _snapshotController;
+        UniquePtrNotNull<GameSpatialContainer> _spatialContainer;
+        UniquePtrNotNull<GameSnapshotModelContainer> _snapshotContainer;
+        UniquePtrNotNull<GameSnapshotView> _snapshotView;
+        UniquePtrNotNull<GameSnapshotController> _snapshotController;
     };
 }

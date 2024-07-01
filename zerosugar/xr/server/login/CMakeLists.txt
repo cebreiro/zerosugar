@@ -3,6 +3,7 @@ add_library(zerosugar_xr_server_login)
 target_link_libraries(zerosugar_xr_server_login PRIVATE
     zerosugar_xr_pch
     zerosugar_xr_network
+    zerosugar_xr_service_model
 )
 
 target_precompile_headers(zerosugar_xr_server_login REUSE_FROM zerosugar_xr_pch)

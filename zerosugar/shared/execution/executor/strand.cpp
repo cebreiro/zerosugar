@@ -37,6 +37,11 @@ namespace zerosugar
         Dispatch(task_type(std::move(function)));
     }
 
+    auto Strand::GetConcurrency() const -> int64_t
+    {
+        return 1;
+    }
+
     auto Strand::SharedFromThis() -> SharedPtrNotNull<IExecutor>
     {
         return shared_from_this();

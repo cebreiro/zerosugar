@@ -13,6 +13,8 @@ service DatabaseService
     rpc GetCharacter (GetCharacterParam) returns (GetCharacterResult);
     rpc RemoveCharacter (RemoveCharacterParam) returns (RemoveCharacterResult);
 
+    rpc SaveCharacterItemChange (CharacterItemChangeParam) returns (CharacterItemChangeResult);
+
     rpc GetLobbyCharacters (GetLobbyCharactersParam) returns (GetLobbyCharactersResult);
 }
 
@@ -83,6 +85,17 @@ message AddCharacterResult
     DatabaseServiceErrorCode error_code = 1;
 
     int64 character_id = 2;
+}
+
+message CharacterItemChangeParam
+{
+    int64 character_id = 1;
+    string item_change_logs = 2;
+}
+
+message CharacterItemChangeResult
+{
+    DatabaseServiceErrorCode error_code = 1;
 }
 
 message GetLobbyCharactersParam

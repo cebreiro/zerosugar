@@ -28,6 +28,8 @@ namespace zerosugar
         void Dispatch(const std::function<void()>& function) override;
         void Dispatch(std::move_only_function<void()> function) override;
 
+        auto GetConcurrency() const -> int64_t override;
+
         auto SharedFromThis() -> SharedPtrNotNull<IExecutor> override;
         auto SharedFromThis() const -> SharedPtrNotNull<const IExecutor> override;
 

@@ -2,7 +2,7 @@
 
 #include "zerosugar/shared/network/session/session.h"
 #include "zerosugar/xr/server/game/game_server.h"
-#include "zerosugar/xr/server/game/client/game_client.h"
+#include "zerosugar/xr/server/game/controller/game_client.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/task/impl/player_roll_dodge.h"
 

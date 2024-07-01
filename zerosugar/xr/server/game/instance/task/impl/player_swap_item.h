@@ -25,7 +25,6 @@ namespace zerosugar::xr::game_task
         std::optional<data::EquipPosition> _equipPosition = {};
         std::optional<InventoryItem> _newEquipment;
 
-        network::game::sc::NotifySwapItemResult _packet;
-        boost::container::small_vector<inventory_change_log_type, 4> _changeLogs;
+        network::game::sc::NotifySwapItemResult _sync;
     };
 }

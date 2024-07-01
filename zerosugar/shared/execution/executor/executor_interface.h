@@ -25,6 +25,8 @@ namespace zerosugar::execution
         virtual void Dispatch(const std::function<void()>& function) = 0;
         virtual void Dispatch(std::move_only_function<void()> function) = 0;
 
+        virtual auto GetConcurrency() const -> int64_t = 0;
+
         virtual auto SharedFromThis() -> SharedPtrNotNull<IExecutor> = 0;
         virtual auto SharedFromThis() const -> SharedPtrNotNull<const IExecutor> = 0;
     };

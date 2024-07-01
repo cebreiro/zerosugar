@@ -6,3 +6,4 @@
 #include "zerosugar/xr/service/database/stored_procedure/impl/characters_get.h"
 #include "zerosugar/xr/service/database/stored_procedure/impl/equip_items_add.h"
 #include "zerosugar/xr/service/database/stored_procedure/impl/lobby_characters_get_all.h"
+#include "zerosugar/xr/service/database/stored_procedure/impl/items_update.h"

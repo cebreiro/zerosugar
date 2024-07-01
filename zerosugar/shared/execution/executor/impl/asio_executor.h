@@ -36,7 +36,7 @@ namespace zerosugar::execution
         auto GetIoContext() -> boost::asio::io_context&;
         auto GetIoContext() const -> const boost::asio::io_context&;
 
-        auto GetConcurrency() const -> int64_t;
+        auto GetConcurrency() const -> int64_t override;
 
         auto MakeStrand() -> SharedPtrNotNull<AsioStrand>;
 

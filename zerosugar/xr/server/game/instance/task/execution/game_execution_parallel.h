@@ -1,5 +1,6 @@
 #pragma once
 #include "zerosugar/xr/server/game/instance/game_type.h"
+#include "zerosugar/xr/server/game/repository/game_repository_interface.h"
 
 namespace zerosugar::xr
 {
@@ -13,7 +14,7 @@ namespace zerosugar::xr
     class GameExecutionParallel
     {
     public:
-        using service_locator_type = ServiceLocatorT<ILogService>;
+        using service_locator_type = ServiceLocatorT<ILogService, IGameRepository>;
 
     public:
         GameExecutionParallel() = delete;

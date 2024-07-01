@@ -7,14 +7,14 @@
 #include "zerosugar/shared/process/query_sys_info.h"
 #include "zerosugar/xr/network/packet_reader.h"
 #include "zerosugar/xr/network/model/generated/game_cs_message.h"
-#include "zerosugar/xr/server/game/client/game_client.h"
+#include "zerosugar/xr/server/game/controller/game_client.h"
 #include "zerosugar/xr/server/game/command/command_channel_runner.h"
 #include "zerosugar/xr/server/game/command/command_handler_factory.h"
-#include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/game_instance_container.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_serializer.h"
 #include "zerosugar/xr/server/game/packet/packet_handler_factory.h"
 #include "zerosugar/xr/server/game/packet/packet_handler_interface.h"
+#include "zerosugar/xr/server/game/repository/game_repository.h"
 #include "zerosugar/xr/service/model/generated/coordination_service.h"
 
 namespace zerosugar::xr
@@ -37,6 +37,9 @@ namespace zerosugar::xr
         Server::Initialize(serviceLocator);
 
         _serviceLocator = serviceLocator;
+        _gameRepository = std::make_shared<GameRepository>(GetExecutor(), _serviceLocator);
+
+        _serviceLocator.Add<IGameRepository>(_gameRepository);
     }
 
     void GameServer::StartUp(uint16_t listenPort)

@@ -2,7 +2,8 @@
 
 #include "zerosugar/shared/network/session/session.h"
 #include "zerosugar/xr/server/game/game_server.h"
-#include "zerosugar/xr/server/game/client/game_client.h"
+#include "zerosugar/xr/server/game/controller/game_client.h"
+#include "zerosugar/xr/server/game/repository/game_repository_interface.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/game_instance_container.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
@@ -20,8 +21,6 @@ namespace zerosugar::xr
         using namespace service;
 
         ServiceLocator& serviceLocator = server.GetServiceLocator();
-        auto& coordinationService = serviceLocator.Get<ICoordinationService>();
-        auto& databaseService = serviceLocator.Get<IDatabaseService>();
 
         if (server.HasClient(session.GetId()))
         {
@@ -37,7 +36,7 @@ namespace zerosugar::xr
         authParam.serverId = server.GetServerId();
         authParam.authenticationToken = packet.authenticationToken;
 
-        AuthenticatePlayerResult authResult = co_await coordinationService.AuthenticatePlayerAsync(authParam);
+        AuthenticatePlayerResult authResult = co_await serviceLocator.Get<ICoordinationService>().AuthenticatePlayerAsync(authParam);
         if (authResult.errorCode != CoordinationServiceErrorCode::CoordinationErrorNone)
         {
             ZEROSUGAR_LOG_WARN(server.GetServiceLocator(),
@@ -49,17 +48,16 @@ namespace zerosugar::xr
             co_return;
         }
 
-        GetCharacterParam getCharacterParam;
-        getCharacterParam.characterId = authResult.characterId;
+        IGameRepository& repository = serviceLocator.Get<IGameRepository>();
+        std::optional<DTOCharacter> character = co_await repository.Find(authResult.characterId);
 
-        GetCharacterResult getCharacterResult = co_await databaseService.GetCharacterAsync(getCharacterParam);
-        if (getCharacterResult.errorCode != DatabaseServiceErrorCode::DatabaseErrorNone)
+        if (!character.has_value())
         {
-            // TODO: remove coordination auth
+            // TODO: remove auth
 
             ZEROSUGAR_LOG_CRITICAL(server.GetServiceLocator(),
-                std::format("[{}] fail to get character data fro database service. session: {}, error: {}",
-                    server.GetName(), session, GetEnumName(getCharacterResult.errorCode)));
+                std::format("[{}] fail to find character from repository. session: {}, auth_token: {}, character_id: {}",
+                    server.GetName(), session, authParam.authenticationToken, authResult.characterId));
 
             session.Close();
 
@@ -70,9 +68,11 @@ namespace zerosugar::xr
             server.GetGameInstanceContainer().Find(game_instance_id_type(authResult.gameInstanceId));
         if (!gameInstance)
         {
+            // TODO: remove auth
+            
             ZEROSUGAR_LOG_CRITICAL(server.GetServiceLocator(),
-                std::format("[{}] fail to find game instance. session: {}",
-                    server.GetName(), session, GetEnumName(authResult.errorCode)));
+                std::format("[{}] fail to find game instance. session: {}, instance_id: {}",
+                    server.GetName(), session, authResult.gameInstanceId));
 
             session.Close();
 
@@ -89,7 +89,7 @@ namespace zerosugar::xr
         const game_controller_id_type controllerId = gameInstance->PublishControllerId();
         const game_entity_id_type entityId = gameInstance->PublishPlayerId();
 
-        SharedPtrNotNull<GameEntity> entity = server.GetGameEntitySerializer().Deserialize(getCharacterResult.character);
+        SharedPtrNotNull<GameEntity> entity = server.GetGameEntitySerializer().Deserialize(*character);
         entity->SetId(entityId);
         entity->SetController(client);
 

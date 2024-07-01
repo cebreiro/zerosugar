@@ -144,6 +144,34 @@ namespace zerosugar::xr::service
             };
     }
 
+    void from_json(const nlohmann::json& j, CharacterItemChangeParam& item)
+    {
+        j.at("characterId").get_to(item.characterId);
+        j.at("itemChangeLogs").get_to(item.itemChangeLogs);
+    }
+
+    void to_json(nlohmann::json& j, const CharacterItemChangeParam& item)
+    {
+        j = nlohmann::json
+            {
+                { "characterId", item.characterId },
+                { "itemChangeLogs", item.itemChangeLogs },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, CharacterItemChangeResult& item)
+    {
+        j.at("errorCode").get_to(item.errorCode);
+    }
+
+    void to_json(nlohmann::json& j, const CharacterItemChangeResult& item)
+    {
+        j = nlohmann::json
+            {
+                { "errorCode", item.errorCode },
+            };
+    }
+
     void from_json(const nlohmann::json& j, GetLobbyCharactersParam& item)
     {
         j.at("accountId").get_to(item.accountId);

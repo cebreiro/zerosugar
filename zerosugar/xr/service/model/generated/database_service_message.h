@@ -75,6 +75,17 @@ namespace zerosugar::xr::service
         int64_t characterId = {};
     };
 
+    struct CharacterItemChangeParam
+    {
+        int64_t characterId = {};
+        std::string itemChangeLogs = {};
+    };
+
+    struct CharacterItemChangeResult
+    {
+        DatabaseServiceErrorCode errorCode = {};
+    };
+
     struct GetLobbyCharactersParam
     {
         int64_t accountId = {};

@@ -8,6 +8,6 @@ namespace zerosugar::xr
         service::UnequipItemLog,
         service::ShiftItemLog,
         service::DiscardItemLog,
-        service::UseItemLog
+        service::ChangeItemQuantityLog
     >;
 }

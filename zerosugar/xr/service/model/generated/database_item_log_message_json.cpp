@@ -4,6 +4,7 @@ namespace zerosugar::xr::service
 {
     void from_json(const nlohmann::json& j, EquipItemLog& item)
     {
+        j.at("characterId").get_to(item.characterId);
         j.at("itemId").get_to(item.itemId);
         j.at("equipPosition").get_to(item.equipPosition);
     }
@@ -12,6 +13,7 @@ namespace zerosugar::xr::service
     {
         j = nlohmann::json
             {
+                { "characterId", item.characterId },
                 { "itemId", item.itemId },
                 { "equipPosition", item.equipPosition },
             };
@@ -20,7 +22,7 @@ namespace zerosugar::xr::service
     void from_json(const nlohmann::json& j, UnequipItemLog& item)
     {
         j.at("itemId").get_to(item.itemId);
-        j.at("invenotrySlot").get_to(item.invenotrySlot);
+        j.at("inventorySlot").get_to(item.inventorySlot);
     }
 
     void to_json(nlohmann::json& j, const UnequipItemLog& item)
@@ -28,14 +30,14 @@ namespace zerosugar::xr::service
         j = nlohmann::json
             {
                 { "itemId", item.itemId },
-                { "invenotrySlot", item.invenotrySlot },
+                { "inventorySlot", item.inventorySlot },
             };
     }
 
     void from_json(const nlohmann::json& j, ShiftItemLog& item)
     {
         j.at("itemId").get_to(item.itemId);
-        j.at("invenotrySlot").get_to(item.invenotrySlot);
+        j.at("inventorySlot").get_to(item.inventorySlot);
     }
 
     void to_json(nlohmann::json& j, const ShiftItemLog& item)
@@ -43,7 +45,7 @@ namespace zerosugar::xr::service
         j = nlohmann::json
             {
                 { "itemId", item.itemId },
-                { "invenotrySlot", item.invenotrySlot },
+                { "inventorySlot", item.inventorySlot },
             };
     }
 
@@ -60,13 +62,13 @@ namespace zerosugar::xr::service
             };
     }
 
-    void from_json(const nlohmann::json& j, UseItemLog& item)
+    void from_json(const nlohmann::json& j, ChangeItemQuantityLog& item)
     {
         j.at("itemId").get_to(item.itemId);
         j.at("quantity").get_to(item.quantity);
     }
 
-    void to_json(nlohmann::json& j, const UseItemLog& item)
+    void to_json(nlohmann::json& j, const ChangeItemQuantityLog& item)
     {
         j = nlohmann::json
             {

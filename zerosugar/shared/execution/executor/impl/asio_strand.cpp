@@ -35,6 +35,11 @@ namespace zerosugar::execution
         dispatch(_strand, std::move(function));
     }
 
+    auto AsioStrand::GetConcurrency() const -> int64_t
+    {
+        return 1;
+    }
+
     auto AsioStrand::SharedFromThis() -> SharedPtrNotNull<IExecutor>
     {
         return shared_from_this();

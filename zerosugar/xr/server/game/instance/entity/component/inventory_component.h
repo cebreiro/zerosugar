@@ -16,7 +16,7 @@ namespace zerosugar::xr
     class InventoryComponent : public GameComponent
     {
     public:
-        bool Initialize(const std::vector<service::DTOItem>& items, const std::vector<service::DTOEquipment>& equipments);
+        bool Initialize(int64_t cid, const std::vector<service::DTOItem>& items, const std::vector<service::DTOEquipment>& equipments);
 
         bool HasEquipItem(game_item_id_type itemId) const;
 
@@ -32,6 +32,7 @@ namespace zerosugar::xr
         inline auto GetInventoryItemsRange() const;
         inline auto GetEquippedItemRange() const;
 
+        auto GetCharacterId() const -> int64_t;
         auto GetEquipments() const -> std::array<const InventoryItem*, static_cast<int32_t>(data::EquipPosition::Count)>;
         auto GetChangeLogs() const -> const std::vector<inventory_change_log_type>&;
 
@@ -50,6 +51,7 @@ namespace zerosugar::xr
         static bool IsValidSlot(int32_t slot);
 
     private:
+        int64_t _characterId = 0;
         std::unordered_map<game_item_id_type, InventoryItem> _items;
 
         std::array<InventoryItem*, game_constant::inventory_size> _inventory = {};

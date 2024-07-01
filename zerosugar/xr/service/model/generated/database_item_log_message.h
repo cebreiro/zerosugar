@@ -14,6 +14,7 @@ namespace zerosugar::xr::service
         void Serialize(PacketWriter& writer) const final;
         auto GetOpcode() const -> int32_t final { return opcode; }
 
+        int64_t characterId = {};
         int64_t itemId = {};
         int32_t equipPosition = {};
     };
@@ -27,7 +28,7 @@ namespace zerosugar::xr::service
         auto GetOpcode() const -> int32_t final { return opcode; }
 
         int64_t itemId = {};
-        int32_t invenotrySlot = {};
+        int32_t inventorySlot = {};
     };
 
     struct ShiftItemLog final : IPacket
@@ -39,7 +40,7 @@ namespace zerosugar::xr::service
         auto GetOpcode() const -> int32_t final { return opcode; }
 
         int64_t itemId = {};
-        int32_t invenotrySlot = {};
+        int32_t inventorySlot = {};
     };
 
     struct DiscardItemLog final : IPacket
@@ -53,7 +54,7 @@ namespace zerosugar::xr::service
         int64_t itemId = {};
     };
 
-    struct UseItemLog final : IPacket
+    struct ChangeItemQuantityLog final : IPacket
     {
         static constexpr int32_t opcode = 5;
 
