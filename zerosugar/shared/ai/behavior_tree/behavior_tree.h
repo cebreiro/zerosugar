@@ -1,94 +1,72 @@
 #pragma once
-#include <mutex>
 #include <cassert>
-#include <stdexcept>
-#include "zerosugar/shared/ai/behavior_tree/task/state.h"
-#include "zerosugar/shared/ai/behavior_tree/task/task.h"
-#include "zerosugar/shared/ai/behavior_tree/task/task_factory.h"
-#include "zerosugar/shared/ai/behavior_tree/task/task_factory_register.h"
+#include <boost/unordered/unordered_flat_set.hpp>
+#include "zerosugar/shared/ai/behavior_tree/node/bt_node.h"
+#include "zerosugar/shared/ai/behavior_tree/node/bt_node_state.h"
+#include "zerosugar/shared/ai/behavior_tree/node/bt_node_event.h"
+
+namespace zerosugar::bt
+{
+    class BlackBoard;
+}
 
 namespace zerosugar
 {
-    template <typename TContext>
     class BehaviorTree
     {
     public:
-        BehaviorTree() = default;
-        explicit  BehaviorTree(std::remove_cvref_t<TContext>& context);
+        BehaviorTree() = delete;
+        BehaviorTree(bt::BlackBoard& blackBoard);
+        ~BehaviorTree();
 
-        bool Initialize(const pugi::xml_node& root);
+        void Initialize(std::vector<UniquePtrNotNull<bt::INode>> nodes);
+        void Finalize();
 
-        bool IsValid() const;
-        auto Execute() -> bt::State;
+        bool IsRunning() const;
 
-        void Reset();
+        void RunOnce();
 
-        auto GetState() const -> bt::State;
+        template <bt::bt_event_concept E>
+        void Notify(const E& e);
+
+        auto GetBlackBoard() -> bt::BlackBoard&;
+        auto GetBlackBoard() const -> const bt::BlackBoard&;
 
     private:
-        std::remove_const_t<TContext>* _context = nullptr;
-        bt::task_pointer_type<TContext> _root = nullptr;
+        void Traverse();
 
-        static std::once_flag _registerFlag;
+        void FinalizeTraverse();
+
+    private:
+        bt::BlackBoard& _blackBoard;
+
+        std::vector<UniquePtrNotNull<bt::INode>> _storage;
+        bt::NodePtr _rootNode;
+        bt::node::State _currentState = bt::node::State::Success;
+
+        std::vector<bt::NodePtr> _stack;
+        boost::unordered::unordered_flat_set<bt::INode*> _visited;
+        std::coroutine_handle<bt::node::Result::promise_type> _runningNodeCoroutine;
     };
 
-    template <typename TContext>
-    BehaviorTree<TContext>::BehaviorTree(std::remove_cvref_t<TContext>& context)
-        : _context(&context)
+    template <bt::bt_event_concept E>
+    void BehaviorTree::Notify(const E& e)
     {
-    }
-
-    template <typename TContext>
-    bool BehaviorTree<TContext>::Initialize(const pugi::xml_node& root)
-    {
-        std::call_once(_registerFlag, bt::RegisterBaseTaskToFactory<TContext>);
-
-        const auto& child = root.first_child();
-        if (!child)
+        if (_currentState != bt::node::State::Running)
         {
-            return false;
+            return;
         }
 
-        auto& factory = bt::TaskFactory<TContext>::GetInstance();
+        assert(_runningNodeCoroutine);
 
-        _root = factory.CreateTask(*_context, child.name());
-        if (!_root)
+        if (bt::node::Result::promise_type& promise = _runningNodeCoroutine.promise();
+            promise.IsWaitingFor(typeid(E)))
         {
-            return false;
+            promise.SetEvent(e);
+
+            _runningNodeCoroutine.resume();
+
+            Traverse();
         }
-
-        return _root->Initialize(child);
     }
-
-    template <typename TContext>
-    bool BehaviorTree<TContext>::IsValid() const
-    {
-        return _root.operator bool();
-    }
-
-    template <typename TContext>
-    auto BehaviorTree<TContext>::Execute() -> bt::State
-    {
-        assert(IsValid());
-        return _root->Execute();
-    }
-
-    template <typename TContext>
-    void BehaviorTree<TContext>::Reset()
-    {
-        assert(IsValid());
-
-        _root->Reset();
-    }
-
-    template <typename TContext>
-    auto BehaviorTree<TContext>::GetState() const -> bt::State
-    {
-        assert(IsValid());
-
-        return _root->GetState();
-    }
-
-    template <typename TContext>
-    std::once_flag BehaviorTree<TContext>::_registerFlag;
 }
