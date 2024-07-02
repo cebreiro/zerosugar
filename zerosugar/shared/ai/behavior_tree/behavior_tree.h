@@ -22,12 +22,19 @@ namespace zerosugar
         void Initialize(std::vector<UniquePtrNotNull<bt::INode>> nodes);
         void Finalize();
 
-        bool IsRunning() const;
+        bool IsAwaiting() const;
+        bool StopRequested() const;
 
         void RunOnce();
+        void RequestStop();
+
+        template <bt::bt_event_concept E>
+        bool IsWaitFor() const;
+        bool IsWaitFor(const std::type_info& typeInfo) const;
 
         template <bt::bt_event_concept E>
         void Notify(const E& e);
+        void Notify(const std::any& any);
 
         auto GetBlackBoard() -> bt::BlackBoard&;
         auto GetBlackBoard() const -> const bt::BlackBoard&;
@@ -47,7 +54,15 @@ namespace zerosugar
         std::vector<bt::NodePtr> _stack;
         boost::unordered::unordered_flat_set<bt::INode*> _visited;
         std::coroutine_handle<bt::node::Result::promise_type> _runningNodeCoroutine;
+
+        bool _stopRequested = false;
     };
+
+    template <bt::bt_event_concept E>
+    bool BehaviorTree::IsWaitFor() const
+    {
+        return IsWaitFor(typeid(E));
+    }
 
     template <bt::bt_event_concept E>
     void BehaviorTree::Notify(const E& e)
@@ -62,7 +77,7 @@ namespace zerosugar
         if (bt::node::Result::promise_type& promise = _runningNodeCoroutine.promise();
             promise.IsWaitingFor(typeid(E)))
         {
-            promise.SetEvent(e);
+            promise.SetEvent(std::move(e));
 
             _runningNodeCoroutine.resume();
 

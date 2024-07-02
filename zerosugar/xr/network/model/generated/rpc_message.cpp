@@ -177,4 +177,62 @@ namespace zerosugar::xr::network
         }
         return {};
     }
+
+    auto CreateAnyFrom(PacketReader& reader) -> std::any
+    {
+        const int16_t opcode = reader.Read<int16_t>();
+        switch(opcode)
+        {
+            case RequestRegisterRPCClient::opcode:
+            {
+                RequestRegisterRPCClient item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case ResultRegisterRPCClient::opcode:
+            {
+                ResultRegisterRPCClient item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case RequestRemoteProcedureCall::opcode:
+            {
+                RequestRemoteProcedureCall item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case ResultRemoteProcedureCall::opcode:
+            {
+                ResultRemoteProcedureCall item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case SendServerStreaming::opcode:
+            {
+                SendServerStreaming item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case SendClientSteaming::opcode:
+            {
+                SendClientSteaming item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case AbortClientStreamingRPC::opcode:
+            {
+                AbortClientStreamingRPC item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+        }
+        return {};
+    }
 }

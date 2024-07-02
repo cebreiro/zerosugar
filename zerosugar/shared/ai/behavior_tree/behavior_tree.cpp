@@ -36,18 +36,41 @@ namespace zerosugar
         }
     }
 
-    bool BehaviorTree::IsRunning() const
+    bool BehaviorTree::IsAwaiting() const
     {
         return !_stack.empty();
     }
 
+    bool BehaviorTree::StopRequested() const
+    {
+        return _stopRequested;
+    }
+
     void BehaviorTree::RunOnce()
     {
-        assert(!IsRunning());
+        assert(!IsAwaiting());
 
         _stack.push_back(_rootNode);
 
         Traverse();
+    }
+
+    void BehaviorTree::RequestStop()
+    {
+        _stopRequested = true;
+    }
+
+    bool BehaviorTree::IsWaitFor(const std::type_info& typeInfo) const
+    {
+        if (_currentState != bt::node::State::Running)
+        {
+            return false;
+        }
+
+        assert(_runningNodeCoroutine);
+        bt::node::Result::promise_type& promise = _runningNodeCoroutine.promise();
+
+        return promise.IsWaitingFor(typeInfo);
     }
 
     void BehaviorTree::Finalize()
@@ -59,6 +82,26 @@ namespace zerosugar
         if (_runningNodeCoroutine)
         {
             _runningNodeCoroutine = nullptr;
+        }
+    }
+
+    void BehaviorTree::Notify(const std::any& any)
+    {
+        if (_currentState != bt::node::State::Running)
+        {
+            return;
+        }
+
+        assert(_runningNodeCoroutine);
+
+        if (bt::node::Result::promise_type& promise = _runningNodeCoroutine.promise();
+            promise.IsWaitingFor(any.type()))
+        {
+            promise.SetEvent(any);
+
+            _runningNodeCoroutine.resume();
+
+            Traverse();
         }
     }
 

@@ -81,4 +81,41 @@ namespace zerosugar::xr::network::lobby::cs
         }
         return {};
     }
+
+    auto CreateAnyFrom(PacketReader& reader) -> std::any
+    {
+        const int16_t opcode = reader.Read<int16_t>();
+        switch(opcode)
+        {
+            case Authenticate::opcode:
+            {
+                Authenticate item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case CreateCharacter::opcode:
+            {
+                CreateCharacter item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case DeleteCharacter::opcode:
+            {
+                DeleteCharacter item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case SelectCharacter::opcode:
+            {
+                SelectCharacter item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+        }
+        return {};
+    }
 }

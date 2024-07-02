@@ -8,7 +8,7 @@ namespace pugi
 
 namespace zerosugar::bt::node
 {
-    class Sequence : public Branch
+    class Sequence final : public Branch
     {
     public:
         static constexpr const char* name = "sequence";

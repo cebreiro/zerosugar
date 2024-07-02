@@ -18,8 +18,8 @@
 
 namespace zerosugar::xr
 {
-    AllInOneApp::AllInOneApp(const AllInOneAppConfig& config)
-        : _config(std::make_unique<AllInOneAppConfig>(config))
+    AllInOneApp::AllInOneApp()
+        : _config(std::make_unique<AllInOneAppConfig>())
         , _executor(std::make_shared<execution::AsioExecutor>(_config->workerCount))
         , _logService(std::make_shared<LogService>())
         , _connectionPool(std::make_shared<db::ConnectionPool>(_executor))

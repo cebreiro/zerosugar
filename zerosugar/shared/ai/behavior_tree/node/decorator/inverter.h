@@ -1,14 +1,9 @@
 #pragma once
 #include "zerosugar/shared/ai/behavior_tree/node/bt_node.h"
 
-namespace pugi
-{
-    class xml_node;
-}
-
 namespace zerosugar::bt::node
 {
-    class Inverter : public Decorator
+    class Inverter final : public Decorator
     {
     public:
         static constexpr const char* name = "inverter";

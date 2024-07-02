@@ -144,4 +144,62 @@ namespace zerosugar::xr::network::game::cs
         }
         return {};
     }
+
+    auto CreateAnyFrom(PacketReader& reader) -> std::any
+    {
+        const int16_t opcode = reader.Read<int16_t>();
+        switch(opcode)
+        {
+            case Authenticate::opcode:
+            {
+                Authenticate item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case MovePlayer::opcode:
+            {
+                MovePlayer item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case StopPlayer::opcode:
+            {
+                StopPlayer item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case SprintPlayer::opcode:
+            {
+                SprintPlayer item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case RollDodgePlayer::opcode:
+            {
+                RollDodgePlayer item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case Chat::opcode:
+            {
+                Chat item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case SwapItem::opcode:
+            {
+                SwapItem item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+        }
+        return {};
+    }
 }

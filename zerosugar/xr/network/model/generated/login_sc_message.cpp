@@ -53,4 +53,27 @@ namespace zerosugar::xr::network::login::sc
         }
         return {};
     }
+
+    auto CreateAnyFrom(PacketReader& reader) -> std::any
+    {
+        const int16_t opcode = reader.Read<int16_t>();
+        switch(opcode)
+        {
+            case CreateAccountResult::opcode:
+            {
+                CreateAccountResult item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case LoginResult::opcode:
+            {
+                LoginResult item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+        }
+        return {};
+    }
 }

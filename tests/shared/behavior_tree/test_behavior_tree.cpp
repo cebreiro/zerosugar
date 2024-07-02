@@ -144,7 +144,7 @@ TEST_F(BehaviorTreeTest, TestSequence)
     behaviorTree.RunOnce();
 
     // assert
-    EXPECT_FALSE(behaviorTree.IsRunning());
+    EXPECT_FALSE(behaviorTree.IsAwaiting());
     EXPECT_TRUE(blackBoard.Contains("value"));
     EXPECT_TRUE(blackBoard.ContainsAs<int32_t>("value"));
     EXPECT_EQ(*blackBoard.GetIf<int32_t>("value"), value1 + value2);
@@ -190,7 +190,7 @@ TEST_F(BehaviorTreeTest, TestSequenceOrder)
     behaviorTree.RunOnce();
 
     // assert
-    EXPECT_FALSE(behaviorTree.IsRunning());
+    EXPECT_FALSE(behaviorTree.IsAwaiting());
     EXPECT_TRUE(blackBoard.Contains("value"));
     EXPECT_TRUE(blackBoard.ContainsAs<int32_t>("value"));
     EXPECT_EQ(*blackBoard.GetIf<int32_t>("value"), (value1 * value2 + value3) * value4 + value5);
@@ -228,18 +228,18 @@ TEST_F(BehaviorTreeTest, TestRunning)
 
     // act
     behaviorTree.RunOnce();
-    ASSERT_TRUE(behaviorTree.IsRunning());
+    ASSERT_TRUE(behaviorTree.IsAwaiting());
 
     RunningTask::ExpectTrue param;
     param.eventValue = false;
 
     behaviorTree.Notify(param);
-    bool running1 = behaviorTree.IsRunning();
+    bool running1 = behaviorTree.IsAwaiting();
 
     param.eventValue = true;
     behaviorTree.Notify(param);
 
-    bool running2 = behaviorTree.IsRunning();
+    bool running2 = behaviorTree.IsAwaiting();
 
     // assert
     EXPECT_TRUE(running1);

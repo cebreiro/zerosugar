@@ -279,4 +279,97 @@ namespace zerosugar::xr::network::game::sc
         }
         return {};
     }
+
+    auto CreateAnyFrom(PacketReader& reader) -> std::any
+    {
+        const int16_t opcode = reader.Read<int16_t>();
+        switch(opcode)
+        {
+            case EnterGame::opcode:
+            {
+                EnterGame item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case AddRemotePlayer::opcode:
+            {
+                AddRemotePlayer item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case RemoveRemotePlayer::opcode:
+            {
+                RemoveRemotePlayer item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case MoveRemotePlayer::opcode:
+            {
+                MoveRemotePlayer item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case StopRemotePlayer::opcode:
+            {
+                StopRemotePlayer item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case SprintRemotePlayer::opcode:
+            {
+                SprintRemotePlayer item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case RollDodgeRemotePlayer::opcode:
+            {
+                RollDodgeRemotePlayer item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case NotifyChattingMessage::opcode:
+            {
+                NotifyChattingMessage item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case AddInventory::opcode:
+            {
+                AddInventory item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case RemoveInventory::opcode:
+            {
+                RemoveInventory item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case NotifySwapItemResult::opcode:
+            {
+                NotifySwapItemResult item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case ChangeRemotePlayerEquipItem::opcode:
+            {
+                ChangeRemotePlayerEquipItem item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+        }
+        return {};
+    }
 }

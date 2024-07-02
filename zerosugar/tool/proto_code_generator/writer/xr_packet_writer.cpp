@@ -26,6 +26,7 @@ namespace zerosugar
 
         _headerPrinter.AddLine(indent, "#pragma once");
         _headerPrinter.AddLine(indent, "#include <cstdint>");
+        _headerPrinter.AddLine(indent, "#include <any>");
         _headerPrinter.AddLine(indent, "#include <string>");
         _headerPrinter.AddLine(indent, "#include <vector>");
         _headerPrinter.AddLine(indent, "#include \"zerosugar/xr/network/packet_interface.h\"");
@@ -99,6 +100,7 @@ namespace zerosugar
         }
 
         _headerPrinter.AddLine(classIndent, "auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>;");
+        _headerPrinter.AddLine(classIndent, "auto CreateAnyFrom(PacketReader& reader) -> std::any;");
     }
 
     void XRPacketWriter::WriteCxx(const Param& param)
@@ -237,34 +239,69 @@ namespace zerosugar
             _cxxPrinter.BreakLine();
         }
 
-        _cxxPrinter.AddLine(classIndent, "auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>");
         {
-            BraceGuard functionBraceGuard(_cxxPrinter, classIndent, false);
-
-            const int64_t functionBodyIndent = classIndent + 1;
-
-            _cxxPrinter.AddLine(functionBodyIndent, "const int16_t opcode = reader.Read<int16_t>();");
-            _cxxPrinter.AddLine(functionBodyIndent, "switch(opcode)");
+            _cxxPrinter.AddLine(classIndent, "auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>");
             {
-                BraceGuard switchBraceGuard(_cxxPrinter, functionBodyIndent, false);
+                BraceGuard functionBraceGuard(_cxxPrinter, classIndent, false);
 
-                const int64_t switchBodyIndent = functionBodyIndent + 1;
+                const int64_t functionBodyIndent = classIndent + 1;
 
-                for (const Message& message : input.messages | std::views::filter(MessageFilter()))
+                _cxxPrinter.AddLine(functionBodyIndent, "const int16_t opcode = reader.Read<int16_t>();");
+                _cxxPrinter.AddLine(functionBodyIndent, "switch(opcode)");
                 {
-                    _cxxPrinter.AddLine(switchBodyIndent, "case {}::opcode:", message.name);
-                    BraceGuard caseBraceGuard(_cxxPrinter, switchBodyIndent, false);
+                    BraceGuard switchBraceGuard(_cxxPrinter, functionBodyIndent, false);
 
-                    const int64_t caseBodyIndent = switchBodyIndent + 1;
+                    const int64_t switchBodyIndent = functionBodyIndent + 1;
 
-                    _cxxPrinter.AddLine(caseBodyIndent, "auto item = std::make_unique<{}>();", message.name);
-                    _cxxPrinter.AddLine(caseBodyIndent, "item->Deserialize(reader);");
-                    _cxxPrinter.BreakLine();
-                    _cxxPrinter.AddLine(caseBodyIndent, "return item;");
+                    for (const Message& message : input.messages | std::views::filter(MessageFilter()))
+                    {
+                        _cxxPrinter.AddLine(switchBodyIndent, "case {}::opcode:", message.name);
+                        BraceGuard caseBraceGuard(_cxxPrinter, switchBodyIndent, false);
+
+                        const int64_t caseBodyIndent = switchBodyIndent + 1;
+
+                        _cxxPrinter.AddLine(caseBodyIndent, "auto item = std::make_unique<{}>();", message.name);
+                        _cxxPrinter.AddLine(caseBodyIndent, "item->Deserialize(reader);");
+                        _cxxPrinter.BreakLine();
+                        _cxxPrinter.AddLine(caseBodyIndent, "return item;");
+                    }
                 }
-            }
 
-            _cxxPrinter.AddLine(functionBodyIndent, "return {};");
+                _cxxPrinter.AddLine(functionBodyIndent, "return {};");
+            }
+        }
+
+        _cxxPrinter.BreakLine();
+        {
+            _cxxPrinter.AddLine(classIndent, "auto CreateAnyFrom(PacketReader& reader) -> std::any");
+            {
+                BraceGuard functionBraceGuard(_cxxPrinter, classIndent, false);
+
+                const int64_t functionBodyIndent = classIndent + 1;
+
+                _cxxPrinter.AddLine(functionBodyIndent, "const int16_t opcode = reader.Read<int16_t>();");
+                _cxxPrinter.AddLine(functionBodyIndent, "switch(opcode)");
+                {
+                    BraceGuard switchBraceGuard(_cxxPrinter, functionBodyIndent, false);
+
+                    const int64_t switchBodyIndent = functionBodyIndent + 1;
+
+                    for (const Message& message : input.messages | std::views::filter(MessageFilter()))
+                    {
+                        _cxxPrinter.AddLine(switchBodyIndent, "case {}::opcode:", message.name);
+                        BraceGuard caseBraceGuard(_cxxPrinter, switchBodyIndent, false);
+
+                        const int64_t caseBodyIndent = switchBodyIndent + 1;
+
+                        _cxxPrinter.AddLine(caseBodyIndent, "{} item;", message.name);
+                        _cxxPrinter.AddLine(caseBodyIndent, "item.Deserialize(reader);");
+                        _cxxPrinter.BreakLine();
+                        _cxxPrinter.AddLine(caseBodyIndent, "return item;");
+                    }
+                }
+
+                _cxxPrinter.AddLine(functionBodyIndent, "return {};");
+            }
         }
     }
 

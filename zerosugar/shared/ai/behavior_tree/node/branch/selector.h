@@ -8,7 +8,7 @@ namespace pugi
 
 namespace zerosugar::bt::node
 {
-    class Selector : public Branch
+    class Selector final : public Branch
     {
     public:
         static constexpr const char* name = "selector";

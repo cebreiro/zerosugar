@@ -6,7 +6,7 @@ namespace zerosugar::bt
     template <typename T>
     concept bt_event_concept = requires
     {
-        { T::name } -> std::convertible_to<std::string>;
+        requires std::is_copy_assignable_v<T>;
     };
 
     template <bt_event_concept... E>

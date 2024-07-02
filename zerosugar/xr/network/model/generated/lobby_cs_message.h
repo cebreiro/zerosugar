@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <any>
 #include <string>
 #include <vector>
 #include "zerosugar/xr/network/packet_interface.h"
@@ -52,4 +53,5 @@ namespace zerosugar::xr::network::lobby::cs
     };
 
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>;
+    auto CreateAnyFrom(PacketReader& reader) -> std::any;
 }

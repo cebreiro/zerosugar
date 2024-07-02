@@ -13,6 +13,8 @@ namespace zerosugar::execution
 
 namespace zerosugar::xr
 {
+    struct AllInOneAppConfig;
+
     class RPCServer;
     class RPCClient;
     class LoginServer;
@@ -40,13 +42,10 @@ namespace zerosugar::xr
 
 namespace zerosugar::xr
 {
-    struct AllInOneAppConfig;
-
     class AllInOneApp final : public AppInstance
     {
     public:
-        AllInOneApp() = delete;
-        explicit AllInOneApp(const AllInOneAppConfig& config);
+        AllInOneApp();
         ~AllInOneApp();
 
     private:

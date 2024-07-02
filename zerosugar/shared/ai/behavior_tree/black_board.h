@@ -22,6 +22,9 @@ namespace zerosugar::bt
         void InsertOrUpdate(const std::string& key, T&& value);
 
         template <typename T>
+        auto Get(const std::string& key) -> T&;
+
+        template <typename T>
         auto GetIf(const std::string& key) -> T*;
 
     private:
@@ -50,6 +53,15 @@ namespace zerosugar::bt
     void BlackBoard::InsertOrUpdate(const std::string& key, T&& value)
     {
         _container[key] = std::forward<T>(value);
+    }
+
+    template <typename T>
+    auto BlackBoard::Get(const std::string& key) -> T&
+    {
+        T* result = GetIf<T>(key);
+        assert(result);
+
+        return *result;
     }
 
     template <typename T>

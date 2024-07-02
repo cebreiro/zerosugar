@@ -28,8 +28,6 @@ namespace zerosugar::xr
 {
     void NavigationDataProvider::Initialize(ServiceLocator& serviceLocator)
     {
-        IService::Initialize(serviceLocator);
-
         _serviceLocator = serviceLocator;
     }
 

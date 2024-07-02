@@ -28,6 +28,7 @@ namespace zerosugar::bt::node
 
             template <bt_event_concept E>
             void SetEvent(const E& e);
+            void SetEvent(const std::any& any);
 
             auto GetState() const -> State;
 

@@ -6,6 +6,11 @@
 #include "zerosugar/shared/ai/behavior_tree/node/bt_node_state.h"
 #include "zerosugar/shared/ai/behavior_tree/node/bt_node_result.h"
 
+namespace pugi
+{
+    class xml_node;
+}
+
 namespace zerosugar
 {
     class BehaviorTree;

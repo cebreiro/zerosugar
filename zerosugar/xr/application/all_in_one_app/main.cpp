@@ -5,10 +5,7 @@ int main(int argc, char* argv[])
 {
     using namespace zerosugar::xr;
 
-    // TODO: remove hard code
-    AllInOneApp server(AllInOneAppConfig{
-        .workerCount = std::thread::hardware_concurrency(),
-        });
+    AllInOneApp server;
 
     return server.Run(std::span(argv, argc));
 }

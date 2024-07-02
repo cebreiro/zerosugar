@@ -104,7 +104,7 @@ namespace zerosugar::xr
                 if (!packet)
                 {
                     ZEROSUGAR_LOG_WARN(_serviceLocator,
-                                       std::format("[{}] unnkown packet. session: {}", GetName(), *session));
+                        std::format("[{}] unnkown packet. session: {}", GetName(), *session));
 
                     session->Close();
 
