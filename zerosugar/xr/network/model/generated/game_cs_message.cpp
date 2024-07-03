@@ -87,6 +87,46 @@ namespace zerosugar::xr::network::game::cs
         writer.Write<int32_t>(srcPosition);
     }
 
+    void StartDungeonMatch::Deserialize(PacketReader& reader)
+    {
+        deugeonId = reader.Read<int32_t>();
+    }
+
+    void StartDungeonMatch::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int32_t>(deugeonId);
+    }
+
+    void CancelDungeonMatch::Deserialize(PacketReader& reader)
+    {
+        (void)reader;
+    }
+
+    void CancelDungeonMatch::Serialize(PacketWriter& writer) const
+    {
+        (void)writer;
+    }
+
+    void ApproveDungeonMatch::Deserialize(PacketReader& reader)
+    {
+        (void)reader;
+    }
+
+    void ApproveDungeonMatch::Serialize(PacketWriter& writer) const
+    {
+        (void)writer;
+    }
+
+    void RejectDungeonMatch::Deserialize(PacketReader& reader)
+    {
+        (void)reader;
+    }
+
+    void RejectDungeonMatch::Serialize(PacketWriter& writer) const
+    {
+        (void)writer;
+    }
+
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>
     {
         const int16_t opcode = reader.Read<int16_t>();
@@ -137,6 +177,34 @@ namespace zerosugar::xr::network::game::cs
             case SwapItem::opcode:
             {
                 auto item = std::make_unique<SwapItem>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case StartDungeonMatch::opcode:
+            {
+                auto item = std::make_unique<StartDungeonMatch>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case CancelDungeonMatch::opcode:
+            {
+                auto item = std::make_unique<CancelDungeonMatch>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case ApproveDungeonMatch::opcode:
+            {
+                auto item = std::make_unique<ApproveDungeonMatch>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case RejectDungeonMatch::opcode:
+            {
+                auto item = std::make_unique<RejectDungeonMatch>();
                 item->Deserialize(reader);
 
                 return item;
@@ -195,6 +263,34 @@ namespace zerosugar::xr::network::game::cs
             case SwapItem::opcode:
             {
                 SwapItem item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case StartDungeonMatch::opcode:
+            {
+                StartDungeonMatch item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case CancelDungeonMatch::opcode:
+            {
+                CancelDungeonMatch item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case ApproveDungeonMatch::opcode:
+            {
+                ApproveDungeonMatch item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case RejectDungeonMatch::opcode:
+            {
+                RejectDungeonMatch item;
                 item.Deserialize(reader);
 
                 return item;

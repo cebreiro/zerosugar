@@ -1,0 +1,15 @@
+<root>
+    <selector>
+        <sequence>
+            <connect_to target="lobby" />
+            <authenticate_lobby />
+            <force_success>
+                <create_character />
+            </force_success>
+            <select_character />
+            <close_socket />
+            <suspend_forever />
+        </sequence>
+        <shutdown_behavior_tree />
+    </selector>
+</root>

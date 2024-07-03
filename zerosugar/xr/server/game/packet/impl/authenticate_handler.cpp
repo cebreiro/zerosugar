@@ -11,7 +11,6 @@
 #include "zerosugar/xr/server/game/instance/task/impl/player_spawn.h"
 #include "zerosugar/xr/service/model/generated/coordination_service.h"
 #include "zerosugar/xr/service/model/generated/coordination_service_message.h"
-#include "zerosugar/xr/service/model/generated/database_service.h"
 
 namespace zerosugar::xr
 {
@@ -80,7 +79,7 @@ namespace zerosugar::xr
         }
 
         auto client = std::make_shared<GameClient>(session.weak_from_this(),
-            authParam.authenticationToken, authResult.accountId, authResult.characterId, gameInstance);
+            authParam.authenticationToken, authResult.accountId, authResult.characterId, authResult.userUniqueId, gameInstance);
 
         [[maybe_unused]]
         const bool added = server.AddClient(session.GetId(), client);

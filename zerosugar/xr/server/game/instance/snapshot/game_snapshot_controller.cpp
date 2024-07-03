@@ -50,6 +50,31 @@ namespace zerosugar::xr
         sector.AddEntity(snapshot->GetId());
     }
 
+    void GameSnapshotController::ProcessPlayerDespawn(game_entity_id_type entityId)
+    {
+        GameSnapshotModelContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
+        GameSpatialContainer& spatialContainer = _gameInstance.GetSpatialContainer();
+        GameSnapshotView& view = _gameInstance.GetSnapshotView();
+
+        GamePlayerSnapshot* snapshot = snapshotContainer.FindPlayer(entityId);
+        assert(snapshot);
+
+        GameSpatialSector& sector = spatialContainer.GetSector(snapshot->GetPosition().x(), snapshot->GetPosition().y());
+        sector.RemoveEntity(entityId);
+
+        if (!sector.Empty() && sector.HasEntitiesAtLeast(GameEntityType::Player, 1))
+        {
+            network::game::sc::RemoveRemotePlayer packet;
+            GamePacketBuilder::Build(packet, *snapshot);
+
+            view.Broadcast(packet, sector, GameEntityType::Player);
+        }
+
+        [[maybe_unused]]
+        const bool removed = snapshotContainer.RemovePlayer(entityId);
+        assert(removed);
+    }
+
     void GameSnapshotController::ProcessMovement(game_entity_id_type id, const Eigen::Vector3d& position)
     {
         GameSnapshotModelContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();

@@ -196,4 +196,43 @@ namespace zerosugar::xr::network::game::sc
             };
     }
 
+    void from_json(const nlohmann::json& j, NotifyDungeonMatchGroupCreation& item)
+    {
+        (void)j;
+        (void)item;
+    }
+
+    void to_json(nlohmann::json& j, const NotifyDungeonMatchGroupCreation& item)
+    {
+        (void)j;
+        (void)item;
+    }
+
+    void from_json(const nlohmann::json& j, NotifyDungeonMatchFailure& item)
+    {
+        (void)j;
+        (void)item;
+    }
+
+    void to_json(nlohmann::json& j, const NotifyDungeonMatchFailure& item)
+    {
+        (void)j;
+        (void)item;
+    }
+
+    void from_json(const nlohmann::json& j, NotifyDungeonMatchGroupApproved& item)
+    {
+        j.at("ip").get_to(item.ip);
+        j.at("port").get_to(item.port);
+    }
+
+    void to_json(nlohmann::json& j, const NotifyDungeonMatchGroupApproved& item)
+    {
+        j = nlohmann::json
+            {
+                { "ip", item.ip },
+                { "port", item.port },
+            };
+    }
+
 }

@@ -30,4 +30,47 @@ namespace zerosugar::xr::coordination::command
             };
     }
 
+    void from_json(const nlohmann::json& j, NotifyDungeonMatchGroupCreation& item)
+    {
+        j.at("userId").get_to(item.userId);
+    }
+
+    void to_json(nlohmann::json& j, const NotifyDungeonMatchGroupCreation& item)
+    {
+        j = nlohmann::json
+            {
+                { "userId", item.userId },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, NotifyDungeonMatchGroupApproved& item)
+    {
+        j.at("userId").get_to(item.userId);
+        j.at("ip").get_to(item.ip);
+        j.at("port").get_to(item.port);
+    }
+
+    void to_json(nlohmann::json& j, const NotifyDungeonMatchGroupApproved& item)
+    {
+        j = nlohmann::json
+            {
+                { "userId", item.userId },
+                { "ip", item.ip },
+                { "port", item.port },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, NotifyDungeonMatchGroupRejected& item)
+    {
+        j.at("userId").get_to(item.userId);
+    }
+
+    void to_json(nlohmann::json& j, const NotifyDungeonMatchGroupRejected& item)
+    {
+        j = nlohmann::json
+            {
+                { "userId", item.userId },
+            };
+    }
+
 }

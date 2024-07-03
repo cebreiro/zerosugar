@@ -7,7 +7,7 @@
 
 namespace zerosugar::xr::coordination
 {
-    auto LaunchGameInstanceResponseHandler::HandleResponse(CoordinationService& service, GameServer& server, const command::response::LaunchGameInstance& response) const
+    auto LaunchGameInstanceResponseHandler::HandleResponse(CoordinationService& service, GameServer& server, command::response::LaunchGameInstance response) const
         -> Future<void>
     {
         const auto id = game_instance_id_type(response.gameInstanceId);

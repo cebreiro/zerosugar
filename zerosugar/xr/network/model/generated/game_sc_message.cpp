@@ -187,6 +187,38 @@ namespace zerosugar::xr::network::game::sc
         writer.Write<int32_t>(itemId);
     }
 
+    void NotifyDungeonMatchGroupCreation::Deserialize(PacketReader& reader)
+    {
+        (void)reader;
+    }
+
+    void NotifyDungeonMatchGroupCreation::Serialize(PacketWriter& writer) const
+    {
+        (void)writer;
+    }
+
+    void NotifyDungeonMatchFailure::Deserialize(PacketReader& reader)
+    {
+        (void)reader;
+    }
+
+    void NotifyDungeonMatchFailure::Serialize(PacketWriter& writer) const
+    {
+        (void)writer;
+    }
+
+    void NotifyDungeonMatchGroupApproved::Deserialize(PacketReader& reader)
+    {
+        ip = reader.ReadString();
+        port = reader.Read<int32_t>();
+    }
+
+    void NotifyDungeonMatchGroupApproved::Serialize(PacketWriter& writer) const
+    {
+        writer.Write(ip);
+        writer.Write<int32_t>(port);
+    }
+
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>
     {
         const int16_t opcode = reader.Read<int16_t>();
@@ -272,6 +304,27 @@ namespace zerosugar::xr::network::game::sc
             case ChangeRemotePlayerEquipItem::opcode:
             {
                 auto item = std::make_unique<ChangeRemotePlayerEquipItem>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case NotifyDungeonMatchGroupCreation::opcode:
+            {
+                auto item = std::make_unique<NotifyDungeonMatchGroupCreation>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case NotifyDungeonMatchFailure::opcode:
+            {
+                auto item = std::make_unique<NotifyDungeonMatchFailure>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case NotifyDungeonMatchGroupApproved::opcode:
+            {
+                auto item = std::make_unique<NotifyDungeonMatchGroupApproved>();
                 item->Deserialize(reader);
 
                 return item;
@@ -365,6 +418,27 @@ namespace zerosugar::xr::network::game::sc
             case ChangeRemotePlayerEquipItem::opcode:
             {
                 ChangeRemotePlayerEquipItem item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case NotifyDungeonMatchGroupCreation::opcode:
+            {
+                NotifyDungeonMatchGroupCreation item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case NotifyDungeonMatchFailure::opcode:
+            {
+                NotifyDungeonMatchFailure item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case NotifyDungeonMatchGroupApproved::opcode:
+            {
+                NotifyDungeonMatchGroupApproved item;
                 item.Deserialize(reader);
 
                 return item;

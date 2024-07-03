@@ -1,9 +1,10 @@
 #include "bot_control_service.h"
 
 #include "zerosugar/shared/ai/behavior_tree/data/node_serializer.h"
+#include "zerosugar/shared/ai/behavior_tree/log/behavior_tree_log_service_adapter.h"
 #include "zerosugar/shared/execution/executor/impl/asio_executor.h"
 #include "zerosugar/xr/application/bot_client/controller/bot_controller.h"
-#include "zerosugar/xr/application/bot_client/controller/ai/behavior_tree/task/register.h"
+#include "zerosugar/xr/application/bot_client/controller/ai/behavior_tree/register_task.h"
 
 namespace zerosugar::xr
 {
@@ -13,9 +14,10 @@ namespace zerosugar::xr
         , _serviceLocator(locator)
         , _strands(std::max<int64_t>(1, concurrency))
         , _botControllers(std::max<int64_t>(1, botCount))
+        , _behaviorTreeLogger(std::make_unique<BehaviorTreeLogServiceAdapter>(_serviceLocator.Get<ILogService>(), LogLevel::Debug))
         , _nodeSerializer(std::make_unique<bt::NodeSerializer>())
     {
-        bot::Register(*_nodeSerializer);
+        bot::RegisterTask(*_nodeSerializer);
 
         for (int64_t i = 0; i < std::ssize(_strands); ++i)
         {
@@ -26,6 +28,7 @@ namespace zerosugar::xr
         {
             _botControllers[i] = std::make_shared<BotController>(_serviceLocator,
                 _strands[i % std::ssize(_strands)], i, *_nodeSerializer, btName);
+            _botControllers[i]->SetLogger(_behaviorTreeLogger.get());
         }
     }
 

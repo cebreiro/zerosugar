@@ -11,7 +11,7 @@ namespace zerosugar::xr
     using coordination::command::LaunchGameInstance;
 
     auto LaunchGameInstanceHandler::HandleCommand(GameServer& server,
-        const LaunchGameInstance& command, std::optional<int64_t> responseId) const -> Future<void>
+        LaunchGameInstance command, std::optional<int64_t> responseId) const -> Future<void>
     {
         assert(responseId.has_value());
 

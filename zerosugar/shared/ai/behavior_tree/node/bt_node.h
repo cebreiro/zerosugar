@@ -34,6 +34,7 @@ namespace zerosugar::bt
         virtual ~INode() = default;
 
         virtual void Reset() = 0;
+        virtual auto GetName() const -> std::string_view = 0;
         virtual auto GetNodePtr() -> NodePtr = 0;
     };
 
@@ -94,11 +95,15 @@ namespace zerosugar::bt
     private:
         virtual auto Run() -> node::Result = 0;
 
+    protected:
+        auto GetBlackBoard() -> BlackBoard&;
+        auto GetBlackBoard() const -> const BlackBoard&;
+
     private:
         node::State _state = node::State::Success;
         std::coroutine_handle<node::Result::promise_type> _handle;
 
-    protected:
-        BehaviorTree* _bt;
+    private:
+        BehaviorTree* _bt = nullptr;
     };
 }

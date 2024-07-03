@@ -35,6 +35,7 @@ namespace zerosugar::xr
             explicit Process(int64_t id);
 
             bool HasTask() const;
+            bool IsTerminateReserved() const;
 
             void AddStarvationCount();
 
@@ -49,6 +50,7 @@ namespace zerosugar::xr
             void SetTaskQueueId(std::optional<int64_t> id);
             void SetState(State state);
             void SetStarvationCount(int64_t value);
+            void SetTerminateReserved(bool value);
 
         private:
             int64_t _id = 0;
@@ -57,6 +59,7 @@ namespace zerosugar::xr
 
             State _state = State::Waiting;
             int64_t _starvationCount = 0;
+            bool _terminateReserved = false;
         };
 
         struct Resource

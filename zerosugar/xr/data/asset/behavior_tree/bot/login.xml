@@ -1,0 +1,18 @@
+<root>
+    <sequence>
+        <selector>
+            <is_connected_to_login />
+            <connect_to target="login" />
+        </selector>
+        <sequence>
+            <force_success>
+                <create_account />
+            </force_success>
+            <force_success>
+                <login />
+            </force_success>
+            <close_socket />
+            <transition_behavior_tree target="select_character" />
+        </sequence>
+    </sequence>
+</root>

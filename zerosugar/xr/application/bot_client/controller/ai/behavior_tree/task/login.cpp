@@ -1,6 +1,5 @@
 #include "login.h"
 
-#include "zerosugar/shared/ai/behavior_tree/behavior_tree.h"
 #include "zerosugar/shared/ai/behavior_tree/black_board.h"
 #include "zerosugar/xr/application/bot_client/controller/bot_controller.h"
 #include "zerosugar/xr/network/packet.h"
@@ -11,32 +10,36 @@ namespace zerosugar::xr::bot
 {
     auto Login::Run() -> bt::node::Result
     {
-        bt::BlackBoard& blackBoard = _bt->GetBlackBoard();
+        bt::BlackBoard& blackBoard = GetBlackBoard();
         BotController& controller = *blackBoard.Get<BotController*>("owner");
 
         const auto id = std::format("bot{}", controller.GetId());
 
-        network::login::cs::Login packet;
+        using namespace network::login;
+
+        cs::Login packet;
         packet.account = id;
         packet.password = id;
 
         controller.Send(Packet::ToBuffer(packet));
 
-        auto result = co_await bt::Event<network::login::sc::LoginResult>();
+        std::variant<sc::LoginResult> va = co_await bt::Event<sc::LoginResult>();
+        const sc::LoginResult& result = std::get<sc::LoginResult>(va);
 
-        if (const auto* ptr = std::get_if<network::login::sc::LoginResult>(&result); ptr)
+        if (result.success)
         {
-            const network::login::sc::LoginResult& loginResult = *ptr;
-            if (loginResult.success)
-            {
-                blackBoard.Insert("auth_token", std::string(loginResult.authenticationToken));
-                blackBoard.Insert("lobby_address", std::pair<std::string, int32_t>(loginResult.lobbyIp, loginResult.lobbyPort));
+            blackBoard.Insert("auth_token", std::string(result.authenticationToken));
+            blackBoard.Insert("lobby_address", std::pair<std::string, int32_t>(result.lobbyIp, result.lobbyPort));
 
-                co_return true;
-            }
+            co_return true;
         }
 
         co_return false;
+    }
+
+    auto Login::GetName() const -> std::string_view
+    {
+        return name;
     }
 
     void from_xml(Login&, const pugi::xml_node&)

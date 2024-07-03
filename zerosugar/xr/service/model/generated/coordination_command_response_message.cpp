@@ -66,4 +66,34 @@ namespace zerosugar::xr::coordination::command::response
         }
         return {};
     }
+
+    auto CreateAnyFrom(PacketReader& reader) -> std::any
+    {
+        const int16_t opcode = reader.Read<int16_t>();
+        switch(opcode)
+        {
+            case Exception::opcode:
+            {
+                Exception item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case Authenticate::opcode:
+            {
+                Authenticate item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case LaunchGameInstance::opcode:
+            {
+                LaunchGameInstance item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+        }
+        return {};
+    }
 }

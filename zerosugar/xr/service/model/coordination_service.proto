@@ -17,6 +17,11 @@ service CoordinationService
     rpc AuthenticatePlayer (AuthenticatePlayerParam) returns (AuthenticatePlayerResult);
 
     rpc BroadcastChatting (BroadcastChattingParam) returns (BroadcastChattingResult);
+
+    rpc RequestDungeonMatch (RequestDungeonMatchParam) returns (RequestDungeonMatchResult);
+    rpc CancelDungeonMatch (CancelDungeonMatchParam) returns (CancelDungeonMatchResult);
+    rpc ApproveDungeonMatch (ApproveDungeonMatchParam) returns (ApproveDungeonMatchResult);
+    rpc RejectDungeonMatch (RejectDungeonMatchParam) returns (RejectDungeonMatchResult);
 }
 
 enum CoordinationServiceErrorCode
@@ -139,6 +144,7 @@ message AuthenticatePlayerResult
     int64 account_id = 2;
     int64 character_id = 3;
     int64 game_instance_id = 4;
+    int64 user_unique_id = 5;
 }
 
 message BroadcastChattingParam
@@ -151,6 +157,55 @@ message BroadcastChattingParam
 }
 
 message BroadcastChattingResult
+{
+    CoordinationServiceErrorCode error_code = 1;
+}
+
+message RequestDungeonMatchParam
+{
+    int64 server_id = 1;
+    int64 game_instance_id = 2;
+    string authentication_token = 3;
+    int32 dungeon_id = 4;
+}
+
+message RequestDungeonMatchResult
+{
+    CoordinationServiceErrorCode error_code = 1;
+}
+
+message CancelDungeonMatchParam
+{
+    int64 server_id = 1;
+    int64 game_instance_id = 2;
+    string authentication_token = 3;
+}
+
+message CancelDungeonMatchResult
+{
+    CoordinationServiceErrorCode error_code = 1;
+}
+
+message ApproveDungeonMatchParam
+{
+    int64 server_id = 1;
+    int64 game_instance_id = 2;
+    string authentication_token = 3;
+}
+
+message ApproveDungeonMatchResult
+{
+    CoordinationServiceErrorCode error_code = 1;
+}
+
+message RejectDungeonMatchParam
+{
+    int64 server_id = 1;
+    int64 game_instance_id = 2;
+    string authentication_token = 3;
+}
+
+message RejectDungeonMatchResult
 {
     CoordinationServiceErrorCode error_code = 1;
 }

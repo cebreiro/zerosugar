@@ -5,11 +5,14 @@
 
 namespace zerosugar::xr
 {
-    GameClient::GameClient(WeakPtrNotNull<Session> session, std::string authenticationToken, int64_t accountId, int64_t characterId, WeakPtrNotNull<GameInstance> gameInstance)
-        : _session(std::move(session))
+    GameClient::GameClient(WeakPtrNotNull<Session> session, std::string authenticationToken, int64_t accountId, int64_t characterId,
+        int64_t worldUserUniqueId, WeakPtrNotNull<GameInstance> gameInstance)
+        : _sessionId(session.lock()->GetId())
+        , _session(std::move(session))
         , _authenticationToken(std::move(authenticationToken))
         , _accountId(accountId)
         , _characterId(characterId)
+        , _worldUserUniqueId(worldUserUniqueId)
         , _gameInstance(std::move(gameInstance))
     {
     }
@@ -35,6 +38,10 @@ namespace zerosugar::xr
 
     void GameClient::SetSession(WeakPtrNotNull<Session> session)
     {
+        const auto shared = session.lock();
+        assert(shared);
+
+        _sessionId = shared->GetId();
         _session = std::move(session);
     }
 
@@ -46,6 +53,11 @@ namespace zerosugar::xr
     void GameClient::SetGameEntityId(game_entity_id_type id)
     {
         _entityId = id;
+    }
+
+    auto GameClient::GetSessionId() const -> session::id_type
+    {
+        return _sessionId;
     }
 
     auto GameClient::GetAuthenticationToken() const -> const std::string&
@@ -71,12 +83,12 @@ namespace zerosugar::xr
         }
     }
 
-    auto GameClient::GetGameInstance() -> SharedPtrNotNull<GameInstance>
+    auto GameClient::GetGameInstance() -> std::shared_ptr<GameInstance>
     {
         return _gameInstance.lock();
     }
 
-    auto GameClient::GetGameInstance() const -> SharedPtrNotNull<GameInstance>
+    auto GameClient::GetGameInstance() const -> std::shared_ptr<GameInstance>
     {
         return _gameInstance.lock();
     }
@@ -91,5 +103,10 @@ namespace zerosugar::xr
         (void)opcode;
 
         return true;
+    }
+
+    auto GameClient::GetWorldUserUniqueId() const -> int64_t
+    {
+        return _worldUserUniqueId;
     }
 }

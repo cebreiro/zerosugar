@@ -26,8 +26,6 @@ namespace zerosugar::xr::coordination
 
             void SetParent(TParent parent)
             {
-                assert(!_parent);
-
                 _parent = parent;
             }
 

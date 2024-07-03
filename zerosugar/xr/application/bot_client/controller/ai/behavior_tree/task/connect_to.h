@@ -10,6 +10,8 @@ namespace zerosugar::xr::bot
 
         auto Run() -> bt::node::Result override;
 
+        auto GetName() const -> std::string_view override;
+
         friend void from_xml(ConnectTo& self, const pugi::xml_node& node);
 
     private:

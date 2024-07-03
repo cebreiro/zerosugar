@@ -151,6 +151,11 @@ namespace zerosugar::xr
             return _param;
         }
 
+        auto MutableParam() -> TParam&
+        {
+            return _param;
+        }
+
     private:
         TParam _param;
     };

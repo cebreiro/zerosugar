@@ -63,4 +63,28 @@ namespace zerosugar::xr::service
     void from_json(const nlohmann::json& j, BroadcastChattingResult& item);
     void to_json(nlohmann::json& j, const BroadcastChattingResult& item);
 
+    void from_json(const nlohmann::json& j, RequestDungeonMatchParam& item);
+    void to_json(nlohmann::json& j, const RequestDungeonMatchParam& item);
+
+    void from_json(const nlohmann::json& j, RequestDungeonMatchResult& item);
+    void to_json(nlohmann::json& j, const RequestDungeonMatchResult& item);
+
+    void from_json(const nlohmann::json& j, CancelDungeonMatchParam& item);
+    void to_json(nlohmann::json& j, const CancelDungeonMatchParam& item);
+
+    void from_json(const nlohmann::json& j, CancelDungeonMatchResult& item);
+    void to_json(nlohmann::json& j, const CancelDungeonMatchResult& item);
+
+    void from_json(const nlohmann::json& j, ApproveDungeonMatchParam& item);
+    void to_json(nlohmann::json& j, const ApproveDungeonMatchParam& item);
+
+    void from_json(const nlohmann::json& j, ApproveDungeonMatchResult& item);
+    void to_json(nlohmann::json& j, const ApproveDungeonMatchResult& item);
+
+    void from_json(const nlohmann::json& j, RejectDungeonMatchParam& item);
+    void to_json(nlohmann::json& j, const RejectDungeonMatchParam& item);
+
+    void from_json(const nlohmann::json& j, RejectDungeonMatchResult& item);
+    void to_json(nlohmann::json& j, const RejectDungeonMatchResult& item);
+
 }

@@ -5,12 +5,10 @@
 #include "zerosugar/shared/ai/behavior_tree/data/node_data_set_interface.h"
 #include "zerosugar/shared/execution/executor/impl/asio_strand.h"
 #include "zerosugar/shared/network/socket.h"
-#include "zerosugar/xr/network/packet_interface.h"
 #include "zerosugar/xr/network/packet_reader.h"
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
 #include "zerosugar/xr/network/model/generated/lobby_sc_message.h"
 #include "zerosugar/xr/network/model/generated/login_sc_message.h"
-#include "zerosugar/xr/application/bot_client/controller/ai/behavior_tree/event/connect_event.h"
 #include "zerosugar/xr/data/behavior_tree_xml_provider.h"
 
 namespace zerosugar::xr
@@ -26,7 +24,7 @@ namespace zerosugar::xr
         , _blackBoard(std::make_unique<bt::BlackBoard>())
     {
         _blackBoard->Insert<BotController*>("owner", this);
-        _blackBoard->Insert<std::pair<std::string, int32_t>>("login", { "127.0.0.1", 8181 });
+        _blackBoard->Insert<std::pair<std::string, int32_t>>("login_address", { "127.0.0.1", 8181 });
     }
 
     BotController::~BotController()
@@ -57,11 +55,13 @@ namespace zerosugar::xr
         }
 
         auto newBehaviorTree = std::make_shared<BehaviorTree>(*_blackBoard);
-        newBehaviorTree->Initialize(dataSet->Deserialize(_nodeSerializer));
+        newBehaviorTree->Initialize(behaviorTreeName, dataSet->Deserialize(_nodeSerializer));
+        newBehaviorTree->SetLogger(_behaviorTreeLogger);
 
         if (_behaviorTree)
         {
             _behaviorTree->RequestStop();
+            _behaviorTree.reset();
         }
 
         if (_runAI.IsValid())
@@ -71,6 +71,13 @@ namespace zerosugar::xr
 
         _behaviorTree = std::move(newBehaviorTree);
         _runAI = RunAI();
+    }
+
+    void BotController::InvokeOnBehaviorTree(const std::function<void(BehaviorTree&)>& func)
+    {
+        assert(func);
+
+        func(*_behaviorTree);
     }
 
     auto BotController::ConnectTo(std::string ip, uint16_t port, int32_t retryMilli) -> Future<void>
@@ -83,11 +90,6 @@ namespace zerosugar::xr
 
         co_await _socket->ConnectAsync(ip, port, std::chrono::milliseconds(retryMilli));
         _runIOFuture = RunIO();
-
-        Post(*_strand, [self = shared_from_this()]()
-            {
-                self->_behaviorTree->Notify(event::OnSessionConnected{});
-            });
 
         co_return;
     }
@@ -122,6 +124,11 @@ namespace zerosugar::xr
     auto BotController::GetSessionState() const -> BotSessionStateType
     {
         return _sessionState;
+    }
+
+    void BotController::SetLogger(IBehaviorTreeLogger* logger)
+    {
+        _behaviorTreeLogger = logger;
     }
 
     void BotController::SetSessionState(BotSessionStateType sessionState)
@@ -207,6 +214,10 @@ namespace zerosugar::xr
                         assert(false);
                     }
 
+                    Buffer temp;
+                    [[maybe_unused]] bool sliced = receivedBuffer.SliceFront(temp, packetSize);
+                    assert(sliced);
+
                     if (_behaviorTree->IsWaitFor(packet.type()))
                     {
                         _behaviorTree->Notify(packet);
@@ -233,7 +244,7 @@ namespace zerosugar::xr
 
         std::chrono::milliseconds tickInterval = minTickInternal;
 
-        SharedPtrNotNull<BehaviorTree> bt = _behaviorTree;
+        const SharedPtrNotNull<BehaviorTree> bt = _behaviorTree;
         bt->RunOnce();
 
         while (true)
@@ -263,11 +274,28 @@ namespace zerosugar::xr
 
     void BotController::Shutdown(const std::string& reason)
     {
-        (void)reason;
+        ZEROSUGAR_LOG_INFO(_serviceLocator,
+            std::format("[bot_controller] shutdown. reason: {}", reason));
+
+        if (_behaviorTree)
+        {
+            _behaviorTree->RequestStop();
+            _behaviorTree.reset();
+        }
+
+        if (_socket)
+        {
+            _socket->CloseAsync();
+        }
     }
 
     auto BotController::GetId() const -> int64_t
     {
         return _id;
+    }
+
+    auto BotController::GetStrand() const -> execution::AsioStrand&
+    {
+        return *_strand;
     }
 }

@@ -47,4 +47,13 @@ namespace zerosugar::xr::network::game::sc
     void from_json(const nlohmann::json& j, ChangeRemotePlayerEquipItem& item);
     void to_json(nlohmann::json& j, const ChangeRemotePlayerEquipItem& item);
 
+    void from_json(const nlohmann::json& j, NotifyDungeonMatchGroupCreation& item);
+    void to_json(nlohmann::json& j, const NotifyDungeonMatchGroupCreation& item);
+
+    void from_json(const nlohmann::json& j, NotifyDungeonMatchFailure& item);
+    void to_json(nlohmann::json& j, const NotifyDungeonMatchFailure& item);
+
+    void from_json(const nlohmann::json& j, NotifyDungeonMatchGroupApproved& item);
+    void to_json(nlohmann::json& j, const NotifyDungeonMatchGroupApproved& item);
+
 }

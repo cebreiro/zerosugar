@@ -12,6 +12,7 @@ message Authenticate
     string authentication_token = 1;
 }
 
+// movement
 message MovePlayer
 {
     option (opcode) = 1001;
@@ -50,6 +51,7 @@ message Chat
     string message = 1;
 }
 
+// item
 message SwapItem
 {
     option (opcode) = 1003;
@@ -58,4 +60,27 @@ message SwapItem
     int32 dest_position = 2;
     bool src_equipped = 3;
     int32 src_position = 4;
+}
+
+// matcing
+message StartDungeonMatch
+{
+    option (opcode) = 3001;
+
+    int32 deugeon_id = 1;
+}
+
+message CancelDungeonMatch
+{
+    option (opcode) = 3002;
+}
+
+message ApproveDungeonMatch
+{
+    option (opcode) = 3003;
+}
+
+message RejectDungeonMatch
+{
+    option (opcode) = 3004;
 }

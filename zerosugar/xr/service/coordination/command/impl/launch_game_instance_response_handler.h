@@ -7,6 +7,6 @@ namespace zerosugar::xr::coordination
     class LaunchGameInstanceResponseHandler final : public CommandResponseHandlerT<command::response::LaunchGameInstance>
     {
     private:
-        auto HandleResponse(CoordinationService& service, GameServer& server, const command::response::LaunchGameInstance& response) const -> Future<void> override;
+        auto HandleResponse(CoordinationService& service, GameServer& server, command::response::LaunchGameInstance response) const -> Future<void> override;
     };
 }

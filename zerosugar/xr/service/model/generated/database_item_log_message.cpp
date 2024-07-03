@@ -108,4 +108,48 @@ namespace zerosugar::xr::service
         }
         return {};
     }
+
+    auto CreateAnyFrom(PacketReader& reader) -> std::any
+    {
+        const int16_t opcode = reader.Read<int16_t>();
+        switch(opcode)
+        {
+            case EquipItemLog::opcode:
+            {
+                EquipItemLog item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case UnequipItemLog::opcode:
+            {
+                UnequipItemLog item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case ShiftItemLog::opcode:
+            {
+                ShiftItemLog item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case DiscardItemLog::opcode:
+            {
+                DiscardItemLog item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case ChangeItemQuantityLog::opcode:
+            {
+                ChangeItemQuantityLog item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+        }
+        return {};
+    }
 }

@@ -12,14 +12,19 @@ namespace zerosugar::bt
 
 namespace zerosugar
 {
+    class IBehaviorTreeLogger;
+}
+
+namespace zerosugar
+{
     class BehaviorTree
     {
     public:
         BehaviorTree() = delete;
-        BehaviorTree(bt::BlackBoard& blackBoard);
+        explicit BehaviorTree(bt::BlackBoard& blackBoard);
         ~BehaviorTree();
 
-        void Initialize(std::vector<UniquePtrNotNull<bt::INode>> nodes);
+        void Initialize(std::string name, std::vector<UniquePtrNotNull<bt::INode>> nodes);
         void Finalize();
 
         bool IsAwaiting() const;
@@ -36,18 +41,26 @@ namespace zerosugar
         void Notify(const E& e);
         void Notify(const std::any& any);
 
+        auto GetName() const -> const std::string&;
         auto GetBlackBoard() -> bt::BlackBoard&;
         auto GetBlackBoard() const -> const bt::BlackBoard&;
+
+        void SetLogger(IBehaviorTreeLogger* logger);
 
     private:
         void Traverse();
 
         void FinalizeTraverse();
 
+        auto GetCurrentNodeName() const -> std::string;
+
     private:
         bt::BlackBoard& _blackBoard;
 
+        std::string _name;
         std::vector<UniquePtrNotNull<bt::INode>> _storage;
+        IBehaviorTreeLogger* _logger = nullptr;
+
         bt::NodePtr _rootNode;
         bt::node::State _currentState = bt::node::State::Success;
 

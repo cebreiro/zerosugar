@@ -1,6 +1,11 @@
 #pragma once
 #include "zerosugar/shared/execution/executor/impl/asio_strand.h"
 
+namespace zerosugar
+{
+    class IBehaviorTreeLogger;
+}
+
 namespace zerosugar::bt
 {
     class NodeSerializer;
@@ -32,10 +37,12 @@ namespace zerosugar::xr
     private:
         SharedPtrNotNull<execution::AsioExecutor> _executor;
         ServiceLocator _serviceLocator;
+        
 
         std::vector<SharedPtrNotNull<execution::AsioStrand>> _strands;
         std::vector<SharedPtrNotNull<BotController>> _botControllers;
 
-        std::unique_ptr<bt::NodeSerializer> _nodeSerializer;
+        UniquePtrNotNull<IBehaviorTreeLogger> _behaviorTreeLogger;
+        UniquePtrNotNull<bt::NodeSerializer> _nodeSerializer;
     };
 }

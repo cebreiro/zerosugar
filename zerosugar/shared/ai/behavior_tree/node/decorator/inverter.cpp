@@ -9,6 +9,11 @@ namespace zerosugar::bt::node
         return state == State::Success ? State::Failure : State::Success;
     }
 
+    auto Inverter::GetName() const -> std::string_view
+    {
+        return name;
+    }
+
     void from_xml(Inverter&, const pugi::xml_node&)
     {
     }

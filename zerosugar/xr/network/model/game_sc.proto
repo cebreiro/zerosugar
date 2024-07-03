@@ -114,3 +114,22 @@ message ChangeRemotePlayerEquipItem
     int32 equip_position = 2;
     int32 item_id = 3;
 }
+
+// dungeon match
+message NotifyDungeonMatchGroupCreation
+{
+    option (opcode) = 1012;
+}
+
+message NotifyDungeonMatchFailure
+{
+    option (opcode) = 1013;
+}
+
+message NotifyDungeonMatchGroupApproved
+{
+    option (opcode) = 3001;
+
+    string ip = 1;
+    int32 port = 2;
+}

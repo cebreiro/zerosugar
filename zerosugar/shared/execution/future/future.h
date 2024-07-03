@@ -59,6 +59,17 @@ namespace zerosugar
         template <typename Callable, typename Result = boost::callable_traits::return_type_t<Callable>>
         auto ContinuationWith(execution::IExecutor& executor, Callable&& callable) -> Future<Result>;
 
+    public:
+        friend bool operator==(const Future& lhs, const Future& rhs)
+        {
+            return lhs._context == rhs._context;
+        }
+
+        friend bool operator!=(const Future& lhs, const Future& rhs)
+        {
+            return lhs._context != rhs._context;
+        }
+
     private:
         SharedPtrNotNull<context_type> _context;
     };

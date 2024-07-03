@@ -124,6 +124,7 @@ namespace zerosugar::xr::service
         int64_t accountId = {};
         int64_t characterId = {};
         int64_t gameInstanceId = {};
+        int64_t userUniqueId = {};
     };
 
     struct BroadcastChattingParam
@@ -135,6 +136,55 @@ namespace zerosugar::xr::service
     };
 
     struct BroadcastChattingResult
+    {
+        CoordinationServiceErrorCode errorCode = {};
+    };
+
+    struct RequestDungeonMatchParam
+    {
+        int64_t serverId = {};
+        int64_t gameInstanceId = {};
+        std::string authenticationToken = {};
+        int32_t dungeonId = {};
+    };
+
+    struct RequestDungeonMatchResult
+    {
+        CoordinationServiceErrorCode errorCode = {};
+    };
+
+    struct CancelDungeonMatchParam
+    {
+        int64_t serverId = {};
+        int64_t gameInstanceId = {};
+        std::string authenticationToken = {};
+    };
+
+    struct CancelDungeonMatchResult
+    {
+        CoordinationServiceErrorCode errorCode = {};
+    };
+
+    struct ApproveDungeonMatchParam
+    {
+        int64_t serverId = {};
+        int64_t gameInstanceId = {};
+        std::string authenticationToken = {};
+    };
+
+    struct ApproveDungeonMatchResult
+    {
+        CoordinationServiceErrorCode errorCode = {};
+    };
+
+    struct RejectDungeonMatchParam
+    {
+        int64_t serverId = {};
+        int64_t gameInstanceId = {};
+        std::string authenticationToken = {};
+    };
+
+    struct RejectDungeonMatchResult
     {
         CoordinationServiceErrorCode errorCode = {};
     };

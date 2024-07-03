@@ -21,13 +21,10 @@ namespace zerosugar::xr
     public:
         auto Handle(GameServer& server, const std::string& str, std::optional<int64_t> responseId) const -> Future<void> final
         {
-            const nlohmann::json& json = nlohmann::json::parse(str);
-            const T& command = json.get<T>();
-
-            return this->HandleCommand(server, command, responseId);
+            return this->HandleCommand(server, nlohmann::json::parse(str).get<T>(), responseId);
         }
 
     private:
-        virtual auto HandleCommand(GameServer& server, const T& command, std::optional<int64_t> responseId) const -> Future<void> = 0;
+        virtual auto HandleCommand(GameServer& server, T command, std::optional<int64_t> responseId) const -> Future<void> = 0;
     };
 }

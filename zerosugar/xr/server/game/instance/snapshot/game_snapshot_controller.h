@@ -31,6 +31,7 @@ namespace zerosugar::xr
         ~GameSnapshotController();
 
         void ProcessPlayerSpawn(const GameEntity& entity);
+        void ProcessPlayerDespawn(game_entity_id_type entityId);
         void ProcessMovement(game_entity_id_type id, const Eigen::Vector3d& position);
         void ProcessStop(game_entity_id_type id, const Eigen::Vector3d& position);
         void ProcessSprint(game_entity_id_type id);

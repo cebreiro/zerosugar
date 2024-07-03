@@ -91,6 +91,44 @@ namespace zerosugar::xr::network::game::cs
         int32_t srcPosition = {};
     };
 
+    struct StartDungeonMatch final : IPacket
+    {
+        static constexpr int32_t opcode = 3001;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        int32_t deugeonId = {};
+    };
+
+    struct CancelDungeonMatch final : IPacket
+    {
+        static constexpr int32_t opcode = 3002;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+    };
+
+    struct ApproveDungeonMatch final : IPacket
+    {
+        static constexpr int32_t opcode = 3003;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+    };
+
+    struct RejectDungeonMatch final : IPacket
+    {
+        static constexpr int32_t opcode = 3004;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+    };
+
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>;
     auto CreateAnyFrom(PacketReader& reader) -> std::any;
 }

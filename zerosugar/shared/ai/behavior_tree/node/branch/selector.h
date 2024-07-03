@@ -16,6 +16,8 @@ namespace zerosugar::bt::node
     public:
         bool ShouldContinue(State childState) const override;
 
+        auto GetName() const -> std::string_view override;
+
         friend void from_xml(Selector&, const pugi::xml_node&);
     };
 }

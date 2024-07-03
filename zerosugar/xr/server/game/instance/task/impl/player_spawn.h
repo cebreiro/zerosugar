@@ -1,5 +1,4 @@
 #pragma once
-#include "zerosugar/xr/network/model/generated/game_cs_message.h"
 #include "zerosugar/xr/server/game/instance/task/game_task.h"
 
 namespace zerosugar::xr::game_task

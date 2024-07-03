@@ -1,11 +1,19 @@
 #pragma once
+#include "zerosugar/xr/service/coordination/node/node_id.h"
 #include "zerosugar/xr/service/model/generated/coordination_service.h"
 
 namespace zerosugar::xr::coordination
 {
+    class GameUser;
     class NodeContainer;
     class ILoadBalancer;
     class CommandResponseHandlerFactory;
+}
+
+namespace zerosugar::xr
+{
+    class DungeonMatchGroup;
+    class DungeonMatchCoordinator;
 }
 
 namespace zerosugar::xr
@@ -37,14 +45,25 @@ namespace zerosugar::xr
 
         auto BroadcastChattingAsync(service::BroadcastChattingParam param) -> Future<service::BroadcastChattingResult> override;
 
+        auto RequestDungeonMatchAsync(service::RequestDungeonMatchParam param) -> Future<service::RequestDungeonMatchResult> override;
+        auto CancelDungeonMatchAsync(service::CancelDungeonMatchParam param) -> Future<service::CancelDungeonMatchResult> override;
+        auto ApproveDungeonMatchAsync(service::ApproveDungeonMatchParam param) -> Future<service::ApproveDungeonMatchResult> override;
+        auto RejectDungeonMatchAsync(service::RejectDungeonMatchParam param) -> Future<service::RejectDungeonMatchResult> override;
 
+    public:
+        auto PublishGameInstanceId() -> coordination::game_instance_id_type;
+
+    public:
         auto GetStrand() -> Strand&;
         auto GetServiceLocator() -> ServiceLocator&;
 
         auto GetNodeContainer() -> coordination::NodeContainer&;
+        auto GetLoadBalancer() -> coordination::ILoadBalancer&;
         auto GetChannelInputHandlerFactory() -> const coordination::CommandResponseHandlerFactory&;
 
     private:
+        auto FindGameUser(const std::string& token, coordination::game_instance_id_type instanceId,
+            coordination::game_server_id_type serverId) -> coordination::GameUser*;
         auto PublishSnowflakeKey(const std::string& requester) -> std::optional<int32_t>;
 
     private:
@@ -62,8 +81,9 @@ namespace zerosugar::xr
         int64_t _nextGameUserId = 0;
 
         std::optional<std::pair<std::string, int32_t>> _lobby;
-        std::unique_ptr<coordination::NodeContainer> _nodeContainer;
-        std::unique_ptr<coordination::ILoadBalancer> _loadBalancer;
-        std::unique_ptr<coordination::CommandResponseHandlerFactory> _commandResponseHandlerFactory;
+        UniquePtrNotNull<coordination::NodeContainer> _nodeContainer;
+        UniquePtrNotNull<coordination::ILoadBalancer> _loadBalancer;
+        UniquePtrNotNull<coordination::CommandResponseHandlerFactory> _commandResponseHandlerFactory;
+        SharedPtrNotNull<DungeonMatchCoordinator> _dungeonMatchCoordinator;
     };
 }

@@ -5,6 +5,7 @@
 #include "zerosugar/xr/network/rpc/rpc_client.h"
 #include "zerosugar/xr/service/coordination/command/command_response_channel_runner.h"
 #include "zerosugar/xr/service/coordination/command/command_response_handler_factory.h"
+#include "zerosugar/xr/service/coordination/contents/match/dungeon_match_coordinator.h"
 #include "zerosugar/xr/service/coordination/load_balance/load_balancer.h"
 #include "zerosugar/xr/service/coordination/node/game_instance.h"
 #include "zerosugar/xr/service/coordination/node/game_server.h"
@@ -21,6 +22,7 @@ namespace zerosugar::xr
         , _nodeContainer(std::make_unique<coordination::NodeContainer>())
         , _loadBalancer(std::make_unique<coordination::LoadBalancer>(*this))
         , _commandResponseHandlerFactory(std::make_unique<coordination::CommandResponseHandlerFactory>())
+        , _dungeonMatchCoordinator(std::make_shared<DungeonMatchCoordinator>(*this))
     {
     }
 
@@ -35,16 +37,22 @@ namespace zerosugar::xr
         _serviceLocator = serviceLocator;
 
         Configure(shared_from_this(), serviceLocator.Get<RPCClient>());
+
+        _dungeonMatchCoordinator->Start();
     }
 
     void CoordinationService::Shutdown()
     {
         ICoordinationService::Shutdown();
+
+        _dungeonMatchCoordinator->Shutdown();
     }
 
     void CoordinationService::Join(std::vector<boost::system::error_code>& errors)
     {
         ICoordinationService::Join(errors);
+
+        _dungeonMatchCoordinator->Join().Get();
     }
 
     auto CoordinationService::RegisterServerAsync(service::RegisterServerParam param) -> Future<service::RegisterServerResult>
@@ -194,7 +202,7 @@ namespace zerosugar::xr
         coordination::GameInstance* instance = server->FindGameInstance(param.zoneId);
         if (!instance)
         {
-            const coordination::game_instance_id_type instanceId(++_nextGameInstanceId);
+            const coordination::game_instance_id_type instanceId = PublishGameInstanceId();
 
             coordination::command::LaunchGameInstance launchGameInstance;
             launchGameInstance.zoneId = param.zoneId;
@@ -297,6 +305,7 @@ namespace zerosugar::xr
             result.accountId = user->GetAccountId();
             result.characterId = user->GetCharacterId();
             result.gameInstanceId = gameInstance->GetId().Unwrap();
+            result.userUniqueId = user->GetId().Unwrap();
             
         } while (false);
 
@@ -320,42 +329,136 @@ namespace zerosugar::xr
 
         service::BroadcastChattingResult result;
 
-        do
+        const coordination::GameUser* user = FindGameUser(param.authenticationToken,
+            coordination::game_instance_id_type(param.gameInstanceId), coordination::game_server_id_type(param.serverId));
+        if (!user)
         {
-            const coordination::GameUser* user = _nodeContainer->FindGameUser(param.authenticationToken);
-            if (!user)
-            {
-                result.errorCode = service::CoordinationServiceErrorCode::CoordinationErrorInternalError;
+            result.errorCode = service::CoordinationServiceErrorCode::CoordinationErrorInternalError;
+            co_return result;
+        }
 
-                break;
-            }
+        coordination::command::BroadcastChatting command;
+        command.message = std::move(param.message);
 
-            const coordination::GameInstance* instance = user->GetParent();
-            if (!instance || instance->GetId().Unwrap() != param.gameInstanceId)
-            {
-                result.errorCode = service::CoordinationServiceErrorCode::CoordinationErrorInternalError;
-
-                break;
-            }
-
-            if (const coordination::GameServer* server = instance->GetParent(); !server || server->GetId().Unwrap() != param.serverId)
-            {
-                result.errorCode = service::CoordinationServiceErrorCode::CoordinationErrorInternalError;
-
-                break;
-            }
-
-            coordination::command::BroadcastChatting command;
-            command.message = std::move(param.message);
-
-            for (PtrNotNull<coordination::GameServer> server : _nodeContainer->GetServerRange())
-            {
-                server->SendCommand(command);
-            }
-            
-        } while (false);
+        for (PtrNotNull<coordination::GameServer> server : _nodeContainer->GetServerRange())
+        {
+            server->SendCommand(command);
+        }
 
         co_return result;
+    }
+
+    auto CoordinationService::RequestDungeonMatchAsync(service::RequestDungeonMatchParam param) -> Future<service::RequestDungeonMatchResult>
+    {
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
+        co_await *_strand;
+        assert(ExecutionContext::IsEqualTo(*_strand));
+
+        service::RequestDungeonMatchResult result;
+
+        const coordination::GameUser* user = FindGameUser(param.authenticationToken,
+            coordination::game_instance_id_type(param.gameInstanceId), coordination::game_server_id_type(param.serverId));
+        if (!user)
+        {
+            result.errorCode = service::CoordinationServiceErrorCode::CoordinationErrorInternalError;
+            co_return result;
+        }
+
+        if (!_dungeonMatchCoordinator->AddUser(user->GetId(), param.dungeonId))
+        {
+            result.errorCode = service::CoordinationServiceErrorCode::CoordinationErrorInternalError;
+            co_return result;
+        }
+
+        co_return result;
+    }
+
+    auto CoordinationService::CancelDungeonMatchAsync(service::CancelDungeonMatchParam param) -> Future<service::CancelDungeonMatchResult>
+    {
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
+        co_await *_strand;
+        assert(ExecutionContext::IsEqualTo(*_strand));
+
+        service::CancelDungeonMatchResult result;
+
+        const coordination::GameUser* user = FindGameUser(param.authenticationToken,
+            coordination::game_instance_id_type(param.gameInstanceId), coordination::game_server_id_type(param.serverId));
+        if (!user)
+        {
+            result.errorCode = service::CoordinationServiceErrorCode::CoordinationErrorInternalError;
+            co_return result;
+        }
+
+        if (!_dungeonMatchCoordinator->CancelUserMatch(user->GetId()))
+        {
+            result.errorCode = service::CoordinationServiceErrorCode::CoordinationErrorInternalError;
+            co_return result;
+        }
+
+        co_return result;
+    }
+
+    auto CoordinationService::ApproveDungeonMatchAsync(service::ApproveDungeonMatchParam param) -> Future<service::ApproveDungeonMatchResult>
+    {
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
+        co_await *_strand;
+        assert(ExecutionContext::IsEqualTo(*_strand));
+
+        service::ApproveDungeonMatchResult result;
+
+        const coordination::GameUser* user = FindGameUser(param.authenticationToken,
+            coordination::game_instance_id_type(param.gameInstanceId), coordination::game_server_id_type(param.serverId));
+        if (!user)
+        {
+            result.errorCode = service::CoordinationServiceErrorCode::CoordinationErrorInternalError;
+            co_return result;
+        }
+
+        if (!_dungeonMatchCoordinator->ApproveUserMatch(user->GetId()))
+        {
+            result.errorCode = service::CoordinationServiceErrorCode::CoordinationErrorInternalError;
+            co_return result;
+        }
+
+        co_return result;
+    }
+
+    auto CoordinationService::RejectDungeonMatchAsync(service::RejectDungeonMatchParam param) -> Future<service::RejectDungeonMatchResult>
+    {
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
+        co_await *_strand;
+        assert(ExecutionContext::IsEqualTo(*_strand));
+
+        service::RejectDungeonMatchResult result;
+
+        const coordination::GameUser* user = FindGameUser(param.authenticationToken,
+            coordination::game_instance_id_type(param.gameInstanceId), coordination::game_server_id_type(param.serverId));
+        if (!user)
+        {
+            result.errorCode = service::CoordinationServiceErrorCode::CoordinationErrorInternalError;
+            co_return result;
+        }
+
+        if (!_dungeonMatchCoordinator->RejectUserMatch(user->GetId()))
+        {
+            result.errorCode = service::CoordinationServiceErrorCode::CoordinationErrorInternalError;
+            co_return result;
+        }
+
+        co_return result;
+    }
+
+    auto CoordinationService::PublishGameInstanceId() -> coordination::game_instance_id_type
+    {
+        return coordination::game_instance_id_type(++_nextGameInstanceId);
     }
 
     auto CoordinationService::GetStrand() -> Strand&
@@ -373,9 +476,37 @@ namespace zerosugar::xr
         return *_nodeContainer;
     }
 
+    auto CoordinationService::GetLoadBalancer() -> coordination::ILoadBalancer&
+    {
+        return *_loadBalancer;
+    }
+
     auto CoordinationService::GetChannelInputHandlerFactory() -> const coordination::CommandResponseHandlerFactory&
     {
         return *_commandResponseHandlerFactory;
+    }
+
+    auto CoordinationService::FindGameUser(const std::string& token, coordination::game_instance_id_type instanceId,
+        coordination::game_server_id_type serverId) -> coordination::GameUser*
+    {
+        coordination::GameUser* user = _nodeContainer->FindGameUser(token);
+        if (!user)
+        {
+            return nullptr;
+        }
+
+        const coordination::GameInstance* instance = user->GetParent();
+        if (!instance || instance->GetId() != instanceId)
+        {
+            return nullptr;
+        }
+
+        if (const coordination::GameServer* server = instance->GetParent(); !server || server->GetId() != serverId)
+        {
+            return nullptr;
+        }
+
+        return user;
     }
 
     auto CoordinationService::PublishSnowflakeKey(const std::string& requester) -> std::optional<int32_t>

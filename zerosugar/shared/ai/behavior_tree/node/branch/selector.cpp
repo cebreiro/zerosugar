@@ -17,6 +17,11 @@ namespace zerosugar::bt::node
         return false;
     }
 
+    auto Selector::GetName() const -> std::string_view
+    {
+        return name;
+    }
+
     void from_xml(Selector&, const pugi::xml_node&)
     {
     }

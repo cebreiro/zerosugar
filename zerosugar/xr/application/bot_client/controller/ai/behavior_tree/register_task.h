@@ -7,5 +7,5 @@ namespace zerosugar::bt
 
 namespace zerosugar::xr::bot
 {
-    void Register(bt::NodeSerializer& serializer);
+    void RegisterTask(bt::NodeSerializer& serializer);
 }

@@ -7,8 +7,10 @@
 
 namespace zerosugar::xr
 {
-    auto BroadcastChattingHandler::HandleCommand(GameServer& server, const coordination::command::BroadcastChatting& command,
-        [[maybe_unused]] std::optional<int64_t> responseId) const -> Future<void>
+    using coordination::command::BroadcastChatting;
+
+    auto BroadcastChattingHandler::HandleCommand(GameServer& server,
+        BroadcastChatting command, [[maybe_unused]] std::optional<int64_t> responseId) const -> Future<void>
     {
         assert(!responseId.has_value());
 

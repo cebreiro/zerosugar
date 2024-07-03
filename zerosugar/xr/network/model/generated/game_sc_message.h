@@ -159,6 +159,36 @@ namespace zerosugar::xr::network::game::sc
         int32_t itemId = {};
     };
 
+    struct NotifyDungeonMatchGroupCreation final : IPacket
+    {
+        static constexpr int32_t opcode = 1012;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+    };
+
+    struct NotifyDungeonMatchFailure final : IPacket
+    {
+        static constexpr int32_t opcode = 1013;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+    };
+
+    struct NotifyDungeonMatchGroupApproved final : IPacket
+    {
+        static constexpr int32_t opcode = 3001;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        std::string ip = {};
+        int32_t port = {};
+    };
+
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>;
     auto CreateAnyFrom(PacketReader& reader) -> std::any;
 }

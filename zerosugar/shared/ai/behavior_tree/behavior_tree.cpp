@@ -1,6 +1,7 @@
 #include "behavior_tree.h"
 
 #include "zerosugar/shared/ai/behavior_tree/data/node_data_set_interface.h"
+#include "zerosugar/shared/ai/behavior_tree/log/behavior_tree_logger_interface.h"
 #include "zerosugar/shared/ai/behavior_tree/node/bt_node.h"
 #include "zerosugar/shared/ai/behavior_tree/node/bt_node_result.h"
 
@@ -16,11 +17,13 @@ namespace zerosugar
         Finalize();
     }
 
-    void BehaviorTree::Initialize(std::vector<UniquePtrNotNull<bt::INode>> nodes)
+    void BehaviorTree::Initialize(std::string name, std::vector<UniquePtrNotNull<bt::INode>> nodes)
     {
         assert(!nodes.empty());
 
+        _name = std::move(name);
         _storage = std::move(nodes);
+
         _rootNode = _storage.front()->GetNodePtr();
 
         for (const UniquePtrNotNull<bt::INode>& node : _storage)
@@ -49,6 +52,11 @@ namespace zerosugar
     void BehaviorTree::RunOnce()
     {
         assert(!IsAwaiting());
+
+        if (_logger)
+        {
+            _logger->LogBehaviorTreeStart(GetName());
+        }
 
         _stack.push_back(_rootNode);
 
@@ -97,12 +105,22 @@ namespace zerosugar
         if (bt::node::Result::promise_type& promise = _runningNodeCoroutine.promise();
             promise.IsWaitingFor(any.type()))
         {
+            if (_logger)
+            {
+                _logger->LogNodeResumeEvent(GetName(), GetCurrentNodeName(), any.type().name());
+            }
+
             promise.SetEvent(any);
 
             _runningNodeCoroutine.resume();
 
             Traverse();
         }
+    }
+
+    auto BehaviorTree::GetName() const -> const std::string&
+    {
+        return _name;
     }
 
     auto BehaviorTree::GetBlackBoard() -> bt::BlackBoard&
@@ -113,6 +131,11 @@ namespace zerosugar
     auto BehaviorTree::GetBlackBoard() const -> const bt::BlackBoard&
     {
         return _blackBoard;
+    }
+
+    void BehaviorTree::SetLogger(IBehaviorTreeLogger* logger)
+    {
+        _logger = logger;
     }
 
     void BehaviorTree::Traverse()
@@ -136,15 +159,9 @@ namespace zerosugar
                         if (branch.HasNext())
                         {
                             _stack.emplace_back(branch.Next());
+
+                            continue;
                         }
-                        else
-                        {
-                            _stack.pop_back();
-                        }
-                    }
-                    else
-                    {
-                        _stack.pop_back();
                     }
                 }
                 else
@@ -152,10 +169,17 @@ namespace zerosugar
                     assert(branch.HasNext());
 
                     (void)_visited.insert(&branch);
+                    if (_logger)
+                    {
+                        _logger->LogNodeStart(GetName(), GetCurrentNodeName());
+                    }
 
                     _stack.emplace_back(branch.Next());
+
+                    continue;
                 }
             }
+
             if (auto pptr = std::get_if<PtrNotNull<bt::Decorator>>(&current); pptr)
             {
                 bt::Decorator& decorator = **pptr;
@@ -165,18 +189,23 @@ namespace zerosugar
                     assert(_currentState != bt::node::State::Running);
 
                     _currentState = decorator.Decorate(_currentState);
-
-                    _stack.pop_back();
                 }
                 else
                 {
                     assert(decorator.HasChild());
 
                     (void)_visited.insert(&decorator);
+                    if (_logger)
+                    {
+                        _logger->LogNodeStart(GetName(), GetCurrentNodeName());
+                    }
 
                     _stack.push_back(decorator.GetChild());
+
+                    continue;
                 }
             }
+
             if (auto pptr = std::get_if<PtrNotNull<bt::Leaf>>(&current); pptr)
             {
                 bt::Leaf& leaf = **pptr;
@@ -192,44 +221,72 @@ namespace zerosugar
                     {
                         break;
                     }
-                    else
-                    {
-                        _runningNodeCoroutine = nullptr;
-                        _stack.pop_back();
-                    }
+
+                    _runningNodeCoroutine = nullptr;
                 }
                 else
                 {
-                    _currentState = leaf.Execute();
                     _visited.insert(&leaf);
+                    if (_logger)
+                    {
+                        _logger->LogNodeStart(GetName(), GetCurrentNodeName());
+                    }
+
+                    _currentState = leaf.Execute();
 
                     if (_currentState == bt::node::State::Running)
                     {
                         _runningNodeCoroutine = leaf.GetPromise();
 
+                        if (_logger)
+                        {
+                            _logger->LogNodeSuspend(GetName(), GetCurrentNodeName());
+                        }
+
                         break;
                     }
-
-                    _stack.pop_back();
                 }
             }
+
+            if (_logger)
+            {
+                assert(_currentState != bt::node::State::Running);
+
+                _logger->LogNodeEnd(GetName(), GetCurrentNodeName(), _currentState == bt::node::State::Success);
+            }
+
+            _stack.pop_back();
         }
 
         if (_stack.empty())
         {
+            if (_logger)
+            {
+                _logger->LogBehaviorTreeEnd(GetName(), _currentState == bt::node::State::Success);
+            }
+            
             FinalizeTraverse();
         }
     }
 
     void BehaviorTree::FinalizeTraverse()
     {
-        assert(_runningNodeCoroutine == nullptr);
-
         for (bt::INode* node : _visited)
         {
             node->Reset();
         }
 
         _visited.clear();
+    }
+
+    auto BehaviorTree::GetCurrentNodeName() const -> std::string
+    {
+        assert(!_stack.empty());
+
+        return std::visit([]<typename T>(const T & item) -> std::string
+        {
+            return std::string(item->GetName());
+
+        }, _stack.back());
     }
 }

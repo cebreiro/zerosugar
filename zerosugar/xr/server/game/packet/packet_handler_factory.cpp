@@ -13,6 +13,10 @@ namespace zerosugar::xr
         Register<RollDodgePlayerHandler>();
         Register<ChatHandler>();
         Register<SwapItemHandler>();
+        Register<StartDungeonMatchHandler>();
+        Register<CancelDungeonMatchHandler>();
+        Register<ApproveDungeonMatchHandler>();
+        Register<RejectDungeonMatchHandler>();
     }
 
     GamePacketHandlerFactory::~GamePacketHandlerFactory()

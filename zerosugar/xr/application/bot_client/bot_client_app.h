@@ -32,7 +32,9 @@ namespace zerosugar::xr
     private:
         void InitializeConfig();
         void InitializeLogger();
+        void InitializeExecutor();
         void InitializeGameData(ServiceLocator& serviceLocator);
+        void InitializeBotControlService();
 
     private:
         UniquePtrNotNull<BotClientAppConfig> _config;

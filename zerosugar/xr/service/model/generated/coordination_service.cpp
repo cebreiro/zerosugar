@@ -56,6 +56,26 @@ namespace zerosugar::xr::service
         return _client->CallRemoteProcedure<BroadcastChattingParam, Future<BroadcastChattingResult>::value_type>(name, "BroadcastChattingAsync", std::move(param));
     }
 
+    auto CoordinationServiceProxy::RequestDungeonMatchAsync(RequestDungeonMatchParam param) -> Future<RequestDungeonMatchResult>
+    {
+        return _client->CallRemoteProcedure<RequestDungeonMatchParam, Future<RequestDungeonMatchResult>::value_type>(name, "RequestDungeonMatchAsync", std::move(param));
+    }
+
+    auto CoordinationServiceProxy::CancelDungeonMatchAsync(CancelDungeonMatchParam param) -> Future<CancelDungeonMatchResult>
+    {
+        return _client->CallRemoteProcedure<CancelDungeonMatchParam, Future<CancelDungeonMatchResult>::value_type>(name, "CancelDungeonMatchAsync", std::move(param));
+    }
+
+    auto CoordinationServiceProxy::ApproveDungeonMatchAsync(ApproveDungeonMatchParam param) -> Future<ApproveDungeonMatchResult>
+    {
+        return _client->CallRemoteProcedure<ApproveDungeonMatchParam, Future<ApproveDungeonMatchResult>::value_type>(name, "ApproveDungeonMatchAsync", std::move(param));
+    }
+
+    auto CoordinationServiceProxy::RejectDungeonMatchAsync(RejectDungeonMatchParam param) -> Future<RejectDungeonMatchResult>
+    {
+        return _client->CallRemoteProcedure<RejectDungeonMatchParam, Future<RejectDungeonMatchResult>::value_type>(name, "RejectDungeonMatchAsync", std::move(param));
+    }
+
     void Configure(const SharedPtrNotNull<ICoordinationService>& service, RPCClient& rpcClient)
     {
         rpcClient.RegisterProcedure<false, false>("CoordinationService", "RegisterServerAsync",
@@ -102,6 +122,26 @@ namespace zerosugar::xr::service
             [service = service](BroadcastChattingParam param) -> Future<BroadcastChattingResult>
             {
                 return service->BroadcastChattingAsync(std::move(param));
+            });
+        rpcClient.RegisterProcedure<false, false>("CoordinationService", "RequestDungeonMatchAsync",
+            [service = service](RequestDungeonMatchParam param) -> Future<RequestDungeonMatchResult>
+            {
+                return service->RequestDungeonMatchAsync(std::move(param));
+            });
+        rpcClient.RegisterProcedure<false, false>("CoordinationService", "CancelDungeonMatchAsync",
+            [service = service](CancelDungeonMatchParam param) -> Future<CancelDungeonMatchResult>
+            {
+                return service->CancelDungeonMatchAsync(std::move(param));
+            });
+        rpcClient.RegisterProcedure<false, false>("CoordinationService", "ApproveDungeonMatchAsync",
+            [service = service](ApproveDungeonMatchParam param) -> Future<ApproveDungeonMatchResult>
+            {
+                return service->ApproveDungeonMatchAsync(std::move(param));
+            });
+        rpcClient.RegisterProcedure<false, false>("CoordinationService", "RejectDungeonMatchAsync",
+            [service = service](RejectDungeonMatchParam param) -> Future<RejectDungeonMatchResult>
+            {
+                return service->RejectDungeonMatchAsync(std::move(param));
             });
     }
 

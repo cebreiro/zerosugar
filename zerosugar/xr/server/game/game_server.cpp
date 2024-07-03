@@ -10,17 +10,21 @@
 #include "zerosugar/xr/server/game/controller/game_client.h"
 #include "zerosugar/xr/server/game/command/command_channel_runner.h"
 #include "zerosugar/xr/server/game/command/command_handler_factory.h"
+#include "zerosugar/xr/server/game/controller/game_client_container.h"
+#include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/game_instance_container.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_serializer.h"
 #include "zerosugar/xr/server/game/packet/packet_handler_factory.h"
 #include "zerosugar/xr/server/game/packet/packet_handler_interface.h"
 #include "zerosugar/xr/server/game/repository/game_repository.h"
+#include "zerosugar/xr/server/game/instance/task/impl/player_despawn.h"
 #include "zerosugar/xr/service/model/generated/coordination_service.h"
 
 namespace zerosugar::xr
 {
     GameServer::GameServer(execution::AsioExecutor& executor)
         : Server("game_server", executor)
+        , _clientContainer(std::make_unique<GameClientContainer>())
         , _gameInstanceContainer(std::make_unique<GameInstanceContainer>())
         , _gamePacketHandlerFactory(std::make_unique<GamePacketHandlerFactory>())
         , _commandHandlerFactory(std::make_unique<CommandHandlerFactory>())
@@ -65,35 +69,45 @@ namespace zerosugar::xr
 
     bool GameServer::HasClient(session::id_type id) const
     {
-        return _clients.count(id) > 0;
+        return _clientContainer->Contains(id);
     }
 
     bool GameServer::AddClient(session::id_type id, SharedPtrNotNull<GameClient> client)
     {
-        decltype(_clients)::accessor accessor;
-        if (_clients.insert(accessor, id))
-        {
-            accessor->second = std::move(client);
-
-            return true;
-        }
-        else
-        {
-            assert(false);
-
-            return false;
-        }
+        return _clientContainer->Add(id, client);
     }
 
     auto GameServer::FindClient(session::id_type id) const -> SharedPtrNotNull<GameClient>
     {
-        decltype(_clients)::const_accessor accessor;
-        if (_clients.find(accessor, id))
+        return _clientContainer->Find(id);
+    }
+
+    auto GameServer::ShutdownClient(int64_t userId) -> Future<void>
+    {
+        std::shared_ptr<GameClient> client = _clientContainer->FindByUserId(userId);
+        if (!client)
         {
-            return accessor->second;
+            co_return;
         }
 
-        return {};
+        std::shared_ptr<GameInstance> gameInstance = client->GetGameInstance();
+        if (!gameInstance)
+        {
+            co_return;
+        }
+
+        Promise<void> promise;
+        Future<void> future = promise.GetFuture();
+
+        auto task = std::make_unique<game_task::PlayerDepsawn>(std::move(promise), client->GetControllerId(), client->GetGameEntityId());
+        gameInstance->Summit(std::move(task), std::nullopt);
+
+        co_await future;
+        co_await _gameRepository->FinalizeSaves(client->GetCharacterId());
+
+        _clientContainer->Remove(userId);
+
+        co_return;
     }
 
     void GameServer::SendCommandResponse(const service::CoordinationCommandResponse& response)
@@ -109,6 +123,11 @@ namespace zerosugar::xr
     auto GameServer::GetServiceLocator() -> ServiceLocator&
     {
         return _serviceLocator;
+    }
+
+    auto GameServer::GetClientContainer() -> GameClientContainer&
+    {
+        return *_clientContainer;
     }
 
     auto GameServer::GetGameInstanceContainer() -> GameInstanceContainer&
@@ -274,7 +293,8 @@ namespace zerosugar::xr
             std::format("[{}] session io error. session: {}, error: {}", GetName(), session, error.message()));
 
         _sessionReceiveBuffers.erase(session.GetId());
-        _clients.erase(session.GetId());
+
+        _clientContainer->Remove(session.GetId());
     }
 
     void GameServer::RegisterToCoordinationService()

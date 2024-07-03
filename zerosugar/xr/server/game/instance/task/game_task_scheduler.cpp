@@ -29,6 +29,11 @@ namespace zerosugar::xr
         return _task.operator bool();
     }
 
+    bool GameTaskScheduler::Process::IsTerminateReserved() const
+    {
+        return _terminateReserved;
+    }
+
     void GameTaskScheduler::Process::AddStarvationCount()
     {
         ++_starvationCount;
@@ -84,6 +89,11 @@ namespace zerosugar::xr
     void GameTaskScheduler::Process::SetStarvationCount(int64_t value)
     {
         _starvationCount = value;
+    }
+
+    void GameTaskScheduler::Process::SetTerminateReserved(bool value)
+    {
+        _terminateReserved = value;
     }
 
     GameTaskScheduler::GameTaskScheduler(GameInstance& gameInstance)
@@ -142,9 +152,22 @@ namespace zerosugar::xr
     {
         Dispatch(_gameInstance.GetStrand(), [this, id = id.Unwrap()]()
             {
-                [[maybe_unused]]
-                const size_t erased = _processTaskQueues.erase(id);
-                assert(erased);
+                if (const auto iter = _processes.find(id); iter != _processes.end())
+                {
+                    Process& process = iter->second;
+                    if (process.GetState() == Process::State::Running)
+                    {
+                        process.SetTerminateReserved(true);
+                    }
+                    else
+                    {
+                        ExitProcess(process);
+                    }
+                }
+                else
+                {
+                    assert(false);
+                }
             });
     }
 
@@ -393,7 +416,7 @@ namespace zerosugar::xr
                 return nullptr;
             }();
 
-        if (taskQueue)
+        if (taskQueue && !process.IsTerminateReserved())
         {
             if (taskQueue->empty())
             {
@@ -588,8 +611,6 @@ namespace zerosugar::xr
 
     void GameTaskScheduler::ExitProcess(Process& process)
     {
-        assert(process.GetState() == Process::State::Running);
-
         const int64_t id = ++_nextRecycleProcessId;
 
         set_type& states = GetProcessesBy(process.GetState());

@@ -8,6 +8,9 @@ namespace zerosugar::xr
     {
         Register<LaunchGameInstanceHandler>();
         Register<BroadcastChattingHandler>();
+        Register<NotifyDungeonMatchGroupApprovedHandler>();
+        Register<NotifyDungeonMatchGroupCreationHandler>();
+        Register<NotifyDungeonMatchGroupRejectedHandler>();
     }
 
     CommandHandlerFactory::~CommandHandlerFactory()

@@ -6,3 +6,8 @@
 #include "zerosugar/xr/server/game/packet/impl/roll_dodge_player_handler.h"
 #include "zerosugar/xr/server/game/packet/impl/chat_handler.h"
 #include "zerosugar/xr/server/game/packet/impl/swap_item.h"
+#include "zerosugar/xr/server/game/packet/impl/start_dungeon_match.h"
+#include "zerosugar/xr/server/game/packet/impl/reject_dungeon_match.h"
+#include "zerosugar/xr/server/game/packet/impl/cancel_dungeon_match.h"
+#include "zerosugar/xr/server/game/packet/impl/approve_dungeon_match.h"
+#include "zerosugar/xr/server/game/packet/impl/reject_dungeon_match.h"

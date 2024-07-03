@@ -8,7 +8,7 @@ namespace zerosugar::xr
     {
     private:
         auto HandleCommand(GameServer& server,
-            const coordination::command::LaunchGameInstance& command,
+            coordination::command::LaunchGameInstance command,
             std::optional<int64_t> responseId) const -> Future<void> override;
     };
 }

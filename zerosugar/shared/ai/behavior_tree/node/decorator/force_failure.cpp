@@ -9,6 +9,11 @@ namespace zerosugar::bt::node
         return State::Failure;
     }
 
+    auto ForceFailure::GetName() const -> std::string_view
+    {
+        return name;
+    }
+
     void from_xml(ForceFailure&, const pugi::xml_node&)
     {
     }

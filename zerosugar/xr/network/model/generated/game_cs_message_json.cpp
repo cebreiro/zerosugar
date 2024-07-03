@@ -105,4 +105,53 @@ namespace zerosugar::xr::network::game::cs
             };
     }
 
+    void from_json(const nlohmann::json& j, StartDungeonMatch& item)
+    {
+        j.at("deugeonId").get_to(item.deugeonId);
+    }
+
+    void to_json(nlohmann::json& j, const StartDungeonMatch& item)
+    {
+        j = nlohmann::json
+            {
+                { "deugeonId", item.deugeonId },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, CancelDungeonMatch& item)
+    {
+        (void)j;
+        (void)item;
+    }
+
+    void to_json(nlohmann::json& j, const CancelDungeonMatch& item)
+    {
+        (void)j;
+        (void)item;
+    }
+
+    void from_json(const nlohmann::json& j, ApproveDungeonMatch& item)
+    {
+        (void)j;
+        (void)item;
+    }
+
+    void to_json(nlohmann::json& j, const ApproveDungeonMatch& item)
+    {
+        (void)j;
+        (void)item;
+    }
+
+    void from_json(const nlohmann::json& j, RejectDungeonMatch& item)
+    {
+        (void)j;
+        (void)item;
+    }
+
+    void to_json(nlohmann::json& j, const RejectDungeonMatch& item)
+    {
+        (void)j;
+        (void)item;
+    }
+
 }

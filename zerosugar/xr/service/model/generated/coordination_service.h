@@ -26,6 +26,10 @@ namespace zerosugar::xr::service
         virtual auto RemovePlayerAsync(RemovePlayerParam param) -> Future<RemovePlayerResult> = 0;
         virtual auto AuthenticatePlayerAsync(AuthenticatePlayerParam param) -> Future<AuthenticatePlayerResult> = 0;
         virtual auto BroadcastChattingAsync(BroadcastChattingParam param) -> Future<BroadcastChattingResult> = 0;
+        virtual auto RequestDungeonMatchAsync(RequestDungeonMatchParam param) -> Future<RequestDungeonMatchResult> = 0;
+        virtual auto CancelDungeonMatchAsync(CancelDungeonMatchParam param) -> Future<CancelDungeonMatchResult> = 0;
+        virtual auto ApproveDungeonMatchAsync(ApproveDungeonMatchParam param) -> Future<ApproveDungeonMatchResult> = 0;
+        virtual auto RejectDungeonMatchAsync(RejectDungeonMatchParam param) -> Future<RejectDungeonMatchResult> = 0;
         auto GetName() const -> std::string_view override { return "CoordinationService"; }
     };
 
@@ -45,6 +49,10 @@ namespace zerosugar::xr::service
         auto RemovePlayerAsync(RemovePlayerParam param) -> Future<RemovePlayerResult> override;
         auto AuthenticatePlayerAsync(AuthenticatePlayerParam param) -> Future<AuthenticatePlayerResult> override;
         auto BroadcastChattingAsync(BroadcastChattingParam param) -> Future<BroadcastChattingResult> override;
+        auto RequestDungeonMatchAsync(RequestDungeonMatchParam param) -> Future<RequestDungeonMatchResult> override;
+        auto CancelDungeonMatchAsync(CancelDungeonMatchParam param) -> Future<CancelDungeonMatchResult> override;
+        auto ApproveDungeonMatchAsync(ApproveDungeonMatchParam param) -> Future<ApproveDungeonMatchResult> override;
+        auto RejectDungeonMatchAsync(RejectDungeonMatchParam param) -> Future<RejectDungeonMatchResult> override;
     private:
         SharedPtrNotNull<RPCClient> _client;
     };

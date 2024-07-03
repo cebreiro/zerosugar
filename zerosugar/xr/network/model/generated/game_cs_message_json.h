@@ -32,4 +32,16 @@ namespace zerosugar::xr::network::game::cs
     void from_json(const nlohmann::json& j, SwapItem& item);
     void to_json(nlohmann::json& j, const SwapItem& item);
 
+    void from_json(const nlohmann::json& j, StartDungeonMatch& item);
+    void to_json(nlohmann::json& j, const StartDungeonMatch& item);
+
+    void from_json(const nlohmann::json& j, CancelDungeonMatch& item);
+    void to_json(nlohmann::json& j, const CancelDungeonMatch& item);
+
+    void from_json(const nlohmann::json& j, ApproveDungeonMatch& item);
+    void to_json(nlohmann::json& j, const ApproveDungeonMatch& item);
+
+    void from_json(const nlohmann::json& j, RejectDungeonMatch& item);
+    void to_json(nlohmann::json& j, const RejectDungeonMatch& item);
+
 }

@@ -16,10 +16,10 @@ namespace zerosugar::bt
         bool ContainsAs(const std::string& key) const;
 
         template <typename T>
-        bool Insert(const std::string& key, T&& value);
+        bool Insert(const std::string& key, const T& value);
 
         template <typename T>
-        void InsertOrUpdate(const std::string& key, T&& value);
+        void InsertOrUpdate(const std::string& key, const T& value);
 
         template <typename T>
         auto Get(const std::string& key) -> T&;
@@ -44,15 +44,15 @@ namespace zerosugar::bt
     }
 
     template <typename T>
-    bool BlackBoard::Insert(const std::string& key, T&& value)
+    bool BlackBoard::Insert(const std::string& key, const T& value)
     {
-        return _container.try_emplace(key, std::forward<T>(value)).second;
+        return _container.try_emplace(key, value).second;
     }
 
     template <typename T>
-    void BlackBoard::InsertOrUpdate(const std::string& key, T&& value)
+    void BlackBoard::InsertOrUpdate(const std::string& key, const T& value)
     {
-        _container[key] = std::forward<T>(value);
+        _container[key] = value;
     }
 
     template <typename T>

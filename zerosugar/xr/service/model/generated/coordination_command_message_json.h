@@ -15,4 +15,13 @@ namespace zerosugar::xr::coordination::command
     void from_json(const nlohmann::json& j, BroadcastChatting& item);
     void to_json(nlohmann::json& j, const BroadcastChatting& item);
 
+    void from_json(const nlohmann::json& j, NotifyDungeonMatchGroupCreation& item);
+    void to_json(nlohmann::json& j, const NotifyDungeonMatchGroupCreation& item);
+
+    void from_json(const nlohmann::json& j, NotifyDungeonMatchGroupApproved& item);
+    void to_json(nlohmann::json& j, const NotifyDungeonMatchGroupApproved& item);
+
+    void from_json(const nlohmann::json& j, NotifyDungeonMatchGroupRejected& item);
+    void to_json(nlohmann::json& j, const NotifyDungeonMatchGroupRejected& item);
+
 }

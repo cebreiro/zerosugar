@@ -246,6 +246,7 @@ namespace zerosugar::xr::service
         j.at("accountId").get_to(item.accountId);
         j.at("characterId").get_to(item.characterId);
         j.at("gameInstanceId").get_to(item.gameInstanceId);
+        j.at("userUniqueId").get_to(item.userUniqueId);
     }
 
     void to_json(nlohmann::json& j, const AuthenticatePlayerResult& item)
@@ -256,6 +257,7 @@ namespace zerosugar::xr::service
                 { "accountId", item.accountId },
                 { "characterId", item.characterId },
                 { "gameInstanceId", item.gameInstanceId },
+                { "userUniqueId", item.userUniqueId },
             };
     }
 
@@ -284,6 +286,128 @@ namespace zerosugar::xr::service
     }
 
     void to_json(nlohmann::json& j, const BroadcastChattingResult& item)
+    {
+        j = nlohmann::json
+            {
+                { "errorCode", item.errorCode },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, RequestDungeonMatchParam& item)
+    {
+        j.at("serverId").get_to(item.serverId);
+        j.at("gameInstanceId").get_to(item.gameInstanceId);
+        j.at("authenticationToken").get_to(item.authenticationToken);
+        j.at("dungeonId").get_to(item.dungeonId);
+    }
+
+    void to_json(nlohmann::json& j, const RequestDungeonMatchParam& item)
+    {
+        j = nlohmann::json
+            {
+                { "serverId", item.serverId },
+                { "gameInstanceId", item.gameInstanceId },
+                { "authenticationToken", item.authenticationToken },
+                { "dungeonId", item.dungeonId },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, RequestDungeonMatchResult& item)
+    {
+        j.at("errorCode").get_to(item.errorCode);
+    }
+
+    void to_json(nlohmann::json& j, const RequestDungeonMatchResult& item)
+    {
+        j = nlohmann::json
+            {
+                { "errorCode", item.errorCode },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, CancelDungeonMatchParam& item)
+    {
+        j.at("serverId").get_to(item.serverId);
+        j.at("gameInstanceId").get_to(item.gameInstanceId);
+        j.at("authenticationToken").get_to(item.authenticationToken);
+    }
+
+    void to_json(nlohmann::json& j, const CancelDungeonMatchParam& item)
+    {
+        j = nlohmann::json
+            {
+                { "serverId", item.serverId },
+                { "gameInstanceId", item.gameInstanceId },
+                { "authenticationToken", item.authenticationToken },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, CancelDungeonMatchResult& item)
+    {
+        j.at("errorCode").get_to(item.errorCode);
+    }
+
+    void to_json(nlohmann::json& j, const CancelDungeonMatchResult& item)
+    {
+        j = nlohmann::json
+            {
+                { "errorCode", item.errorCode },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, ApproveDungeonMatchParam& item)
+    {
+        j.at("serverId").get_to(item.serverId);
+        j.at("gameInstanceId").get_to(item.gameInstanceId);
+        j.at("authenticationToken").get_to(item.authenticationToken);
+    }
+
+    void to_json(nlohmann::json& j, const ApproveDungeonMatchParam& item)
+    {
+        j = nlohmann::json
+            {
+                { "serverId", item.serverId },
+                { "gameInstanceId", item.gameInstanceId },
+                { "authenticationToken", item.authenticationToken },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, ApproveDungeonMatchResult& item)
+    {
+        j.at("errorCode").get_to(item.errorCode);
+    }
+
+    void to_json(nlohmann::json& j, const ApproveDungeonMatchResult& item)
+    {
+        j = nlohmann::json
+            {
+                { "errorCode", item.errorCode },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, RejectDungeonMatchParam& item)
+    {
+        j.at("serverId").get_to(item.serverId);
+        j.at("gameInstanceId").get_to(item.gameInstanceId);
+        j.at("authenticationToken").get_to(item.authenticationToken);
+    }
+
+    void to_json(nlohmann::json& j, const RejectDungeonMatchParam& item)
+    {
+        j = nlohmann::json
+            {
+                { "serverId", item.serverId },
+                { "gameInstanceId", item.gameInstanceId },
+                { "authenticationToken", item.authenticationToken },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, RejectDungeonMatchResult& item)
+    {
+        j.at("errorCode").get_to(item.errorCode);
+    }
+
+    void to_json(nlohmann::json& j, const RejectDungeonMatchResult& item)
     {
         j = nlohmann::json
             {

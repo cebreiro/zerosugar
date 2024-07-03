@@ -1,5 +1,7 @@
 #include "bt_node.h"
 
+#include "zerosugar/shared/ai/behavior_tree/behavior_tree.h"
+
 namespace zerosugar::bt
 {
     bool Branch::HasNext() const
@@ -109,5 +111,19 @@ namespace zerosugar::bt
     void Leaf::SetBehaviorTree(BehaviorTree& bt)
     {
         _bt = &bt;
+    }
+
+    auto Leaf::GetBlackBoard() -> BlackBoard&
+    {
+        assert(_bt);
+
+        return _bt->GetBlackBoard();
+    }
+
+    auto Leaf::GetBlackBoard() const -> const BlackBoard&
+    {
+        assert(_bt);
+
+        return _bt->GetBlackBoard();
     }
 }

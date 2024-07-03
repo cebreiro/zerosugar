@@ -26,14 +26,11 @@ namespace zerosugar::xr::coordination
     public:
         auto Handle(CoordinationService& service, GameServer& server, const std::string& str) const -> Future<void> final
         {
-            const nlohmann::json& json = nlohmann::json::parse(str);
-            const T& response = json.get<T>();
-
-            return this->HandleResponse(service, server, response);
+            return this->HandleResponse(service, server, nlohmann::json::parse(str).get<T>());
         }
 
     private:
-        virtual auto HandleResponse(CoordinationService& service, GameServer& server, const T& response) const -> Future<void> = 0;
+        virtual auto HandleResponse(CoordinationService& service, GameServer& server, T response) const -> Future<void> = 0;
     };
 
 }

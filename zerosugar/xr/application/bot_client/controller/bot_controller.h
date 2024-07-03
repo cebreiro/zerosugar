@@ -5,6 +5,7 @@ namespace zerosugar
 {
     class Socket;
     class BehaviorTree;
+    class IBehaviorTreeLogger;
 }
 
 namespace zerosugar::execution
@@ -36,6 +37,7 @@ namespace zerosugar::xr
         void Shutdown(const std::string& reason);
 
         auto Transition(const std::string& behaviorTreeName) -> Future<void>;
+        void InvokeOnBehaviorTree(const std::function<void(BehaviorTree&)>& func);
 
         auto ConnectTo(std::string ip, uint16_t port, int32_t retryMilli) -> Future<void>;
         auto Close() -> Future<void>;
@@ -43,9 +45,11 @@ namespace zerosugar::xr
         void Send(Buffer buffer);
 
         auto GetId() const -> int64_t;
+        auto GetStrand() const -> execution::AsioStrand&;
         auto GetSocket() -> Socket&;
         auto GetSessionState() const -> BotSessionStateType;
 
+        void SetLogger(IBehaviorTreeLogger* logger);
         void SetSessionState(BotSessionStateType sessionState);
 
     private:
@@ -58,6 +62,8 @@ namespace zerosugar::xr
         int64_t _id;
 
         const bt::NodeSerializer& _nodeSerializer;
+        IBehaviorTreeLogger* _behaviorTreeLogger = nullptr;
+
         std::string _defaultBehaviorTree;
         Future<void> _runAI;
 

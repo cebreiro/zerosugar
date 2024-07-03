@@ -14,9 +14,9 @@ struct AddTask : Leaf
 
     auto Run() -> Result override
     {
-        (void)_bt->GetBlackBoard().Insert("value", int32_t{ 0 });
+        (void)GetBlackBoard().Insert("value", int32_t{ 0 });
 
-        int32_t* value = _bt->GetBlackBoard().GetIf<int32_t>("value");
+        int32_t* value = GetBlackBoard().GetIf<int32_t>("value");
         *value += _value;
 
         return true;
@@ -39,9 +39,9 @@ struct MultiplyTask : Leaf
 
     auto Run() -> Result override
     {
-        if (_bt->GetBlackBoard().Contains("value"))
+        if (GetBlackBoard().Contains("value"))
         {
-            int32_t* value = _bt->GetBlackBoard().GetIf<int32_t>("value");
+            int32_t* value = GetBlackBoard().GetIf<int32_t>("value");
             *value *= _value;
 
             return true;
@@ -138,7 +138,7 @@ TEST_F(BehaviorTreeTest, TestSequence)
     BehaviorTree behaviorTree(blackBoard);
 
     NodeDataSetXML dataSet(doc.child("root").first_child());
-    behaviorTree.Initialize(dataSet.Deserialize(_serializer));
+    behaviorTree.Initialize("test", dataSet.Deserialize(_serializer));
 
     // act
     behaviorTree.RunOnce();
@@ -184,7 +184,7 @@ TEST_F(BehaviorTreeTest, TestSequenceOrder)
     BehaviorTree behaviorTree(blackBoard);
 
     NodeDataSetXML dataSet(doc.child("root").first_child());
-    behaviorTree.Initialize(dataSet.Deserialize(_serializer));
+    behaviorTree.Initialize("test", dataSet.Deserialize(_serializer));
 
     // act
     behaviorTree.RunOnce();
@@ -224,7 +224,7 @@ TEST_F(BehaviorTreeTest, TestRunning)
     BehaviorTree behaviorTree(blackBoard);
 
     NodeDataSetXML dataSet(doc.child("root").first_child());
-    behaviorTree.Initialize(dataSet.Deserialize(_serializer));
+    behaviorTree.Initialize("test", dataSet.Deserialize(_serializer));
 
     // act
     behaviorTree.RunOnce();
