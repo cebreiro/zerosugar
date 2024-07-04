@@ -37,6 +37,16 @@ namespace zerosugar::xr::network::game::sc
         writer.Write(localPlayer);
     }
 
+    void NotifyPlayerControllable::Deserialize(PacketReader& reader)
+    {
+        (void)reader;
+    }
+
+    void NotifyPlayerControllable::Serialize(PacketWriter& writer) const
+    {
+        (void)writer;
+    }
+
     void AddRemotePlayer::Deserialize(PacketReader& reader)
     {
         player = reader.Read<RemotePlayer>();
@@ -231,6 +241,13 @@ namespace zerosugar::xr::network::game::sc
 
                 return item;
             }
+            case NotifyPlayerControllable::opcode:
+            {
+                auto item = std::make_unique<NotifyPlayerControllable>();
+                item->Deserialize(reader);
+
+                return item;
+            }
             case AddRemotePlayer::opcode:
             {
                 auto item = std::make_unique<AddRemotePlayer>();
@@ -341,6 +358,13 @@ namespace zerosugar::xr::network::game::sc
             case EnterGame::opcode:
             {
                 EnterGame item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case NotifyPlayerControllable::opcode:
+            {
+                NotifyPlayerControllable item;
                 item.Deserialize(reader);
 
                 return item;

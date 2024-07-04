@@ -4,7 +4,7 @@
 #include "zerosugar/xr/network/packet.h"
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
 #include "zerosugar/xr/server/game/game_server.h"
-#include "zerosugar/xr/server/game/controller/game_client.h"
+#include "zerosugar/xr/server/game/client/game_client.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/service/model/generated/coordination_service.h"
 

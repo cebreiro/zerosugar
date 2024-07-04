@@ -122,7 +122,7 @@ namespace zerosugar::xr
         auto& statComponent = entity.GetComponent<StatComponent>();
 
         result.hp = 100;// statComponent.GetHP().As<float>();
-        result.maxHP = 100;// statComponent.GetMaxHP().As<float>();
+        result.maxHp = 100;// statComponent.GetMaxHP().As<float>();
         result.attackMin = statComponent.Get(StatType::Attack).As<float>();
         result.attackMax = statComponent.Get(StatType::Attack).As<float>();
         result.speed = 10.f;
@@ -141,7 +141,7 @@ namespace zerosugar::xr
     void GamePacketBuilder::Build(network::game::PlayerBase& result, const GamePlayerSnapshot& playerView)
     {
         result.hp = playerView.GetHp();
-        result.maxHP = playerView.GetMaxHp();
+        result.maxHp = playerView.GetMaxHp();
         result.attackMin = playerView.GetAttackMin();
         result.attackMax = playerView.GetAttackMax();
         result.speed = playerView.GetSpeed();

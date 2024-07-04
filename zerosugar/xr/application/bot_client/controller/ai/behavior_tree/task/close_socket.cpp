@@ -17,7 +17,7 @@ namespace zerosugar::xr::bot
             {
                 controller->InvokeOnBehaviorTree([](BehaviorTree& behaviorTree)
                     {
-                        behaviorTree.Notify(event::SocketClosed{});
+                        behaviorTree.NotifyAndResume(event::SocketClosed{});
                     });
             });
 

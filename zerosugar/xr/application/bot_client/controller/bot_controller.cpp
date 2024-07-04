@@ -239,37 +239,52 @@ namespace zerosugar::xr
         [[maybe_unused]]
         auto self = shared_from_this();
 
-        constexpr auto minTickInternal = std::chrono::milliseconds(200);
-        constexpr auto maxTickInternal = std::chrono::milliseconds(1000);
-
-        std::chrono::milliseconds tickInterval = minTickInternal;
-
         const SharedPtrNotNull<BehaviorTree> bt = _behaviorTree;
-        bt->RunOnce();
+        auto completionToken = std::make_shared<future::SharedContext<void>>();
 
         while (true)
         {
+            constexpr auto tickInterval = std::chrono::milliseconds(200);
             co_await Delay(tickInterval);
+
             assert(ExecutionContext::IsEqualTo(*_strand));
+
+            ZEROSUGAR_LOG_DEBUG(_serviceLocator,
+                std::format("[{}] behavior_tree[{}] tick", GetName(), bt->GetName()));
+
+            bt->RunOnce();
+
+            while (bt->IsAwaiting())
+            {
+                completionToken->Reset();
+
+                bt->SetSignalHandler([completionToken]()
+                    {
+                        completionToken->OnSuccess();
+                    });
+
+                co_await Future<void>(completionToken);
+
+                ZEROSUGAR_LOG_DEBUG(_serviceLocator,
+                    std::format("[{}] behavior_tree[{}] resume", GetName(), bt->GetName()));
+
+                if (bt->StopRequested())
+                {
+                    break;
+                }
+
+                bt->Resume();
+            }
 
             if (bt->StopRequested())
             {
-                bt->Finalize();
-
-                co_return;
-            }
-
-            if (bt->IsAwaiting())
-            {
-                tickInterval = std::min(tickInterval + std::chrono::milliseconds(100), maxTickInternal);
-            }
-            else
-            {
-                tickInterval = minTickInternal;
-
-                bt->RunOnce();
+                break;
             }
         }
+
+        bt->Finalize();
+
+        co_return;
     }
 
     void BotController::Shutdown(const std::string& reason)
@@ -292,6 +307,11 @@ namespace zerosugar::xr
     auto BotController::GetId() const -> int64_t
     {
         return _id;
+    }
+
+    auto BotController::GetName() const -> std::string
+    {
+        return std::format("bot_controller:{}", _id);
     }
 
     auto BotController::GetStrand() const -> execution::AsioStrand&

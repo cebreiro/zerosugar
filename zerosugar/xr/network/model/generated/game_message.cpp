@@ -45,7 +45,7 @@ namespace zerosugar::xr::network::game
     void PlayerBase::Deserialize(BufferReader& reader)
     {
         hp = reader.Read<float>();
-        maxHP = reader.Read<float>();
+        maxHp = reader.Read<float>();
         attackMin = reader.Read<float>();
         attackMax = reader.Read<float>();
         attackRange = reader.Read<float>();
@@ -67,7 +67,7 @@ namespace zerosugar::xr::network::game
     void PlayerBase::Serialize(BufferWriter& writer) const
     {
         writer.Write<float>(hp);
-        writer.Write<float>(maxHP);
+        writer.Write<float>(maxHp);
         writer.Write<float>(attackMin);
         writer.Write<float>(attackMax);
         writer.Write<float>(attackRange);
@@ -227,12 +227,32 @@ namespace zerosugar::xr::network::game
 
     void Monster::Deserialize(BufferReader& reader)
     {
-        (void)reader;
+        dataId = reader.Read<int32_t>();
+        id = reader.Read<int64_t>();
+        reader.Read(transform);
+        hp = reader.Read<float>();
+        maxHp = reader.Read<float>();
+        attackMin = reader.Read<float>();
+        attackMax = reader.Read<float>();
+        attackRange = reader.Read<float>();
+        attackSpeed = reader.Read<float>();
+        speed = reader.Read<float>();
+        defence = reader.Read<float>();
     }
 
     void Monster::Serialize(BufferWriter& writer) const
     {
-        (void)writer;
+        writer.Write<int32_t>(dataId);
+        writer.Write<int64_t>(id);
+        writer.Write(transform);
+        writer.Write<float>(hp);
+        writer.Write<float>(maxHp);
+        writer.Write<float>(attackMin);
+        writer.Write<float>(attackMax);
+        writer.Write<float>(attackRange);
+        writer.Write<float>(attackSpeed);
+        writer.Write<float>(speed);
+        writer.Write<float>(defence);
     }
 
 }

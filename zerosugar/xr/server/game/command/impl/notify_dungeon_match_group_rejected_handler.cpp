@@ -1,8 +1,8 @@
 #include "notify_dungeon_match_group_rejected_handler.h"
 
 #include "zerosugar/xr/server/game/game_server.h"
-#include "zerosugar/xr/server/game/controller/game_client.h"
-#include "zerosugar/xr/server/game/controller/game_client_container.h"
+#include "zerosugar/xr/server/game/client/game_client.h"
+#include "zerosugar/xr/server/game/client/game_client_container.h"
 #include "zerosugar/xr/server/game/instance/game_instance_container.h"
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
 

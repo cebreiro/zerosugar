@@ -28,18 +28,28 @@ namespace zerosugar
         void Finalize();
 
         bool IsAwaiting() const;
+        bool CanResume() const;
+
         bool StopRequested() const;
 
         void RunOnce();
+        void Resume();
+
         void RequestStop();
 
         template <bt::bt_event_concept E>
         bool IsWaitFor() const;
         bool IsWaitFor(const std::type_info& typeInfo) const;
 
+        void SetSignalHandler(const std::function<void()>& function);
+
         template <bt::bt_event_concept E>
         void Notify(const E& e);
         void Notify(const std::any& any);
+
+        template <bt::bt_event_concept E>
+        void NotifyAndResume(const E& e);
+        void NotifyAndResume(const std::any& any);
 
         auto GetName() const -> const std::string&;
         auto GetBlackBoard() -> bt::BlackBoard&;
@@ -49,8 +59,9 @@ namespace zerosugar
 
     private:
         void Traverse();
-
         void FinalizeTraverse();
+
+        void Signal();
 
         auto GetCurrentNodeName() const -> std::string;
 
@@ -69,6 +80,7 @@ namespace zerosugar
         std::coroutine_handle<bt::node::Result::promise_type> _runningNodeCoroutine;
 
         bool _stopRequested = false;
+        std::function<void()> _signalHandler;
     };
 
     template <bt::bt_event_concept E>
@@ -90,7 +102,26 @@ namespace zerosugar
         if (bt::node::Result::promise_type& promise = _runningNodeCoroutine.promise();
             promise.IsWaitingFor(typeid(E)))
         {
-            promise.SetEvent(std::move(e));
+            promise.SetEvent(e);
+
+            Signal();
+        }
+    }
+
+    template <bt::bt_event_concept E>
+    void BehaviorTree::NotifyAndResume(const E& e)
+    {
+        if (_currentState != bt::node::State::Running)
+        {
+            return;
+        }
+
+        assert(_runningNodeCoroutine);
+
+        if (bt::node::Result::promise_type& promise = _runningNodeCoroutine.promise();
+            promise.IsWaitingFor(typeid(E)))
+        {
+            promise.SetEvent(e);
 
             _runningNodeCoroutine.resume();
 

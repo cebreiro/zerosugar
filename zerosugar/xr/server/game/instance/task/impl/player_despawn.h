@@ -1,5 +1,5 @@
 #pragma once
-#include "zerosugar/xr/server/game/controller/game_controller_id.h"
+#include "zerosugar/xr/server/game/instance/controller/game_controller_id.h"
 #include "zerosugar/xr/server/game/instance/task/game_task.h"
 
 namespace zerosugar::xr::game_task

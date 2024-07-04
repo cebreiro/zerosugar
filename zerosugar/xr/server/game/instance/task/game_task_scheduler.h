@@ -1,6 +1,6 @@
 #pragma once
 #include <boost/unordered/unordered_flat_set.hpp>
-#include "zerosugar/xr/server/game/controller/game_controller_id.h"
+#include "zerosugar/xr/server/game/instance/controller/game_controller_id.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_id.h"
 
 namespace zerosugar::xr

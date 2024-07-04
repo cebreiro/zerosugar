@@ -25,6 +25,18 @@ namespace zerosugar::xr::network::game::sc
             };
     }
 
+    void from_json(const nlohmann::json& j, NotifyPlayerControllable& item)
+    {
+        (void)j;
+        (void)item;
+    }
+
+    void to_json(nlohmann::json& j, const NotifyPlayerControllable& item)
+    {
+        (void)j;
+        (void)item;
+    }
+
     void from_json(const nlohmann::json& j, AddRemotePlayer& item)
     {
         j.at("player").get_to(item.player);

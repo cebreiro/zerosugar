@@ -30,6 +30,7 @@ namespace zerosugar::xr
         void Broadcast(const IPacket& packet, const detail::game::GameSpatialSet& set, GameEntityType type, std::optional<game_entity_id_type> excluded = std::nullopt);
 
         void Send(const IPacket& packet, IGameController& controller);
+        void SendDelay(std::chrono::milliseconds delay, UniquePtrNotNull<IPacket> packet, game_entity_id_type id);
 
     private:
         GameInstance& _gameInstance;

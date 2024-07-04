@@ -20,6 +20,11 @@ message EnterGame
     Player local_player = 6;
 }
 
+message NotifyPlayerControllable
+{
+    option (opcode) = 1015;
+}
+
 // view
 message AddRemotePlayer
 {

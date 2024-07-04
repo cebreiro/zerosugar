@@ -54,7 +54,7 @@ namespace zerosugar::xr::network::game
     void from_json(const nlohmann::json& j, PlayerBase& item)
     {
         j.at("hp").get_to(item.hp);
-        j.at("maxHP").get_to(item.maxHP);
+        j.at("maxHp").get_to(item.maxHp);
         j.at("attackMin").get_to(item.attackMin);
         j.at("attackMax").get_to(item.attackMax);
         j.at("attackRange").get_to(item.attackRange);
@@ -78,7 +78,7 @@ namespace zerosugar::xr::network::game
         j = nlohmann::json
             {
                 { "hp", item.hp },
-                { "maxHP", item.maxHP },
+                { "maxHp", item.maxHp },
                 { "attackMin", item.attackMin },
                 { "attackMax", item.attackMax },
                 { "attackRange", item.attackRange },
@@ -259,14 +259,35 @@ namespace zerosugar::xr::network::game
 
     void from_json(const nlohmann::json& j, Monster& item)
     {
-        (void)j;
-        (void)item;
+        j.at("dataId").get_to(item.dataId);
+        j.at("id").get_to(item.id);
+        j.at("transform").get_to(item.transform);
+        j.at("hp").get_to(item.hp);
+        j.at("maxHp").get_to(item.maxHp);
+        j.at("attackMin").get_to(item.attackMin);
+        j.at("attackMax").get_to(item.attackMax);
+        j.at("attackRange").get_to(item.attackRange);
+        j.at("attackSpeed").get_to(item.attackSpeed);
+        j.at("speed").get_to(item.speed);
+        j.at("defence").get_to(item.defence);
     }
 
     void to_json(nlohmann::json& j, const Monster& item)
     {
-        (void)j;
-        (void)item;
+        j = nlohmann::json
+            {
+                { "dataId", item.dataId },
+                { "id", item.id },
+                { "transform", item.transform },
+                { "hp", item.hp },
+                { "maxHp", item.maxHp },
+                { "attackMin", item.attackMin },
+                { "attackMax", item.attackMax },
+                { "attackRange", item.attackRange },
+                { "attackSpeed", item.attackSpeed },
+                { "speed", item.speed },
+                { "defence", item.defence },
+            };
     }
 
 }

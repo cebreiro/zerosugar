@@ -44,6 +44,21 @@ namespace zerosugar
         return !_stack.empty();
     }
 
+    bool BehaviorTree::CanResume() const
+    {
+        if (!IsAwaiting())
+        {
+            return false;
+        }
+
+        if (!_runningNodeCoroutine)
+        {
+            return false;
+        }
+
+        return _runningNodeCoroutine.promise().HasEvent();
+    }
+
     bool BehaviorTree::StopRequested() const
     {
         return _stopRequested;
@@ -63,9 +78,22 @@ namespace zerosugar
         Traverse();
     }
 
+    void BehaviorTree::Resume()
+    {
+        assert(CanResume());
+        assert(IsAwaiting());
+        assert(_runningNodeCoroutine);
+
+        _runningNodeCoroutine.resume();
+
+        Traverse();
+    }
+
     void BehaviorTree::RequestStop()
     {
         _stopRequested = true;
+
+        Signal();
     }
 
     bool BehaviorTree::IsWaitFor(const std::type_info& typeInfo) const
@@ -81,6 +109,38 @@ namespace zerosugar
         return promise.IsWaitingFor(typeInfo);
     }
 
+    void BehaviorTree::SetSignalHandler(const std::function<void()>& function)
+    {
+        assert(!_signalHandler);
+
+        if (CanResume())
+        {
+            function();
+        }
+        else
+        {
+            _signalHandler = function;
+        }
+    }
+
+    void BehaviorTree::Notify(const std::any& any)
+    {
+        if (_currentState != bt::node::State::Running)
+        {
+            return;
+        }
+
+        assert(_runningNodeCoroutine);
+
+        if (bt::node::Result::promise_type& promise = _runningNodeCoroutine.promise();
+            promise.IsWaitingFor(any.type()))
+        {
+            promise.SetEvent(any);
+
+            Signal();
+        }
+    }
+
     void BehaviorTree::Finalize()
     {
         FinalizeTraverse();
@@ -93,7 +153,7 @@ namespace zerosugar
         }
     }
 
-    void BehaviorTree::Notify(const std::any& any)
+    void BehaviorTree::NotifyAndResume(const std::any& any)
     {
         if (_currentState != bt::node::State::Running)
         {
@@ -277,6 +337,14 @@ namespace zerosugar
         }
 
         _visited.clear();
+    }
+
+    void BehaviorTree::Signal()
+    {
+        if (const auto signalHandler = std::exchange(_signalHandler, {}))
+        {
+            signalHandler();
+        }
     }
 
     auto BehaviorTree::GetCurrentNodeName() const -> std::string

@@ -38,6 +38,11 @@ namespace zerosugar::bt::node
         return _eventChecker(typeInfo);
     }
 
+    bool Result::promise_type::HasEvent() const
+    {
+        return _currentEvent.has_value();
+    }
+
     void Result::promise_type::SetEvent(const std::any& any)
     {
         _currentEvent = any;

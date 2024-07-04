@@ -1,7 +1,7 @@
 #include "game_snapshot_view.h"
 
 #include "zerosugar/xr/network/packet_interface.h"
-#include "zerosugar/xr/server/game/controller/game_controller_interface.h"
+#include "zerosugar/xr/server/game/instance/controller/game_controller_interface.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_player_snapshot.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_container.h"
@@ -81,5 +81,24 @@ namespace zerosugar::xr
         {
             controller.Notify(packet);
         }
+    }
+
+    void GameSnapshotView::SendDelay(std::chrono::milliseconds delay, UniquePtrNotNull<IPacket> packet, game_entity_id_type id)
+    {
+        auto instance = _gameInstance.shared_from_this();
+
+        Delay(delay).Then(_gameInstance.GetStrand(),
+            [instance = std::move(instance), packet = std::move(packet), id]()
+            {
+                GameSnapshotModelContainer& snapshotContainer = instance->GetSnapshotContainer();
+                if (GamePlayerSnapshot* player = snapshotContainer.FindPlayer(id); player)
+                {
+                    IGameController& controller = player->GetController();
+                    if (controller.IsSubscriberOf(packet->GetOpcode()))
+                    {
+                        controller.Notify(*packet);
+                    }
+                }
+            });
     }
 }

@@ -27,7 +27,7 @@ message Transform
 message PlayerBase
 {
     float hp = 1;
-    float maxHP = 2;
+    float max_hp = 2;
     float attack_min = 3;
     float attack_max = 4;
     float attack_range = 5;
@@ -124,5 +124,16 @@ message Player
 
 message Monster
 {
+    int32 data_id = 1;
+    int64 id = 2;
+    Transform transform = 3;
 
+    float hp = 4;
+    float max_hp = 5;
+    float attack_min = 6;
+    float attack_max = 7;
+    float attack_range = 8;
+    float attack_speed = 9;
+    float speed = 10;
+    float defence = 11;
 }

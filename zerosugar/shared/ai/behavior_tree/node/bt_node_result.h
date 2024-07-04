@@ -25,6 +25,7 @@ namespace zerosugar::bt::node
             auto await_transform(Event<E...>);
 
             bool IsWaitingFor(const std::type_info& typeInfo) const;
+            bool HasEvent() const;
 
             template <bt_event_concept E>
             void SetEvent(const E& e);
@@ -83,6 +84,8 @@ namespace zerosugar::bt::node
                 (void)((_event->type() == typeid(E) ?
                             (event = std::move(*std::any_cast<E>(_event)), true) : false
                 ) || ...);
+
+                _event->reset();
 
                 return event;
             }

@@ -24,6 +24,15 @@ namespace zerosugar::xr::network::game::sc
         Player localPlayer = {};
     };
 
+    struct NotifyPlayerControllable final : IPacket
+    {
+        static constexpr int32_t opcode = 1015;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+    };
+
     struct AddRemotePlayer final : IPacket
     {
         static constexpr int32_t opcode = 1001;

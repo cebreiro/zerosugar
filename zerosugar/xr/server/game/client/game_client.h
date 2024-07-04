@@ -1,6 +1,6 @@
 #pragma once
 #include "zerosugar/shared/network/session/id.h"
-#include "zerosugar/xr/server/game/controller/game_controller_interface.h"
+#include "zerosugar/xr/server/game/instance/controller/game_controller_interface.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_id.h"
 
 namespace zerosugar

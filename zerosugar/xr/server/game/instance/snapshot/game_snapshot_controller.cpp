@@ -1,7 +1,6 @@
 #include "game_snapshot_controller.h"
 
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
-#include "zerosugar/xr/server/game/controller/game_controller_interface.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_player_snapshot.h"
@@ -13,6 +12,8 @@
 
 namespace zerosugar::xr
 {
+    using namespace network::game;
+
     GameSnapshotController::GameSnapshotController(GameInstance& instance)
         : _gameInstance(instance)
     {
@@ -33,15 +34,18 @@ namespace zerosugar::xr
 
         GameSpatialSector& sector = spatialContainer.GetSector(snapshot->GetPosition().x(), snapshot->GetPosition().y());
         {
-            network::game::sc::EnterGame packet;
+            sc::EnterGame packet;
             GamePacketBuilder::Build(packet, _gameInstance, entity, sector);
 
             view.Send(packet, snapshot->GetController());
+            // client character loading issue
+            view.SendDelay(std::chrono::seconds(1),
+                std::make_unique<sc::NotifyPlayerControllable>(), entity.GetId());
         }
 
         if (!sector.Empty() && sector.HasEntitiesAtLeast(GameEntityType::Player, 0))
         {
-            network::game::sc::AddRemotePlayer packet;
+            sc::AddRemotePlayer packet;
             GamePacketBuilder::Build(packet, *snapshot);
 
             view.Broadcast(packet, sector, GameEntityType::Player);
@@ -64,7 +68,7 @@ namespace zerosugar::xr
 
         if (!sector.Empty() && sector.HasEntitiesAtLeast(GameEntityType::Player, 1))
         {
-            network::game::sc::RemoveRemotePlayer packet;
+            sc::RemoveRemotePlayer packet;
             GamePacketBuilder::Build(packet, *snapshot);
 
             view.Broadcast(packet, sector, GameEntityType::Player);
@@ -100,7 +104,7 @@ namespace zerosugar::xr
                 return;
             }
 
-            network::game::sc::MoveRemotePlayer packet;
+            sc::MoveRemotePlayer packet;
             GamePacketBuilder::Build(packet, *snapshot);
 
             view.Broadcast(packet, oldSector, id);
@@ -113,7 +117,7 @@ namespace zerosugar::xr
         if (GameSpatialSector::Subset outs = (oldSector - newSector);
             !outs.Empty() && outs.HasEntitiesAtLeast(GameEntityType::Player, 0))
         {
-            network::game::sc::RemoveRemotePlayer packet;
+            sc::RemoveRemotePlayer packet;
             GamePacketBuilder::Build(packet, *snapshot);
 
             view.Broadcast(packet, outs, GameEntityType::Player);
@@ -122,7 +126,7 @@ namespace zerosugar::xr
         if (GameSpatialSector::Subset unchanged = (newSector & oldSector);
             !unchanged.Empty() && unchanged.HasEntitiesAtLeast(GameEntityType::Player, 1))
         {
-            network::game::sc::MoveRemotePlayer packet;
+            sc::MoveRemotePlayer packet;
             GamePacketBuilder::Build(packet, *snapshot);
 
             view.Broadcast(packet, unchanged, GameEntityType::Player, id);
@@ -131,7 +135,7 @@ namespace zerosugar::xr
         if (GameSpatialSector::Subset ins = (newSector - oldSector);
             !ins.Empty() && ins.HasEntitiesAtLeast(GameEntityType::Player, 0))
         {
-            network::game::sc::AddRemotePlayer packet;
+            sc::AddRemotePlayer packet;
             GamePacketBuilder::Build(packet, *snapshot);
 
             view.Broadcast(packet, ins, GameEntityType::Player);
@@ -172,7 +176,7 @@ namespace zerosugar::xr
                 return;
             }
 
-            network::game::sc::StopRemotePlayer packet;
+            sc::StopRemotePlayer packet;
             packet.id = id.Unwrap();
             GamePacketBuilder::Build(packet.position, *snapshot);
 
@@ -186,7 +190,7 @@ namespace zerosugar::xr
         if (GameSpatialSector::Subset outs = (oldSector - newSector);
             !outs.Empty() && outs.HasEntitiesAtLeast(GameEntityType::Player, 0))
         {
-            network::game::sc::RemoveRemotePlayer packet;
+            sc::RemoveRemotePlayer packet;
             GamePacketBuilder::Build(packet, *snapshot);
 
             view.Broadcast(packet, outs, GameEntityType::Player);
@@ -195,7 +199,7 @@ namespace zerosugar::xr
         if (GameSpatialSector::Subset unchanged = (newSector & oldSector);
             !unchanged.Empty() && unchanged.HasEntitiesAtLeast(GameEntityType::Player, 1))
         {
-            network::game::sc::StopRemotePlayer packet;
+            sc::StopRemotePlayer packet;
             packet.id = id.Unwrap();
             GamePacketBuilder::Build(packet.position, *snapshot);
 
@@ -205,7 +209,7 @@ namespace zerosugar::xr
         if (GameSpatialSector::Subset ins = (newSector - oldSector);
             !ins.Empty() && ins.HasEntitiesAtLeast(GameEntityType::Player, 0))
         {
-            network::game::sc::AddRemotePlayer packet;
+            sc::AddRemotePlayer packet;
             GamePacketBuilder::Build(packet, *snapshot);
 
             view.Broadcast(packet, ins, GameEntityType::Player);
@@ -233,7 +237,7 @@ namespace zerosugar::xr
         GameSpatialSector& sector = spatialContainer.GetSector(
             snapshot->GetPosition().x(), snapshot->GetPosition().y());
 
-        network::game::sc::SprintRemotePlayer packet;
+        sc::SprintRemotePlayer packet;
         packet.id = id.Unwrap();
 
         view.Broadcast(packet, sector, id);
@@ -251,7 +255,7 @@ namespace zerosugar::xr
         GameSpatialSector& sector = spatialContainer.GetSector(
             snapshot->GetPosition().x(), snapshot->GetPosition().y());
 
-        network::game::sc::RollDodgeRemotePlayer packet;
+        sc::RollDodgeRemotePlayer packet;
         packet.id = id.Unwrap();
         packet.rotation.pitch = static_cast<float>(rotation.x());
         packet.rotation.yaw = static_cast<float>(rotation.y());
@@ -273,7 +277,7 @@ namespace zerosugar::xr
 
         snapshot->SetEquipment(pos, item ? *item : std::optional<InventoryItem>());
 
-        network::game::sc::ChangeRemotePlayerEquipItem packet;
+        sc::ChangeRemotePlayerEquipItem packet;
         packet.id = id.Unwrap();
         packet.equipPosition = static_cast<int32_t>(pos);
         packet.itemId = item ? item->itemDataId : -1;

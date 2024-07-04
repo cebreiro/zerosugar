@@ -42,7 +42,7 @@ namespace zerosugar::xr::network::game
         void Serialize(BufferWriter& writer) const final;
 
         float hp = {};
-        float maxHP = {};
+        float maxHp = {};
         float attackMin = {};
         float attackMax = {};
         float attackRange = {};
@@ -156,6 +156,17 @@ namespace zerosugar::xr::network::game
         void Deserialize(BufferReader& reader) final;
         void Serialize(BufferWriter& writer) const final;
 
+        int32_t dataId = {};
+        int64_t id = {};
+        Transform transform = {};
+        float hp = {};
+        float maxHp = {};
+        float attackMin = {};
+        float attackMax = {};
+        float attackRange = {};
+        float attackSpeed = {};
+        float speed = {};
+        float defence = {};
     };
 
 }

@@ -1,6 +1,6 @@
 #include "game_client_container.h"
 
-#include "zerosugar/xr/server/game/controller/game_client.h"
+#include "zerosugar/xr/server/game/client/game_client.h"
 
 namespace zerosugar::xr
 {

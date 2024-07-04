@@ -1,7 +1,7 @@
 #define ANKERL_NANOBENCH_IMPLEMENT
 #include <nanobench.h>
 #include "zerosugar/shared/execution/executor/impl/asio_executor.h"
-#include "zerosugar/xr/server/game/controller/game_controller_interface.h"
+#include "zerosugar/xr/server/game/instance/controller/game_controller_interface.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_serializer.h"

@@ -32,7 +32,7 @@ namespace zerosugar::xr::bot
                 {
                     controller->InvokeOnBehaviorTree([](BehaviorTree& behaviorTree)
                         {
-                            behaviorTree.Notify(event::SocketConnected {});
+                            behaviorTree.NotifyAndResume(event::SocketConnected {});
                         });
                 });
 

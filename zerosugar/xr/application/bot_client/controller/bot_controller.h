@@ -45,6 +45,7 @@ namespace zerosugar::xr
         void Send(Buffer buffer);
 
         auto GetId() const -> int64_t;
+        auto GetName() const -> std::string;
         auto GetStrand() const -> execution::AsioStrand&;
         auto GetSocket() -> Socket&;
         auto GetSessionState() const -> BotSessionStateType;

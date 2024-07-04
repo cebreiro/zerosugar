@@ -233,11 +233,11 @@ TEST_F(BehaviorTreeTest, TestRunning)
     RunningTask::ExpectTrue param;
     param.eventValue = false;
 
-    behaviorTree.Notify(param);
+    behaviorTree.NotifyAndResume(param);
     bool running1 = behaviorTree.IsAwaiting();
 
     param.eventValue = true;
-    behaviorTree.Notify(param);
+    behaviorTree.NotifyAndResume(param);
 
     bool running2 = behaviorTree.IsAwaiting();
 
