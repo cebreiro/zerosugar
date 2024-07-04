@@ -3,8 +3,9 @@
 namespace zerosugar::xr
 {
     ENUM_CLASS(GameEntityType, int16_t,
-        (Player, 0)
+        (Player)
         (Monster)
+        (Spawner)
 
         (Count)
     )
@@ -36,7 +37,6 @@ namespace zerosugar::xr
             int16_t _reserved = 0;
             int32_t _value = 0;
         };
-
     }
 
     using game_entity_id_type = detail::game::GameEntityId;

@@ -235,4 +235,41 @@ namespace zerosugar::xr::network
         }
         return {};
     }
+
+    auto GetPacketTypeInfo(int32_t opcode) -> const std::type_info&
+    {
+        switch(opcode)
+        {
+            case RequestRegisterRPCClient::opcode:
+            {
+                return typeid(RequestRegisterRPCClient);
+            }
+            case ResultRegisterRPCClient::opcode:
+            {
+                return typeid(ResultRegisterRPCClient);
+            }
+            case RequestRemoteProcedureCall::opcode:
+            {
+                return typeid(RequestRemoteProcedureCall);
+            }
+            case ResultRemoteProcedureCall::opcode:
+            {
+                return typeid(ResultRemoteProcedureCall);
+            }
+            case SendServerStreaming::opcode:
+            {
+                return typeid(SendServerStreaming);
+            }
+            case SendClientSteaming::opcode:
+            {
+                return typeid(SendClientSteaming);
+            }
+            case AbortClientStreamingRPC::opcode:
+            {
+                return typeid(AbortClientStreamingRPC);
+            }
+        }
+        assert(false);
+        return typeid(nullptr);
+    }
 }

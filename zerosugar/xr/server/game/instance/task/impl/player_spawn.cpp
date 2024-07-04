@@ -1,5 +1,6 @@
 #include "player_spawn.h"
 
+#include "zerosugar/xr/data/provider/map_data.h"
 #include "zerosugar/xr/server/game/instance/controller/game_controller_interface.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_container.h"
@@ -45,14 +46,21 @@ namespace zerosugar::xr::game_task
 
     void PlayerSpawn::OnComplete(GameExecutionSerial& serialContext)
     {
-        auto playerView = std::make_unique<GamePlayerSnapshot>(GetParam()->GetController());
-        playerView->Initialize(*GetParam());
+        auto player = std::make_unique<GamePlayerSnapshot>(GetParam()->GetController());
+        player->Initialize(*GetParam());
+
+        const game_entity_id_type id = player->GetId();
 
         [[maybe_unused]]
-        const bool result = serialContext.GetSnapshotContainer().Add(std::move(playerView));
+        const bool result = serialContext.GetSnapshotContainer().Add(std::move(player));
         assert(result);
 
         serialContext.GetSnapshotController().ProcessPlayerSpawn(*GetParam());
+
+        if (serialContext.GetMapData().type == data::MapType::Village)
+        {
+            serialContext.GetSnapshotController().ProcessPlayerActivate(id);
+        }
     }
 
     void PlayerSpawn::ConfigureStat(GameEntity& entity)

@@ -12,6 +12,11 @@ message Authenticate
     string authentication_token = 1;
 }
 
+message LoadLevelComplete
+{
+    option (opcode) = 1012;
+}
+
 // movement
 message MovePlayer
 {

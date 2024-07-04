@@ -41,7 +41,7 @@ namespace zerosugar::xr
 
     void GameSnapshotView::Broadcast(const IPacket& packet, const detail::game::GameSpatialSet& set, std::optional<game_entity_id_type> excluded)
     {
-        GameSnapshotModelContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
+        GameSnapshotContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
 
         for (const game_entity_id_type id : set.GetEntities())
         {
@@ -50,16 +50,16 @@ namespace zerosugar::xr
                 continue;
             }
 
-            GamePlayerSnapshot* snapshot = snapshotContainer.FindPlayer(id);
-            assert(snapshot);
+            IGameController* controller = snapshotContainer.FindController(id);
+            assert(controller);
 
-            Send(packet, snapshot->GetController());
+            Send(packet, *controller);
         }
     }
 
     void GameSnapshotView::Broadcast(const IPacket& packet, const detail::game::GameSpatialSet& set, GameEntityType type, std::optional<game_entity_id_type> excluded)
     {
-        GameSnapshotModelContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
+        GameSnapshotContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
 
         for (const game_entity_id_type id : set.GetEntities(type))
         {
@@ -68,10 +68,10 @@ namespace zerosugar::xr
                 continue;
             }
 
-            GamePlayerSnapshot* snapshot = snapshotContainer.FindPlayer(id);
-            assert(snapshot);
+            IGameController* controller = snapshotContainer.FindController(id);
+            assert(controller);
 
-            Send(packet, snapshot->GetController());
+            Send(packet, *controller);
         }
     }
 
@@ -90,13 +90,11 @@ namespace zerosugar::xr
         Delay(delay).Then(_gameInstance.GetStrand(),
             [instance = std::move(instance), packet = std::move(packet), id]()
             {
-                GameSnapshotModelContainer& snapshotContainer = instance->GetSnapshotContainer();
-                if (GamePlayerSnapshot* player = snapshotContainer.FindPlayer(id); player)
+                if (IGameController* controller = instance->GetSnapshotContainer().FindController(id); controller)
                 {
-                    IGameController& controller = player->GetController();
-                    if (controller.IsSubscriberOf(packet->GetOpcode()))
+                    if (controller->IsSubscriberOf(packet->GetOpcode()))
                     {
-                        controller.Notify(*packet);
+                        controller->Notify(*packet);
                     }
                 }
             });

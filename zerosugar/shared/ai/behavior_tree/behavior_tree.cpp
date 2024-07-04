@@ -143,6 +143,11 @@ namespace zerosugar
 
     void BehaviorTree::Finalize()
     {
+        if (std::exchange(_finalized, true))
+        {
+            return;
+        }
+
         FinalizeTraverse();
 
         _stack.clear();
@@ -150,6 +155,11 @@ namespace zerosugar
         if (_runningNodeCoroutine)
         {
             _runningNodeCoroutine = nullptr;
+        }
+
+        if (_logger)
+        {
+            _logger->LogBehaviorTreeFinalize(GetName());
         }
     }
 

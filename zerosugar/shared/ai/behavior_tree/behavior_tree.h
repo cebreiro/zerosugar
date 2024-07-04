@@ -67,6 +67,7 @@ namespace zerosugar
 
     private:
         bt::BlackBoard& _blackBoard;
+        bool _finalized = false;
 
         std::string _name;
         std::vector<UniquePtrNotNull<bt::INode>> _storage;

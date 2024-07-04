@@ -26,13 +26,18 @@ namespace
 
 namespace zerosugar::xr
 {
-    void NavigationDataProvider::Initialize(ServiceLocator& serviceLocator)
+    void NavigationDataProvider::Initialize(ServiceLocator& serviceLocator, const std::filesystem::path& basePath)
     {
-        _serviceLocator = serviceLocator;
-    }
+        const auto directory = basePath / "navigation";
+        if (!exists(directory))
+        {
+            ZEROSUGAR_LOG_ERROR(serviceLocator,
+                std::format("[{}] fail to find navigation directory. path: {}",
+                    GetName(), directory.generic_string()));
 
-    void NavigationDataProvider::StartUp(const std::filesystem::path& directory)
-    {
+            return;
+        }
+
         for (const auto& entry : std::filesystem::directory_iterator(directory))
         {
             const auto& path = entry.path();
@@ -48,7 +53,7 @@ namespace zerosugar::xr
             }
             catch (const std::exception& e)
             {
-                ZEROSUGAR_LOG_ERROR(_serviceLocator,
+                ZEROSUGAR_LOG_ERROR(serviceLocator,
                     std::format("[{}] fail to load navigation data. exception: {}, path: {}",
                         GetName(), e.what(), path.generic_string()));
             }

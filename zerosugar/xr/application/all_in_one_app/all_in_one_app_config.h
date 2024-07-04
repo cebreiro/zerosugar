@@ -23,8 +23,6 @@ namespace zerosugar::xr
         std::string databaseSchema;
         int32_t databaseConnectionCount;
 
-        std::string navigationDataDirectoryPath;
-
         friend void from_json(const nlohmann::json& j, AllInOneAppConfig& config)
         {
             config.workerCount = j.at("executor_thread_count").get<int64_t>();
@@ -46,8 +44,6 @@ namespace zerosugar::xr
             config.databasePassword = j.at("database_password").get<std::string>();
             config.databaseSchema = j.at("database_schema").get<std::string>();
             config.databaseConnectionCount = j.at("database_connection_count").get<int32_t>();
-
-            config.navigationDataDirectoryPath = j.at("navigation_data_directory_path").get<std::string>();
         }
     };
 }

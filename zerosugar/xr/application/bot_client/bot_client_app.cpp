@@ -5,23 +5,19 @@
 #include "zerosugar/shared/log/spdlog/spdlog_logger_builder.h"
 #include "zerosugar/xr/application/bot_client/bot_client_app_config.h"
 #include "zerosugar/xr/application/bot_client/controller/bot_control_service.h"
-#include "zerosugar/xr/data/behavior_tree_xml_provider.h"
-#include "zerosugar/xr/data/navigation_data_provider.h"
-#include "zerosugar/shared/ai/behavior_tree/data/node_data_set_interface.h"
+#include "zerosugar/xr/data/game_data_provider.h"
 
 namespace zerosugar::xr
 {
     BotClientApp::BotClientApp()
         : _config(std::make_unique<BotClientAppConfig>())
         , _logService(std::make_shared<LogService>())
-        , _behaviorTreeDataProvider(std::make_shared<BehaviorTreeXMLProvider>())
-        , _navigationDataProvider(std::make_shared<NavigationDataProvider>())
+        , _gameDataProvider(std::make_shared<GameDataProvider>())
     {
         ServiceLocator& serviceLocator = GetServiceLocator();
 
         serviceLocator.Add<ILogService>(_logService);
-        serviceLocator.Add<BehaviorTreeXMLProvider>(_behaviorTreeDataProvider);
-        serviceLocator.Add<NavigationDataProvider>(_navigationDataProvider);
+        serviceLocator.Add<GameDataProvider>(_gameDataProvider);
     }
 
     BotClientApp::~BotClientApp()
@@ -108,11 +104,7 @@ namespace zerosugar::xr
     {
         ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize game data", GetName()));
 
-        _behaviorTreeDataProvider->Initialize(serviceLocator);
-        _behaviorTreeDataProvider->StartUp(_config->behaviorTreeDataDirectoryPath);
-
-        _navigationDataProvider->Initialize(serviceLocator);
-        _navigationDataProvider->StartUp(_config->navigationDataDirectoryPath);
+        _gameDataProvider->Initialize(serviceLocator);
 
         ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize game data --> Done", GetName()));
     }
@@ -122,7 +114,7 @@ namespace zerosugar::xr
         ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize bot control service", GetName()));
 
         _botControlService = std::make_shared<BotControlService>(_executor, GetServiceLocator(),
-            _config->workerCount, 1, "login");
+            _config->workerCount, 1, "bot_login");
         _botControlService->Start();
 
         ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize bot control service --> Done", GetName()));

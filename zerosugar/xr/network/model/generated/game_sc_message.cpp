@@ -37,34 +37,86 @@ namespace zerosugar::xr::network::game::sc
         writer.Write(localPlayer);
     }
 
-    void NotifyPlayerControllable::Deserialize(PacketReader& reader)
+    void NotifyPlayerActivated::Deserialize(PacketReader& reader)
     {
         (void)reader;
     }
 
-    void NotifyPlayerControllable::Serialize(PacketWriter& writer) const
+    void NotifyPlayerActivated::Serialize(PacketWriter& writer) const
     {
         (void)writer;
     }
 
     void AddRemotePlayer::Deserialize(PacketReader& reader)
     {
-        player = reader.Read<RemotePlayer>();
+        playersCount = reader.Read<int32_t>();
+        for (int32_t i = 0; i < playersCount; ++i)
+        {
+            players.emplace_back(reader.Read<RemotePlayer>());
+        }
     }
 
     void AddRemotePlayer::Serialize(PacketWriter& writer) const
     {
-        writer.Write(player);
+        writer.Write<int32_t>(playersCount);
+        for (const auto& item : players)
+        {
+            writer.WriteObject(item);
+        }
     }
 
     void RemoveRemotePlayer::Deserialize(PacketReader& reader)
     {
-        id = reader.Read<int64_t>();
+        playersCount = reader.Read<int32_t>();
+        for (int32_t i = 0; i < playersCount; ++i)
+        {
+            players.emplace_back(reader.Read<int64_t>());
+        }
     }
 
     void RemoveRemotePlayer::Serialize(PacketWriter& writer) const
     {
-        writer.Write<int64_t>(id);
+        writer.Write<int32_t>(playersCount);
+        for (const auto& item : players)
+        {
+            writer.WriteObject(item);
+        }
+    }
+
+    void AddMonster::Deserialize(PacketReader& reader)
+    {
+        monstersCount = reader.Read<int32_t>();
+        for (int32_t i = 0; i < monstersCount; ++i)
+        {
+            monsters.emplace_back(reader.Read<Monster>());
+        }
+    }
+
+    void AddMonster::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int32_t>(monstersCount);
+        for (const auto& item : monsters)
+        {
+            writer.WriteObject(item);
+        }
+    }
+
+    void RemoveMonster::Deserialize(PacketReader& reader)
+    {
+        monstersCount = reader.Read<int32_t>();
+        for (int32_t i = 0; i < monstersCount; ++i)
+        {
+            monsters.emplace_back(reader.Read<int64_t>());
+        }
+    }
+
+    void RemoveMonster::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int32_t>(monstersCount);
+        for (const auto& item : monsters)
+        {
+            writer.WriteObject(item);
+        }
     }
 
     void MoveRemotePlayer::Deserialize(PacketReader& reader)
@@ -241,9 +293,9 @@ namespace zerosugar::xr::network::game::sc
 
                 return item;
             }
-            case NotifyPlayerControllable::opcode:
+            case NotifyPlayerActivated::opcode:
             {
-                auto item = std::make_unique<NotifyPlayerControllable>();
+                auto item = std::make_unique<NotifyPlayerActivated>();
                 item->Deserialize(reader);
 
                 return item;
@@ -258,6 +310,20 @@ namespace zerosugar::xr::network::game::sc
             case RemoveRemotePlayer::opcode:
             {
                 auto item = std::make_unique<RemoveRemotePlayer>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case AddMonster::opcode:
+            {
+                auto item = std::make_unique<AddMonster>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case RemoveMonster::opcode:
+            {
+                auto item = std::make_unique<RemoveMonster>();
                 item->Deserialize(reader);
 
                 return item;
@@ -362,9 +428,9 @@ namespace zerosugar::xr::network::game::sc
 
                 return item;
             }
-            case NotifyPlayerControllable::opcode:
+            case NotifyPlayerActivated::opcode:
             {
-                NotifyPlayerControllable item;
+                NotifyPlayerActivated item;
                 item.Deserialize(reader);
 
                 return item;
@@ -379,6 +445,20 @@ namespace zerosugar::xr::network::game::sc
             case RemoveRemotePlayer::opcode:
             {
                 RemoveRemotePlayer item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case AddMonster::opcode:
+            {
+                AddMonster item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case RemoveMonster::opcode:
+            {
+                RemoveMonster item;
                 item.Deserialize(reader);
 
                 return item;
@@ -469,5 +549,86 @@ namespace zerosugar::xr::network::game::sc
             }
         }
         return {};
+    }
+
+    auto GetPacketTypeInfo(int32_t opcode) -> const std::type_info&
+    {
+        switch(opcode)
+        {
+            case EnterGame::opcode:
+            {
+                return typeid(EnterGame);
+            }
+            case NotifyPlayerActivated::opcode:
+            {
+                return typeid(NotifyPlayerActivated);
+            }
+            case AddRemotePlayer::opcode:
+            {
+                return typeid(AddRemotePlayer);
+            }
+            case RemoveRemotePlayer::opcode:
+            {
+                return typeid(RemoveRemotePlayer);
+            }
+            case AddMonster::opcode:
+            {
+                return typeid(AddMonster);
+            }
+            case RemoveMonster::opcode:
+            {
+                return typeid(RemoveMonster);
+            }
+            case MoveRemotePlayer::opcode:
+            {
+                return typeid(MoveRemotePlayer);
+            }
+            case StopRemotePlayer::opcode:
+            {
+                return typeid(StopRemotePlayer);
+            }
+            case SprintRemotePlayer::opcode:
+            {
+                return typeid(SprintRemotePlayer);
+            }
+            case RollDodgeRemotePlayer::opcode:
+            {
+                return typeid(RollDodgeRemotePlayer);
+            }
+            case NotifyChattingMessage::opcode:
+            {
+                return typeid(NotifyChattingMessage);
+            }
+            case AddInventory::opcode:
+            {
+                return typeid(AddInventory);
+            }
+            case RemoveInventory::opcode:
+            {
+                return typeid(RemoveInventory);
+            }
+            case NotifySwapItemResult::opcode:
+            {
+                return typeid(NotifySwapItemResult);
+            }
+            case ChangeRemotePlayerEquipItem::opcode:
+            {
+                return typeid(ChangeRemotePlayerEquipItem);
+            }
+            case NotifyDungeonMatchGroupCreation::opcode:
+            {
+                return typeid(NotifyDungeonMatchGroupCreation);
+            }
+            case NotifyDungeonMatchFailure::opcode:
+            {
+                return typeid(NotifyDungeonMatchFailure);
+            }
+            case NotifyDungeonMatchGroupApproved::opcode:
+            {
+                return typeid(NotifyDungeonMatchGroupApproved);
+            }
+        }
+        assert(false);
+        return typeid(nullptr);
     }
 }

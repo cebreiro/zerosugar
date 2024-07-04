@@ -1,7 +1,7 @@
 #pragma once
-#include <Eigen/Dense>
 #include "zerosugar/xr/data/enum/equip_position.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_id.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_monster_snapshot.h"
 
 namespace zerosugar::xr
 {
@@ -13,6 +13,8 @@ namespace zerosugar::xr
     class GameInstance;
     class GameSpatialSector;
     class GamePlayerSnapshot;
+    class GameMonsterSnapshot;
+    class GameSpawnerSnapshot;
 }
 
 namespace zerosugar::xr::detail::game
@@ -31,13 +33,23 @@ namespace zerosugar::xr
         ~GameSnapshotController();
 
         void ProcessPlayerSpawn(const GameEntity& entity);
+        void ProcessPlayerActivate(game_entity_id_type playerId);
+
         void ProcessPlayerDespawn(game_entity_id_type entityId);
-        void ProcessMovement(game_entity_id_type id, const Eigen::Vector3d& position);
-        void ProcessStop(game_entity_id_type id, const Eigen::Vector3d& position);
+        void ProcessMovement(game_entity_id_type playerId, const Eigen::Vector3d& position);
+        void ProcessStop(game_entity_id_type playerId, const Eigen::Vector3d& position);
         void ProcessSprint(game_entity_id_type id);
         void ProcessRollDodge(game_entity_id_type id, const Eigen::Vector3d& rotation);
 
         void ProcessPlayerEquipItemChange(game_entity_id_type id, data::EquipPosition pos, const InventoryItem* item);
+
+        void ProcessMonsterSpawn(const GameMonsterSnapshot& snapshot);
+
+        void ProcessSpawnerAdd(const GameSpawnerSnapshot& snapshot);
+
+    private:
+        void HandlePlayerPositionChange(GamePlayerSnapshot& player, const Eigen::Vector3d& oldPos, const Eigen::Vector3d& newPos);
+        void HandleMonsterPositionChange(GameMonsterSnapshot& monster, const Eigen::Vector3d& oldPos, const Eigen::Vector3d& newPos);
 
     private:
         GameInstance& _gameInstance;

@@ -6,6 +6,7 @@
 #include "zerosugar/xr/server/game/instance/entity/component/player_component.h"
 #include "zerosugar/xr/server/game/instance/entity/component/stat_component.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_monster_snapshot.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_container.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_player_snapshot.h"
 #include "zerosugar/xr/server/game/instance/snapshot/grid/game_spatial_container.h"
@@ -17,7 +18,7 @@ namespace zerosugar::xr
     {
         result.zoneId = gameInstance.GetZoneId();
 
-        const GameSnapshotModelContainer& viewContainer = gameInstance.GetSnapshotContainer();
+        const GameSnapshotContainer& snapshotContainer = gameInstance.GetSnapshotContainer();
         {
             for (game_entity_id_type id : sector.GetEntities())
             {
@@ -26,40 +27,54 @@ namespace zerosugar::xr
                     continue;
                 }
 
-                if (const GamePlayerSnapshot* playerView = viewContainer.FindPlayer(id); playerView)
+                if (id.GetType() == GameEntityType::Player)
                 {
+                    const GamePlayerSnapshot* player = snapshotContainer.FindPlayer(id);
+                    assert(player);
+
                     network::game::RemotePlayer& item = result.remotePlayers.emplace_back();
-                    Build(item.base, *playerView);
-                    Build(item.equipment, *playerView);
+                    Build(item.base, *player);
+                    Build(item.equipment, *player);
 
                     ++result.remotePlayersCount;
                 }
-                else
+                else if (id.GetType() == GameEntityType::Monster)
                 {
-                    assert(false);
+                    const GameMonsterSnapshot* monster = snapshotContainer.FindMonster(id);
+                    assert(monster);
+
+                    Build(result.monsters.emplace_back(), *monster);
+
+                    ++result.monstersCount;
                 }
             }
-
-            result.monstersCount = 0;
         }
 
         Build(result.localPlayer, entity);
     }
 
-    void GamePacketBuilder::Build(network::game::sc::AddRemotePlayer& result, const GamePlayerSnapshot& playerView)
+    void GamePacketBuilder::Build(network::game::sc::EnterGame& result, const GameEntity& entity, int32_t mapId)
     {
-        Build(result.player, playerView);
+        result.zoneId = mapId;
+        Build(result.localPlayer, entity);
     }
 
-    void GamePacketBuilder::Build(network::game::sc::RemoveRemotePlayer& result, const GamePlayerSnapshot& playerView)
+    void GamePacketBuilder::Build(network::game::sc::AddRemotePlayer& result, const GamePlayerSnapshot& player)
     {
-        result.id = playerView.GetId().Unwrap();
+        Build(result.players.emplace_back(), player);
+        result.playersCount = 1;
     }
 
-    void GamePacketBuilder::Build(network::game::sc::MoveRemotePlayer& result, const GamePlayerSnapshot& playerView)
+    void GamePacketBuilder::Build(network::game::sc::RemoveRemotePlayer& result, const GamePlayerSnapshot& player)
     {
-        result.id = playerView.GetId().Unwrap();
-        Build(result.position, playerView);
+        result.players.emplace_back(player.GetId().Unwrap());
+        result.playersCount = 1;
+    }
+
+    void GamePacketBuilder::Build(network::game::sc::MoveRemotePlayer& result, const GamePlayerSnapshot& player)
+    {
+        result.id = player.GetId().Unwrap();
+        Build(result.position, player);
     }
 
     void GamePacketBuilder::Build(network::game::PlayerInventoryItem& result, const InventoryItem& item)
@@ -107,13 +122,13 @@ namespace zerosugar::xr
         }
     }
 
-    void GamePacketBuilder::Build(network::game::RemotePlayer& result, const GamePlayerSnapshot& playerView)
+    void GamePacketBuilder::Build(network::game::RemotePlayer& result, const GamePlayerSnapshot& player)
     {
-        result.id = playerView.GetId().Unwrap();
+        result.id = player.GetId().Unwrap();
 
-        Build(result.base, playerView);
-        Build(result.equipment, playerView);
-        Build(result.transform.position, playerView);
+        Build(result.base, player);
+        Build(result.equipment, player);
+        Build(result.transform.position, player);
     }
 
     void GamePacketBuilder::Build(network::game::PlayerBase& result, const GameEntity& entity)
@@ -138,23 +153,23 @@ namespace zerosugar::xr
         result.staminaMax = statComponent.GetMaxStamina().As<float>();
     }
 
-    void GamePacketBuilder::Build(network::game::PlayerBase& result, const GamePlayerSnapshot& playerView)
+    void GamePacketBuilder::Build(network::game::PlayerBase& result, const GamePlayerSnapshot& player)
     {
-        result.hp = playerView.GetHp();
-        result.maxHp = playerView.GetMaxHp();
-        result.attackMin = playerView.GetAttackMin();
-        result.attackMax = playerView.GetAttackMax();
-        result.speed = playerView.GetSpeed();
-        result.name = playerView.GetName();
-        result.level = playerView.GetLevel();
-        result.gender = playerView.GetGender();
-        result.face = playerView.GetFace();
-        result.hair = playerView.GetHair();
-        result.str = playerView.GetStr();
-        result.dex = playerView.GetDex();
-        result.intell = playerView.GetIntell();
-        result.stamina = playerView.GetStamina();
-        result.staminaMax = playerView.GetStaminaMax();
+        result.hp = player.GetHp();
+        result.maxHp = player.GetMaxHp();
+        result.attackMin = player.GetAttackMin();
+        result.attackMax = player.GetAttackMax();
+        result.speed = player.GetSpeed();
+        result.name = player.GetName();
+        result.level = player.GetLevel();
+        result.gender = player.GetGender();
+        result.face = player.GetFace();
+        result.hair = player.GetHair();
+        result.str = player.GetStr();
+        result.dex = player.GetDex();
+        result.intell = player.GetIntell();
+        result.stamina = player.GetStamina();
+        result.staminaMax = player.GetStaminaMax();
     }
 
     void GamePacketBuilder::Build(network::game::PlayerEquipment& result, const GameEntity& entity)
@@ -191,9 +206,9 @@ namespace zerosugar::xr
         }
     }
 
-    void GamePacketBuilder::Build(network::game::PlayerEquipment& result, const GamePlayerSnapshot& playerView)
+    void GamePacketBuilder::Build(network::game::PlayerEquipment& result, const GamePlayerSnapshot& player)
     {
-        const auto& equipItems = playerView.GetEquipments();
+        const auto& equipItems = player.GetEquipments();
 
         for (int32_t i = 0; i < static_cast<int32_t>(std::ssize(equipItems)); ++i)
         {
@@ -234,10 +249,27 @@ namespace zerosugar::xr
         result.intell = item.attack.value_or(0);
     }
 
-    void GamePacketBuilder::Build(network::game::Position& position, const GamePlayerSnapshot& playerView)
+    void GamePacketBuilder::Build(network::game::Position& position, const GamePlayerSnapshot& player)
     {
-        position.x = static_cast<float>(playerView.GetPosition().x());
-        position.y = static_cast<float>(playerView.GetPosition().y());
-        position.z = static_cast<float>(playerView.GetPosition().z());
+        position.x = static_cast<float>(player.GetPosition().x());
+        position.y = static_cast<float>(player.GetPosition().y());
+        position.z = static_cast<float>(player.GetPosition().z());
+    }
+
+    void GamePacketBuilder::Build(network::game::Monster& result, const GameMonsterSnapshot& snapshot)
+    {
+        result.dataId = snapshot.GetDataId();
+        result.id = snapshot.GetId().Unwrap();
+        result.transform.position.x = static_cast<float>(snapshot.GetPosition().x());
+        result.transform.position.y = static_cast<float>(snapshot.GetPosition().y());
+        result.transform.position.z = static_cast<float>(snapshot.GetPosition().z());
+        result.hp = snapshot.GetHp();
+        result.maxHp = snapshot.GetAttackMax();
+        result.attackMin = snapshot.GetAttackMin();
+        result.attackMax = snapshot.GetAttackMax();
+        result.attackRange = snapshot.GetAttackRange();
+        result.attackSpeed = snapshot.GetAttackSpeed();
+        result.speed = 0.f;
+        result.defence = 0.f;
     }
 }

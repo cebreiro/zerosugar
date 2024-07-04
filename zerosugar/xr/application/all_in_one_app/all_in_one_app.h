@@ -21,7 +21,7 @@ namespace zerosugar::xr
     class LobbyServer;
     class GameServer;
 
-    class NavigationDataProvider;
+    class GameDataProvider;
 }
 
 namespace zerosugar::xr
@@ -72,7 +72,7 @@ namespace zerosugar::xr
         SharedPtrNotNull<db::ConnectionPool> _connectionPool;
 
         // data
-        SharedPtrNotNull<NavigationDataProvider> _navigationDataProvider;
+        SharedPtrNotNull<GameDataProvider> _gameDataProvider;
 
         // network
         SharedPtrNotNull<RPCServer> _rpcServer;

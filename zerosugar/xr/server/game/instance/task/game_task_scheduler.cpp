@@ -616,11 +616,12 @@ namespace zerosugar::xr
         set_type& states = GetProcessesBy(process.GetState());
         if (auto handle = states.extract(&process); handle)
         {
-            handle.value() = reinterpret_cast<Process*>(id);
-
-            [[maybe_unused]]
-            const bool inserted = _statesRecycleBuffer.insert(std::move(handle)).inserted;
-            assert(inserted);
+            if (!_statesRecycleBuffer.contains(handle.value()))
+            {
+                [[maybe_unused]]
+                const bool inserted = _statesRecycleBuffer.insert(std::move(handle)).inserted;
+                assert(inserted);
+            }
         }
         else
         {

@@ -118,4 +118,29 @@ namespace zerosugar::xr::network::lobby::cs
         }
         return {};
     }
+
+    auto GetPacketTypeInfo(int32_t opcode) -> const std::type_info&
+    {
+        switch(opcode)
+        {
+            case Authenticate::opcode:
+            {
+                return typeid(Authenticate);
+            }
+            case CreateCharacter::opcode:
+            {
+                return typeid(CreateCharacter);
+            }
+            case DeleteCharacter::opcode:
+            {
+                return typeid(DeleteCharacter);
+            }
+            case SelectCharacter::opcode:
+            {
+                return typeid(SelectCharacter);
+            }
+        }
+        assert(false);
+        return typeid(nullptr);
+    }
 }

@@ -15,6 +15,7 @@ namespace zerosugar::xr
 
         void ChangeRegenValue(StatValue regenValue, game_time_point_type now);
         void SetValue(StatValue value, game_time_point_type now);
+        void SetMaxValue(StatValue value);
 
     private:
         void Update(game_time_point_type now);

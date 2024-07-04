@@ -27,7 +27,7 @@ namespace zerosugar::xr
         GameInstanceContainer& container = server.GetGameInstanceContainer();
 
         [[maybe_unused]]
-        bool added = container.Add(std::move(instance));
+        bool added = container.Add(instance);
         assert(added);
 
         coordination::command::response::LaunchGameInstance response;
@@ -35,6 +35,8 @@ namespace zerosugar::xr
         response.zoneId = zoneId;
 
         server.SendCommandResponse(*responseId, response);
+
+        instance->Start();
 
         co_return;
     }

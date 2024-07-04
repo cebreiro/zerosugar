@@ -18,6 +18,8 @@ namespace zerosugar
 
         void LogBehaviorTreeStart(const std::string& btName) override;
         void LogBehaviorTreeEnd(const std::string& btName, bool success) override;
+        void LogBehaviorTreeFinalize(const std::string& btName) override;
+
         void LogNodeStart(const std::string& btName, const std::string& nodeName) override;
         void LogNodeEnd(const std::string& btName, const std::string& nodeName, bool success) override;
         void LogNodeSuspend(const std::string& btName, const std::string& nodeName) override;

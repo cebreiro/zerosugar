@@ -57,6 +57,11 @@ namespace zerosugar::xr
         _value = value;
     }
 
+    void RegenStat::SetMaxValue(StatValue value)
+    {
+        _max = value;
+    }
+
     void RegenStat::Update(game_time_point_type now)
     {
         const auto interval = std::chrono::duration_cast<std::chrono::milliseconds>((now - _lastUpdateTimePoint));

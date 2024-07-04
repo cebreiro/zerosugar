@@ -4,37 +4,52 @@
 
 namespace zerosugar::xr
 {
+    class IGameController;
     class GamePlayerSnapshot;
+    class GameMonsterSnapshot;
+    class GameSpawnerSnapshot;
 }
 
 namespace zerosugar::xr
 {
-    class GameSnapshotModelContainer
+    class GameSnapshotContainer
     {
     public:
-        using container_type = boost::unordered::unordered_flat_map<game_entity_id_type, UniquePtrNotNull<GamePlayerSnapshot>>;
+        using player_container_type = boost::unordered::unordered_flat_map<game_entity_id_type, UniquePtrNotNull<GamePlayerSnapshot>>;
+        using monster_container_type = boost::unordered::unordered_flat_map<game_entity_id_type, UniquePtrNotNull<GameMonsterSnapshot>>;
+        using spawner_container_type = boost::unordered::unordered_flat_map<game_entity_id_type, UniquePtrNotNull<GameSpawnerSnapshot>>;
 
     public:
-        GameSnapshotModelContainer(const GameSnapshotModelContainer& other) = delete;
-        GameSnapshotModelContainer(GameSnapshotModelContainer&& other) noexcept = delete;
-        GameSnapshotModelContainer& operator=(const GameSnapshotModelContainer& other) = delete;
-        GameSnapshotModelContainer& operator=(GameSnapshotModelContainer&& other) noexcept = delete;
+        GameSnapshotContainer(const GameSnapshotContainer& other) = delete;
+        GameSnapshotContainer(GameSnapshotContainer&& other) noexcept = delete;
+        GameSnapshotContainer& operator=(const GameSnapshotContainer& other) = delete;
+        GameSnapshotContainer& operator=(GameSnapshotContainer&& other) noexcept = delete;
 
     public:
-        GameSnapshotModelContainer() = default;
-        ~GameSnapshotModelContainer();
+        GameSnapshotContainer() = default;
+        ~GameSnapshotContainer();
 
         bool Has(game_entity_id_type id) const;
 
         bool Add(UniquePtrNotNull<GamePlayerSnapshot> player);
-        bool RemovePlayer(game_entity_id_type id);
+        bool Add(UniquePtrNotNull<GameMonsterSnapshot> monster);
+        bool Add(UniquePtrNotNull<GameSpawnerSnapshot> spawner);
+
+        bool Remove(game_entity_id_type id);
+
+        auto FindController(game_entity_id_type id) -> IGameController*;
 
         auto FindPlayer(game_entity_id_type id) -> GamePlayerSnapshot*;
         auto FindPlayer(game_entity_id_type id) const -> const GamePlayerSnapshot*;
 
-        auto GetPlayerRange() const -> std::ranges::values_view<std::ranges::ref_view<const container_type>>;
+        auto FindMonster(game_entity_id_type id) -> GameMonsterSnapshot*;
+        auto FindMonster(game_entity_id_type id) const -> const GameMonsterSnapshot*;
+
+        auto GetPlayerRange() const -> std::ranges::values_view<std::ranges::ref_view<const player_container_type>>;
 
     private:
-        container_type _playerViews;
+        player_container_type _players;
+        monster_container_type _monsters;
+        spawner_container_type _spawners;
     };
 }

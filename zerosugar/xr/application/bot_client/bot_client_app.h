@@ -8,11 +8,8 @@ namespace zerosugar::execution
 
 namespace zerosugar::xr
 {
+    class GameDataProvider;
     struct BotClientAppConfig;
-
-    class BehaviorTreeXMLProvider;
-    class NavigationDataProvider;
-
     class BotControlService;
 }
 
@@ -41,9 +38,7 @@ namespace zerosugar::xr
         SharedPtrNotNull<execution::AsioExecutor> _executor;
         SharedPtrNotNull<LogService> _logService;
 
-        SharedPtrNotNull<BehaviorTreeXMLProvider> _behaviorTreeDataProvider;
-        SharedPtrNotNull<NavigationDataProvider> _navigationDataProvider;
-
+        SharedPtrNotNull<GameDataProvider> _gameDataProvider;
         SharedPtrNotNull<BotControlService> _botControlService;
     };
 }

@@ -86,7 +86,7 @@ namespace zerosugar::xr
         assert(added);
 
         const game_controller_id_type controllerId = gameInstance->PublishControllerId();
-        const game_entity_id_type entityId = gameInstance->PublishPlayerId();
+        const game_entity_id_type entityId = gameInstance->PublishEntityId(GameEntityType::Player);
 
         SharedPtrNotNull<GameEntity> entity = server.GetGameEntitySerializer().Deserialize(*character);
         entity->SetId(entityId);

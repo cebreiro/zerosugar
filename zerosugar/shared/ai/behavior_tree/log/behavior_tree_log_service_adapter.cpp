@@ -22,6 +22,12 @@ namespace zerosugar
                 btName, success ? "success" : "failure"), std::source_location::current());
     }
 
+    void BehaviorTreeLogServiceAdapter::LogBehaviorTreeFinalize(const std::string& btName)
+    {
+        _logService.Log(_logLevel,
+            std::format("behavior_tree[{}] finalize.", btName), std::source_location::current());
+    }
+
     void BehaviorTreeLogServiceAdapter::LogNodeStart(const std::string& btName, const std::string& nodeName)
     {
         _logService.Log(_logLevel, std::format("behavior_tree[{}] node[{}] start", btName, nodeName), std::source_location::current());

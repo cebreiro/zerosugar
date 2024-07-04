@@ -29,6 +29,7 @@ namespace zerosugar
         _headerPrinter.AddLine(indent, "#include <any>");
         _headerPrinter.AddLine(indent, "#include <string>");
         _headerPrinter.AddLine(indent, "#include <vector>");
+        _headerPrinter.AddLine(indent, "#include <typeinfo>");
         _headerPrinter.AddLine(indent, "#include \"zerosugar/xr/network/packet_interface.h\"");
         for (const std::string& include : param.includes)
         {
@@ -101,6 +102,39 @@ namespace zerosugar
 
         _headerPrinter.AddLine(classIndent, "auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>;");
         _headerPrinter.AddLine(classIndent, "auto CreateAnyFrom(PacketReader& reader) -> std::any;");
+        _headerPrinter.AddLine(classIndent, "auto GetPacketTypeInfo(int32_t opcode) -> const std::type_info&;");
+
+        _headerPrinter.BreakLine();
+        {
+            _headerPrinter.AddLine(classIndent, "template <typename TVisitor>");
+            _headerPrinter.AddLine(classIndent, "auto Visit(const IPacket& packet, const TVisitor& visitor)");
+            {
+                BraceGuard functionBraceGuard(_headerPrinter, classIndent, false);
+
+                const int64_t functionBodyIndent = classIndent + 1;
+
+                _headerPrinter.AddLine(functionBodyIndent, "switch(packet.GetOpcode())");
+                {
+                    BraceGuard switchBraceGuard(_headerPrinter, functionBodyIndent, false);
+
+                    const int64_t switchBodyIndent = functionBodyIndent + 1;
+
+                    for (const Message& message : input.messages | std::views::filter(MessageFilter()))
+                    {
+                        _headerPrinter.AddLine(switchBodyIndent, "case {}::opcode:", message.name);
+                        {
+                            BraceGuard caseBraceGuard(_headerPrinter, switchBodyIndent, false);
+
+                            const int64_t caseBodyIndent = switchBodyIndent + 1;
+
+                            _headerPrinter.AddLine(caseBodyIndent, "static_assert(std::is_invocable_v<TVisitor, const {}&>);", message.name);
+                            _headerPrinter.AddLine(caseBodyIndent, "visitor.template operator()<{0}>(*packet.Cast<{0}>());", message.name);
+                        }
+                        _headerPrinter.AddLine(switchBodyIndent, "break;");
+                    }
+                }
+            }
+        }
     }
 
     void XRPacketWriter::WriteCxx(const Param& param)
@@ -301,6 +335,35 @@ namespace zerosugar
                 }
 
                 _cxxPrinter.AddLine(functionBodyIndent, "return {};");
+            }
+        }
+        _cxxPrinter.BreakLine();
+        {
+            _cxxPrinter.AddLine(classIndent, "auto GetPacketTypeInfo(int32_t opcode) -> const std::type_info&");
+            {
+                BraceGuard functionBraceGuard(_cxxPrinter, classIndent, false);
+
+                const int64_t functionBodyIndent = classIndent + 1;
+
+                _cxxPrinter.AddLine(functionBodyIndent, "switch(opcode)");
+                {
+                    BraceGuard switchBraceGuard(_cxxPrinter, functionBodyIndent, false);
+
+                    const int64_t switchBodyIndent = functionBodyIndent + 1;
+
+                    for (const Message& message : input.messages | std::views::filter(MessageFilter()))
+                    {
+                        _cxxPrinter.AddLine(switchBodyIndent, "case {}::opcode:", message.name);
+                        BraceGuard caseBraceGuard(_cxxPrinter, switchBodyIndent, false);
+
+                        const int64_t caseBodyIndent = switchBodyIndent + 1;
+
+                        _cxxPrinter.AddLine(caseBodyIndent, "return typeid({});", message.name);
+                    }
+                }
+
+                _cxxPrinter.AddLine(functionBodyIndent, "assert(false);");
+                _cxxPrinter.AddLine(functionBodyIndent, "return typeid(nullptr);");
             }
         }
     }

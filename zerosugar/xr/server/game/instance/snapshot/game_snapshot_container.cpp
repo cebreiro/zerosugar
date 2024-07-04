@@ -1,46 +1,151 @@
 #include "game_snapshot_container.h"
 
+#include "zerosugar/xr/server/game/instance/snapshot/game_monster_snapshot.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_player_snapshot.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_spawner_snapshot.h"
 
 namespace zerosugar::xr
 {
-    GameSnapshotModelContainer::~GameSnapshotModelContainer()
+    GameSnapshotContainer::~GameSnapshotContainer()
     {
     }
 
-    bool GameSnapshotModelContainer::Has(game_entity_id_type id) const
+    bool GameSnapshotContainer::Has(game_entity_id_type id) const
     {
-        return _playerViews.contains(id);
+        switch (id.GetType())
+        {
+        case GameEntityType::Player:
+            return _players.contains(id);
+        case GameEntityType::Monster:
+            return _monsters.contains(id);
+        case GameEntityType::Spawner:
+            break;
+        default:;
+        }
+
+        assert(false);
+
+        return false;
     }
 
-    bool GameSnapshotModelContainer::Add(UniquePtrNotNull<GamePlayerSnapshot> playerView)
+    bool GameSnapshotContainer::Add(UniquePtrNotNull<GamePlayerSnapshot> player)
     {
-        const game_entity_id_type id = playerView->GetId();
+        const game_entity_id_type id = player->GetId();
+        assert(id.GetType() == GameEntityType::Player);
 
-        return _playerViews.try_emplace(id, std::move(playerView)).second;
+        return _players.try_emplace(id, std::move(player)).second;
     }
 
-    bool GameSnapshotModelContainer::RemovePlayer(game_entity_id_type id)
+    bool GameSnapshotContainer::Add(UniquePtrNotNull<GameMonsterSnapshot> monster)
     {
-        return _playerViews.erase(id);
+        const game_entity_id_type id = monster->GetId();
+        assert(id.GetType() == GameEntityType::Monster);
+
+        return _monsters.try_emplace(id, std::move(monster)).second;
     }
 
-    auto GameSnapshotModelContainer::FindPlayer(game_entity_id_type id) -> GamePlayerSnapshot*
+    bool GameSnapshotContainer::Add(UniquePtrNotNull<GameSpawnerSnapshot> spawner)
     {
-        const auto iter = _playerViews.find(id);
+        const game_entity_id_type id = spawner->GetId();
+        assert(id.GetType() == GameEntityType::Spawner);
 
-        return iter != _playerViews.end() ? iter->second.get() : nullptr;
+        return _spawners.try_emplace(id, std::move(spawner)).second;
     }
 
-    auto GameSnapshotModelContainer::FindPlayer(game_entity_id_type id) const -> const GamePlayerSnapshot*
+    bool GameSnapshotContainer::Remove(game_entity_id_type id)
     {
-        const auto iter = _playerViews.find(id);
+        switch (id.GetType())
+        {
+        case GameEntityType::Player:
+            return _players.erase(id);
+        case GameEntityType::Monster:
+            return _monsters.erase(id);
+        case GameEntityType::Spawner:
+            return _spawners.erase(id);
+        default:;
+        }
 
-        return iter != _playerViews.end() ? iter->second.get() : nullptr;
+        assert(false);
+
+        return false;
     }
 
-    auto GameSnapshotModelContainer::GetPlayerRange() const -> std::ranges::values_view<std::ranges::ref_view<const container_type>>
+    auto GameSnapshotContainer::FindController(game_entity_id_type id) -> IGameController*
     {
-        return _playerViews | std::views::values;
+        switch (id.GetType())
+        {
+        case GameEntityType::Player:
+        {
+            if (const GamePlayerSnapshot* snapshot = FindPlayer(id); snapshot)
+            {
+                return &snapshot->GetController();
+            }
+
+            return nullptr;
+        }
+        case GameEntityType::Monster:
+        {
+            if (const GameMonsterSnapshot* snapshot = FindMonster(id); snapshot)
+            {
+                return &snapshot->GetController();
+            }
+
+            return nullptr;
+        }
+        case GameEntityType::Spawner:
+        {
+            if (const auto iter = _spawners.find(id); iter != _spawners.end())
+            {
+                return &iter->second->GetController();
+            }
+
+            return nullptr;
+        }
+        default:;
+        }
+
+        assert(false);
+
+        return nullptr;
+    }
+
+    auto GameSnapshotContainer::FindPlayer(game_entity_id_type id) -> GamePlayerSnapshot*
+    {
+        assert(id.GetType() == GameEntityType::Player);
+
+        const auto iter = _players.find(id);
+
+        return iter != _players.end() ? iter->second.get() : nullptr;
+    }
+
+    auto GameSnapshotContainer::FindPlayer(game_entity_id_type id) const -> const GamePlayerSnapshot*
+    {
+        assert(id.GetType() == GameEntityType::Player);
+        const auto iter = _players.find(id);
+
+        return iter != _players.end() ? iter->second.get() : nullptr;
+    }
+
+    auto GameSnapshotContainer::FindMonster(game_entity_id_type id) -> GameMonsterSnapshot*
+    {
+        assert(id.GetType() == GameEntityType::Monster);
+
+        const auto iter = _monsters.find(id);
+
+        return iter != _monsters.end() ? iter->second.get() : nullptr;
+    }
+
+    auto GameSnapshotContainer::FindMonster(game_entity_id_type id) const -> const GameMonsterSnapshot*
+    {
+        assert(id.GetType() == GameEntityType::Monster);
+
+        const auto iter = _monsters.find(id);
+
+        return iter != _monsters.end() ? iter->second.get() : nullptr;
+    }
+
+    auto GameSnapshotContainer::GetPlayerRange() const -> std::ranges::values_view<std::ranges::ref_view<const player_container_type>>
+    {
+        return _players | std::views::values;
     }
 }

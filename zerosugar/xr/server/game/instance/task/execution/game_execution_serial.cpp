@@ -10,9 +10,19 @@ namespace zerosugar::xr
     {
     }
 
+    auto GameExecutionSerial::PublishEntityId(GameEntityType type) -> game_entity_id_type
+    {
+        return _gameInstance.PublishEntityId(type);
+    }
+
     auto GameExecutionSerial::GetServiceLocator() const -> service_locator_type&
     {
         return *_serviceLocator;
+    }
+
+    auto GameExecutionSerial::GetMapData() const -> const data::Map&
+    {
+        return _gameInstance.GetMapData();
     }
 
     auto GameExecutionSerial::GetTaskScheduler() -> GameTaskScheduler&
@@ -35,14 +45,14 @@ namespace zerosugar::xr
         return _gameInstance.GetSnapshotView();
     }
 
-    auto GameExecutionSerial::GetSnapshotContainer() -> GameSnapshotModelContainer&
+    auto GameExecutionSerial::GetSnapshotContainer() -> GameSnapshotContainer&
     {
         assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
 
         return _gameInstance.GetSnapshotContainer();
     }
 
-    auto GameExecutionSerial::GetSnapshotContainer() const -> const GameSnapshotModelContainer&
+    auto GameExecutionSerial::GetSnapshotContainer() const -> const GameSnapshotContainer&
     {
         assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
 
@@ -61,5 +71,12 @@ namespace zerosugar::xr
         assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
 
         return _gameInstance.GetSpatialContainer();
+    }
+
+    auto GameExecutionSerial::GetAIControlService() -> AIControlService&
+    {
+        assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
+
+        return _gameInstance.GetAIControlService();
     }
 }

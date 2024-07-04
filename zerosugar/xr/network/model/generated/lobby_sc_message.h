@@ -3,6 +3,7 @@
 #include <any>
 #include <string>
 #include <vector>
+#include <typeinfo>
 #include "zerosugar/xr/network/packet_interface.h"
 #include "zerosugar/xr/network/model/generated/lobby_message.h"
 
@@ -66,4 +67,43 @@ namespace zerosugar::xr::network::lobby::sc
 
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>;
     auto CreateAnyFrom(PacketReader& reader) -> std::any;
+    auto GetPacketTypeInfo(int32_t opcode) -> const std::type_info&;
+
+    template <typename TVisitor>
+    auto Visit(const IPacket& packet, const TVisitor& visitor)
+    {
+        switch(packet.GetOpcode())
+        {
+            case FailAuthenticate::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const FailAuthenticate&>);
+                visitor.template operator()<FailAuthenticate>(*packet.Cast<FailAuthenticate>());
+            }
+            break;
+            case ResultCreateCharacter::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const ResultCreateCharacter&>);
+                visitor.template operator()<ResultCreateCharacter>(*packet.Cast<ResultCreateCharacter>());
+            }
+            break;
+            case SuccessDeleteCharacter::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const SuccessDeleteCharacter&>);
+                visitor.template operator()<SuccessDeleteCharacter>(*packet.Cast<SuccessDeleteCharacter>());
+            }
+            break;
+            case NotifyCharacterList::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const NotifyCharacterList&>);
+                visitor.template operator()<NotifyCharacterList>(*packet.Cast<NotifyCharacterList>());
+            }
+            break;
+            case SuccessSelectCharacter::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const SuccessSelectCharacter&>);
+                visitor.template operator()<SuccessSelectCharacter>(*packet.Cast<SuccessSelectCharacter>());
+            }
+            break;
+        }
+    }
 }

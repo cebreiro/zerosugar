@@ -15,6 +15,16 @@ namespace zerosugar::xr::network::game::cs
         writer.Write(authenticationToken);
     }
 
+    void LoadLevelComplete::Deserialize(PacketReader& reader)
+    {
+        (void)reader;
+    }
+
+    void LoadLevelComplete::Serialize(PacketWriter& writer) const
+    {
+        (void)writer;
+    }
+
     void MovePlayer::Deserialize(PacketReader& reader)
     {
         position = reader.Read<Position>();
@@ -139,6 +149,13 @@ namespace zerosugar::xr::network::game::cs
 
                 return item;
             }
+            case LoadLevelComplete::opcode:
+            {
+                auto item = std::make_unique<LoadLevelComplete>();
+                item->Deserialize(reader);
+
+                return item;
+            }
             case MovePlayer::opcode:
             {
                 auto item = std::make_unique<MovePlayer>();
@@ -225,6 +242,13 @@ namespace zerosugar::xr::network::game::cs
 
                 return item;
             }
+            case LoadLevelComplete::opcode:
+            {
+                LoadLevelComplete item;
+                item.Deserialize(reader);
+
+                return item;
+            }
             case MovePlayer::opcode:
             {
                 MovePlayer item;
@@ -297,5 +321,62 @@ namespace zerosugar::xr::network::game::cs
             }
         }
         return {};
+    }
+
+    auto GetPacketTypeInfo(int32_t opcode) -> const std::type_info&
+    {
+        switch(opcode)
+        {
+            case Authenticate::opcode:
+            {
+                return typeid(Authenticate);
+            }
+            case LoadLevelComplete::opcode:
+            {
+                return typeid(LoadLevelComplete);
+            }
+            case MovePlayer::opcode:
+            {
+                return typeid(MovePlayer);
+            }
+            case StopPlayer::opcode:
+            {
+                return typeid(StopPlayer);
+            }
+            case SprintPlayer::opcode:
+            {
+                return typeid(SprintPlayer);
+            }
+            case RollDodgePlayer::opcode:
+            {
+                return typeid(RollDodgePlayer);
+            }
+            case Chat::opcode:
+            {
+                return typeid(Chat);
+            }
+            case SwapItem::opcode:
+            {
+                return typeid(SwapItem);
+            }
+            case StartDungeonMatch::opcode:
+            {
+                return typeid(StartDungeonMatch);
+            }
+            case CancelDungeonMatch::opcode:
+            {
+                return typeid(CancelDungeonMatch);
+            }
+            case ApproveDungeonMatch::opcode:
+            {
+                return typeid(ApproveDungeonMatch);
+            }
+            case RejectDungeonMatch::opcode:
+            {
+                return typeid(RejectDungeonMatch);
+            }
+        }
+        assert(false);
+        return typeid(nullptr);
     }
 }

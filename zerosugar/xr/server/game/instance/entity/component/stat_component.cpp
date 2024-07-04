@@ -70,6 +70,16 @@ namespace zerosugar::xr
         _mp.SetValue(value, now);
     }
 
+    void StatComponent::SetMaxHP(StatValue value)
+    {
+        _hp.SetMaxValue(value);
+    }
+
+    void StatComponent::SetMaxMP(StatValue value)
+    {
+        _mp.SetMaxValue(value);
+    }
+
     auto StatComponent::GetStableStat(StatType type) -> StableStat&
     {
         const int64_t index = static_cast<int64_t>(type);

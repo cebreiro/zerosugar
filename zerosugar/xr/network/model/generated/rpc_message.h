@@ -3,6 +3,7 @@
 #include <any>
 #include <string>
 #include <vector>
+#include <typeinfo>
 #include "zerosugar/xr/network/packet_interface.h"
 
 namespace zerosugar::xr::network
@@ -114,4 +115,55 @@ namespace zerosugar::xr::network
 
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>;
     auto CreateAnyFrom(PacketReader& reader) -> std::any;
+    auto GetPacketTypeInfo(int32_t opcode) -> const std::type_info&;
+
+    template <typename TVisitor>
+    auto Visit(const IPacket& packet, const TVisitor& visitor)
+    {
+        switch(packet.GetOpcode())
+        {
+            case RequestRegisterRPCClient::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const RequestRegisterRPCClient&>);
+                visitor.template operator()<RequestRegisterRPCClient>(*packet.Cast<RequestRegisterRPCClient>());
+            }
+            break;
+            case ResultRegisterRPCClient::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const ResultRegisterRPCClient&>);
+                visitor.template operator()<ResultRegisterRPCClient>(*packet.Cast<ResultRegisterRPCClient>());
+            }
+            break;
+            case RequestRemoteProcedureCall::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const RequestRemoteProcedureCall&>);
+                visitor.template operator()<RequestRemoteProcedureCall>(*packet.Cast<RequestRemoteProcedureCall>());
+            }
+            break;
+            case ResultRemoteProcedureCall::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const ResultRemoteProcedureCall&>);
+                visitor.template operator()<ResultRemoteProcedureCall>(*packet.Cast<ResultRemoteProcedureCall>());
+            }
+            break;
+            case SendServerStreaming::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const SendServerStreaming&>);
+                visitor.template operator()<SendServerStreaming>(*packet.Cast<SendServerStreaming>());
+            }
+            break;
+            case SendClientSteaming::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const SendClientSteaming&>);
+                visitor.template operator()<SendClientSteaming>(*packet.Cast<SendClientSteaming>());
+            }
+            break;
+            case AbortClientStreamingRPC::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const AbortClientStreamingRPC&>);
+                visitor.template operator()<AbortClientStreamingRPC>(*packet.Cast<AbortClientStreamingRPC>());
+            }
+            break;
+        }
+    }
 }

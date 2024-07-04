@@ -98,7 +98,7 @@ auto MakeTestData(GameInstance& gameInstance) -> std::vector<std::pair<std::uniq
         controller->SetControllerId(gameInstance.PublishControllerId());
 
         const game_controller_id_type controllerId = controller->GetControllerId();
-        const game_entity_id_type entityId = gameInstance.PublishPlayerId();
+        const game_entity_id_type entityId = gameInstance.PublishEntityId(GameEntityType::Player);
 
         entity->SetController(std::move(controller));
         entity->SetId(entityId);

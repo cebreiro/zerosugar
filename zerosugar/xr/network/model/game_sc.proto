@@ -20,7 +20,7 @@ message EnterGame
     Player local_player = 6;
 }
 
-message NotifyPlayerControllable
+message NotifyPlayerActivated
 {
     option (opcode) = 1015;
 }
@@ -30,14 +30,32 @@ message AddRemotePlayer
 {
     option (opcode) = 1001;
 
-    RemotePlayer player = 1;
+    int32 players_count = 1;
+    repeated RemotePlayer players = 2 [(size_element) = "players_count"];
 }
 
 message RemoveRemotePlayer
 {
     option (opcode) = 1016;
 
-    int64 id = 1;
+    int32 players_count = 1;
+    repeated int64 players = 2 [(size_element) = "players_count"];
+}
+
+message AddMonster
+{
+    option (opcode) = 4001;
+
+    int32 monsters_count = 1;
+    repeated Monster monsters = 2 [(size_element) = "monsters_count"];
+}
+
+message RemoveMonster
+{
+    option (opcode) = 4002;
+
+    int32 monsters_count = 1;
+    repeated int64 monsters = 2 [(size_element) = "monsters_count"];
 }
 
 // movement

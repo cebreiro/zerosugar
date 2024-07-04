@@ -25,13 +25,13 @@ namespace zerosugar::xr::network::game::sc
             };
     }
 
-    void from_json(const nlohmann::json& j, NotifyPlayerControllable& item)
+    void from_json(const nlohmann::json& j, NotifyPlayerActivated& item)
     {
         (void)j;
         (void)item;
     }
 
-    void to_json(nlohmann::json& j, const NotifyPlayerControllable& item)
+    void to_json(nlohmann::json& j, const NotifyPlayerActivated& item)
     {
         (void)j;
         (void)item;
@@ -39,27 +39,61 @@ namespace zerosugar::xr::network::game::sc
 
     void from_json(const nlohmann::json& j, AddRemotePlayer& item)
     {
-        j.at("player").get_to(item.player);
+        j.at("playersCount").get_to(item.playersCount);
+        j.at("players").get_to(item.players);
     }
 
     void to_json(nlohmann::json& j, const AddRemotePlayer& item)
     {
         j = nlohmann::json
             {
-                { "player", item.player },
+                { "playersCount", item.playersCount },
+                { "players", item.players },
             };
     }
 
     void from_json(const nlohmann::json& j, RemoveRemotePlayer& item)
     {
-        j.at("id").get_to(item.id);
+        j.at("playersCount").get_to(item.playersCount);
+        j.at("players").get_to(item.players);
     }
 
     void to_json(nlohmann::json& j, const RemoveRemotePlayer& item)
     {
         j = nlohmann::json
             {
-                { "id", item.id },
+                { "playersCount", item.playersCount },
+                { "players", item.players },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, AddMonster& item)
+    {
+        j.at("monstersCount").get_to(item.monstersCount);
+        j.at("monsters").get_to(item.monsters);
+    }
+
+    void to_json(nlohmann::json& j, const AddMonster& item)
+    {
+        j = nlohmann::json
+            {
+                { "monstersCount", item.monstersCount },
+                { "monsters", item.monsters },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, RemoveMonster& item)
+    {
+        j.at("monstersCount").get_to(item.monstersCount);
+        j.at("monsters").get_to(item.monsters);
+    }
+
+    void to_json(nlohmann::json& j, const RemoveMonster& item)
+    {
+        j = nlohmann::json
+            {
+                { "monstersCount", item.monstersCount },
+                { "monsters", item.monsters },
             };
     }
 

@@ -3,6 +3,7 @@
 #include <any>
 #include <string>
 #include <vector>
+#include <typeinfo>
 #include "zerosugar/xr/network/packet_interface.h"
 #include "zerosugar/xr/network/model/generated/lobby_message.h"
 
@@ -54,4 +55,37 @@ namespace zerosugar::xr::network::lobby::cs
 
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>;
     auto CreateAnyFrom(PacketReader& reader) -> std::any;
+    auto GetPacketTypeInfo(int32_t opcode) -> const std::type_info&;
+
+    template <typename TVisitor>
+    auto Visit(const IPacket& packet, const TVisitor& visitor)
+    {
+        switch(packet.GetOpcode())
+        {
+            case Authenticate::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const Authenticate&>);
+                visitor.template operator()<Authenticate>(*packet.Cast<Authenticate>());
+            }
+            break;
+            case CreateCharacter::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const CreateCharacter&>);
+                visitor.template operator()<CreateCharacter>(*packet.Cast<CreateCharacter>());
+            }
+            break;
+            case DeleteCharacter::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const DeleteCharacter&>);
+                visitor.template operator()<DeleteCharacter>(*packet.Cast<DeleteCharacter>());
+            }
+            break;
+            case SelectCharacter::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const SelectCharacter&>);
+                visitor.template operator()<SelectCharacter>(*packet.Cast<SelectCharacter>());
+            }
+            break;
+        }
+    }
 }

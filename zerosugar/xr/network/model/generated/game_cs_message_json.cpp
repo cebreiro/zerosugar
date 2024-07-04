@@ -15,6 +15,18 @@ namespace zerosugar::xr::network::game::cs
             };
     }
 
+    void from_json(const nlohmann::json& j, LoadLevelComplete& item)
+    {
+        (void)j;
+        (void)item;
+    }
+
+    void to_json(nlohmann::json& j, const LoadLevelComplete& item)
+    {
+        (void)j;
+        (void)item;
+    }
+
     void from_json(const nlohmann::json& j, MovePlayer& item)
     {
         j.at("position").get_to(item.position);
