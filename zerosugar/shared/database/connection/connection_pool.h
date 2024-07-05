@@ -33,8 +33,8 @@ namespace zerosugar::db
         void Start(const ConnectionPoolOption& option);
         void Stop();
 
-        auto Pop() -> Future<Borrowed>;
-        void Push(boost::mysql::tcp_ssl_connection& connection);
+        auto Borrow() -> Future<Borrowed>;
+        void TakeBack(boost::mysql::tcp_ssl_connection& connection);
 
     private:
         struct Context;

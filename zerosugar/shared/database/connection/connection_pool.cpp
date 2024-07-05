@@ -43,7 +43,7 @@ namespace zerosugar::db
         _pingStopSource.request_stop();
     }
 
-    auto ConnectionPool::Pop() -> Future<Borrowed>
+    auto ConnectionPool::Borrow() -> Future<Borrowed>
     {
         [[maybe_unused]]
         auto self = shared_from_this();
@@ -68,7 +68,7 @@ namespace zerosugar::db
         }
     }
 
-    void ConnectionPool::Push(boost::mysql::tcp_ssl_connection& connection)
+    void ConnectionPool::TakeBack(boost::mysql::tcp_ssl_connection& connection)
     {
         const size_t key = reinterpret_cast<size_t>(&connection);
 

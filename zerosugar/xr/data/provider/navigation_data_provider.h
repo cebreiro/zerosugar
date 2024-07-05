@@ -1,6 +1,5 @@
 #pragma once
-
-class dtNavMesh;
+#include "zerosugar/xr/data/provider/navi_data.h"
 
 namespace zerosugar::xr
 {
@@ -9,12 +8,18 @@ namespace zerosugar::xr
     public:
         void Initialize(ServiceLocator& serviceLocator, const std::filesystem::path& basePath);
 
-        auto GetName() const -> std::string_view;
+        bool Contains(int32_t mapId) const;
+        auto Create(int32_t mapId, int32_t maxSearchNode) -> data::Navigation;
+
+        auto GetName() const->std::string_view;
 
     private:
-        void AddNavMesh(const std::filesystem::path& filePath);
+        static auto CreateData(const std::filesystem::path& filePath, int32_t maxSearchNode) -> data::Navigation;
 
     private:
-        std::unordered_map<int32_t, SharedPtrNotNull<dtNavMesh>> _naviMeshes;
+        std::filesystem::path _path;
+
+        std::unordered_map<int32_t, std::filesystem::path> _naviFilePaths;
+        std::unordered_map<int32_t, std::vector<data::Navigation>> _naviData;
     };
 }

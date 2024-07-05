@@ -44,7 +44,7 @@ namespace zerosugar::xr
         co_await *_executor;
         assert(ExecutionContext::IsEqualTo(*_executor));
 
-        ConnectionPool::Borrowed conn = co_await _connectionPool->Pop();
+        ConnectionPool::Borrowed conn = co_await _connectionPool->Borrow();
         sp::AccountsAdd storedProcedure(conn, param.account, param.password);
 
         service::AddAccountResult result;
@@ -69,7 +69,7 @@ namespace zerosugar::xr
         co_await *_executor;
         assert(ExecutionContext::IsEqualTo(*_executor));
 
-        ConnectionPool::Borrowed conn = co_await _connectionPool->Pop();
+        ConnectionPool::Borrowed conn = co_await _connectionPool->Borrow();
         sp::AccountsGet storedProcedure(conn, param.account);
 
         service::GetAccountResult result;
@@ -102,7 +102,7 @@ namespace zerosugar::xr
         co_await *_executor;
         assert(ExecutionContext::IsEqualTo(*_executor));
 
-        ConnectionPool::Borrowed conn = co_await _connectionPool->Pop();
+        ConnectionPool::Borrowed conn = co_await _connectionPool->Borrow();
 
         sp::CharactersAdd characterAdd(conn, param.characterAdd);
 
@@ -170,7 +170,7 @@ namespace zerosugar::xr
         co_await *_executor;
         assert(ExecutionContext::IsEqualTo(*_executor));
 
-        ConnectionPool::Borrowed conn = co_await _connectionPool->Pop();
+        ConnectionPool::Borrowed conn = co_await _connectionPool->Borrow();
         sp::CharactersGet storedProcedure(conn, param.characterId);
 
         service::GetCharacterResult result;
@@ -198,7 +198,7 @@ namespace zerosugar::xr
         co_await *_executor;
         assert(ExecutionContext::IsEqualTo(*_executor));
 
-        ConnectionPool::Borrowed conn = co_await _connectionPool->Pop();
+        ConnectionPool::Borrowed conn = co_await _connectionPool->Borrow();
         sp::CharactersDelete storedProcedure(conn, param.characterId);
 
         service::RemoveCharacterResult result;
@@ -223,7 +223,7 @@ namespace zerosugar::xr
         co_await *_executor;
         assert(ExecutionContext::IsEqualTo(*_executor));
 
-        ConnectionPool::Borrowed conn = co_await _connectionPool->Pop();
+        ConnectionPool::Borrowed conn = co_await _connectionPool->Borrow();
         sp::ItemsUpdate storedProcedure(conn, param.itemChangeLogs);
 
         service::CharacterItemChangeResult result;
@@ -248,7 +248,7 @@ namespace zerosugar::xr
         co_await *_executor;
         assert(ExecutionContext::IsEqualTo(*_executor));
 
-        ConnectionPool::Borrowed conn = co_await _connectionPool->Pop();
+        ConnectionPool::Borrowed conn = co_await _connectionPool->Borrow();
         sp::LobbyCharactersGetAll storedProcedure(conn, param.accountId);
 
         service::GetLobbyCharactersResult result;

@@ -15,7 +15,7 @@ namespace zerosugar
     concept value_owner_concept = requires (T t, U & u)
     {
         requires borrowed_value_concept<U>;
-        { t.Push(u) } -> std::same_as<void>;
+        { t.TakeBack(u) } -> std::same_as<void>;
     };
 
     template <borrowed_value_concept T, typename U>
@@ -96,7 +96,7 @@ namespace zerosugar
             return;
         }
 
-        _owner->Push(*_item);
+        _owner->TakeBack(*_item);
         _owner.reset();
     }
 

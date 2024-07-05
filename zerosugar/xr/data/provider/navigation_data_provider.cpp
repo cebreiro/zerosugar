@@ -3,6 +3,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/scope/scope_fail.hpp>
 #include "recastnavigation/DetourNavMesh.h"
+#include "recastnavigation/DetourNavMeshQuery.h"
 
 namespace
 {
@@ -49,7 +50,11 @@ namespace zerosugar::xr
 
             try
             {
-                AddNavMesh(path);
+                data::Navigation naviData = CreateData(path, 1024);
+
+                [[maybe_unused]]
+                const bool inserted = _naviFilePaths.try_emplace(naviData.GetMapId(), path).second;
+                assert(inserted);
             }
             catch (const std::exception& e)
             {
@@ -60,7 +65,19 @@ namespace zerosugar::xr
         }
     }
 
-    void NavigationDataProvider::AddNavMesh(const std::filesystem::path& filePath)
+    bool NavigationDataProvider::Contains(int32_t mapId) const
+    {
+        return _naviFilePaths.contains(mapId);
+    }
+
+    auto NavigationDataProvider::Create(int32_t mapId, int32_t maxSearchNode) -> data::Navigation
+    {
+        assert(Contains(mapId));
+
+        return CreateData(_naviFilePaths[mapId], maxSearchNode);
+    }
+
+    auto NavigationDataProvider::CreateData(const std::filesystem::path& filePath, int32_t maxSearchNode) -> data::Navigation
     {
         std::string message;
 
@@ -86,6 +103,11 @@ namespace zerosugar::xr
 
             std::shared_ptr<dtNavMesh> mesh(dtAllocNavMesh(), [](dtNavMesh* ptr)
                 {
+                    if (!ptr)
+                    {
+                        return;
+                    }
+
                     dtFreeNavMesh(ptr);
                 });
 
@@ -125,14 +147,22 @@ namespace zerosugar::xr
                     DT_TILE_FREE_DATA, tileHeader.tileRef, 0);
             }
 
+            std::shared_ptr<dtNavMeshQuery> query(dtAllocNavMeshQuery(), [](dtNavMeshQuery* ptr)
+                {
+                    if (!ptr)
+                    {
+                        return;
+                    }
+
+                    dtFreeNavMeshQuery(ptr);
+                });
+
+            query->init(mesh.get(), maxSearchNode);
+            (void)query;
 
             const int32_t id = boost::lexical_cast<int32_t>(filePath.stem().generic_string());
 
-            [[maybe_unused]]
-            const bool inserted = _naviMeshes.try_emplace(id, std::move(mesh)).second;
-            assert(inserted);
-
-            return;
+            return data::Navigation(id, std::move(mesh), std::move(query));
 
         } while (false);
 
