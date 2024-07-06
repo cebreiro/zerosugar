@@ -42,6 +42,8 @@ namespace zerosugar::xr
         bool IsSubscriberOf(int32_t opcode) const override;
         void Notify(const IPacket& packet) override;
 
+        void InvokeOnBehaviorTree(const std::function<void(BehaviorTree&)>& function);
+
         auto GetControllerId() const -> game_controller_id_type override;
         void SetControllerId(game_controller_id_type id) override;
 

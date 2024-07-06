@@ -13,6 +13,38 @@ namespace zerosugar
     {
     }
 
+    bool Strand::try_lock(const std::thread::id& tid)
+    {
+        std::lock_guard lock(_spinMutex);
+
+        if (_owner.empty())
+        {
+            _owner.push_back(tid);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    void Strand::release(const std::thread::id& tid)
+    {
+        int32_t taskCount = 0;
+        {
+            std::lock_guard lock(_spinMutex);
+
+            assert(!_owner.empty() && _owner.back() == tid);
+
+            _owner.pop_back();
+            taskCount = _taskCount;
+        }
+
+        if (taskCount > 0)
+        {
+            PostFlushTask();
+        }
+    }
+
     void Strand::Stop()
     {
     }

@@ -30,7 +30,10 @@ namespace zerosugar::xr
         }
 
         _visualizer = std::make_unique<navi::Visualizer>(*_strand, _naviData);
-        _visualizerRunFuture = _visualizer->Run();
+        _visualizerRunFuture = _visualizer->Run().Then(*_strand, [self = shared_from_this()]()
+            {
+                self->_visualizer.reset();
+            });
     }
 
     void NavigationService::StopVisualize()
@@ -52,23 +55,26 @@ namespace zerosugar::xr
             assert(_visualizerRunFuture.IsValid());
             co_await _visualizerRunFuture;
 
-            _visualizer.reset();
-            _visualizerRunFuture = Future<bool>();
+            _visualizerRunFuture = Future<void>();
         }
 
         co_return;
     }
 
-    auto NavigationService::GetRandomPointAroundCircle(const navi::FVector& position, const navi::FVector& extents, float radius)
+    auto NavigationService::GetRandomPointAroundCircle(const navi::FVector& position, float radius)
         -> Future<std::optional<navi::FVector>>
     {
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
         const navi::Vector pos(position);
-        const navi::Vector ex(extents);
+        const navi::Extents ex = GetPolyFindingExtents();
+        const navi::Scalar r(radius);
 
         co_await *_strand;
 
         const dtQueryFilter queryFilter;
-        const auto [polyRef, vector] = navi::GetRandomPointAroundCircle(_naviData.GetQuery(), pos, ex, radius, queryFilter);
+        const auto [polyRef, vector] = navi::GetRandomPointAroundCircle(_naviData.GetQuery(), pos, ex, r, queryFilter);
 
         if (!polyRef)
         {
@@ -78,12 +84,15 @@ namespace zerosugar::xr
         co_return navi::FVector(vector);
     }
 
-    auto NavigationService::FindStraightPath(const navi::FVector& start, const navi::FVector& end, const navi::FVector& extents)
+    auto NavigationService::FindStraightPath(const navi::FVector& start, const navi::FVector& end)
         ->Future<boost::container::static_vector<navi::FVector, navi::constant::max_straight_path_count>>
     {
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
         const navi::Vector startPos(start);
         const navi::Vector endPos(end);
-        const navi::Vector ex(extents);
+        const navi::Extents ex = GetPolyFindingExtents();
 
         co_await *_strand;
 
@@ -97,5 +106,20 @@ namespace zerosugar::xr
         }
 
         co_return result;
+    }
+
+    void NavigationService::DrawCircle(const navi::FVector& vector, float radius)
+    {
+        const navi::Vector pos(vector);
+
+        Dispatch(*_strand, [self = shared_from_this(), pos, radius]()
+            {
+                self->_visualizer->DrawSphere(pos, radius);
+            });
+    }
+
+    auto NavigationService::GetPolyFindingExtents() -> navi::Extents
+    {
+        return navi::Extents(400.f, 200.f, 400.f);
     }
 }

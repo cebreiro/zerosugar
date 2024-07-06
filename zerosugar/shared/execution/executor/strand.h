@@ -20,6 +20,9 @@ namespace zerosugar
 
         explicit Strand(SharedPtrNotNull<IExecutor> executor);
 
+        bool try_lock(const std::thread::id& tid);
+        void release(const std::thread::id& tid);
+
         void Stop() override;
 
         void Post(const std::function<void()>& function) override;

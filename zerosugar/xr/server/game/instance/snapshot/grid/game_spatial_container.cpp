@@ -111,7 +111,7 @@ namespace zerosugar::xr
 
     auto GameSpatialContainer::CalculateXIndex(double x) const -> int32_t
     {
-        const int32_t intValue = static_cast<int32_t>(x);
+        const int32_t intValue = static_cast<int32_t>(x + 10000.0);
         const int32_t clamped = std::clamp(intValue, 0, _width);
 
         return clamped / _lengthPerGrid;
@@ -119,7 +119,7 @@ namespace zerosugar::xr
 
     auto GameSpatialContainer::CalculateYIndex(double y) const -> int32_t
     {
-        const int32_t intValue = static_cast<int32_t>(y);
+        const int32_t intValue = static_cast<int32_t>(y + 10000.0);
         const int32_t clamped = std::clamp(intValue, 0, _height);
 
         return clamped / _lengthPerGrid;

@@ -13,8 +13,8 @@ namespace zerosugar::xr::data
     void from_json(const nlohmann::json& json, PlayerSpawnPoint& spawnPoint)
     {
         json.at("x").get_to(spawnPoint.x);
-        json.at("y").get_to(spawnPoint.x);
-        json.at("z").get_to(spawnPoint.x);
+        json.at("y").get_to(spawnPoint.y);
+        json.at("z").get_to(spawnPoint.z);
         json.at("rd").get_to(spawnPoint.yaw);
     }
 
@@ -22,8 +22,8 @@ namespace zerosugar::xr::data
     {
         json.at("id").get_to(spawner.monsterId);
         json.at("x").get_to(spawner.x);
-        json.at("y").get_to(spawner.x);
-        json.at("z").get_to(spawner.x);
+        json.at("y").get_to(spawner.y);
+        json.at("z").get_to(spawner.z);
     }
 
     void from_json(const nlohmann::json& json, Map& map)

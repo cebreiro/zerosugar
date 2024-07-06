@@ -31,7 +31,7 @@ namespace zerosugar::xr
         , _serial(*this)
         , _taskScheduler(std::make_unique<GameTaskScheduler>(*this))
         , _entityContainer(std::make_unique<GameEntityContainer>())
-        , _spatialContainer(std::make_unique<GameSpatialContainer>(100000, 100000, 300))
+        , _spatialContainer(std::make_unique<GameSpatialContainer>(100000, 100000, 2000))
         , _snapshotContainer(std::make_unique<GameSnapshotContainer>())
         , _snapshotView(std::make_unique<GameSnapshotView>(*this))
         , _snapshotController(std::make_unique<GameSnapshotController>(*this))

@@ -132,6 +132,13 @@ namespace zerosugar::xr
         assert(_behaviorTree->CanResume());
     }
 
+    void AIController::InvokeOnBehaviorTree(const std::function<void(BehaviorTree&)>& function)
+    {
+        assert(function);
+
+        function(*_behaviorTree);
+    }
+
     auto AIController::GetControllerId() const -> game_controller_id_type
     {
         return _id;

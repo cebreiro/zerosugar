@@ -2,13 +2,15 @@
 
 namespace zerosugar::xr::navi
 {
+    constexpr const float scale = 100.f;
+
     Vector::Vector(float x, float y, float z)
         : _data({ x, y, z})
     {
     }
 
     Vector::Vector(const FVector& vector)
-        : _data({ -vector.GetX(), vector.GetZ(), -vector.GetY() })
+        : _data({ -vector.GetX() / scale, vector.GetZ() / scale, -vector.GetY() / scale })
     {
     }
 
@@ -63,7 +65,7 @@ namespace zerosugar::xr::navi
     }
 
     FVector::FVector(const Vector& vector)
-        : _data({ -vector.GetX(), vector.GetZ(), -vector.GetY() })
+        : _data({ -vector.GetX() * scale, -vector.GetZ() * scale, vector.GetY() * scale })
     {
     }
 
@@ -85,5 +87,70 @@ namespace zerosugar::xr::navi
     auto FVector::GetZ() const -> float
     {
         return _data[2];
+    }
+
+    Extents::Extents(float x, float y, float z)
+        : _data({ x, y, z })
+    {
+    }
+
+    Extents::Extents(const FVector& vector)
+        : _data({ vector.GetX(), vector.GetZ(), vector.GetY() })
+    {
+    }
+
+    Extents::Extents(const std::array<float, 3>& array)
+        : _data(array)
+    {
+    }
+
+    auto Extents::GetX() const -> float
+    {
+        return _data[0];
+    }
+
+    auto Extents::GetY() const -> float
+    {
+        return _data[1];
+    }
+
+    auto Extents::GetZ() const -> float
+    {
+        return _data[2];
+    }
+
+    void Extents::SetX(float x)
+    {
+        _data[0] = x;
+    }
+
+    void Extents::SetY(float y)
+    {
+        _data[1] = y;
+    }
+
+    void Extents::SetZ(float z)
+    {
+        _data[2] = z;
+    }
+
+    auto Extents::GetData() -> float*
+    {
+        return _data.data();
+    }
+
+    auto Extents::GetData() const -> const float*
+    {
+        return _data.data();
+    }
+
+    Scalar::Scalar(float value)
+        : _value(value / scale)
+    {
+    }
+
+    auto Scalar::Get() const -> float
+    {
+        return _value;
     }
 }

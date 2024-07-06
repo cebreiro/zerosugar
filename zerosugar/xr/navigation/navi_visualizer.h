@@ -1,4 +1,5 @@
 #pragma once
+#include "zerosugar/xr/navigation/navi_vector.h"
 #include "zerosugar/xr/navigation/navi_visualizer_interface.h"
 
 class InputGeom;
@@ -18,9 +19,11 @@ namespace zerosugar::xr::navi
         Visualizer(Strand& strand, Data& data);
         ~Visualizer();
 
-        auto Run() -> Future<bool>;
+        auto Run() -> Future<void>;
 
         void Shutdown();
+
+        void DrawSphere(const Vector& position, float radius);
 
     public:
         void handleTools() override;
@@ -42,15 +45,19 @@ namespace zerosugar::xr::navi
         auto GetAgentClimb() const -> float override;
 
     private:
+        void RenderThreadMain();
+
+    private:
         Strand& _strand;
         Data& _data;
-        bool _shutdown = false;
-        std::chrono::milliseconds _tickInterval = std::chrono::milliseconds(200);
+        std::atomic<bool> _shutdown = false;
 
+        std::thread _renderThread;
         std::unique_ptr<InputGeom> _geom;
         std::unique_ptr<SampleDebugDraw> _dd;
         std::unique_ptr<NavMeshTesterTool> _testTool;
 
         int32_t _drawMode = 0;
+        std::vector<std::pair<Vector, float>> _drawSpheres;
     };
 }

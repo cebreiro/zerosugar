@@ -1,6 +1,7 @@
 #include "navi_visualizer.h"
 
 #include <DebugDraw.h>
+#include <boost/scope/scope_fail.hpp>
 #include <recastnavigation/DebugDraw.h>
 #include <recastnavigation/DetourDebugDraw.h>
 #include <recastnavigation/Recast.h>
@@ -44,6 +45,38 @@ namespace zerosugar::xr::navi
 
     Visualizer::~Visualizer()
     {
+        Shutdown();
+
+        _renderThread.join();
+    }
+
+    auto Visualizer::Run() -> Future<void>
+    {
+        Promise<void> promise;
+        Future<void> future = promise.GetFuture();
+
+        _renderThread = std::thread([this, p = std::move(promise)]() mutable
+            {
+                this->RenderThreadMain();
+
+                p.Set();
+            });
+
+        co_await future;
+
+        co_return;
+    }
+
+    void Visualizer::Shutdown()
+    {
+        _shutdown.store(true);
+    }
+
+    void Visualizer::DrawSphere(const Vector& position, float radius)
+    {
+        assert(ExecutionContext::IsEqualTo(_strand));
+
+        _drawSpheres.emplace_back(position, radius);
     }
 
     void Visualizer::handleTools()
@@ -188,16 +221,14 @@ namespace zerosugar::xr::navi
         _testTool->handleUpdate(dt);
     }
 
-    auto Visualizer::Run() -> Future<bool>
+    void Visualizer::RenderThreadMain()
     {
-        assert(ExecutionContext::IsEqualTo(this->_strand));
-
         this->_geom = std::make_unique<InputGeom>();
         if (const bool success = _geom->load(nullptr, this->GetObjectFilePath()); !success)
         {
             assert(false);
 
-            co_return false;
+            return;
         }
 
         _testTool->init(this);
@@ -206,7 +237,7 @@ namespace zerosugar::xr::navi
         if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
         {
             printf("Could not initialise SDL.\nError: %s\n", SDL_GetError());
-            co_return false;
+            return;
         }
 
         // Use OpenGL render driver.
@@ -254,7 +285,7 @@ namespace zerosugar::xr::navi
         if (errorCode != 0 || !window || !renderer)
         {
             printf("Could not initialise SDL opengl\nError: %s\n", SDL_GetError());
-            co_return false;
+            return;
         }
 
         SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
@@ -263,7 +294,7 @@ namespace zerosugar::xr::navi
         {
             printf("Could not init GUI renderer.\n");
             SDL_Quit();
-            co_return false;
+            return;
         }
 
         float timeAcc = 0.0f;
@@ -320,7 +351,7 @@ namespace zerosugar::xr::navi
         glEnable(GL_CULL_FACE);
         glDepthFunc(GL_LEQUAL);
 
-        while (!this->_shutdown)
+        while (!_shutdown.load())
         {
             // Handle input events.
             int mouseScroll = 0;
@@ -336,7 +367,7 @@ namespace zerosugar::xr::navi
                     // Handle any key presses here.
                     if (event.key.keysym.sym == SDLK_ESCAPE)
                     {
-                        this->_shutdown = true;
+                        _shutdown.store(true);
                     }
                     /*else if (event.key.keysym.sym == SDLK_t)
                     {
@@ -459,7 +490,7 @@ namespace zerosugar::xr::navi
                     break;
 
                 case SDL_QUIT:
-                    this->_shutdown = true;
+                    _shutdown.store(true);
                     break;
 
                 default:
@@ -467,10 +498,18 @@ namespace zerosugar::xr::navi
                 }
             }
 
-            //co_await Delay(this->_tickInterval);
-            //assert(ExecutionContext::IsEqualTo(this->_strand));
+            const auto tid = std::this_thread::get_id();
+            while (!_strand.try_lock(tid))
+            {
+                std::this_thread::yield();
+            }
 
-            if (this->_shutdown)
+            boost::scope::scope_exit exit([this, tid]()
+                {
+                    _strand.release(tid);
+                });
+
+            if (_shutdown.load())
             {
                 break;
             }
@@ -622,6 +661,14 @@ namespace zerosugar::xr::navi
 
             if (test)
                 test->handleRender();
+
+            for (const auto& [pos, radius] : _drawSpheres)
+            {
+                const auto grin = duRGBA(0, 255, 0, 255);
+                constexpr float lineWidth = 3;
+
+                duDebugDrawCircle(_dd.get(), pos.GetX(), pos.GetY(), pos.GetZ(), radius, grin, lineWidth);
+            }
 
             glDisable(GL_FOG);
 
@@ -1047,13 +1094,6 @@ namespace zerosugar::xr::navi
         imguiRenderGLDestroy();
 
         SDL_Quit();
-
-        co_return true;
-    }
-
-    void Visualizer::Shutdown()
-    {
-        _shutdown = true;
     }
 
     auto Visualizer::GetNavMesh() -> dtNavMesh&

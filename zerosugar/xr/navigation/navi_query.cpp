@@ -6,7 +6,7 @@
 
 namespace zerosugar::xr::navi
 {
-    auto FindNearestPoly(const dtNavMeshQuery& query, const Vector& center, const Vector& extents, const dtQueryFilter& filter)
+    auto FindNearestPoly(const dtNavMeshQuery& query, const Vector& center, const Extents& extents, const dtQueryFilter& filter)
         -> std::pair<dtPolyRef, Vector>
     {
         std::pair<dtPolyRef, Vector> result;
@@ -16,7 +16,7 @@ namespace zerosugar::xr::navi
         return result;
     }
 
-    auto GetRandomPointAroundCircle(const dtNavMeshQuery& query, const Vector& center, const Vector& extent, float radius, const dtQueryFilter& filter)
+    auto GetRandomPointAroundCircle(const dtNavMeshQuery& query, const Vector& center, const Extents& extent, const Scalar& radius, const dtQueryFilter& filter)
         -> std::pair<dtPolyRef, Vector>
     {
         std::pair<dtPolyRef, Vector> result;
@@ -28,7 +28,7 @@ namespace zerosugar::xr::navi
             return result;
         }
 
-        query.findRandomPointAroundCircle(startPoly, center.GetData(), radius, &filter, []() -> float
+        query.findRandomPointAroundCircle(startPoly, center.GetData(), radius.Get(), &filter, []() -> float
             {
                 thread_local std::mt19937 mt(std::random_device{}());
                 thread_local std::uniform_real_distribution<float> dist(0.f, 1.f);
@@ -40,7 +40,7 @@ namespace zerosugar::xr::navi
         return result;
     }
 
-    auto FindStraightPath(const dtNavMeshQuery& query, const Vector& start, const Vector& end, const Vector& extents, const dtQueryFilter& filter)
+    auto FindStraightPath(const dtNavMeshQuery& query, const Vector& start, const Vector& end, const Extents& extents, const dtQueryFilter& filter)
         -> boost::container::static_vector<Vector, constant::max_straight_path_count>
     {
         const auto [startPoly, startNearestPoint] = FindNearestPoly(query, start, extents, filter);

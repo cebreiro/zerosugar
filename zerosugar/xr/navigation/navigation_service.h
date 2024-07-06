@@ -21,18 +21,23 @@ namespace zerosugar::xr
 
         auto Join() -> Future<void>;
 
-        auto GetRandomPointAroundCircle(const navi::FVector& position, const navi::FVector& extents, float radius)
+        auto GetRandomPointAroundCircle(const navi::FVector& position, float radius)
             -> Future<std::optional<navi::FVector>>;
 
-        auto FindStraightPath(const navi::FVector& start, const navi::FVector& end, const navi::FVector& extents)
+        auto FindStraightPath(const navi::FVector& start, const navi::FVector& end)
             -> Future<boost::container::static_vector<navi::FVector, navi::constant::max_straight_path_count>>;
+
+        void DrawCircle(const navi::FVector& vector, float radius);
+
+    private:
+        static auto GetPolyFindingExtents() -> navi::Extents;
 
     private:
         ServiceLocator _serviceLocator;
         SharedPtrNotNull<Strand> _strand;
-
         navi::Data _naviData;
+
         std::unique_ptr<navi::Visualizer> _visualizer;
-        Future<bool> _visualizerRunFuture;
+        Future<void> _visualizerRunFuture;
     };
 }

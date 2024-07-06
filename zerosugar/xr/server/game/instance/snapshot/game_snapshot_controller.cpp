@@ -256,6 +256,8 @@ namespace zerosugar::xr
 
             view.Broadcast(packet, oldSector, player.GetId());
 
+            player.SetPosition(newPos);
+
             return;
         }
 
