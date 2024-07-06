@@ -1,6 +1,6 @@
 #include "navi_vector.h"
 
-namespace zerosugar::navi
+namespace zerosugar::xr::navi
 {
     Vector::Vector(float x, float y, float z)
         : _data({ x, y, z})

@@ -4,6 +4,8 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+add_definitions(-DDT_POLYREF64=1)
+
 project(zerosugar)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/msvc.cmake)

@@ -22,7 +22,7 @@ namespace
     };
 
     static const int NAVMESHSET_MAGIC = 'M' << 24 | 'S' << 16 | 'E' << 8 | 'T'; //'MSET';
-    static const int NAVMESHSET_VERSION = 1;
+    //static const int NAVMESHSET_VERSION = 1;
 }
 
 namespace zerosugar::xr
@@ -50,7 +50,7 @@ namespace zerosugar::xr
 
             try
             {
-                data::Navigation naviData = CreateData(path, 1024);
+                navi::Data naviData = CreateData(path, 1024);
 
                 [[maybe_unused]]
                 const bool inserted = _naviFilePaths.try_emplace(naviData.GetMapId(), path).second;
@@ -70,103 +70,101 @@ namespace zerosugar::xr
         return _naviFilePaths.contains(mapId);
     }
 
-    auto NavigationDataProvider::Create(int32_t mapId, int32_t maxSearchNode) -> data::Navigation
+    auto NavigationDataProvider::Create(int32_t mapId, int32_t maxSearchNode) const -> navi::Data
     {
-        assert(Contains(mapId));
+        const auto iter = _naviFilePaths.find(mapId);
+        assert(iter != _naviFilePaths.end());
 
-        return CreateData(_naviFilePaths[mapId], maxSearchNode);
+        return CreateData(iter->second, maxSearchNode);
     }
 
-    auto NavigationDataProvider::CreateData(const std::filesystem::path& filePath, int32_t maxSearchNode) -> data::Navigation
+    auto NavigationDataProvider::CreateData(const std::filesystem::path& filePath, int32_t maxSearchNode) -> navi::Data
     {
         std::string message;
 
-        do
+        std::ifstream ifstream(filePath, std::ios::in | std::ios::binary);
+        if (!ifstream.is_open())
         {
-            std::ifstream ifstream(filePath, std::ios::in | std::ios::binary);
-            if (!ifstream.is_open())
+            throw std::runtime_error("fail to open file");
+        }
+
+        NavMeshSetHeader header;
+        ifstream.read(reinterpret_cast<char*>(&header), sizeof(header));
+
+        if (header.magic != DT_NAVMESH_MAGIC || header.version != DT_NAVMESH_VERSION)
+        {
+            throw std::runtime_error("invalid file header");
+        }
+
+        std::shared_ptr<dtNavMesh> mesh(dtAllocNavMesh(), [](dtNavMesh* ptr)
             {
-                message = "fail to open file";
-
-                break;
-            }
-
-            NavMeshSetHeader header;
-            ifstream.read(reinterpret_cast<char*>(&header), sizeof(header));
-
-            if (header.magic != NAVMESHSET_MAGIC || header.version != NAVMESHSET_VERSION)
-            {
-                message = std::format("invalid file header");
-
-                break;
-            }
-
-            std::shared_ptr<dtNavMesh> mesh(dtAllocNavMesh(), [](dtNavMesh* ptr)
+                if (!ptr)
                 {
-                    if (!ptr)
-                    {
-                        return;
-                    }
-
-                    dtFreeNavMesh(ptr);
-                });
-
-            const dtStatus status = mesh->init(&header.params);
-            if (dtStatusFailed(status))
-            {
-                message = std::format("fail to init nav mesh");
-
-                break;
-            }
-
-            for (int i = 0; i < header.numTiles; ++i)
-            {
-                NavMeshTileHeader tileHeader;
-                ifstream.read(reinterpret_cast<char*>(&tileHeader), sizeof(tileHeader));
-
-                if (!tileHeader.tileRef || !tileHeader.dataSize)
-                {
-                    break;
+                    return;
                 }
 
-                auto data = static_cast<char*>(dtAlloc(tileHeader.dataSize, DT_ALLOC_PERM));
-                if (!data)
-                {
-                    break;
-                }
+                dtFreeNavMesh(ptr);
+            });
 
-                boost::scope::scope_fail failGuard([data]()
-                    {
-                        dtFree(data);
-                    });
+        if (const dtStatus status = mesh->init(&header.params); dtStatusFailed(status))
+        {
+            throw std::runtime_error("fail to init nav mesh");
+        }
 
-                memset(data, 0, tileHeader.dataSize);
-                ifstream.read(data, sizeof(tileHeader.dataSize));
+        for (int32_t i = 0; i < header.numTiles; ++i)
+        {
+            NavMeshTileHeader tileHeader;
+            ifstream.read(reinterpret_cast<char*>(&tileHeader), sizeof(tileHeader));
+            assert(ifstream.gcount() == sizeof(tileHeader));
 
-                mesh->addTile(reinterpret_cast<uint8_t*>(data), tileHeader.dataSize,
-                    DT_TILE_FREE_DATA, tileHeader.tileRef, 0);
+            if (!tileHeader.tileRef || !tileHeader.dataSize)
+            {
+                throw std::runtime_error("fail to init nav tile data");
             }
 
-            std::shared_ptr<dtNavMeshQuery> query(dtAllocNavMeshQuery(), [](dtNavMeshQuery* ptr)
-                {
-                    if (!ptr)
-                    {
-                        return;
-                    }
+            auto data = static_cast<char*>(dtAlloc(tileHeader.dataSize, DT_ALLOC_PERM));
+            if (!data)
+            {
+                throw std::runtime_error("fail to init nav tile data");
+            }
 
-                    dtFreeNavMeshQuery(ptr);
+            boost::scope::scope_fail failGuard([data]()
+                {
+                    dtFree(data);
                 });
 
-            query->init(mesh.get(), maxSearchNode);
-            (void)query;
+            memset(data, 0, tileHeader.dataSize);
 
-            const int32_t id = boost::lexical_cast<int32_t>(filePath.stem().generic_string());
+            ifstream.read(data, tileHeader.dataSize);
+            assert(ifstream.gcount() == tileHeader.dataSize);
 
-            return data::Navigation(id, std::move(mesh), std::move(query));
+            if (const dtStatus status = mesh->addTile(reinterpret_cast<uint8_t*>(data), tileHeader.dataSize,
+                DT_TILE_FREE_DATA, tileHeader.tileRef, 0);
+                dtStatusFailed(status))
+            {
+                throw std::runtime_error("fail to init nav tile data");
+            }
+        }
 
-        } while (false);
+        std::shared_ptr<dtNavMeshQuery> query(dtAllocNavMeshQuery(), [](dtNavMeshQuery* ptr)
+            {
+                if (!ptr)
+                {
+                    return;
+                }
 
-        throw std::runtime_error(message);
+                dtFreeNavMeshQuery(ptr);
+            });
+
+        if (const dtStatus status = query->init(mesh.get(), maxSearchNode); dtStatusFailed(status))
+        {
+            throw std::runtime_error("fail to init nav query");
+        }
+
+        const int32_t id = boost::lexical_cast<int32_t>(filePath.stem().generic_string());
+        const std::filesystem::path objectFilePath = filePath.parent_path() / std::format("{}.obj", filePath.stem().generic_string());
+
+        return navi::Data(id, objectFilePath.generic_string(), std::move(mesh), std::move(query));
     }
 
     auto NavigationDataProvider::GetName() const -> std::string_view

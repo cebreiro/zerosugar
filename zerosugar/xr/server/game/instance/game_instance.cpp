@@ -2,6 +2,8 @@
 
 #include "zerosugar/xr/data/game_data_provider.h"
 #include "zerosugar/xr/data/provider/map_data_provider.h"
+#include "zerosugar/xr/data/provider/navigation_data_provider.h"
+#include "zerosugar/xr/navigation/navigation_service.h"
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
 #include "zerosugar/xr/server/game/instance/ai/ai_control_service.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
@@ -40,6 +42,17 @@ namespace zerosugar::xr
 
         _data = mapDataProvider.Find(_zoneId);
         assert(_data);
+
+        if (_data->type != data::MapType::Village)
+        {
+            const NavigationDataProvider& naviDataProvider = gameDataProvider.GetNavigationDataProvider();
+            navi::Data naviData = naviDataProvider.Create(_data->id);
+
+            _navigationService = std::make_shared<NavigationService>(_serviceLocator,
+                std::make_shared<Strand>(_executor), std::move(naviData));
+
+            _navigationService->StartVisualize();
+        }
     }
 
     GameInstance::~GameInstance()
@@ -200,5 +213,10 @@ namespace zerosugar::xr
     auto GameInstance::GetAIControlService() -> AIControlService&
     {
         return *_aiControlService;
+    }
+
+    auto GameInstance::GetNavigationService() -> NavigationService*
+    {
+        return _navigationService.get();
     }
 }

@@ -1,7 +1,7 @@
 #pragma once
 #include <array>
 
-namespace zerosugar::navi
+namespace zerosugar::xr::navi
 {
     class FVector;
 

@@ -1,10 +1,8 @@
 add_library(zerosugar_xr_data)
 
-find_package(RecastNavigation REQUIRED)
-
 target_link_libraries(zerosugar_xr_data PRIVATE
     zerosugar_xr_pch
-    RecastNavigation::Detour
+    zerosugar_xr_navigation
 )
 
 target_precompile_headers(zerosugar_xr_data REUSE_FROM zerosugar_xr_pch)

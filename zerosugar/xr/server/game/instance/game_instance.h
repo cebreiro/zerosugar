@@ -24,6 +24,7 @@ namespace zerosugar::xr
     class GameTaskScheduler;
 
     class AIControlService;
+    class NavigationService;
 }
 
 namespace zerosugar::xr
@@ -72,6 +73,7 @@ namespace zerosugar::xr
         auto GetSnapshotView() -> GameSnapshotView&;
 
         auto GetAIControlService() -> AIControlService&;
+        auto GetNavigationService() -> NavigationService*;
 
     private:
         SharedPtrNotNull<execution::IExecutor> _executor;
@@ -97,5 +99,6 @@ namespace zerosugar::xr
         UniquePtrNotNull<GameSnapshotController> _snapshotController;
 
         UniquePtrNotNull<AIControlService> _aiControlService;
+        std::shared_ptr<NavigationService> _navigationService;
     };
 }
