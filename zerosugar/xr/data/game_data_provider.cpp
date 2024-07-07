@@ -3,6 +3,7 @@
 #include "zerosugar/shared/ai/behavior_tree/data/node_data_set_interface.h"
 #include "zerosugar/xr/data/provider/behavior_tree_xml_provider.h"
 #include "zerosugar/xr/data/provider/map_data_provider.h"
+#include "zerosugar/xr/data/provider/monster_data_provider.h"
 #include "zerosugar/xr/data/provider/navigation_data_provider.h"
 
 namespace zerosugar::xr
@@ -11,6 +12,7 @@ namespace zerosugar::xr
         : _behaviorTreeXmlProvider(std::make_shared<BehaviorTreeXMLProvider>())
         , _mapDataProvider(std::make_shared<MapDataProvider>())
         , _navigationDataProvider(std::make_shared<NavigationDataProvider>())
+        , _monsterDataProvider(std::make_shared<MonsterDataProvider>())
     {
     }
 
@@ -32,6 +34,7 @@ namespace zerosugar::xr
         _behaviorTreeXmlProvider->Initialize(serviceLocator, *baseDirectory);
         _mapDataProvider->Initialize(serviceLocator, *baseDirectory);
         _navigationDataProvider->Initialize(serviceLocator, *baseDirectory);
+        _monsterDataProvider->Initialize(serviceLocator, *baseDirectory);
     }
 
     auto GameDataProvider::GetName() const -> std::string_view
@@ -52,6 +55,11 @@ namespace zerosugar::xr
     auto GameDataProvider::GetNavigationDataProvider() const -> const NavigationDataProvider&
     {
         return *_navigationDataProvider;
+    }
+
+    auto GameDataProvider::GetMonsterDataProvider() const -> const MonsterDataProvider&
+    {
+        return *_monsterDataProvider;
     }
 
     auto GameDataProvider::FindGameDataBaseDirectory() -> std::optional<std::filesystem::path>

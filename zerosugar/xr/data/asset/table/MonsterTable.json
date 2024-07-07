@@ -1,0 +1,52 @@
+{
+    "list": [
+        {
+            "Name": "20001",
+            "MonsterName": "몬스터1",
+            "MonsterSkeletalID": 0,
+            "MonsterAnimBP": 0,
+            "MonsterBT": 0,
+            "MonsterBB": 0,
+            "MonsterMaxHP": 300,
+            "MonsterAttackMin": 50,
+            "MonsterAttackMax": 70,
+            "MonsterAttackRange": 50,
+            "MonsterAttackSpeed": 1,
+            "MonsterAttackDefence": 10,
+            "MonsterSpeed": 50,
+            "BehaviorTree": "monster_aggressive_roam"
+        },
+        {
+            "Name": "20002",
+            "MonsterName": "몬스터2",
+            "MonsterSkeletalID": 0,
+            "MonsterAnimBP": 0,
+            "MonsterBT": 0,
+            "MonsterBB": 0,
+            "MonsterMaxHP": 350,
+            "MonsterAttackMin": 55,
+            "MonsterAttackMax": 75,
+            "MonsterAttackRange": 500,
+            "MonsterAttackSpeed": 1,
+            "MonsterAttackDefence": 5,
+            "MonsterSpeed": 55,
+            "BehaviorTree": "monster_aggressive_roam"
+        },
+        {
+            "Name": "20003",
+            "MonsterName": "보스몬스터",
+            "MonsterSkeletalID": 0,
+            "MonsterAnimBP": 0,
+            "MonsterBT": 0,
+            "MonsterBB": 0,
+            "MonsterMaxHP": 10000,
+            "MonsterAttackMin": 300,
+            "MonsterAttackMax": 400,
+            "MonsterAttackRange": 1,
+            "MonsterAttackSpeed": 100,
+            "MonsterAttackDefence": 50,
+            "MonsterSpeed": 100,
+            "BehaviorTree": "monster_aggressive_roam"
+        }
+    ]
+}

@@ -1,12 +1,12 @@
 #include "suspend_forever.h"
 
-#include "zerosugar/xr/application/bot_client/controller/ai/behavior_tree/event/suspend_event.h"
-
-namespace zerosugar::xr::bot
+namespace zerosugar::bt::node
 {
-    auto SuspendForever::Run() -> bt::node::Result
+    auto SuspendForever::Run() -> Result
     {
-        co_await bt::Event<event::SuspendForever>();
+        struct SuspendForever{};
+
+        co_await bt::Event<SuspendForever>();
 
         co_return false;
     }

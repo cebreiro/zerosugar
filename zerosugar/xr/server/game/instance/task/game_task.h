@@ -128,6 +128,13 @@ namespace zerosugar::xr
             std::apply(std::bind_front(&GameTaskT::Execute, this, std::ref(parallelContext)), getTarget(_tuple, sequence));
         }
 
+    protected:
+        template <typename T> requires std::disjunction_v<std::is_same<T, TSelector>...>
+        auto GetSelector() const -> const T&
+        {
+            return std::get<T>(_tuple);
+        }
+
     private:
         virtual void Execute(GameExecutionParallel& parallelContext, typename TSelector::target_type...) = 0;
 

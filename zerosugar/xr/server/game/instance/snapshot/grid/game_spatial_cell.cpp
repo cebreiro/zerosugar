@@ -2,9 +2,16 @@
 
 namespace zerosugar::xr
 {
-    GameSpatialCell::GameSpatialCell(game_spatial_cell_id_type id)
+    GameSpatialCell::GameSpatialCell(game_spatial_cell_id_type id, double leftX, double topY)
         : _id(id)
+        , _leftX(leftX)
+        , _topY(topY)
     {
+    }
+
+    bool GameSpatialCell::HasEntity(GameEntityType type) const
+    {
+        return !GetContainer(type).empty();
     }
 
     bool GameSpatialCell::HasEntity(game_entity_id_type id) const
@@ -43,6 +50,16 @@ namespace zerosugar::xr
     auto GameSpatialCell::GetId() const -> game_spatial_cell_id_type
     {
         return _id;
+    }
+
+    auto GameSpatialCell::GetLeftX() const -> double
+    {
+        return _leftX;
+    }
+
+    auto GameSpatialCell::GetTopY() const -> double
+    {
+        return _topY;
     }
 
     auto GameSpatialCell::GetSize() const -> int64_t

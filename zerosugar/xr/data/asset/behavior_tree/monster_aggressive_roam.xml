@@ -1,0 +1,13 @@
+<root>
+    <sequence>
+        <wait_until_player_in_view />
+        <selector>
+            <sequence>
+                <select_attack_target interval="3.0" />
+                <!-- suspend_forever / -->
+                <!--transition_behavior_tree target="monster_battle" / -->
+            </sequence>
+            <monster_roam />
+        </selector>
+    </sequence>
+</root>

@@ -3,7 +3,6 @@
 #include <pugixml.hpp>
 #include "zerosugar/shared/ai/behavior_tree/black_board.h"
 #include "zerosugar/xr/application/bot_client/controller/bot_controller.h"
-#include "zerosugar/xr/application/bot_client/controller/ai/behavior_tree/event/suspend_event.h"
 
 namespace zerosugar::xr::bot
 {
@@ -14,8 +13,10 @@ namespace zerosugar::xr::bot
 
         controller.Transition(_target);
 
+        struct SuspendForever{};
+
         // block this bt execution. this coroutine will be destructed on BehaviorTree::Finalize()
-        co_await bt::Event<event::SuspendForever>{};
+        co_await bt::Event<SuspendForever>{};
 
         co_return false;
     }

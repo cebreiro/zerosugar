@@ -17,6 +17,7 @@
 #include "zerosugar/xr/server/game/instance/task/game_task.h"
 #include "zerosugar/xr/server/game/instance/task/game_task_scheduler.h"
 #include "zerosugar/xr/server/game/instance/task/impl/spawner_install.h"
+#include "zerosugar/xr/server/game/instance/gm/gm_command_factory.h"
 
 namespace zerosugar::xr
 {
@@ -36,6 +37,7 @@ namespace zerosugar::xr
         , _snapshotView(std::make_unique<GameSnapshotView>(*this))
         , _snapshotController(std::make_unique<GameSnapshotController>(*this))
         , _aiControlService(std::make_unique<AIControlService>(*this))
+        , _gmCommandFactory(std::make_unique<GMCommandFactory>())
     {
         const GameDataProvider& gameDataProvider = serviceLocator.Get<GameDataProvider>();
         const MapDataProvider& mapDataProvider = gameDataProvider.GetMapDataProvider();
@@ -50,8 +52,6 @@ namespace zerosugar::xr
 
             _navigationService = std::make_shared<NavigationService>(_serviceLocator,
                 std::make_shared<Strand>(_executor), std::move(naviData));
-
-            _navigationService->StartVisualize();
         }
     }
 
@@ -218,5 +218,10 @@ namespace zerosugar::xr
     auto GameInstance::GetNavigationService() -> NavigationService*
     {
         return _navigationService.get();
+    }
+
+    auto GameInstance::GetGMCommandFactory() const -> const IGMCommandFactory&
+    {
+        return *_gmCommandFactory;
     }
 }

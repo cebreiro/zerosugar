@@ -34,6 +34,7 @@ namespace zerosugar::xr
         auto GetAuthenticationToken() const -> const std::string&;
         auto GetAccountId() const -> int64_t;
         auto GetCharacterId() const -> int64_t;
+        auto GetGMLevel() const -> int32_t;
         auto GetWorldUserUniqueId() const -> int64_t;
         auto GetGameInstance() -> std::shared_ptr<GameInstance>;
         auto GetGameInstance() const -> std::shared_ptr<GameInstance>;

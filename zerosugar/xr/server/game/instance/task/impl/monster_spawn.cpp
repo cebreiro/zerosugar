@@ -1,9 +1,11 @@
 #include "monster_spawn.h"
 
+#include "zerosugar/xr/data/provider/monster_data_provider.h"
 #include "zerosugar/xr/server/game/instance/ai/ai_controller.h"
 #include "zerosugar/xr/server/game/instance/ai/ai_control_service.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_container.h"
+#include "zerosugar/xr/server/game/instance/entity/component/monster_component.h"
 #include "zerosugar/xr/server/game/instance/entity/component/movement_component.h"
 #include "zerosugar/xr/server/game/instance/entity/component/stat_component.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_monster_snapshot.h"
@@ -32,10 +34,8 @@ namespace zerosugar::xr::game_task
     {
         quickExit = false;
 
-        constexpr const char* behaviorTreeName = "monster_aggressive";
-
         _entityId = serialContext.PublishEntityId(GameEntityType::Monster);
-        _aiController = serialContext.GetAIControlService().CreateAIController(_entityId, behaviorTreeName);
+        _aiController = serialContext.GetAIControlService().CreateAIController(_entityId, GetParam().data->behaviorTree);
 
         serialContext.GetTaskScheduler().AddController(_aiController->GetControllerId());
         serialContext.GetTaskScheduler().AddEntity(_entityId);
@@ -49,15 +49,23 @@ namespace zerosugar::xr::game_task
 
         const MonsterSpawnContext& context = GetParam();
         {
+            auto monsterComponent = std::make_unique<MonsterComponent>(*GetParam().data);
+            monsterComponent->SetSpawner(GetParam().spawnerId);
+
+            entity->AddComponent(std::move(monsterComponent));
+        }
+        {
             auto movementComponent = std::make_unique<MovementComponent>();
             movementComponent->SetPosition(Eigen::Vector3d(context.x, context.y, context.z));
 
             entity->AddComponent(std::move(movementComponent));
         }
         {
+            const auto maxHP = StatValue(context.data->hpMax);
+
             auto statComponent = std::make_unique<StatComponent>();
-            statComponent->SetMaxHP(StatValue(100.0));
-            statComponent->SetHP(StatValue(100.0));
+            statComponent->SetMaxHP(maxHP);
+            statComponent->SetHP(maxHP);
 
             entity->AddComponent(std::move(statComponent));
         }
@@ -66,7 +74,7 @@ namespace zerosugar::xr::game_task
         const bool added = parallelContext.GetEntityContainer().Add(entity);
         assert(added);
 
-        _snapshot = std::make_unique<GameMonsterSnapshot>(*_aiController, _entityId, GetParam().dataId);
+        _snapshot = std::make_unique<GameMonsterSnapshot>(*_aiController, _entityId, *context.data);
         _snapshot->Initialize(*entity);
     }
 

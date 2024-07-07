@@ -148,4 +148,9 @@ namespace zerosugar::xr
     {
         return _players | std::views::values;
     }
+
+    auto GameSnapshotContainer::GetMonsterRange() const -> std::ranges::values_view<std::ranges::ref_view<const monster_container_type>>
+    {
+        return _monsters | std::views::values;
+    }
 }

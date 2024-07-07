@@ -10,14 +10,17 @@ namespace zerosugar::xr
         using container_type = std::array<std::vector<game_entity_id_type>, static_cast<int32_t>(GameEntityType::Count)>;
 
     public:
-        explicit GameSpatialCell(game_spatial_cell_id_type id);
+        GameSpatialCell(game_spatial_cell_id_type id, double leftX, double topY);
 
+        bool HasEntity(GameEntityType type) const;
         bool HasEntity(game_entity_id_type id) const;
 
         void AddEntity(game_entity_id_type id);
         void RemoveEntity(game_entity_id_type id);
 
         auto GetId() const -> game_spatial_cell_id_type;
+        auto GetLeftX() const -> double;
+        auto GetTopY() const -> double;
         auto GetSize() const -> int64_t;
         auto GetSize(GameEntityType type) const -> int64_t;
 
@@ -33,6 +36,8 @@ namespace zerosugar::xr
 
     private:
         game_spatial_cell_id_type _id;
+        double _leftX = 0.0;
+        double _topY = 0.0;
 
         std::array<std::vector<game_entity_id_type>, static_cast<int32_t>(GameEntityType::Count)> _entities;
     };

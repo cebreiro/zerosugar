@@ -58,7 +58,7 @@ namespace zerosugar::xr::network::game::sc
         std::vector<int64_t> players = {};
     };
 
-    struct AddMonster final : IPacket
+    struct SpawnMonster final : IPacket
     {
         static constexpr int32_t opcode = 4001;
 
@@ -70,9 +70,21 @@ namespace zerosugar::xr::network::game::sc
         std::vector<Monster> monsters = {};
     };
 
-    struct RemoveMonster final : IPacket
+    struct AddMonster final : IPacket
     {
         static constexpr int32_t opcode = 4002;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        int32_t monstersCount = {};
+        std::vector<Monster> monsters = {};
+    };
+
+    struct RemoveMonster final : IPacket
+    {
+        static constexpr int32_t opcode = 4003;
 
         void Deserialize(PacketReader& reader) final;
         void Serialize(PacketWriter& writer) const final;
@@ -256,6 +268,12 @@ namespace zerosugar::xr::network::game::sc
             {
                 static_assert(std::is_invocable_v<TVisitor, const RemoveRemotePlayer&>);
                 visitor.template operator()<RemoveRemotePlayer>(*packet.Cast<RemoveRemotePlayer>());
+            }
+            break;
+            case SpawnMonster::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const SpawnMonster&>);
+                visitor.template operator()<SpawnMonster>(*packet.Cast<SpawnMonster>());
             }
             break;
             case AddMonster::opcode:

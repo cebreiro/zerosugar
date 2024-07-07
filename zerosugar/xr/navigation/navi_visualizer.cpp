@@ -72,11 +72,38 @@ namespace zerosugar::xr::navi
         _shutdown.store(true);
     }
 
-    void Visualizer::DrawSphere(const Vector& position, float radius)
+    void Visualizer::AddDrawTarget(const AddVisualizeTargetParam& param)
     {
         assert(ExecutionContext::IsEqualTo(_strand));
 
-        _drawSpheres.emplace_back(position, radius);
+        const DrawTarget target{
+            .id = param.id,
+            .position = param.position,
+            .drawColor = param.color,
+            .radius = Scalar(param.radius),
+        };
+
+        (void)_drawTargets.try_emplace(param.id, target);
+    }
+
+    void Visualizer::RemoveDrawTarget(const RemoveVisualizeTargetParam& param)
+    {
+        assert(ExecutionContext::IsEqualTo(_strand));
+
+        _drawTargets.erase(param.id);
+    }
+
+    void Visualizer::UpdateDrawTarget(const UpdateVisualizeTargetParam& param)
+    {
+        assert(ExecutionContext::IsEqualTo(_strand));
+
+        const auto iter = _drawTargets.find(param.id);
+        if (iter != _drawTargets.end())
+        {
+            iter->second.position = param.position;
+            iter->second.destPosition = param.destPosition;
+            iter->second.destPositionDrawColor = param.destPositionDrawColor;
+        }
     }
 
     void Visualizer::handleTools()
@@ -662,12 +689,28 @@ namespace zerosugar::xr::navi
             if (test)
                 test->handleRender();
 
-            for (const auto& [pos, radius] : _drawSpheres)
-            {
-                const auto grin = duRGBA(0, 255, 0, 255);
-                constexpr float lineWidth = 3;
+            const auto drawCylinder = [this](const Vector& pos, float radius, DrawColor color)
+                {
+                    duDebugDrawCylinder(_dd.get(),
+                        pos.GetX() - radius, pos.GetY(), pos.GetZ() - radius,
+                        pos.GetX() + radius, pos.GetY() + 3.f, pos.GetZ() + radius,
+                        ToInt(color));
+                };
 
-                duDebugDrawCircle(_dd.get(), pos.GetX(), pos.GetY(), pos.GetZ(), radius, grin, lineWidth);
+            for (const DrawTarget& drawTarget : _drawTargets | std::views::values)
+            {
+                drawCylinder(drawTarget.position, drawTarget.radius.Get(), drawTarget.drawColor);
+
+                if (drawTarget.destPosition)
+                {
+                    const DrawColor color = drawTarget.destPositionDrawColor.value_or(drawTarget.drawColor);
+                    drawCylinder(*drawTarget.destPosition, drawTarget.radius.Get(), color);
+
+                    duDebugDrawArrow(_dd.get(),
+                        drawTarget.position.GetX(), drawTarget.position.GetY(), drawTarget.position.GetZ(),
+                        drawTarget.destPosition->GetX(), drawTarget.destPosition->GetY(), drawTarget.destPosition->GetZ(),
+                        0, 2, ToInt(DrawColor::Green), 1);
+                }
             }
 
             glDisable(GL_FOG);

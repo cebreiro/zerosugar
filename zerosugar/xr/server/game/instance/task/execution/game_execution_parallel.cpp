@@ -9,23 +9,21 @@ namespace zerosugar::xr
 {
     GameExecutionParallel::GameExecutionParallel(GameInstance& gameInstance)
         : _gameInstance(gameInstance)
-        , _serviceLocator(std::make_unique<service_locator_type>(gameInstance.GetServiceLocator()))
     {
     }
 
-    auto GameExecutionParallel::GetServiceLocator() const -> service_locator_type&
+    GameExecutionParallel::~GameExecutionParallel()
     {
-        return *_serviceLocator;
     }
 
-    auto GameExecutionParallel::GetTaskScheduler() -> GameTaskScheduler&
+    void GameExecutionParallel::SummitTask(UniquePtrNotNull<GameTask> task, std::optional<game_controller_id_type> controllerId)
     {
-        return _gameInstance.GetTaskScheduler();
+        _gameInstance.Summit(std::move(task), controllerId);
     }
 
-    auto GameExecutionParallel::GetTaskScheduler() const -> const GameTaskScheduler&
+    auto GameExecutionParallel::GetServiceLocator() const -> ServiceLocator&
     {
-        return _gameInstance.GetTaskScheduler();
+        return _gameInstance.GetServiceLocator();
     }
 
     auto GameExecutionParallel::GetEntityContainer() -> GameEntityContainer&

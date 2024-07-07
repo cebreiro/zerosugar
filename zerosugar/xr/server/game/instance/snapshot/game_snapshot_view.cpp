@@ -1,6 +1,7 @@
 #include "game_snapshot_view.h"
 
 #include "zerosugar/xr/network/packet_interface.h"
+#include "zerosugar/xr/network/model/generated/game_sc_message.h"
 #include "zerosugar/xr/server/game/instance/controller/game_controller_interface.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_player_snapshot.h"
@@ -19,8 +20,36 @@ namespace zerosugar::xr
     {
     }
 
+    void GameSnapshotView::DisplaySystemMessage(game_entity_id_type target, const std::string& message)
+    {
+        if (target.GetType() != GameEntityType::Player)
+        {
+            return;
+        }
+
+        IGameController* controller = _gameInstance.GetSnapshotContainer().FindController(target);
+        if (!controller)
+        {
+            return;
+        }
+
+        network::game::sc::NotifyChattingMessage packet;
+        packet.type = static_cast<int32_t>(ChattingType::Local);
+        packet.message = message;
+
+        Send(packet, *controller);
+    }
+
     void GameSnapshotView::Broadcast(const IPacket& packet, std::optional<game_entity_id_type> excluded)
     {
+        if (const auto iter = _observers.find(packet.GetOpcode()); iter != _observers.end())
+        {
+            for (const auto& function : iter->second | std::views::values)
+            {
+                function(packet);
+            }
+        }
+
         for (const UniquePtrNotNull<GamePlayerSnapshot>& snapshot : _gameInstance.GetSnapshotContainer().GetPlayerRange())
         {
             if (excluded.has_value() && *excluded == snapshot->GetId())
@@ -32,15 +61,23 @@ namespace zerosugar::xr
         }
     }
 
-    void GameSnapshotView::Broadcast(const IPacket& packet, const GamePlayerSnapshot& middle, std::optional<game_entity_id_type> excluded)
+    void GameSnapshotView::Broadcast(const IPacket& packet, const GamePlayerSnapshot& center, std::optional<game_entity_id_type> excluded)
     {
-        GameSpatialSector& sector = _gameInstance.GetSpatialContainer().GetSector(middle.GetPosition().x(), middle.GetPosition().y());
+        GameSpatialSector& sector = _gameInstance.GetSpatialContainer().GetSector(center.GetPosition().x(), center.GetPosition().y());
 
         Broadcast(packet, sector, excluded);
     }
 
     void GameSnapshotView::Broadcast(const IPacket& packet, const detail::game::GameSpatialSet& set, std::optional<game_entity_id_type> excluded)
     {
+        if (const auto iter = _observers.find(packet.GetOpcode()); iter != _observers.end())
+        {
+            for (const auto& function : iter->second | std::views::values)
+            {
+                function(packet);
+            }
+        }
+
         GameSnapshotContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
 
         for (const game_entity_id_type id : set.GetEntities())
@@ -57,22 +94,17 @@ namespace zerosugar::xr
         }
     }
 
-    void GameSnapshotView::Broadcast(const IPacket& packet, const detail::game::GameSpatialSet& set, GameEntityType type, std::optional<game_entity_id_type> excluded)
+    void GameSnapshotView::Sync(IGameController& controller, const IPacket& packet)
     {
-        GameSnapshotContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
-
-        for (const game_entity_id_type id : set.GetEntities(type))
+        if (const auto iter = _observers.find(packet.GetOpcode()); iter != _observers.end())
         {
-            if (excluded.has_value() && *excluded == id)
+            for (const auto& function : iter->second | std::views::values)
             {
-                continue;
+                function(packet);
             }
-
-            IGameController* controller = snapshotContainer.FindController(id);
-            assert(controller);
-
-            Send(packet, *controller);
         }
+
+        Send(packet, controller);
     }
 
     void GameSnapshotView::Send(const IPacket& packet, IGameController& controller)
@@ -81,22 +113,5 @@ namespace zerosugar::xr
         {
             controller.Notify(packet);
         }
-    }
-
-    void GameSnapshotView::SendDelay(std::chrono::milliseconds delay, UniquePtrNotNull<IPacket> packet, game_entity_id_type id)
-    {
-        auto instance = _gameInstance.shared_from_this();
-
-        Delay(delay).Then(_gameInstance.GetStrand(),
-            [instance = std::move(instance), packet = std::move(packet), id]()
-            {
-                if (IGameController* controller = instance->GetSnapshotContainer().FindController(id); controller)
-                {
-                    if (controller->IsSubscriberOf(packet->GetOpcode()))
-                    {
-                        controller->Notify(*packet);
-                    }
-                }
-            });
     }
 }

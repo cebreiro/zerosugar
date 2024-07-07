@@ -6,7 +6,8 @@ namespace zerosugar::xr
     using game_time_point_type = game_clock_type::time_point;
 
     ENUM_CLASS(ChattingType, int32_t,
-        (Global)
+        (System)
         (Local)
+        (Global)
     )
 }

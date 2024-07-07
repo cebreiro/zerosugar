@@ -21,6 +21,8 @@ namespace zerosugar::bt
         template <typename T>
         void InsertOrUpdate(const std::string& key, const T& value);
 
+        bool Remove(const std::string& key);
+
         template <typename T>
         auto Get(const std::string& key) -> T&;
 

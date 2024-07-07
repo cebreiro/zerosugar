@@ -1,11 +1,12 @@
 #pragma once
 #include "zerosugar/xr/server/game/instance/game_type.h"
+#include "zerosugar/xr/server/game/instance/controller/game_controller_id.h"
 #include "zerosugar/xr/server/game/repository/game_repository_interface.h"
 
 namespace zerosugar::xr
 {
     class GameInstance;
-    class GameTaskScheduler;
+    class GameTask;
     class GameEntityContainer;
 }
 
@@ -14,16 +15,14 @@ namespace zerosugar::xr
     class GameExecutionParallel
     {
     public:
-        using service_locator_type = ServiceLocatorT<ILogService, IGameRepository>;
-
-    public:
         GameExecutionParallel() = delete;
+
         explicit GameExecutionParallel(GameInstance& gameInstance);
+        ~GameExecutionParallel();
 
-        auto GetServiceLocator() const -> service_locator_type&;
+        void SummitTask(UniquePtrNotNull<GameTask> task, std::optional<game_controller_id_type> controllerId = std::nullopt);
 
-        auto GetTaskScheduler() -> GameTaskScheduler&;
-        auto GetTaskScheduler() const -> const GameTaskScheduler&;
+        auto GetServiceLocator() const -> ServiceLocator&;
 
         auto GetEntityContainer() -> GameEntityContainer&;
         auto GetEntityContainer() const -> const GameEntityContainer&;
@@ -33,6 +32,5 @@ namespace zerosugar::xr
 
     private:
         GameInstance& _gameInstance;
-        UniquePtrNotNull<service_locator_type> _serviceLocator;
     };
 }

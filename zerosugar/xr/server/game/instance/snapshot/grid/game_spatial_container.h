@@ -13,6 +13,9 @@ namespace zerosugar::xr
         auto GetSector(double x, double y) -> GameSpatialSector&;
         auto GetSector(double x, double y) const -> const GameSpatialSector&;
 
+        auto GetPositionOffset() const -> double;
+        auto GetLengthPerGrid() const -> int32_t;
+
     private:
         void Initialize();
 
@@ -27,6 +30,7 @@ namespace zerosugar::xr
         int32_t _width = 0;
         int32_t _height = 0;
         int32_t _lengthPerGrid = 0;
+        double _positionOffset = 10000.0;
 
         int32_t _xSize = 0;
         int32_t _ySize = 0;

@@ -36,7 +36,7 @@ namespace zerosugar::xr
         sc::EnterGame packet;
         GamePacketBuilder::Build(packet, entity, _gameInstance.GetZoneId());
 
-        view.Send(packet, snapshot->GetController());
+        view.Sync(snapshot->GetController(), packet);
     }
 
     void GameSnapshotController::ProcessPlayerActivate(game_entity_id_type playerId)
@@ -49,7 +49,7 @@ namespace zerosugar::xr
         assert(player);
 
         sc::NotifyPlayerActivated activated;
-        view.Send(activated, player->GetController());
+        view.Sync(player->GetController(), activated);
 
         GameSpatialSector& sector = spatialContainer.GetSector(player->GetPosition().x(), player->GetPosition().y());
         if (!sector.Empty())
@@ -82,7 +82,7 @@ namespace zerosugar::xr
                     IGameController* controller = snapshotContainer.FindController(id);
                     assert(controller);
 
-                    view.Send(addPlayer, *controller);
+                    view.Sync(*controller, addPlayer);
                 }
 
                 newPlayers.playersCount = static_cast<int32_t>(newPlayers.players.size());
@@ -90,12 +90,12 @@ namespace zerosugar::xr
 
                 if (newPlayers.playersCount > 0)
                 {
-                    view.Send(newPlayers, player->GetController());
+                    view.Sync(player->GetController(), newPlayers);
                 }
 
                 if (newMonsters.monstersCount > 0)
                 {
-                    view.Send(newMonsters, player->GetController());
+                    view.Sync(player->GetController(), newMonsters);
                 }
             }
         }
@@ -287,7 +287,7 @@ namespace zerosugar::xr
                     IGameController* controller = snapshotContainer.FindController(id);
                     assert(controller);
 
-                    view.Send(removePlayer, *controller);
+                    view.Sync(*controller, removePlayer);
                 }
 
                 oldPlayers.playersCount = static_cast<int32_t>(oldPlayers.players.size());
@@ -295,12 +295,12 @@ namespace zerosugar::xr
 
                 if (oldPlayers.playersCount > 0)
                 {
-                    view.Send(oldPlayers, player.GetController());
+                    view.Sync(player.GetController(), oldPlayers);
                 }
 
                 if (oldMonsters.monstersCount > 0)
                 {
-                    view.Send(oldMonsters, player.GetController());
+                    view.Sync(player.GetController(), oldMonsters);
                 }
             }
         }
@@ -343,7 +343,7 @@ namespace zerosugar::xr
                     IGameController* controller = snapshotContainer.FindController(id);
                     assert(controller);
 
-                    view.Send(addPlayer, *controller);
+                    view.Sync(*controller, addPlayer);
                 }
 
                 newPlayers.playersCount = static_cast<int32_t>(newPlayers.players.size());
@@ -351,12 +351,12 @@ namespace zerosugar::xr
 
                 if (newPlayers.playersCount > 0)
                 {
-                    view.Send(newPlayers, player.GetController());
+                    view.Sync(player.GetController(), newPlayers);
                 }
 
                 if (newMonsters.monstersCount > 0)
                 {
-                    view.Send(newMonsters, player.GetController());
+                    view.Sync(player.GetController(), newMonsters);
                 }
             }
         }

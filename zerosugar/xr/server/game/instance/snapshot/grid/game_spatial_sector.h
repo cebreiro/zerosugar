@@ -40,12 +40,20 @@ namespace zerosugar::xr
             virtual ~GameSpatialSet() = default;
 
             bool Empty() const;
+
             bool HasEntitiesAtLeast(int64_t count) const;
             bool HasEntitiesAtLeast(GameEntityType type, int64_t count) const;
             bool HasCell(game_spatial_cell_id_type id) const;
 
             virtual void AddCell(PtrNotNull<GameSpatialCell> cell);
 
+            auto GetCells() const
+            {
+                return _cells | std::views::transform([](PtrNotNull<const GameSpatialCell> cell) -> const GameSpatialCell&
+                    {
+                        return *cell;
+                    });
+            }
             auto GetEntities() const -> entity_id_view_type;
             auto GetEntities(GameEntityType type) const -> entity_id_filter_view_type;
 
@@ -77,6 +85,8 @@ namespace zerosugar::xr
         auto Intersect(const GameSpatialSector& other) const -> Subset;
 
         auto GetId() const -> game_spatial_sector_id_type;
+        auto GetCenter() const -> const GameSpatialCell&;
+        inline auto GetPeripherals() const;
 
     public:
         friend auto operator-(const GameSpatialSector& lhs, const GameSpatialSector& rhs) -> Subset;
@@ -85,6 +95,19 @@ namespace zerosugar::xr
     private:
         game_spatial_sector_id_type _id;
 
-        PtrNotNull<GameSpatialCell> _middle = nullptr;
+        PtrNotNull<GameSpatialCell> _center = nullptr;
     };
+
+    auto GameSpatialSector::GetPeripherals() const
+    {
+        return _cells
+            | std::views::filter([this](PtrNotNull<const GameSpatialCell> cell)
+                {
+                    return cell != _center;
+                })
+            | std::views::transform([](PtrNotNull<const GameSpatialCell> cell) -> const GameSpatialCell&
+                {
+                    return *cell;
+                });
+    }
 }

@@ -5,6 +5,7 @@ namespace zerosugar::xr
     class BehaviorTreeXMLProvider;
     class MapDataProvider;
     class NavigationDataProvider;
+    class MonsterDataProvider;
 }
 
 namespace zerosugar::xr
@@ -24,6 +25,7 @@ namespace zerosugar::xr
         auto GetBehaviorTreeXMLDataProvider() const -> const BehaviorTreeXMLProvider&;
         auto GetMapDataProvider() const -> const MapDataProvider&;
         auto GetNavigationDataProvider() const -> const NavigationDataProvider&;
+        auto GetMonsterDataProvider() const -> const MonsterDataProvider&;
 
     private:
         static auto FindGameDataBaseDirectory() -> std::optional<std::filesystem::path>;
@@ -32,5 +34,6 @@ namespace zerosugar::xr
         SharedPtrNotNull<BehaviorTreeXMLProvider> _behaviorTreeXmlProvider;
         SharedPtrNotNull<MapDataProvider> _mapDataProvider;
         SharedPtrNotNull<NavigationDataProvider> _navigationDataProvider;
+        SharedPtrNotNull<MonsterDataProvider> _monsterDataProvider;
     };
 }

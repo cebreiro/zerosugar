@@ -1,15 +1,16 @@
 #include "game_monster_snapshot.h"
 
+#include "zerosugar/xr/data/provider/monster_data_provider.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
 #include "zerosugar/xr/server/game/instance/entity/component/movement_component.h"
 #include "zerosugar/xr/server/game/instance/entity/component/stat_component.h"
 
 namespace zerosugar::xr
 {
-    GameMonsterSnapshot::GameMonsterSnapshot(IGameController& controller, game_entity_id_type id, int32_t dataId)
+    GameMonsterSnapshot::GameMonsterSnapshot(IGameController& controller, game_entity_id_type id, const data::Monster& data)
         : _controller(controller)
         , _id(id)
-        , _dataId(dataId)
+        , _data(data)
     {
     }
 
@@ -34,9 +35,14 @@ namespace zerosugar::xr
         return _id;
     }
 
+    auto GameMonsterSnapshot::GetData() const -> const data::Monster&
+    {
+        return _data;
+    }
+
     auto GameMonsterSnapshot::GetDataId() const -> int32_t
     {
-        return _dataId;
+        return _data.id;
     }
 
     auto GameMonsterSnapshot::GetPosition() const -> const Eigen::Vector3d&
@@ -61,22 +67,22 @@ namespace zerosugar::xr
 
     auto GameMonsterSnapshot::GetAttackMin() const -> float
     {
-        return _attackMin;
+        return _data.attackMin;
     }
 
     auto GameMonsterSnapshot::GetAttackMax() const -> float
     {
-        return _attackMax;
+        return _data.attackMax;
     }
 
     auto GameMonsterSnapshot::GetAttackRange() const -> float
     {
-        return _attackRange;
+        return _data.attackRange;
     }
 
     auto GameMonsterSnapshot::GetAttackSpeed() const -> float
     {
-        return _attackSpeed;
+        return _data.attackSpeed;
     }
 
     void GameMonsterSnapshot::SetPosition(const Eigen::Vector3d& position)
@@ -97,25 +103,5 @@ namespace zerosugar::xr
     void GameMonsterSnapshot::SetMaxHp(float maxHp)
     {
         _maxHP = maxHp;
-    }
-
-    void GameMonsterSnapshot::SetAttackMin(float attackMin)
-    {
-        _attackMin = attackMin;
-    }
-
-    void GameMonsterSnapshot::SetAttackMax(float attackMax)
-    {
-        _attackMax = attackMax;
-    }
-
-    void GameMonsterSnapshot::SetAttackRange(float attackRange)
-    {
-        _attackRange = attackRange;
-    }
-
-    void GameMonsterSnapshot::SetAttackSpeed(float attackSpeed)
-    {
-        _attackSpeed = attackSpeed;
     }
 }

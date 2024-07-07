@@ -8,4 +8,6 @@ namespace zerosugar::xr::game_constant
     constexpr int32_t inventory_size = 30;
     constexpr int32_t inventory_null_slot = -1;
     constexpr int32_t max_item_overlap_quantity = 200;
+
+    constexpr float player_radius = 45.f;
 }

@@ -1,6 +1,11 @@
 #pragma once
 #include "zerosugar/xr/server/game/instance/task/game_task.h"
 
+namespace zerosugar::xr::data
+{
+    struct Monster;
+}
+
 namespace zerosugar::xr
 {
     class AIController;
@@ -11,10 +16,12 @@ namespace zerosugar::xr::game_task
 {
     struct MonsterSpawnContext
     {
-        int32_t dataId = 0;
+        PtrNotNull<const data::Monster> data = nullptr;
         float x = 0.f;
         float y = 0.f;
         float z = 0.f;
+
+        std::optional<game_entity_id_type> spawnerId = std::nullopt;
     };
 
     class MonsterSpawn final : public GameTaskParamT<MonsterSpawnContext, NullSelector>

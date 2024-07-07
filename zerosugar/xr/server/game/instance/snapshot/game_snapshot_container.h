@@ -46,6 +46,7 @@ namespace zerosugar::xr
         auto FindMonster(game_entity_id_type id) const -> const GameMonsterSnapshot*;
 
         auto GetPlayerRange() const -> std::ranges::values_view<std::ranges::ref_view<const player_container_type>>;
+        auto GetMonsterRange() const ->std::ranges::values_view<std::ranges::ref_view<const monster_container_type>>;
 
     private:
         player_container_type _players;

@@ -1,9 +1,11 @@
 #pragma once
+#include "zerosugar/xr/server/game/instance/controller/game_controller_id.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_id.h"
 
 namespace zerosugar::xr
 {
     class GameInstance;
+    class GameTask;
     class GameTaskScheduler;
     class GameSnapshotContainer;
     class GameSnapshotView;
@@ -11,6 +13,9 @@ namespace zerosugar::xr
     class GameSpatialContainer;
 
     class AIControlService;
+    class NavigationService;
+
+    class IGMCommandFactory;
 }
 
 namespace zerosugar::xr::data
@@ -23,16 +28,18 @@ namespace zerosugar::xr
     class GameExecutionSerial
     {
     public:
-        using service_locator_type = ServiceLocatorT<ILogService>;
-
-    public:
         GameExecutionSerial() = delete;
 
         explicit GameExecutionSerial(GameInstance& gameInstance);
+        ~GameExecutionSerial();
+
+        auto Hold() -> std::shared_ptr<GameExecutionSerial>;
+
+        void SummitTask(UniquePtrNotNull<GameTask> task, std::optional<game_controller_id_type> controllerId = std::nullopt);
 
         auto PublishEntityId(GameEntityType type) -> game_entity_id_type;
 
-        auto GetServiceLocator() const -> service_locator_type&;
+        auto GetServiceLocator() const -> ServiceLocator&;
         auto GetMapData() const -> const data::Map&;
 
         auto GetTaskScheduler() -> GameTaskScheduler&;
@@ -49,9 +56,11 @@ namespace zerosugar::xr
         auto GetSpatialContainer() const -> const GameSpatialContainer&;
 
         auto GetAIControlService() -> AIControlService&;
+        auto GetNavigationService() -> NavigationService*;
+
+        auto GetGMCommandFactory() const -> const IGMCommandFactory&;
 
     private:
         GameInstance& _gameInstance;
-        UniquePtrNotNull<service_locator_type> _serviceLocator;
     };
 }

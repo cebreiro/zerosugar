@@ -111,7 +111,7 @@ namespace zerosugar::xr
     {
         GameSpatialSet::AddCell(cell);
 
-        if (_middle)
+        if (_center)
         {
             return;
         }
@@ -119,22 +119,22 @@ namespace zerosugar::xr
         if (const game_spatial_cell_id_type cellID = cell->GetId();
             cellID.GetX() == _id.GetX() && cell->GetId().GetY() == _id.GetY())
         {
-            _middle = cell;
+            _center = cell;
         }
     }
 
     void GameSpatialSector::AddEntity(game_entity_id_type id)
     {
-        assert(_middle);
+        assert(_center);
 
-        _middle->AddEntity(id);
+        _center->AddEntity(id);
     }
 
     void GameSpatialSector::RemoveEntity(game_entity_id_type id)
     {
-        assert(_middle);
+        assert(_center);
 
-        _middle->RemoveEntity(id);
+        _center->RemoveEntity(id);
     }
 
     auto GameSpatialSector::Difference(const GameSpatialSector& other) const -> Subset
@@ -158,6 +158,11 @@ namespace zerosugar::xr
     auto GameSpatialSector::GetId() const -> game_spatial_sector_id_type
     {
         return _id;
+    }
+
+    auto GameSpatialSector::GetCenter() const -> const GameSpatialCell&
+    {
+        return *_center;
     }
 
     auto operator-(const GameSpatialSector& lhs, const GameSpatialSector& rhs) -> GameSpatialSector::Subset

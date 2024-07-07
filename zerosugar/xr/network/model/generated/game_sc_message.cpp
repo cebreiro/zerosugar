@@ -83,6 +83,24 @@ namespace zerosugar::xr::network::game::sc
         }
     }
 
+    void SpawnMonster::Deserialize(PacketReader& reader)
+    {
+        monstersCount = reader.Read<int32_t>();
+        for (int32_t i = 0; i < monstersCount; ++i)
+        {
+            monsters.emplace_back(reader.Read<Monster>());
+        }
+    }
+
+    void SpawnMonster::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int32_t>(monstersCount);
+        for (const auto& item : monsters)
+        {
+            writer.WriteObject(item);
+        }
+    }
+
     void AddMonster::Deserialize(PacketReader& reader)
     {
         monstersCount = reader.Read<int32_t>();
@@ -314,6 +332,13 @@ namespace zerosugar::xr::network::game::sc
 
                 return item;
             }
+            case SpawnMonster::opcode:
+            {
+                auto item = std::make_unique<SpawnMonster>();
+                item->Deserialize(reader);
+
+                return item;
+            }
             case AddMonster::opcode:
             {
                 auto item = std::make_unique<AddMonster>();
@@ -449,6 +474,13 @@ namespace zerosugar::xr::network::game::sc
 
                 return item;
             }
+            case SpawnMonster::opcode:
+            {
+                SpawnMonster item;
+                item.Deserialize(reader);
+
+                return item;
+            }
             case AddMonster::opcode:
             {
                 AddMonster item;
@@ -570,6 +602,10 @@ namespace zerosugar::xr::network::game::sc
             case RemoveRemotePlayer::opcode:
             {
                 return typeid(RemoveRemotePlayer);
+            }
+            case SpawnMonster::opcode:
+            {
+                return typeid(SpawnMonster);
             }
             case AddMonster::opcode:
             {

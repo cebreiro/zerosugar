@@ -1,7 +1,11 @@
 #pragma once
 #include <Eigen/Dense>
-
 #include "zerosugar/xr/server/game/instance/entity/game_entity_id.h"
+
+namespace zerosugar::xr::data
+{
+    struct Monster;
+}
 
 namespace zerosugar::xr
 {
@@ -14,12 +18,13 @@ namespace zerosugar::xr
     class GameMonsterSnapshot
     {
     public:
-        GameMonsterSnapshot(IGameController& controller, game_entity_id_type id, int32_t dataId);
+        GameMonsterSnapshot(IGameController& controller, game_entity_id_type id, const data::Monster& data);
 
         void Initialize(const GameEntity& entity);
 
         auto GetController() const -> IGameController&;
         auto GetId() const -> game_entity_id_type;
+        auto GetData() const -> const data::Monster&;
         auto GetDataId() const -> int32_t;
         auto GetPosition() const -> const Eigen::Vector3d&;
         auto GetYaw() const -> float;
@@ -34,23 +39,15 @@ namespace zerosugar::xr
         void SetYaw(float yaw);
         void SetHp(float hp);
         void SetMaxHp(float maxHp);
-        void SetAttackMin(float attackMin);
-        void SetAttackMax(float attackMax);
-        void SetAttackRange(float attackRange);
-        void SetAttackSpeed(float attackSpeed);
 
     private:
         IGameController& _controller;
+        const data::Monster& _data;
 
         game_entity_id_type _id;
-        int32_t _dataId = 0;
         Eigen::Vector3d _position;
         float _yaw = 0.f;
         float _hp = 0.f;
         float _maxHP = 0.f;
-        float _attackMin = 0.f;
-        float _attackMax = 0.f;
-        float _attackRange = 0.f;
-        float _attackSpeed = 0.f;
     };
 }

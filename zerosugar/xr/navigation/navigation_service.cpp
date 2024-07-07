@@ -20,8 +20,15 @@ namespace zerosugar::xr
     {
     }
 
-    auto NavigationService::StartVisualize() -> Future<bool>
+    bool NavigationService::IsRunningVisualizer() const
     {
+        return _runningVisualizer.load();
+    }
+
+    auto NavigationService::StartVisualize(std::function<void()> shutdownCallback) -> Future<bool>
+    {
+        _runningVisualizer.store(true);
+
         co_await *_strand;
 
         if (_visualizer)
@@ -29,10 +36,17 @@ namespace zerosugar::xr
             co_return false;
         }
 
+        _shutdownCallback = shutdownCallback;
         _visualizer = std::make_unique<navi::Visualizer>(*_strand, _naviData);
         _visualizerRunFuture = _visualizer->Run().Then(*_strand, [self = shared_from_this()]()
             {
                 self->_visualizer.reset();
+                self->_runningVisualizer.store(false);
+
+                if (std::function<void()> callback = std::exchange(self->_shutdownCallback, {}))
+                {
+                    callback();
+                }
             });
     }
 
@@ -59,6 +73,61 @@ namespace zerosugar::xr
         }
 
         co_return;
+    }
+
+    void NavigationService::AddDrawTargets(std::vector<navi::AddVisualizeTargetParam> params)
+    {
+        Dispatch(*_strand, [self = shared_from_this(), params = std::move(params)]()
+            {
+                if (!self->_visualizer)
+                {
+                    return;
+                }
+
+                for (const navi::AddVisualizeTargetParam& param : params)
+                {
+                    self->_visualizer->AddDrawTarget(param);
+                }
+            });
+    }
+
+    void NavigationService::AddDrawTarget(navi::AddVisualizeTargetParam param)
+    {
+        Dispatch(*_strand, [self = shared_from_this(), param = std::move(param)]()
+            {
+                if (!self->_visualizer)
+                {
+                    return;
+                }
+
+                self->_visualizer->AddDrawTarget(param);
+            });
+    }
+
+    void NavigationService::RemoveDrawTarget(navi::RemoveVisualizeTargetParam param)
+    {
+        Dispatch(*_strand, [self = shared_from_this(), param = std::move(param)]()
+            {
+                if (!self->_visualizer)
+                {
+                    return;
+                }
+
+                self->_visualizer->RemoveDrawTarget(param);
+            });
+    }
+
+    void NavigationService::UpdateDrawTarget(navi::UpdateVisualizeTargetParam param)
+    {
+        Dispatch(*_strand, [self = shared_from_this(), param = std::move(param)]()
+            {
+                if (!self->_visualizer)
+                {
+                    return;
+                }
+
+                self->_visualizer->UpdateDrawTarget(param);
+            });
     }
 
     auto NavigationService::GetRandomPointAroundCircle(const navi::FVector& position, float radius)
@@ -106,16 +175,6 @@ namespace zerosugar::xr
         }
 
         co_return result;
-    }
-
-    void NavigationService::DrawCircle(const navi::FVector& vector, float radius)
-    {
-        const navi::Vector pos(vector);
-
-        Dispatch(*_strand, [self = shared_from_this(), pos, radius]()
-            {
-                self->_visualizer->DrawSphere(pos, radius);
-            });
     }
 
     auto NavigationService::GetPolyFindingExtents() -> navi::Extents

@@ -23,6 +23,9 @@ namespace zerosugar::xr::network::game::sc
     void from_json(const nlohmann::json& j, RemoveRemotePlayer& item);
     void to_json(nlohmann::json& j, const RemoveRemotePlayer& item);
 
+    void from_json(const nlohmann::json& j, SpawnMonster& item);
+    void to_json(nlohmann::json& j, const SpawnMonster& item);
+
     void from_json(const nlohmann::json& j, AddMonster& item);
     void to_json(nlohmann::json& j, const AddMonster& item);
 

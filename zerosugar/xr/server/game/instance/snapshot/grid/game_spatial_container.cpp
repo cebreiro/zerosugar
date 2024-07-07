@@ -26,6 +26,16 @@ namespace zerosugar::xr
         return GetSector(CalculateXIndex(x), CalculateYIndex(y));
     }
 
+    auto GameSpatialContainer::GetPositionOffset() const -> double
+    {
+        return _positionOffset;
+    }
+
+    auto GameSpatialContainer::GetLengthPerGrid() const -> int32_t
+    {
+        return _lengthPerGrid;
+    }
+
     void GameSpatialContainer::Initialize()
     {
         _xSize = (_width / _lengthPerGrid) + 1;
@@ -76,9 +86,13 @@ namespace zerosugar::xr
 
         for (int32_t y = 0; y < _ySize; ++y)
         {
+            const double topY = y * _lengthPerGrid;
+
             for (int32_t x = 0; x < _xSize; ++x)
             {
-                GameSpatialCell& cell = _cells.emplace_back(game_spatial_cell_id_type(x, y));
+                const double leftX = x * _lengthPerGrid;
+
+                GameSpatialCell& cell = _cells.emplace_back(game_spatial_cell_id_type(x, y), leftX, topY);
 
                 for (PtrNotNull<GameSpatialSector> sector : getAdjacentSectors(x, y))
                 {
@@ -111,7 +125,7 @@ namespace zerosugar::xr
 
     auto GameSpatialContainer::CalculateXIndex(double x) const -> int32_t
     {
-        const int32_t intValue = static_cast<int32_t>(x + 10000.0);
+        const int32_t intValue = static_cast<int32_t>(x + _positionOffset);
         const int32_t clamped = std::clamp(intValue, 0, _width);
 
         return clamped / _lengthPerGrid;
@@ -119,7 +133,7 @@ namespace zerosugar::xr
 
     auto GameSpatialContainer::CalculateYIndex(double y) const -> int32_t
     {
-        const int32_t intValue = static_cast<int32_t>(y + 10000.0);
+        const int32_t intValue = static_cast<int32_t>(y + _positionOffset);
         const int32_t clamped = std::clamp(intValue, 0, _height);
 
         return clamped / _lengthPerGrid;

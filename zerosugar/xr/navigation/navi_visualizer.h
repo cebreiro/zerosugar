@@ -1,6 +1,8 @@
 #pragma once
+#include <boost/unordered/unordered_flat_map.hpp>
 #include "zerosugar/xr/navigation/navi_vector.h"
 #include "zerosugar/xr/navigation/navi_visualizer_interface.h"
+#include "zerosugar/xr/navigation/navi_visualize_param.h"
 
 class InputGeom;
 class SampleDebugDraw;
@@ -23,7 +25,9 @@ namespace zerosugar::xr::navi
 
         void Shutdown();
 
-        void DrawSphere(const Vector& position, float radius);
+        void AddDrawTarget(const AddVisualizeTargetParam& param);
+        void RemoveDrawTarget(const RemoveVisualizeTargetParam& param);
+        void UpdateDrawTarget(const UpdateVisualizeTargetParam& param);
 
     public:
         void handleTools() override;
@@ -58,6 +62,17 @@ namespace zerosugar::xr::navi
         std::unique_ptr<NavMeshTesterTool> _testTool;
 
         int32_t _drawMode = 0;
-        std::vector<std::pair<Vector, float>> _drawSpheres;
+
+        struct DrawTarget
+        {
+            int64_t id = 0;
+            Vector position;
+            DrawColor drawColor = DrawColor::LightBlue;
+            Scalar radius;
+
+            std::optional<Vector> destPosition = std::nullopt;
+            std::optional<DrawColor> destPositionDrawColor = std::nullopt;
+        };
+        boost::unordered::unordered_flat_map<int64_t, DrawTarget> _drawTargets;
     };
 }

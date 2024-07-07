@@ -2,7 +2,6 @@
 
 #include "zerosugar/shared/ai/behavior_tree/black_board.h"
 #include "zerosugar/xr/application/bot_client/controller/bot_controller.h"
-#include "zerosugar/xr/application/bot_client/controller/ai/behavior_tree/event/suspend_event.h"
 
 namespace zerosugar::xr::bot
 {
@@ -13,7 +12,10 @@ namespace zerosugar::xr::bot
 
         controller.Shutdown(std::format("called on {}", name));
 
-        co_await bt::Event<event::SuspendForever>();
+
+        struct SuspendForever{};
+
+        co_await bt::Event<SuspendForever>();
 
         co_return false;
     }

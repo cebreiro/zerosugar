@@ -8,6 +8,7 @@
 #include "zerosugar/shared/ai/behavior_tree/node/decorator/inverter.h"
 #include "zerosugar/shared/ai/behavior_tree/node/decorator/force_success.h"
 #include "zerosugar/shared/ai/behavior_tree/node/decorator/force_failure.h"
+#include "zerosugar/shared/ai/behavior_tree/node/task/suspend_forever.h"
 
 namespace zerosugar::bt
 {
@@ -19,6 +20,8 @@ namespace zerosugar::bt
         RegisterXML<node::Inverter>();
         RegisterXML<node::ForceSuccess>();
         RegisterXML<node::ForceFailure>();
+
+        RegisterXML<node::SuspendForever>();
     }
 
     auto NodeSerializer::Deserialize(const pugi::xml_node& xmlNode) const -> UniquePtrNotNull<INode>

@@ -3,7 +3,10 @@
 namespace zerosugar::xr
 {
     class IGamePacketHandler;
+}
 
+namespace zerosugar::xr
+{
     class IGamePacketHandlerFactory
     {
     public:

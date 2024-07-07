@@ -67,6 +67,21 @@ namespace zerosugar::xr::network::game::sc
             };
     }
 
+    void from_json(const nlohmann::json& j, SpawnMonster& item)
+    {
+        j.at("monstersCount").get_to(item.monstersCount);
+        j.at("monsters").get_to(item.monsters);
+    }
+
+    void to_json(nlohmann::json& j, const SpawnMonster& item)
+    {
+        j = nlohmann::json
+            {
+                { "monstersCount", item.monstersCount },
+                { "monsters", item.monsters },
+            };
+    }
+
     void from_json(const nlohmann::json& j, AddMonster& item)
     {
         j.at("monstersCount").get_to(item.monstersCount);

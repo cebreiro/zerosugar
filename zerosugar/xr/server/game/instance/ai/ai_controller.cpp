@@ -97,8 +97,19 @@ namespace zerosugar::xr
             co_await _runAI;
         }
 
+        ++_eventCounter;
         _behaviorTree = std::move(newBehaviorTree);
         _runAI = RunAI();
+    }
+
+    bool AIController::HasDifferenceEventCounter(int64_t counter) const
+    {
+        return _eventCounter != counter;
+    }
+
+    auto AIController::PublishEventCounter() -> int64_t
+    {
+        return ++_eventCounter;
     }
 
     bool AIController::IsSubscriberOf(int32_t opcode) const

@@ -75,6 +75,12 @@ namespace zerosugar::xr
         return _characterId;
     }
 
+    auto GameClient::GetGMLevel() const -> int32_t
+    {
+        // temp
+        return 1;
+    }
+
     void GameClient::Send(Buffer buffer)
     {
         if (const auto session = _session.lock(); session)

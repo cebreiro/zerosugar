@@ -42,7 +42,7 @@ message RemoveRemotePlayer
     repeated int64 players = 2 [(size_element) = "players_count"];
 }
 
-message AddMonster
+message SpawnMonster
 {
     option (opcode) = 4001;
 
@@ -50,9 +50,17 @@ message AddMonster
     repeated Monster monsters = 2 [(size_element) = "monsters_count"];
 }
 
-message RemoveMonster
+message AddMonster
 {
     option (opcode) = 4002;
+
+    int32 monsters_count = 1;
+    repeated Monster monsters = 2 [(size_element) = "monsters_count"];
+}
+
+message RemoveMonster
+{
+    option (opcode) = 4003;
 
     int32 monsters_count = 1;
     repeated int64 monsters = 2 [(size_element) = "monsters_count"];

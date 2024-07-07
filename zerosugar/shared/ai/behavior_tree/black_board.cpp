@@ -11,4 +11,9 @@ namespace zerosugar::bt
     {
         return _container.contains(key);
     }
+
+    bool BlackBoard::Remove(const std::string& key)
+    {
+        return _container.erase(key);
+    }
 }

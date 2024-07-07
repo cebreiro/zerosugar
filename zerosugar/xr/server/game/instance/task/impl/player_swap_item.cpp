@@ -128,7 +128,7 @@ namespace zerosugar::xr::game_task
         GamePlayerSnapshot* snapshot = serialContext.GetSnapshotContainer().FindPlayer(_id);
         assert(snapshot);
 
-        serialContext.GetSnapshotView().Send(_sync, snapshot->GetController());
+        serialContext.GetSnapshotView().Sync(snapshot->GetController(), _sync);
 
         if (_equipPosition)
         {

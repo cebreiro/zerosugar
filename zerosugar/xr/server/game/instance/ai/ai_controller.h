@@ -38,6 +38,9 @@ namespace zerosugar::xr
         auto Join() -> Future<void>;
 
         auto Transition(const std::string& behaviorTreeName) -> Future<void>;
+
+        bool HasDifferenceEventCounter(int64_t counter) const;
+        auto PublishEventCounter() -> int64_t;
         
         bool IsSubscriberOf(int32_t opcode) const override;
         void Notify(const IPacket& packet) override;
@@ -70,6 +73,7 @@ namespace zerosugar::xr
 
         IBehaviorTreeLogger* _behaviorTreeLogger = nullptr;
 
+        int64_t _eventCounter = 0;
         Future<void> _runAI;
         UniquePtrNotNull<bt::BlackBoard> _blackBoard;
         SharedPtrNotNull<BehaviorTree> _behaviorTree;

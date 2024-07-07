@@ -25,6 +25,8 @@ namespace zerosugar::xr
 
     class AIControlService;
     class NavigationService;
+
+    class IGMCommandFactory;
 }
 
 namespace zerosugar::xr
@@ -75,6 +77,8 @@ namespace zerosugar::xr
         auto GetAIControlService() -> AIControlService&;
         auto GetNavigationService() -> NavigationService*;
 
+        auto GetGMCommandFactory() const -> const IGMCommandFactory&;
+
     private:
         SharedPtrNotNull<execution::IExecutor> _executor;
         SharedPtrNotNull<Strand> _strand;
@@ -100,5 +104,7 @@ namespace zerosugar::xr
 
         UniquePtrNotNull<AIControlService> _aiControlService;
         std::shared_ptr<NavigationService> _navigationService;
+
+        UniquePtrNotNull<IGMCommandFactory> _gmCommandFactory;
     };
 }

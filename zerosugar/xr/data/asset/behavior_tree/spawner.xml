@@ -1,5 +1,7 @@
 <root>
     <sequence>
         <spawn_monster />
+        <wait_for_spawn_monster_dead />
+        <wait_for_seconds time="3.0" />
     </sequence>
 </root>
