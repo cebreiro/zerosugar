@@ -4,6 +4,8 @@
 
 namespace zerosugar::xr
 {
+    class MapData;
+
     class GameInstance;
     class GameTask;
     class GameTaskScheduler;
@@ -16,11 +18,6 @@ namespace zerosugar::xr
     class NavigationService;
 
     class IGMCommandFactory;
-}
-
-namespace zerosugar::xr::data
-{
-    struct Map;
 }
 
 namespace zerosugar::xr
@@ -40,7 +37,7 @@ namespace zerosugar::xr
         auto PublishEntityId(GameEntityType type) -> game_entity_id_type;
 
         auto GetServiceLocator() const -> ServiceLocator&;
-        auto GetMapData() const -> const data::Map&;
+        auto GetMapData() const -> const MapData&;
 
         auto GetTaskScheduler() -> GameTaskScheduler&;
         auto GetTaskScheduler() const -> const GameTaskScheduler&;

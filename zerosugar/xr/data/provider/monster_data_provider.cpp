@@ -1,34 +1,75 @@
 #include "monster_data_provider.h"
 
-#include <boost/lexical_cast.hpp>
-
-namespace zerosugar::xr::data
-{
-    void from_json(const nlohmann::json& json, Monster& monster)
-    {
-        monster.id = boost::lexical_cast<int32_t>(json.at("Name").get<std::string>());
-        json.at("MonsterMaxHP").get_to(monster.hpMax);
-        json.at("MonsterAttackMin").get_to(monster.attackMin);
-        json.at("MonsterAttackMax").get_to(monster.attackMax);
-        json.at("MonsterAttackRange").get_to(monster.attackRange);
-        json.at("MonsterAttackSpeed").get_to(monster.attackSpeed);
-        json.at("MonsterSpeed").get_to(monster.speed);
-        json.at("BehaviorTree").get_to(monster.behaviorTree);
-    }
-}
-
 namespace zerosugar::xr
 {
     void MonsterDataProvider::Initialize(ServiceLocator& serviceLocator, const std::filesystem::path& basePath)
     {
-        const auto path = basePath / "table" / "MonsterTable.json";
+        _bases = LoadJsonFromFile<data::Monster>(serviceLocator, basePath / "table" / "MonsterTable.json");
+        _skills = LoadJsonFromFile<data::MonsterSkill>(serviceLocator, basePath / "table" / "MonsterSkillTable.json");
+        _animations = LoadJsonFromFile<data::MonsterAnimation>(serviceLocator, basePath / "table" / "MonsterAnimation.json");
+
+        for (const data::Monster& base : _bases)
+        {
+            [[maybe_unused]]
+            const bool inserted = _monsters.try_emplace(base.id, &base).second;
+            assert(inserted);
+        }
+
+        for (const data::MonsterSkill& skill : _skills)
+        {
+            const auto iter = _monsters.find(skill.monsterId);
+            if (iter == _monsters.end())
+            {
+                assert(false);
+
+                continue;
+            }
+
+            iter->second.AddSkill(skill.id, &skill);
+        }
+
+        for (const data::MonsterAnimation& animation : _animations)
+        {
+            const auto iter = _monsters.find(animation.monsterId);
+            if (iter == _monsters.end())
+            {
+                assert(false);
+
+                continue;
+            }
+
+            for (const data::MonsterAnimation::Value& value : animation.values)
+            {
+                iter->second.AddSkillAnimation(value.name, &value);
+            }
+        }
+    }
+
+    auto MonsterDataProvider::Find(int32_t mobId) const -> const MonsterData*
+    {
+        const auto iter = _monsters.find(mobId);
+
+        return iter != _monsters.end() ? &iter->second : nullptr;
+
+    }
+
+    auto MonsterDataProvider::GetName() const -> std::string_view
+    {
+        return "monster_data_provider";
+    }
+
+    template <typename T>
+    auto MonsterDataProvider::LoadJsonFromFile(ServiceLocator& serviceLocator, const std::filesystem::path& path) const -> std::vector<T>
+    {
+        std::vector<T> result;
+        
         if (!exists(path))
         {
             ZEROSUGAR_LOG_ERROR(serviceLocator,
-                std::format("[{}] fail to find navigation directory. path: {}",
+                std::format("[{}] fail to find directory. path: {}",
                     GetName(), path.generic_string()));
 
-            return;
+            return result;
         }
 
         try
@@ -42,18 +83,7 @@ namespace zerosugar::xr
             nlohmann::json json;
             ifstream >> json;
 
-            std::vector<data::Monster> monsters;
-            from_json(json.at("list"), monsters);
-
-            for (const data::Monster& monster : monsters)
-            {
-                if (!_monsters.try_emplace(monster.id, monster).second)
-                {
-                    ZEROSUGAR_LOG_ERROR(serviceLocator,
-                        std::format("[{}] fail to insert monster data. duplicated id: {}, path: {}",
-                            GetName(), monster.id, path.generic_string()));
-                }
-            }
+            from_json(json.at("list"), result);
         }
         catch (const std::exception& e)
         {
@@ -61,18 +91,7 @@ namespace zerosugar::xr
                 std::format("[{}] fail to initialize map data. exception: {}, path: {}",
                     GetName(), e.what(), path.generic_string()));
         }
-    }
 
-    auto MonsterDataProvider::Find(int32_t mobId) const -> const data::Monster*
-    {
-        const auto iter = _monsters.find(mobId);
-
-        return iter != _monsters.end() ? &iter->second : nullptr;
-
-    }
-
-    auto MonsterDataProvider::GetName() const -> std::string_view
-    {
-        return "monster_data_provider";
+        return result;
     }
 }

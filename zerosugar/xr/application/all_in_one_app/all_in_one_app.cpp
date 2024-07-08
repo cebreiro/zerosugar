@@ -8,6 +8,7 @@
 #include "zerosugar/xr/data/game_data_provider.h"
 #include "zerosugar/xr/network/rpc/rpc_client.h"
 #include "zerosugar/xr/network/rpc/rpc_server.h"
+#include "zerosugar/xr/navigation/navi_data_provider.h"
 #include "zerosugar/xr/server/game/game_server.h"
 #include "zerosugar/xr/server/lobby/lobby_server.h"
 #include "zerosugar/xr/server/login/login_server.h"
@@ -24,6 +25,7 @@ namespace zerosugar::xr
         , _logService(std::make_shared<LogService>())
         , _connectionPool(std::make_shared<db::ConnectionPool>(_executor))
         , _gameDataProvider(std::make_shared<GameDataProvider>())
+        , _navigationDataProvider(std::make_shared<NavigationDataProvider>())
         , _rpcServer(std::make_shared<RPCServer>(_executor))
         , _rpcClient(std::make_shared<RPCClient>(_executor))
         , _loginServer(std::make_shared<LoginServer>(*_executor))
@@ -46,6 +48,7 @@ namespace zerosugar::xr
         serviceLocator.Add<RPCClient>(_rpcClient);
 
         serviceLocator.Add<GameDataProvider>(_gameDataProvider);
+        serviceLocator.Add<NavigationDataProvider>(_navigationDataProvider);
 
         serviceLocator.Add<service::ILoginService>(_loginServiceProxy);
         serviceLocator.Add<service::IGatewayService>(_gatewayServiceProxy);
@@ -159,6 +162,7 @@ namespace zerosugar::xr
         ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize game data", GetName()));
 
         _gameDataProvider->Initialize(serviceLocator);
+        _navigationDataProvider->Initialize(serviceLocator, _gameDataProvider->GetBaseDirectory());
 
         ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize game data --> Done", GetName()));
     }

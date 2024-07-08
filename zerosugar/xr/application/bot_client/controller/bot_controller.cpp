@@ -6,7 +6,6 @@
 #include "zerosugar/shared/execution/executor/impl/asio_strand.h"
 #include "zerosugar/shared/network/socket.h"
 #include "zerosugar/xr/data/game_data_provider.h"
-#include "zerosugar/xr/data/provider/behavior_tree_xml_provider.h"
 #include "zerosugar/xr/network/packet_reader.h"
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
 #include "zerosugar/xr/network/model/generated/lobby_sc_message.h"
@@ -48,9 +47,8 @@ namespace zerosugar::xr
         auto self = shared_from_this();
 
         const GameDataProvider& gameDataProvider = _serviceLocator.Get<GameDataProvider>();
-        const BehaviorTreeXMLProvider& behaviorTreeProvider = gameDataProvider.GetBehaviorTreeXMLDataProvider();
 
-        const bt::INodeDataSet* dataSet = behaviorTreeProvider.Find(behaviorTreeName);
+        const bt::INodeDataSet* dataSet = gameDataProvider.FindBehaviorTree(behaviorTreeName);
         if (!dataSet)
         {
             assert(false);

@@ -22,6 +22,7 @@ namespace zerosugar::xr
     class GameServer;
 
     class GameDataProvider;
+    class NavigationDataProvider;
 }
 
 namespace zerosugar::xr
@@ -73,6 +74,7 @@ namespace zerosugar::xr
 
         // data
         SharedPtrNotNull<GameDataProvider> _gameDataProvider;
+        SharedPtrNotNull<NavigationDataProvider> _navigationDataProvider;
 
         // network
         SharedPtrNotNull<RPCServer> _rpcServer;

@@ -1,6 +1,6 @@
 #include "player_spawn.h"
 
-#include "zerosugar/xr/data/provider/map_data.h"
+#include "zerosugar/xr/data/table/map.h"
 #include "zerosugar/xr/server/game/instance/controller/game_controller_interface.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_container.h"
@@ -57,7 +57,7 @@ namespace zerosugar::xr::game_task
 
         serialContext.GetSnapshotController().ProcessPlayerSpawn(*GetParam());
 
-        if (serialContext.GetMapData().type == data::MapType::Village)
+        if (serialContext.GetMapData().GetType() == data::MapType::Village)
         {
             serialContext.GetSnapshotController().ProcessPlayerActivate(id);
         }

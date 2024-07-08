@@ -1,13 +1,10 @@
 #pragma once
 #include "zerosugar/xr/server/game/instance/task/game_task.h"
 
-namespace zerosugar::xr::data
-{
-    struct Monster;
-}
-
 namespace zerosugar::xr
 {
+    class MonsterData;
+
     class AIController;
     class GameMonsterSnapshot;
 }
@@ -16,7 +13,7 @@ namespace zerosugar::xr::game_task
 {
     struct MonsterSpawnContext
     {
-        PtrNotNull<const data::Monster> data = nullptr;
+        PtrNotNull<const MonsterData> data = nullptr;
         float x = 0.f;
         float y = 0.f;
         float z = 0.f;

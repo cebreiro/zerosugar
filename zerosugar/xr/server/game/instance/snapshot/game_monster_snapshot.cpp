@@ -1,13 +1,13 @@
 #include "game_monster_snapshot.h"
 
-#include "zerosugar/xr/data/provider/monster_data_provider.h"
+#include "zerosugar/xr/data/table/monster.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
 #include "zerosugar/xr/server/game/instance/entity/component/movement_component.h"
 #include "zerosugar/xr/server/game/instance/entity/component/stat_component.h"
 
 namespace zerosugar::xr
 {
-    GameMonsterSnapshot::GameMonsterSnapshot(IGameController& controller, game_entity_id_type id, const data::Monster& data)
+    GameMonsterSnapshot::GameMonsterSnapshot(IGameController& controller, game_entity_id_type id, const MonsterData& data)
         : _controller(controller)
         , _id(id)
         , _data(data)
@@ -35,14 +35,14 @@ namespace zerosugar::xr
         return _id;
     }
 
-    auto GameMonsterSnapshot::GetData() const -> const data::Monster&
+    auto GameMonsterSnapshot::GetData() const -> const MonsterData&
     {
         return _data;
     }
 
     auto GameMonsterSnapshot::GetDataId() const -> int32_t
     {
-        return _data.id;
+        return _data.GetBase().id;
     }
 
     auto GameMonsterSnapshot::GetPosition() const -> const Eigen::Vector3d&
@@ -67,22 +67,22 @@ namespace zerosugar::xr
 
     auto GameMonsterSnapshot::GetAttackMin() const -> float
     {
-        return _data.attackMin;
+        return _data.GetBase().attackMin;
     }
 
     auto GameMonsterSnapshot::GetAttackMax() const -> float
     {
-        return _data.attackMax;
+        return _data.GetBase().attackMax;
     }
 
     auto GameMonsterSnapshot::GetAttackRange() const -> float
     {
-        return _data.attackRange;
+        return _data.GetBase().attackRange;
     }
 
     auto GameMonsterSnapshot::GetAttackSpeed() const -> float
     {
-        return _data.attackSpeed;
+        return _data.GetBase().attackSpeed;
     }
 
     void GameMonsterSnapshot::SetPosition(const Eigen::Vector3d& position)

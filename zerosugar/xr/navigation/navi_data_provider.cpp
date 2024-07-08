@@ -1,4 +1,4 @@
-#include "navigation_data_provider.h"
+#include "navi_data_provider.h"
 
 #include <boost/lexical_cast.hpp>
 #include <boost/scope/scope_fail.hpp>
@@ -20,9 +20,6 @@ namespace
         dtTileRef tileRef;
         int dataSize;
     };
-
-    static const int NAVMESHSET_MAGIC = 'M' << 24 | 'S' << 16 | 'E' << 8 | 'T'; //'MSET';
-    //static const int NAVMESHSET_VERSION = 1;
 }
 
 namespace zerosugar::xr

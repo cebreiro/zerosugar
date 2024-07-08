@@ -2,9 +2,9 @@
 #include "zerosugar/xr/server/game/instance/entity/game_entity_id.h"
 #include "zerosugar/xr/server/game/instance/entity/component/game_component.h"
 
-namespace zerosugar::xr::data
+namespace zerosugar::xr
 {
-    struct Monster;
+    class MonsterData;
 }
 
 namespace zerosugar::xr
@@ -14,16 +14,16 @@ namespace zerosugar::xr
     public:
         MonsterComponent() = delete;
 
-        explicit MonsterComponent(const data::Monster& data);
+        explicit MonsterComponent(const MonsterData& data);
         ~MonsterComponent();
 
-        auto GetData() const -> const data::Monster&;
+        auto GetData() const -> const MonsterData&;
         auto GetSpawnerId() const->std::optional<game_entity_id_type>;
 
         void SetSpawner(std::optional<game_entity_id_type> spawner);
 
     private:
-        const data::Monster& _data;
+        const MonsterData& _data;
 
         std::optional<game_entity_id_type> _spawnerId = std::nullopt;
     };

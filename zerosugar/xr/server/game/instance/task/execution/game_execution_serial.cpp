@@ -34,7 +34,7 @@ namespace zerosugar::xr
         return _gameInstance.GetServiceLocator();
     }
 
-    auto GameExecutionSerial::GetMapData() const -> const data::Map&
+    auto GameExecutionSerial::GetMapData() const -> const MapData&
     {
         return _gameInstance.GetMapData();
     }

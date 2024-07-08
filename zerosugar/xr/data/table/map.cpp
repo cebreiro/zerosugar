@@ -1,4 +1,4 @@
-#include "map_data.h"
+#include "map.h"
 
 namespace zerosugar::xr::data
 {
@@ -42,5 +42,38 @@ namespace zerosugar::xr::data
         {
             iter->get_to(map.monsterSpawners);
         }
+    }
+}
+
+namespace zerosugar::xr
+{
+    MapData::MapData(data::Map map)
+        : _map(std::move(map))
+    {
+    }
+
+    auto MapData::GetId() const -> int32_t
+    {
+        return _map.id;
+    }
+
+    auto MapData::GetType() const -> data::MapType
+    {
+        return _map.type;
+    }
+
+    auto MapData::GetPortal() const -> const data::Portal*
+    {
+        return nullptr;
+    }
+
+    auto MapData::GetPlayerSpawnPoint() const -> const data::PlayerSpawnPoint&
+    {
+        return _map.playerSpawnPoint;
+    }
+
+    auto MapData::GetMonsterSpawners() const -> std::span<const data::MonsterSpawner>
+    {
+        return _map.monsterSpawners;
     }
 }

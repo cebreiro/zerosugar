@@ -1,6 +1,6 @@
 #include "monster_spawn.h"
 
-#include "zerosugar/xr/data/provider/monster_data_provider.h"
+#include "zerosugar/xr/data/table/monster.h"
 #include "zerosugar/xr/server/game/instance/ai/ai_controller.h"
 #include "zerosugar/xr/server/game/instance/ai/ai_control_service.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
@@ -35,7 +35,7 @@ namespace zerosugar::xr::game_task
         quickExit = false;
 
         _entityId = serialContext.PublishEntityId(GameEntityType::Monster);
-        _aiController = serialContext.GetAIControlService().CreateAIController(_entityId, GetParam().data->behaviorTree);
+        _aiController = serialContext.GetAIControlService().CreateAIController(_entityId, GetParam().data->GetBase().behaviorTree);
 
         serialContext.GetTaskScheduler().AddController(_aiController->GetControllerId());
         serialContext.GetTaskScheduler().AddEntity(_entityId);
@@ -61,7 +61,7 @@ namespace zerosugar::xr::game_task
             entity->AddComponent(std::move(movementComponent));
         }
         {
-            const auto maxHP = StatValue(context.data->hpMax);
+            const auto maxHP = StatValue(context.data->GetBase().hpMax);
 
             auto statComponent = std::make_unique<StatComponent>();
             statComponent->SetMaxHP(maxHP);

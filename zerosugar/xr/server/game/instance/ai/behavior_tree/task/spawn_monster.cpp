@@ -3,8 +3,7 @@
 #include "zerosugar/shared/ai/behavior_tree/behavior_tree.h"
 #include "zerosugar/shared/ai/behavior_tree/black_board.h"
 #include "zerosugar/xr/data/game_data_provider.h"
-#include "zerosugar/xr/data/provider/map_data.h"
-#include "zerosugar/xr/data/provider/monster_data_provider.h"
+#include "zerosugar/xr/data/table/map.h"
 #include "zerosugar/xr/navigation/navigation_service.h"
 #include "zerosugar/xr/navigation/navi_vector.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
@@ -22,8 +21,7 @@ namespace zerosugar::xr::game
 
         ServiceLocator& serviceLocator = controller.GetGameInstance().GetServiceLocator();
 
-        const MonsterDataProvider& monsterData = serviceLocator.Get<GameDataProvider>().GetMonsterDataProvider();
-        const data::Monster* data = monsterData.Find(param.monsterId);
+        const MonsterData* data = serviceLocator.Get<GameDataProvider>().Find(monster_data_id_type(param.monsterId));
 
         if (!data)
         {

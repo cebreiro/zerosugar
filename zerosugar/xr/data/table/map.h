@@ -43,3 +43,22 @@ namespace zerosugar::xr::data
         friend void from_json(const nlohmann::json& json, Map& map);
     };
 }
+
+namespace zerosugar::xr
+{
+    class MapData
+    {
+    public:
+        MapData() = default;
+        explicit MapData(data::Map map);
+
+        auto GetId() const -> int32_t;
+        auto GetType() const -> data::MapType;
+        auto GetPortal() const -> const data::Portal*;
+        auto GetPlayerSpawnPoint() const -> const data::PlayerSpawnPoint&;
+        auto GetMonsterSpawners() const -> std::span<const data::MonsterSpawner>;
+
+    private:
+        data::Map _map;
+    };
+}

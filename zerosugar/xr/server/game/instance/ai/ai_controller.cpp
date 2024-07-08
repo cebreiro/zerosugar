@@ -4,7 +4,6 @@
 #include "zerosugar/shared/ai/behavior_tree/black_board.h"
 #include "zerosugar/shared/ai/behavior_tree/data/node_data_set_interface.h"
 #include "zerosugar/xr/data/game_data_provider.h"
-#include "zerosugar/xr/data/provider/behavior_tree_xml_provider.h"
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
 
@@ -72,9 +71,8 @@ namespace zerosugar::xr
         assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
 
         const GameDataProvider& gameDataProvider = _gameInstance.GetServiceLocator().Get<GameDataProvider>();
-        const BehaviorTreeXMLProvider& behaviorTreeProvider = gameDataProvider.GetBehaviorTreeXMLDataProvider();
 
-        const bt::INodeDataSet* dataSet = behaviorTreeProvider.Find(behaviorTreeName);
+        const bt::INodeDataSet* dataSet = gameDataProvider.FindBehaviorTree(behaviorTreeName);
         if (!dataSet)
         {
             assert(false);

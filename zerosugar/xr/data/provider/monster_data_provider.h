@@ -1,21 +1,5 @@
 #pragma once
-
-namespace zerosugar::xr::data
-{
-    struct Monster
-    {
-        int32_t id = 0;
-        int32_t hpMax = 0;
-        float attackMin = 0.f;
-        float attackMax = 0.f;
-        float attackRange = 0.f;
-        float attackSpeed = 0.f;
-        float speed = 0.f;
-        std::string behaviorTree;
-
-        friend void from_json(const nlohmann::json& json, Monster& monster);
-    };
-}
+#include "zerosugar/xr/data/table/monster.h"
 
 namespace zerosugar::xr
 {
@@ -24,11 +8,19 @@ namespace zerosugar::xr
     public:
         void Initialize(ServiceLocator& serviceLocator, const std::filesystem::path& basePath);
 
-        auto Find(int32_t mobId) const -> const data::Monster*;
+        auto Find(int32_t mobId) const -> const MonsterData*;
 
         auto GetName() const -> std::string_view;
 
     private:
-        std::unordered_map<int32_t, data::Monster> _monsters;
+        template <typename T>
+        auto LoadJsonFromFile(ServiceLocator& serviceLocator, const std::filesystem::path& path) const -> std::vector<T>;
+
+    private:
+        std::vector<data::Monster> _bases;
+        std::vector<data::MonsterSkill> _skills;
+        std::vector<data::MonsterAnimation> _animations;
+
+        std::unordered_map<int32_t, MonsterData> _monsters;
     };
 }

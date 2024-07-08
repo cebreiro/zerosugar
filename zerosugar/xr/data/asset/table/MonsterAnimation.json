@@ -1,0 +1,61 @@
+{
+    "list": [
+        {
+            "MonsterId": 20001,
+            "Animation": [
+                {
+                    "Name": "NormalAttack1",
+                    "Duration": 1.9,
+                    "AttackTimePoint": [ 0.67 ]
+                },
+                {
+                    "Name": "NormalAttack2",
+                    "Duration": 1.5,
+                    "AttackTimePoint": [ 0.8 ]
+                },
+                {
+                    "Name": "NormalAttack3",
+                    "Duration": 4.0,
+                    "AttackTimePoint": [ 2.35 ]
+                },
+                {
+                    "Name": "Death",
+                    "Duration": 3.56
+                }
+            ]
+        },
+        {
+            "MonsterId": 20002,
+            "Animation": [
+                {
+                    "Name": "NormalAttack1",
+                    "Duration": 1.93,
+                    "AttackTimePoint": [ 1.7 ]
+                },
+                {
+                    "Name": "NormalAttack2",
+                    "Duration": 1.5,
+                    "AttackTimePoint": [ 0.45, 0.9 ]
+                },
+                {
+                    "Name": "NormalAttack3",
+                    "Duration": 2.0,
+                    "AttackTimePoint": [ 0.975, 1.45 ]
+                },
+                {
+                    "Name": "Death",
+                    "Duration": 4.73
+                }
+            ]
+        },
+        {
+            "MonsterId": 20003,
+            "Animation": [
+                {
+                    "Name": "Death",
+                    "Duration": 4.1
+                }
+            ]
+        }
+    ]
+}

@@ -5,13 +5,10 @@
 #include "zerosugar/xr/server/game/instance/task/execution/game_execution_parallel.h"
 #include "zerosugar/xr/server/game/instance/task/execution/game_execution_serial.h"
 
-namespace zerosugar::xr::data
-{
-    struct Map;
-}
-
 namespace zerosugar::xr
 {
+    class MapData;
+
     class GameEntity;
     class GameEntityContainer;
 
@@ -51,7 +48,7 @@ namespace zerosugar::xr
 
         auto GetId() const -> game_instance_id_type;
         auto GetZoneId() const -> int32_t;
-        auto GetMapData() const -> const data::Map&;
+        auto GetMapData() const -> const MapData&;
 
         auto GetParallelContext() -> GameExecutionParallel&;
         auto GetParallelContext() const -> const GameExecutionParallel&;
@@ -86,7 +83,7 @@ namespace zerosugar::xr
 
         game_instance_id_type _id;
         int32_t _zoneId = 0;
-        const data::Map* _data = nullptr;
+        const MapData* _data = nullptr;
 
         std::atomic<int64_t> _nextControllerId = 0;
         std::array<std::atomic<int32_t>, static_cast<int32_t>(GameEntityType::Count)> _nextEntityIds = {};

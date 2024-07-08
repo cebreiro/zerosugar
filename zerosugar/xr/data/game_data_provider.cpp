@@ -4,14 +4,12 @@
 #include "zerosugar/xr/data/provider/behavior_tree_xml_provider.h"
 #include "zerosugar/xr/data/provider/map_data_provider.h"
 #include "zerosugar/xr/data/provider/monster_data_provider.h"
-#include "zerosugar/xr/data/provider/navigation_data_provider.h"
 
 namespace zerosugar::xr
 {
     GameDataProvider::GameDataProvider()
         : _behaviorTreeXmlProvider(std::make_shared<BehaviorTreeXMLProvider>())
         , _mapDataProvider(std::make_shared<MapDataProvider>())
-        , _navigationDataProvider(std::make_shared<NavigationDataProvider>())
         , _monsterDataProvider(std::make_shared<MonsterDataProvider>())
     {
     }
@@ -31,10 +29,26 @@ namespace zerosugar::xr
             throw std::runtime_error("fail to initialize game data");
         }
 
-        _behaviorTreeXmlProvider->Initialize(serviceLocator, *baseDirectory);
-        _mapDataProvider->Initialize(serviceLocator, *baseDirectory);
-        _navigationDataProvider->Initialize(serviceLocator, *baseDirectory);
-        _monsterDataProvider->Initialize(serviceLocator, *baseDirectory);
+        _baseDirectory = *baseDirectory;
+
+        _behaviorTreeXmlProvider->Initialize(serviceLocator, _baseDirectory);
+        _mapDataProvider->Initialize(serviceLocator, _baseDirectory);
+        _monsterDataProvider->Initialize(serviceLocator, _baseDirectory);
+    }
+
+    auto GameDataProvider::Find(map_data_id_type mapId) const -> const MapData*
+    {
+        return _mapDataProvider->Find(mapId.Unwrap());
+    }
+
+    auto GameDataProvider::Find(monster_data_id_type monsterId) const -> const MonsterData*
+    {
+        return _monsterDataProvider->Find(monsterId.Unwrap());
+    }
+
+    auto GameDataProvider::FindBehaviorTree(const std::string& key) const -> const bt::INodeDataSet*
+    {
+        return _behaviorTreeXmlProvider->Find(key);
     }
 
     auto GameDataProvider::GetName() const -> std::string_view
@@ -42,24 +56,9 @@ namespace zerosugar::xr
         return "game_data_provider";
     }
 
-    auto GameDataProvider::GetBehaviorTreeXMLDataProvider() const -> const BehaviorTreeXMLProvider&
+    auto GameDataProvider::GetBaseDirectory() const -> const std::filesystem::path&
     {
-        return *_behaviorTreeXmlProvider;
-    }
-
-    auto GameDataProvider::GetMapDataProvider() const -> const MapDataProvider&
-    {
-        return *_mapDataProvider;
-    }
-
-    auto GameDataProvider::GetNavigationDataProvider() const -> const NavigationDataProvider&
-    {
-        return *_navigationDataProvider;
-    }
-
-    auto GameDataProvider::GetMonsterDataProvider() const -> const MonsterDataProvider&
-    {
-        return *_monsterDataProvider;
+        return _baseDirectory;
     }
 
     auto GameDataProvider::FindGameDataBaseDirectory() -> std::optional<std::filesystem::path>

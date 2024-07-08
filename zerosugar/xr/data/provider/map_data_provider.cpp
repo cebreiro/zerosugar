@@ -6,11 +6,11 @@ namespace zerosugar::xr
 {
     void MapDataProvider::Initialize(ServiceLocator& serviceLocator, const std::filesystem::path& basePath)
     {
-        const auto directory = basePath / "map";
+        const auto directory = basePath / "table" / "map";
         if (!exists(directory))
         {
             ZEROSUGAR_LOG_ERROR(serviceLocator,
-                std::format("[{}] fail to find navigation directory. path: {}",
+                std::format("[{}] fail to find map directory. path: {}",
                     GetName(), directory.generic_string()));
 
             return;
@@ -54,7 +54,7 @@ namespace zerosugar::xr
         }
     }
 
-    auto MapDataProvider::Find(int32_t mapId) const -> const data::Map*
+    auto MapDataProvider::Find(int32_t mapId) const -> const MapData*
     {
         const auto iter = _mapData.find(mapId);
 

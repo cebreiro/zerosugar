@@ -2,7 +2,7 @@
 
 namespace zerosugar::xr
 {
-    MonsterComponent::MonsterComponent(const data::Monster& data)
+    MonsterComponent::MonsterComponent(const MonsterData& data)
         : _data(data)
     {
     }
@@ -21,7 +21,7 @@ namespace zerosugar::xr
         _spawnerId = spawner;
     }
 
-    auto MonsterComponent::GetData() const -> const data::Monster&
+    auto MonsterComponent::GetData() const -> const MonsterData&
     {
         return _data;
     }

@@ -1,7 +1,6 @@
 #include "gm_spawn_monster.h"
 
 #include "zerosugar/xr/data/game_data_provider.h"
-#include "zerosugar/xr/data/provider/monster_data_provider.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/controller/game_controller_interface.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_player_snapshot.h"
@@ -12,8 +11,7 @@ namespace zerosugar::xr::gm
     bool SpawnMonster::HandleCommand(GameExecutionSerial& serialContext, GamePlayerSnapshot& player,
         const int32_t& mobId, const std::optional<int64_t>& count)
     {
-        const MonsterDataProvider& monsterDataProvider = serialContext.GetServiceLocator().Get<GameDataProvider>().GetMonsterDataProvider();
-        const data::Monster* monsterData = monsterDataProvider.Find(mobId);
+        const MonsterData* monsterData = serialContext.GetServiceLocator().Get<GameDataProvider>().Find(monster_data_id_type(mobId));
 
         if (!monsterData)
         {

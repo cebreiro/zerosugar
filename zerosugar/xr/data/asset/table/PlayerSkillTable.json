@@ -1,0 +1,36 @@
+{
+    "list": [
+        {
+            "Name": "101",
+            "SkillName": "GaiaCrush",
+            "SkillNameKorean": "가이아 크러시",
+            "DamageMagnification": 1,
+            "IsKnockBack": 1,
+            "RequireStamina": 50,
+            "CoolTime": 1,
+            "IconID": 60040102,
+            "ToolTip": "힘껏 점프해 대검으로 땅을 후려친다.",
+            "MoveDistance": "1000",
+            "AffectRadius": "500",
+            "DMG_Increase": "0",
+            "DEF_Increase": "0",
+            "TimeDuration": "0"
+        },
+        {
+            "Name": "102",
+            "SkillName": "Berserk",
+            "SkillNameKorean": "광화",
+            "DamageMagnification": 0,
+            "IsKnockBack": 0,
+            "RequireStamina": 100,
+            "CoolTime": 1,
+            "IconID": 6004102,
+            "ToolTip": "격한 분노를 통해 능력을 일시적으로 높인다",
+            "MoveDistance": "0",
+            "AffectRadius": "0",
+            "DMG_Increase": "100",
+            "DEF_Increase": "100",
+            "TimeDuration": "30000"
+        }
+    ]
+}

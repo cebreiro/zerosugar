@@ -1,5 +1,5 @@
 #pragma once
-#include "zerosugar/xr/data/provider/map_data.h"
+#include "zerosugar/xr/data/table/map.h"
 #include "zerosugar/xr/server/game/instance/task/game_task.h"
 
 namespace zerosugar::xr

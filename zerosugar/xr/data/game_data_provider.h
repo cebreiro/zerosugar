@@ -1,11 +1,19 @@
 #pragma once
+#include "zerosugar/xr/data/game_data_id_type.h"
+
+namespace zerosugar::bt
+{
+    class INodeDataSet;
+}
 
 namespace zerosugar::xr
 {
     class BehaviorTreeXMLProvider;
     class MapDataProvider;
-    class NavigationDataProvider;
     class MonsterDataProvider;
+
+    class MapData;
+    class MonsterData;
 }
 
 namespace zerosugar::xr
@@ -20,20 +28,22 @@ namespace zerosugar::xr
 
         void Initialize(ServiceLocator& serviceLocator) override;
 
+        auto Find(map_data_id_type mapId) const -> const MapData*;
+        auto Find(monster_data_id_type monsterId) const -> const MonsterData*;
+
+        auto FindBehaviorTree(const std::string& key) const -> const bt::INodeDataSet*;
+
         auto GetName() const -> std::string_view override;
-
-        auto GetBehaviorTreeXMLDataProvider() const -> const BehaviorTreeXMLProvider&;
-        auto GetMapDataProvider() const -> const MapDataProvider&;
-        auto GetNavigationDataProvider() const -> const NavigationDataProvider&;
-        auto GetMonsterDataProvider() const -> const MonsterDataProvider&;
-
+        auto GetBaseDirectory() const -> const std::filesystem::path&;
+        
     private:
         static auto FindGameDataBaseDirectory() -> std::optional<std::filesystem::path>;
 
     private:
+        std::filesystem::path _baseDirectory;
+
         SharedPtrNotNull<BehaviorTreeXMLProvider> _behaviorTreeXmlProvider;
         SharedPtrNotNull<MapDataProvider> _mapDataProvider;
-        SharedPtrNotNull<NavigationDataProvider> _navigationDataProvider;
         SharedPtrNotNull<MonsterDataProvider> _monsterDataProvider;
     };
 }

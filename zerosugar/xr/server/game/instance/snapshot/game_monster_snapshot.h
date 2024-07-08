@@ -2,13 +2,10 @@
 #include <Eigen/Dense>
 #include "zerosugar/xr/server/game/instance/entity/game_entity_id.h"
 
-namespace zerosugar::xr::data
-{
-    struct Monster;
-}
-
 namespace zerosugar::xr
 {
+    class MonsterData;
+
     class GameEntity;
     class IGameController;
 }
@@ -18,13 +15,13 @@ namespace zerosugar::xr
     class GameMonsterSnapshot
     {
     public:
-        GameMonsterSnapshot(IGameController& controller, game_entity_id_type id, const data::Monster& data);
+        GameMonsterSnapshot(IGameController& controller, game_entity_id_type id, const MonsterData& data);
 
         void Initialize(const GameEntity& entity);
 
         auto GetController() const -> IGameController&;
         auto GetId() const -> game_entity_id_type;
-        auto GetData() const -> const data::Monster&;
+        auto GetData() const -> const MonsterData&;
         auto GetDataId() const -> int32_t;
         auto GetPosition() const -> const Eigen::Vector3d&;
         auto GetYaw() const -> float;
@@ -42,7 +39,7 @@ namespace zerosugar::xr
 
     private:
         IGameController& _controller;
-        const data::Monster& _data;
+        const MonsterData& _data;
 
         game_entity_id_type _id;
         Eigen::Vector3d _position;

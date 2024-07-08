@@ -3,7 +3,7 @@
 
 namespace zerosugar::xr
 {
-    class NavigationDataProvider final
+    class NavigationDataProvider final : public IService
     {
     public:
         void Initialize(ServiceLocator& serviceLocator, const std::filesystem::path& basePath);
@@ -11,7 +11,7 @@ namespace zerosugar::xr
         bool Contains(int32_t mapId) const;
         auto Create(int32_t mapId, int32_t maxSearchNode = 1024) const -> navi::Data;
 
-        auto GetName() const->std::string_view;
+        auto GetName() const -> std::string_view;
 
     private:
         static auto CreateData(const std::filesystem::path& filePath, int32_t maxSearchNode) -> navi::Data;

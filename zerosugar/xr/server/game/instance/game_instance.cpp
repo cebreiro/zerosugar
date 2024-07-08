@@ -1,9 +1,8 @@
 #include "game_instance.h"
 
 #include "zerosugar/xr/data/game_data_provider.h"
-#include "zerosugar/xr/data/provider/map_data_provider.h"
-#include "zerosugar/xr/data/provider/navigation_data_provider.h"
 #include "zerosugar/xr/navigation/navigation_service.h"
+#include "zerosugar/xr/navigation/navi_data_provider.h"
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
 #include "zerosugar/xr/server/game/instance/ai/ai_control_service.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
@@ -40,15 +39,14 @@ namespace zerosugar::xr
         , _gmCommandFactory(std::make_unique<GMCommandFactory>())
     {
         const GameDataProvider& gameDataProvider = serviceLocator.Get<GameDataProvider>();
-        const MapDataProvider& mapDataProvider = gameDataProvider.GetMapDataProvider();
 
-        _data = mapDataProvider.Find(_zoneId);
+        _data = gameDataProvider.Find(map_data_id_type(_zoneId));
         assert(_data);
 
-        if (_data->type != data::MapType::Village)
+        if (_data->GetType() != data::MapType::Village)
         {
-            const NavigationDataProvider& naviDataProvider = gameDataProvider.GetNavigationDataProvider();
-            navi::Data naviData = naviDataProvider.Create(_data->id);
+            const NavigationDataProvider& naviDataProvider = serviceLocator.Get<NavigationDataProvider>();
+            navi::Data naviData = naviDataProvider.Create(_data->GetId());
 
             _navigationService = std::make_shared<NavigationService>(_serviceLocator,
                 std::make_shared<Strand>(_executor), std::move(naviData));
@@ -63,7 +61,7 @@ namespace zerosugar::xr
 
     void GameInstance::Start()
     {
-        for (const data::MonsterSpawner& spawnData : _data->monsterSpawners)
+        for (const data::MonsterSpawner& spawnData : _data->GetMonsterSpawners())
         {
             Summit(std::make_unique<game_task::SpawnerInstall>(&spawnData), std::nullopt);
         }
@@ -133,7 +131,7 @@ namespace zerosugar::xr
         return _zoneId;
     }
 
-    auto GameInstance::GetMapData() const -> const data::Map&
+    auto GameInstance::GetMapData() const -> const MapData&
     {
         assert(_data);
 
