@@ -10,6 +10,7 @@
 #include <SDL2/SDL_opengl.h>
 #include <gl/GLU.h>
 
+#include "zerosugar/shared/collision/shape/obb.h"
 #include "zerosugar/xr/navigation/navi_data.h"
 #include "zerosugar/xr/navigation/RecastDemo/InputGeom.h"
 #include "zerosugar/xr/navigation/RecastDemo/imgui.h"
@@ -104,6 +105,151 @@ namespace zerosugar::xr::navi
             iter->second.destPosition = param.destPosition;
             iter->second.destPositionDrawColor = param.destPositionDrawColor;
         }
+    }
+
+    void Visualizer::DrawBox(const FVector& min, const FVector& max, std::chrono::milliseconds milli)
+    {
+        assert(ExecutionContext::IsEqualTo(_strand));
+
+        auto now = std::chrono::system_clock::now();
+
+        _drawBoxes.emplace(now + milli, std::make_pair<Vector, Vector>(min, max));
+    }
+
+    void Visualizer::DrawOBB(const collision::OBB3d& obb, const std::chrono::milliseconds milli)
+    {
+        assert(ExecutionContext::IsEqualTo(_strand));
+
+        OBB temp;
+        temp.center = obb.GetCenter();
+        temp.halfSize = obb.GetHalfSize();
+        temp.rotation = obb.GetRotation();
+
+        auto now = std::chrono::system_clock::now();
+
+        _drawOBBs.emplace(now + milli, temp);
+    }
+
+    auto ComputeOBBVertices(const Visualizer::OBB& obb) -> std::vector<Vector>
+    {
+        std::vector<Vector> result(8);
+
+        const std::array extents{
+            obb.halfSize,
+            Eigen::Vector3d(-obb.halfSize.x(),  obb.halfSize.y(),  obb.halfSize.z()),
+            Eigen::Vector3d(obb.halfSize.x(), -obb.halfSize.y(),  obb.halfSize.z()),
+            Eigen::Vector3d(obb.halfSize.x(),  obb.halfSize.y(), -obb.halfSize.z()),
+            Eigen::Vector3d(-obb.halfSize.x(), -obb.halfSize.y(),  obb.halfSize.z()),
+            Eigen::Vector3d(-obb.halfSize.x(),  obb.halfSize.y(), -obb.halfSize.z()),
+            Eigen::Vector3d(obb.halfSize.x(), -obb.halfSize.y(), -obb.halfSize.z()),
+            Eigen::Vector3d(-obb.halfSize.x(), -obb.halfSize.y(), -obb.halfSize.z())
+        };
+
+        for (int64_t i = 0; i < std::ssize(extents); ++i)
+        {
+            const Eigen::Vector3d value = obb.center + obb.rotation * extents[i];
+
+            result[i] = Vector(FVector((float)value.x(), (float)value.y(), (float)value.z()));
+        }
+
+        return result;
+    }
+
+
+    void Visualizer::Tick()
+    {
+        const auto drawCylinder = [this](const Vector& pos, float radius, DrawColor color)
+            {
+                duDebugDrawCylinder(_dd.get(),
+                    pos.GetX() - radius, pos.GetY(), pos.GetZ() - radius,
+                    pos.GetX() + radius, pos.GetY() + 3.f, pos.GetZ() + radius,
+                    ToInt(color));
+            };
+
+        for (const DrawTarget& drawTarget : _drawTargets | std::views::values)
+        {
+            drawCylinder(drawTarget.position, drawTarget.radius.Get(), drawTarget.drawColor);
+
+            if (drawTarget.destPosition)
+            {
+                const DrawColor color = drawTarget.destPositionDrawColor.value_or(drawTarget.drawColor);
+                drawCylinder(*drawTarget.destPosition, drawTarget.radius.Get(), color);
+
+                duDebugDrawArrow(_dd.get(),
+                    drawTarget.position.GetX(), drawTarget.position.GetY(), drawTarget.position.GetZ(),
+                    drawTarget.destPosition->GetX(), drawTarget.destPosition->GetY(), drawTarget.destPosition->GetZ(),
+                    0, 2, ToInt(DrawColor::Green), 1);
+            }
+        }
+
+        const auto now = std::chrono::system_clock::now();
+        std::array<uint32_t, 8> boxColor = {};
+        boxColor.fill(ToInt(DrawColor::Brown));
+        {
+            auto removeIter = _drawBoxes.end();
+
+            for (auto iter = _drawBoxes.begin(); iter != _drawBoxes.end(); ++iter)
+            {
+                std::chrono::system_clock::time_point removeTimePoint = iter->first;
+                if (removeTimePoint < now)
+                {
+                    removeIter = iter;
+                }
+
+                const auto& [min, max] = iter->second;
+
+                duDebugDrawBox(_dd.get(),
+                    min.GetX(), min.GetY(), min.GetZ(),
+                    max.GetX(), max.GetY(), max.GetZ(),
+                    boxColor.data());
+            }
+
+            if (removeIter != _drawBoxes.end())
+            {
+                _drawBoxes.erase(_drawBoxes.begin(), std::next(removeIter));
+            }
+        }
+        {
+            auto removeIter = _drawOBBs.end();
+
+            for (auto iter = _drawOBBs.begin(); iter != _drawOBBs.end(); ++iter)
+            {
+                std::chrono::system_clock::time_point removeTimePoint = iter->first;
+                if (removeTimePoint < now)
+                {
+                    removeIter = iter;
+                }
+
+                const OBB& obb = iter->second;
+
+                auto vertices = ComputeOBBVertices(obb);
+
+                glBegin(GL_LINES);
+
+                glVertex3fv(vertices[0].GetData()); glVertex3fv(vertices[1].GetData());
+                glVertex3fv(vertices[1].GetData()); glVertex3fv(vertices[4].GetData());
+                glVertex3fv(vertices[4].GetData()); glVertex3fv(vertices[2].GetData());
+                glVertex3fv(vertices[2].GetData()); glVertex3fv(vertices[0].GetData());
+                                                               
+                glVertex3fv(vertices[3].GetData()); glVertex3fv(vertices[5].GetData());
+                glVertex3fv(vertices[5].GetData()); glVertex3fv(vertices[7].GetData());
+                glVertex3fv(vertices[7].GetData()); glVertex3fv(vertices[6].GetData());
+                glVertex3fv(vertices[6].GetData()); glVertex3fv(vertices[3].GetData());
+                                                               
+                glVertex3fv(vertices[0].GetData()); glVertex3fv(vertices[3].GetData());
+                glVertex3fv(vertices[1].GetData()); glVertex3fv(vertices[5].GetData());
+                glVertex3fv(vertices[4].GetData()); glVertex3fv(vertices[7].GetData());
+                glVertex3fv(vertices[2].GetData()); glVertex3fv(vertices[6].GetData());
+
+                glEnd();
+            }
+
+            if (removeIter != _drawOBBs.end())
+            {
+                _drawOBBs.erase(_drawOBBs.begin(), std::next(removeIter));
+            }
+        }
+        
     }
 
     void Visualizer::handleTools()
@@ -689,29 +835,7 @@ namespace zerosugar::xr::navi
             if (test)
                 test->handleRender();
 
-            const auto drawCylinder = [this](const Vector& pos, float radius, DrawColor color)
-                {
-                    duDebugDrawCylinder(_dd.get(),
-                        pos.GetX() - radius, pos.GetY(), pos.GetZ() - radius,
-                        pos.GetX() + radius, pos.GetY() + 3.f, pos.GetZ() + radius,
-                        ToInt(color));
-                };
-
-            for (const DrawTarget& drawTarget : _drawTargets | std::views::values)
-            {
-                drawCylinder(drawTarget.position, drawTarget.radius.Get(), drawTarget.drawColor);
-
-                if (drawTarget.destPosition)
-                {
-                    const DrawColor color = drawTarget.destPositionDrawColor.value_or(drawTarget.drawColor);
-                    drawCylinder(*drawTarget.destPosition, drawTarget.radius.Get(), color);
-
-                    duDebugDrawArrow(_dd.get(),
-                        drawTarget.position.GetX(), drawTarget.position.GetY(), drawTarget.position.GetZ(),
-                        drawTarget.destPosition->GetX(), drawTarget.destPosition->GetY(), drawTarget.destPosition->GetZ(),
-                        0, 2, ToInt(DrawColor::Green), 1);
-                }
-            }
+            Tick();
 
             glDisable(GL_FOG);
 

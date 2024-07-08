@@ -27,6 +27,44 @@ namespace zerosugar::xr::network::game::cs
         (void)item;
     }
 
+    void from_json(const nlohmann::json& j, StartPlayerAttack& item)
+    {
+        j.at("skillId").get_to(item.skillId);
+        j.at("position").get_to(item.position);
+        j.at("rotation").get_to(item.rotation);
+    }
+
+    void to_json(nlohmann::json& j, const StartPlayerAttack& item)
+    {
+        j = nlohmann::json
+            {
+                { "skillId", item.skillId },
+                { "position", item.position },
+                { "rotation", item.rotation },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, ApplyPlayerAttack& item)
+    {
+        j.at("id").get_to(item.id);
+        j.at("targetId").get_to(item.targetId);
+        j.at("skillId").get_to(item.skillId);
+        j.at("position").get_to(item.position);
+        j.at("rotation").get_to(item.rotation);
+    }
+
+    void to_json(nlohmann::json& j, const ApplyPlayerAttack& item)
+    {
+        j = nlohmann::json
+            {
+                { "id", item.id },
+                { "targetId", item.targetId },
+                { "skillId", item.skillId },
+                { "position", item.position },
+                { "rotation", item.rotation },
+            };
+    }
+
     void from_json(const nlohmann::json& j, MovePlayer& item)
     {
         j.at("position").get_to(item.position);

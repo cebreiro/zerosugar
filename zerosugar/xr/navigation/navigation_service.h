@@ -3,6 +3,11 @@
 #include "zerosugar/xr/navigation/navi_query.h"
 #include "zerosugar/xr/navigation/navi_visualize_param.h"
 
+namespace zerosugar::collision
+{
+    class OBB3d;
+}
+
 namespace zerosugar::xr::navi
 {
     class FVector;
@@ -29,6 +34,9 @@ namespace zerosugar::xr
         void RemoveDrawTarget(navi::RemoveVisualizeTargetParam param);
 
         void UpdateDrawTarget(navi::UpdateVisualizeTargetParam param);
+
+        void DrawBox(const navi::FVector& min, const navi::FVector& max, std::chrono::milliseconds milli);
+        void DrawOBB(const collision::OBB3d& obb, std::chrono::milliseconds milli);
 
     public:
         auto GetRandomPointAroundCircle(const navi::FVector& position, float radius)

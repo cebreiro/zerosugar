@@ -25,6 +25,38 @@ namespace zerosugar::xr::network::game::cs
         (void)writer;
     }
 
+    void StartPlayerAttack::Deserialize(PacketReader& reader)
+    {
+        skillId = reader.Read<int32_t>();
+        position = reader.Read<Position>();
+        rotation = reader.Read<Rotation>();
+    }
+
+    void StartPlayerAttack::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int32_t>(skillId);
+        writer.Write(position);
+        writer.Write(rotation);
+    }
+
+    void ApplyPlayerAttack::Deserialize(PacketReader& reader)
+    {
+        id = reader.Read<int64_t>();
+        targetId = reader.Read<int64_t>();
+        skillId = reader.Read<int32_t>();
+        position = reader.Read<Position>();
+        rotation = reader.Read<Rotation>();
+    }
+
+    void ApplyPlayerAttack::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int64_t>(id);
+        writer.Write<int64_t>(targetId);
+        writer.Write<int32_t>(skillId);
+        writer.Write(position);
+        writer.Write(rotation);
+    }
+
     void MovePlayer::Deserialize(PacketReader& reader)
     {
         position = reader.Read<Position>();
@@ -156,6 +188,20 @@ namespace zerosugar::xr::network::game::cs
 
                 return item;
             }
+            case StartPlayerAttack::opcode:
+            {
+                auto item = std::make_unique<StartPlayerAttack>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case ApplyPlayerAttack::opcode:
+            {
+                auto item = std::make_unique<ApplyPlayerAttack>();
+                item->Deserialize(reader);
+
+                return item;
+            }
             case MovePlayer::opcode:
             {
                 auto item = std::make_unique<MovePlayer>();
@@ -249,6 +295,20 @@ namespace zerosugar::xr::network::game::cs
 
                 return item;
             }
+            case StartPlayerAttack::opcode:
+            {
+                StartPlayerAttack item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case ApplyPlayerAttack::opcode:
+            {
+                ApplyPlayerAttack item;
+                item.Deserialize(reader);
+
+                return item;
+            }
             case MovePlayer::opcode:
             {
                 MovePlayer item;
@@ -334,6 +394,14 @@ namespace zerosugar::xr::network::game::cs
             case LoadLevelComplete::opcode:
             {
                 return typeid(LoadLevelComplete);
+            }
+            case StartPlayerAttack::opcode:
+            {
+                return typeid(StartPlayerAttack);
+            }
+            case ApplyPlayerAttack::opcode:
+            {
+                return typeid(ApplyPlayerAttack);
             }
             case MovePlayer::opcode:
             {

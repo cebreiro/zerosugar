@@ -1,7 +1,7 @@
 #include "navigation_service.h"
 
 #include <recastnavigation/DetourNavMeshQuery.h>
-
+#include "zerosugar/shared/collision/shape/obb.h"
 #include "zerosugar/shared/execution/executor/strand.h"
 #include "zerosugar/shared/execution/executor/executor_coroutine_traits.h"
 #include "zerosugar/xr/navigation/navi_vector.h"
@@ -127,6 +127,32 @@ namespace zerosugar::xr
                 }
 
                 self->_visualizer->UpdateDrawTarget(param);
+            });
+    }
+
+    void NavigationService::DrawBox(const navi::FVector& min, const navi::FVector& max, std::chrono::milliseconds milli)
+    {
+        Dispatch(*_strand, [self = shared_from_this(), min, max, milli]()
+            {
+                if (!self->_visualizer)
+                {
+                    return;
+                }
+
+                self->_visualizer->DrawBox(min, max, milli);
+            });
+    }
+
+    void NavigationService::DrawOBB(const collision::OBB3d& obb, std::chrono::milliseconds milli)
+    {
+        Dispatch(*_strand, [self = shared_from_this(), obb = obb, milli]()
+            {
+                if (!self->_visualizer)
+                {
+                    return;
+                }
+
+                self->_visualizer->DrawOBB(obb, milli);
             });
     }
 

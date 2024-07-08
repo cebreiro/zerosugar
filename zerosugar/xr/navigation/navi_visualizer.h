@@ -1,4 +1,6 @@
 #pragma once
+#include <Eigen/Dense>
+#include <boost/container/flat_map.hpp>
 #include <boost/unordered/unordered_flat_map.hpp>
 #include "zerosugar/xr/navigation/navi_vector.h"
 #include "zerosugar/xr/navigation/navi_visualizer_interface.h"
@@ -7,6 +9,11 @@
 class InputGeom;
 class SampleDebugDraw;
 class NavMeshTesterTool;
+
+namespace zerosugar::collision
+{
+	class OBB3d;
+}
 
 namespace zerosugar::xr::navi
 {
@@ -29,6 +36,9 @@ namespace zerosugar::xr::navi
         void RemoveDrawTarget(const RemoveVisualizeTargetParam& param);
         void UpdateDrawTarget(const UpdateVisualizeTargetParam& param);
 
+        void DrawBox(const FVector& min, const FVector& max, std::chrono::milliseconds milli);
+		void DrawOBB(const collision::OBB3d& obb, const std::chrono::milliseconds milli);
+
     public:
         void handleTools() override;
         void handleDebugMode() override;
@@ -50,6 +60,8 @@ namespace zerosugar::xr::navi
 
     private:
         void RenderThreadMain();
+
+		void Tick();
 
     private:
         Strand& _strand;
@@ -74,5 +86,15 @@ namespace zerosugar::xr::navi
             std::optional<DrawColor> destPositionDrawColor = std::nullopt;
         };
         boost::unordered::unordered_flat_map<int64_t, DrawTarget> _drawTargets;
+        boost::container::flat_multimap<std::chrono::system_clock::time_point, std::pair<Vector, Vector>> _drawBoxes;
+
+    public:
+		struct OBB
+		{
+			Eigen::Vector3d center;
+			Eigen::Vector3d halfSize;
+			Eigen::Matrix3d rotation;
+		};
+        boost::container::flat_multimap<std::chrono::system_clock::time_point, OBB> _drawOBBs;
     };
 }

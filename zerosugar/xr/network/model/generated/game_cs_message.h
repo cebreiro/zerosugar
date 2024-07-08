@@ -29,6 +29,34 @@ namespace zerosugar::xr::network::game::cs
         auto GetOpcode() const -> int32_t final { return opcode; }
     };
 
+    struct StartPlayerAttack final : IPacket
+    {
+        static constexpr int32_t opcode = 1008;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        int32_t skillId = {};
+        Position position = {};
+        Rotation rotation = {};
+    };
+
+    struct ApplyPlayerAttack final : IPacket
+    {
+        static constexpr int32_t opcode = 1009;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        int64_t id = {};
+        int64_t targetId = {};
+        int32_t skillId = {};
+        Position position = {};
+        Rotation rotation = {};
+    };
+
     struct MovePlayer final : IPacket
     {
         static constexpr int32_t opcode = 1001;
@@ -158,6 +186,18 @@ namespace zerosugar::xr::network::game::cs
             {
                 static_assert(std::is_invocable_v<TVisitor, const LoadLevelComplete&>);
                 visitor.template operator()<LoadLevelComplete>(*packet.Cast<LoadLevelComplete>());
+            }
+            break;
+            case StartPlayerAttack::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const StartPlayerAttack&>);
+                visitor.template operator()<StartPlayerAttack>(*packet.Cast<StartPlayerAttack>());
+            }
+            break;
+            case ApplyPlayerAttack::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const ApplyPlayerAttack&>);
+                visitor.template operator()<ApplyPlayerAttack>(*packet.Cast<ApplyPlayerAttack>());
             }
             break;
             case MovePlayer::opcode:

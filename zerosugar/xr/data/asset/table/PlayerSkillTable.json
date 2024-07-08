@@ -1,6 +1,22 @@
 {
     "list": [
         {
+            "Name": "1",
+            "RequireStamina": 0
+        },
+        {
+            "Name": "2",
+            "RequireStamina": 0
+        },
+        {
+            "Name": "3",
+            "RequireStamina": 0
+        },
+        {
+            "Name": "4",
+            "RequireStamina": 0
+        },
+        {
             "Name": "101",
             "SkillName": "GaiaCrush",
             "SkillNameKorean": "가이아 크러시",

@@ -12,3 +12,5 @@
 #include "zerosugar/xr/server/game/packet/impl/approve_dungeon_match.h"
 #include "zerosugar/xr/server/game/packet/impl/reject_dungeon_match.h"
 #include "zerosugar/xr/server/game/packet/impl/load_level_complete_handler.h"
+#include "zerosugar/xr/server/game/packet/impl/start_player_attack_handler.h"
+#include "zerosugar/xr/server/game/packet/impl/apply_player_attack_handler.h"

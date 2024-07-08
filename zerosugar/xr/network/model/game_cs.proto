@@ -17,16 +17,16 @@ message LoadLevelComplete
     option (opcode) = 1012;
 }
 
-message StartCharacterAttack
+message StartPlayerAttack
 {
     option (opcode) = 1008;
 
-    int32 combo = 1;
-    Position position = 1;
-    Rotation rotation = 2;
+    int32 skill_id = 1;
+    Position position = 2;
+    Rotation rotation = 3;
 }
 
-message ApplyCharacterAttack
+message ApplyPlayerAttack
 {
     option (opcode) = 1009;
 

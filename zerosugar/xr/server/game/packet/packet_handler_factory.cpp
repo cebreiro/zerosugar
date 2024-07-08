@@ -18,6 +18,8 @@ namespace zerosugar::xr
         Register<CancelDungeonMatchHandler>();
         Register<ApproveDungeonMatchHandler>();
         Register<RejectDungeonMatchHandler>();
+        Register<StartPlayerAttackHandler>();
+        Register<ApplyPlayerAttackHandler>();
     }
 
     GamePacketHandlerFactory::~GamePacketHandlerFactory()
