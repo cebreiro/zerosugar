@@ -2,16 +2,22 @@
 
 namespace zerosugar::xr
 {
-    GameSpatialCell::GameSpatialCell(game_spatial_cell_id_type id, double leftX, double topY)
+    GameSpatialCell::GameSpatialCell(game_spatial_cell_id_type id, const GameSpatialMBR& mbr)
         : _id(id)
-        , _leftX(leftX)
-        , _topY(topY)
+        , _mbr(mbr)
+        , _halfX((_mbr.GetMin().x() + _mbr.GetMax().x()) / 2.0)
+        , _halfY((_mbr.GetMin().y() + _mbr.GetMax().y()) / 2.0)
     {
+    }
+
+    bool GameSpatialCell::Empty(GameEntityType type) const
+    {
+        return GetContainer(type).empty();
     }
 
     bool GameSpatialCell::HasEntity(GameEntityType type) const
     {
-        return !GetContainer(type).empty();
+        return !Empty(type);
     }
 
     bool GameSpatialCell::HasEntity(game_entity_id_type id) const
@@ -52,14 +58,27 @@ namespace zerosugar::xr
         return _id;
     }
 
-    auto GameSpatialCell::GetLeftX() const -> double
+    auto GameSpatialCell::GetMBR() const -> const GameSpatialMBR&
     {
-        return _leftX;
+        return _mbr;
     }
 
-    auto GameSpatialCell::GetTopY() const -> double
+    auto GameSpatialCell::GetQuadIndex(const Eigen::Vector2d& position) const -> int64_t
     {
-        return _topY;
+        assert(position.x() >= _mbr.GetMin().x() && position.x() <= _mbr.GetMax().x());
+        assert(position.y() >= _mbr.GetMin().y() && position.y() <= _mbr.GetMax().y());
+
+        // quad index
+        // ----------- X
+        // | 0  | 1  |
+        // | 2  | 3  |
+        // -----------
+        // Y
+
+        int64_t value = position.y() <= _halfY ? 0 : 2;
+        value += position.x() <= _halfX ? 0 : 1;
+
+        return value;
     }
 
     auto GameSpatialCell::GetSize() const -> int64_t

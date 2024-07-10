@@ -26,6 +26,11 @@ namespace zerosugar::xr
         (void)quickExit;
     }
 
+    void GameTask::OnFailTargetSelect(GameExecutionSerial& serialContext)
+    {
+        (void)serialContext;
+    }
+
     void GameTask::Start(GameExecutionParallel& parallelContext)
     {
         if (!this->SelectTarget(parallelContext))

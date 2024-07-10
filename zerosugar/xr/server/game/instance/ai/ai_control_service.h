@@ -27,6 +27,8 @@ namespace zerosugar::xr
         auto CreateAIController(game_entity_id_type entityId, const std::string& btName) -> SharedPtrNotNull<AIController>;
         auto DeleteAIController(game_controller_id_type id) -> Future<void>;
 
+        auto FindAIController(game_entity_id_type entityId) -> AIController*;
+
     private:
         GameInstance& _gameInstance;
 
@@ -34,5 +36,6 @@ namespace zerosugar::xr
 
         boost::unordered::unordered_flat_map<
             game_controller_id_type, SharedPtrNotNull<AIController>> _controllers;
+        std::unordered_map<game_entity_id_type, AIController*> _aiControllerEntityIndex;
     };
 }

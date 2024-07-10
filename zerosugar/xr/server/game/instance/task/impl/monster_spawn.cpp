@@ -6,6 +6,7 @@
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_container.h"
 #include "zerosugar/xr/server/game/instance/entity/component/monster_component.h"
+#include "zerosugar/xr/server/game/instance/entity/component/monster_motion_component.h"
 #include "zerosugar/xr/server/game/instance/entity/component/movement_component.h"
 #include "zerosugar/xr/server/game/instance/entity/component/stat_component.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_monster_snapshot.h"
@@ -68,6 +69,11 @@ namespace zerosugar::xr::game_task
             statComponent->SetHP(maxHP);
 
             entity->AddComponent(std::move(statComponent));
+        }
+        {
+            auto motionComponent = std::make_unique<MonsterMotionComponent>();
+
+            entity->AddComponent(std::move(motionComponent));
         }
 
         [[maybe_unused]]

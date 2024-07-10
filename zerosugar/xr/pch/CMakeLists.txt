@@ -12,6 +12,8 @@ target_precompile_headers(zerosugar_xr_pch PUBLIC
     <cstdint>
     <cassert>
 
+    <bitset>
+    <numbers>
     <random>
     <unordered_map>
     <unordered_set>
@@ -62,6 +64,9 @@ target_precompile_headers(zerosugar_xr_pch PUBLIC
     <stacktrace>
 
     <nlohmann/json.hpp>
+
+    <Eigen/Dense>
+    <Eigen/Geometry>
 
     ${PROJECT_SOURCE_DIR}/zerosugar/shared/app/app_log.h
     ${PROJECT_SOURCE_DIR}/zerosugar/shared/execution/channel/channel.h

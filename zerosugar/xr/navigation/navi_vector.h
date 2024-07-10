@@ -11,6 +11,8 @@ namespace zerosugar::xr::navi
         Vector() = default;
 
         Vector(float x, float y, float z);
+
+        explicit (true) Vector(const Eigen::Vector3d& vector);
         explicit(false) Vector(const FVector& vector);
         explicit(false) Vector(const std::array<float, 3>& array);
 
@@ -36,6 +38,8 @@ namespace zerosugar::xr::navi
         FVector() = default;
 
         FVector(float x, float y, float z);
+
+        explicit (true) FVector(const Eigen::Vector3d& vector);
         explicit(false) FVector(const Vector& vector);
         explicit(false) FVector(const std::array<float, 3>& array);
 

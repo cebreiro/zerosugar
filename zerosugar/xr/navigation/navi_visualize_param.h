@@ -19,7 +19,7 @@ namespace zerosugar::xr::navi
     struct AddVisualizeTargetParam
     {
         int64_t id = 0;
-        FVector position = {};
+        Eigen::Vector3d position = {};
         float radius = 0.f;
         DrawColor color = DrawColor::Green;
     };
@@ -32,9 +32,10 @@ namespace zerosugar::xr::navi
     struct UpdateVisualizeTargetParam
     {
         int64_t id = 0;
-        FVector position = {};
+        Eigen::Vector3d position = {};
 
-        std::optional<FVector> destPosition = std::nullopt;
+        std::optional<Eigen::Vector3d> destPosition = std::nullopt;
+        std::optional<double> destMovementDuration = std::nullopt;
         std::optional<DrawColor> destPositionDrawColor = std::nullopt;
     };
 }

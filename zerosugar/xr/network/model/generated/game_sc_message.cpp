@@ -83,6 +83,22 @@ namespace zerosugar::xr::network::game::sc
         }
     }
 
+    void BeAttackedPlayer::Deserialize(PacketReader& reader)
+    {
+        attackerId = reader.Read<int64_t>();
+        attackedId = reader.Read<int64_t>();
+        monsterActionIndex = reader.Read<int32_t>();
+        attackedHp = reader.Read<float>();
+    }
+
+    void BeAttackedPlayer::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int64_t>(attackerId);
+        writer.Write<int64_t>(attackedId);
+        writer.Write<int32_t>(monsterActionIndex);
+        writer.Write<float>(attackedHp);
+    }
+
     void SpawnMonster::Deserialize(PacketReader& reader)
     {
         monstersCount = reader.Read<int32_t>();
@@ -135,6 +151,68 @@ namespace zerosugar::xr::network::game::sc
         {
             writer.WriteObject(item);
         }
+    }
+
+    void BattleTransitionMonster::Deserialize(PacketReader& reader)
+    {
+        id = reader.Read<int64_t>();
+        position = reader.Read<Position>();
+        rotation = reader.Read<Rotation>();
+    }
+
+    void BattleTransitionMonster::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int64_t>(id);
+        writer.Write(position);
+        writer.Write(rotation);
+    }
+
+    void MoveMonster::Deserialize(PacketReader& reader)
+    {
+        id = reader.Read<int64_t>();
+        position = reader.Read<Position>();
+        rotation = reader.Read<Rotation>();
+    }
+
+    void MoveMonster::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int64_t>(id);
+        writer.Write(position);
+        writer.Write(rotation);
+    }
+
+    void AttackMonster::Deserialize(PacketReader& reader)
+    {
+        id = reader.Read<int64_t>();
+        actionIndex = reader.Read<int32_t>();
+        position = reader.Read<Position>();
+        rotation = reader.Read<Rotation>();
+        destPosition = reader.Read<Position>();
+        destMovementDuration = reader.Read<double>();
+    }
+
+    void AttackMonster::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int64_t>(id);
+        writer.Write<int32_t>(actionIndex);
+        writer.Write(position);
+        writer.Write(rotation);
+        writer.Write(destPosition);
+        writer.Write(destMovementDuration);
+    }
+
+    void BeAttackedMonster::Deserialize(PacketReader& reader)
+    {
+        attackerId = reader.Read<int64_t>();
+        attackedId = reader.Read<int64_t>();
+        attackedHp = reader.Read<float>();
+    }
+
+    void BeAttackedMonster::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int64_t>(attackerId);
+        writer.Write<int64_t>(attackedId);
+        writer.Write<float>(attackedHp);
     }
 
     void MoveRemotePlayer::Deserialize(PacketReader& reader)
@@ -332,6 +410,13 @@ namespace zerosugar::xr::network::game::sc
 
                 return item;
             }
+            case BeAttackedPlayer::opcode:
+            {
+                auto item = std::make_unique<BeAttackedPlayer>();
+                item->Deserialize(reader);
+
+                return item;
+            }
             case SpawnMonster::opcode:
             {
                 auto item = std::make_unique<SpawnMonster>();
@@ -349,6 +434,34 @@ namespace zerosugar::xr::network::game::sc
             case RemoveMonster::opcode:
             {
                 auto item = std::make_unique<RemoveMonster>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case BattleTransitionMonster::opcode:
+            {
+                auto item = std::make_unique<BattleTransitionMonster>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case MoveMonster::opcode:
+            {
+                auto item = std::make_unique<MoveMonster>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case AttackMonster::opcode:
+            {
+                auto item = std::make_unique<AttackMonster>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case BeAttackedMonster::opcode:
+            {
+                auto item = std::make_unique<BeAttackedMonster>();
                 item->Deserialize(reader);
 
                 return item;
@@ -474,6 +587,13 @@ namespace zerosugar::xr::network::game::sc
 
                 return item;
             }
+            case BeAttackedPlayer::opcode:
+            {
+                BeAttackedPlayer item;
+                item.Deserialize(reader);
+
+                return item;
+            }
             case SpawnMonster::opcode:
             {
                 SpawnMonster item;
@@ -491,6 +611,34 @@ namespace zerosugar::xr::network::game::sc
             case RemoveMonster::opcode:
             {
                 RemoveMonster item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case BattleTransitionMonster::opcode:
+            {
+                BattleTransitionMonster item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case MoveMonster::opcode:
+            {
+                MoveMonster item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case AttackMonster::opcode:
+            {
+                AttackMonster item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case BeAttackedMonster::opcode:
+            {
+                BeAttackedMonster item;
                 item.Deserialize(reader);
 
                 return item;
@@ -603,6 +751,10 @@ namespace zerosugar::xr::network::game::sc
             {
                 return typeid(RemoveRemotePlayer);
             }
+            case BeAttackedPlayer::opcode:
+            {
+                return typeid(BeAttackedPlayer);
+            }
             case SpawnMonster::opcode:
             {
                 return typeid(SpawnMonster);
@@ -614,6 +766,22 @@ namespace zerosugar::xr::network::game::sc
             case RemoveMonster::opcode:
             {
                 return typeid(RemoveMonster);
+            }
+            case BattleTransitionMonster::opcode:
+            {
+                return typeid(BattleTransitionMonster);
+            }
+            case MoveMonster::opcode:
+            {
+                return typeid(MoveMonster);
+            }
+            case AttackMonster::opcode:
+            {
+                return typeid(AttackMonster);
+            }
+            case BeAttackedMonster::opcode:
+            {
+                return typeid(BeAttackedMonster);
             }
             case MoveRemotePlayer::opcode:
             {

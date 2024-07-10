@@ -1,5 +1,7 @@
 #include "game_spatial_container.h"
 
+#include "zerosugar/xr/server/game/instance/grid/game_spatial_mbr.h"
+
 namespace zerosugar::xr
 {
     GameSpatialContainer::GameSpatialContainer(int32_t width, int32_t height, int32_t lengthPerGrid)
@@ -24,6 +26,26 @@ namespace zerosugar::xr
     auto GameSpatialContainer::GetSector(double x, double y) const -> const GameSpatialSector&
     {
         return GetSector(CalculateXIndex(x), CalculateYIndex(y));
+    }
+
+    auto GameSpatialContainer::GetSector(const Eigen::Vector3d& pos) -> GameSpatialSector&
+    {
+        return GetSector(pos.x(), pos.y());
+    }
+
+    auto GameSpatialContainer::GetSector(const Eigen::Vector3d& pos) const -> const GameSpatialSector&
+    {
+        return GetSector(pos.x(), pos.y());
+    }
+
+    auto GameSpatialContainer::GetSector(const Eigen::Vector2d& pos) -> GameSpatialSector&
+    {
+        return GetSector(pos.x(), pos.y());
+    }
+
+    auto GameSpatialContainer::GetSector(const Eigen::Vector2d& pos) const -> const GameSpatialSector&
+    {
+        return GetSector(pos.x(), pos.y());
     }
 
     auto GameSpatialContainer::GetPositionOffset() const -> double
@@ -86,13 +108,17 @@ namespace zerosugar::xr
 
         for (int32_t y = 0; y < _ySize; ++y)
         {
-            const double topY = y * _lengthPerGrid;
+            const double minY = y * _lengthPerGrid - _positionOffset;
+            const double maxY = minY + _lengthPerGrid;
 
             for (int32_t x = 0; x < _xSize; ++x)
             {
-                const double leftX = x * _lengthPerGrid;
+                const double minX = x * _lengthPerGrid - _positionOffset;
+                const double maxX = minX + _lengthPerGrid;
 
-                GameSpatialCell& cell = _cells.emplace_back(game_spatial_cell_id_type(x, y), leftX, topY);
+                const GameSpatialMBR mbr(Eigen::Vector2d(minX, minY), Eigen::Vector2d(maxX, maxY));
+
+                GameSpatialCell& cell = _cells.emplace_back(game_spatial_cell_id_type(x, y), mbr);
 
                 for (PtrNotNull<GameSpatialSector> sector : getAdjacentSectors(x, y))
                 {

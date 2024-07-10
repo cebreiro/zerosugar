@@ -1,7 +1,8 @@
 #include "game_task_target_selector.h"
 
-
 #include "zerosugar/xr/server/game/instance/entity/game_entity_container.h"
+#include "zerosugar/xr/server/game/instance/grid/game_spatial_query.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_monster_snapshot.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_container.h"
 #include "zerosugar/xr/server/game/instance/task/execution/game_execution_parallel.h"
 #include "zerosugar/xr/server/game/instance/task/execution/game_execution_serial.h"
@@ -57,5 +58,50 @@ namespace zerosugar::xr::game_task
     auto MainTargetSelector::GetTarget() const -> target_type
     {
         return _entity.get();
+    }
+
+    BoxSkillTargetSelector::BoxSkillTargetSelector(const Eigen::Vector3d& center, const Eigen::AlignedBox2d& box, float yaw, GameEntityType targetType)
+        : _center(center)
+        , _box(box)
+        , _yaw(yaw)
+        , _targetType(targetType)
+    {
+    }
+
+    bool BoxSkillTargetSelector::SelectEntityId(const GameExecutionSerial& serial)
+    {
+        GameSpatialQuery query(serial.GetSpatialContainer(), serial.GetSnapshotContainer(), serial.GetNavigationService());
+
+        const auto callback = [this](game_entity_id_type id)
+            {
+                _targetIds.push_back(id);
+            };
+
+        if (query(_center, _box, _yaw, _targetType, callback))
+        {
+            return !_targetIds.empty();
+        }
+
+        return false;
+    }
+
+    auto BoxSkillTargetSelector::GetTargetId() const -> std::span<const game_entity_id_type>
+    {
+        return _targetIds;
+    }
+
+    bool BoxSkillTargetSelector::SelectEntity(const GameExecutionParallel& parallel)
+    {
+        parallel.GetEntityContainer().FindRange(_targetIds, [this](const SharedPtrNotNull<GameEntity>& entity)
+            {
+                this->_targets.push_back(entity.get());
+            });
+
+        return true;
+    }
+
+    auto BoxSkillTargetSelector::GetTarget() const -> target_type
+    {
+        return _targets;
     }
 }

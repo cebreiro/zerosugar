@@ -58,6 +58,20 @@ namespace zerosugar::xr::network::game::sc
         std::vector<int64_t> players = {};
     };
 
+    struct BeAttackedPlayer final : IPacket
+    {
+        static constexpr int32_t opcode = 5001;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        int64_t attackerId = {};
+        int64_t attackedId = {};
+        int32_t monsterActionIndex = {};
+        float attackedHp = {};
+    };
+
     struct SpawnMonster final : IPacket
     {
         static constexpr int32_t opcode = 4001;
@@ -92,6 +106,61 @@ namespace zerosugar::xr::network::game::sc
 
         int32_t monstersCount = {};
         std::vector<int64_t> monsters = {};
+    };
+
+    struct BattleTransitionMonster final : IPacket
+    {
+        static constexpr int32_t opcode = 4004;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        int64_t id = {};
+        Position position = {};
+        Rotation rotation = {};
+    };
+
+    struct MoveMonster final : IPacket
+    {
+        static constexpr int32_t opcode = 4005;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        int64_t id = {};
+        Position position = {};
+        Rotation rotation = {};
+    };
+
+    struct AttackMonster final : IPacket
+    {
+        static constexpr int32_t opcode = 4006;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        int64_t id = {};
+        int32_t actionIndex = {};
+        Position position = {};
+        Rotation rotation = {};
+        Position destPosition = {};
+        double destMovementDuration = {};
+    };
+
+    struct BeAttackedMonster final : IPacket
+    {
+        static constexpr int32_t opcode = 5002;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        int64_t attackerId = {};
+        int64_t attackedId = {};
+        float attackedHp = {};
     };
 
     struct MoveRemotePlayer final : IPacket
@@ -270,6 +339,12 @@ namespace zerosugar::xr::network::game::sc
                 visitor.template operator()<RemoveRemotePlayer>(*packet.Cast<RemoveRemotePlayer>());
             }
             break;
+            case BeAttackedPlayer::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const BeAttackedPlayer&>);
+                visitor.template operator()<BeAttackedPlayer>(*packet.Cast<BeAttackedPlayer>());
+            }
+            break;
             case SpawnMonster::opcode:
             {
                 static_assert(std::is_invocable_v<TVisitor, const SpawnMonster&>);
@@ -286,6 +361,30 @@ namespace zerosugar::xr::network::game::sc
             {
                 static_assert(std::is_invocable_v<TVisitor, const RemoveMonster&>);
                 visitor.template operator()<RemoveMonster>(*packet.Cast<RemoveMonster>());
+            }
+            break;
+            case BattleTransitionMonster::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const BattleTransitionMonster&>);
+                visitor.template operator()<BattleTransitionMonster>(*packet.Cast<BattleTransitionMonster>());
+            }
+            break;
+            case MoveMonster::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const MoveMonster&>);
+                visitor.template operator()<MoveMonster>(*packet.Cast<MoveMonster>());
+            }
+            break;
+            case AttackMonster::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const AttackMonster&>);
+                visitor.template operator()<AttackMonster>(*packet.Cast<AttackMonster>());
+            }
+            break;
+            case BeAttackedMonster::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const BeAttackedMonster&>);
+                visitor.template operator()<BeAttackedMonster>(*packet.Cast<BeAttackedMonster>());
             }
             break;
             case MoveRemotePlayer::opcode:

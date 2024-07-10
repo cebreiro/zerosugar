@@ -5,7 +5,7 @@ namespace zerosugar::bt
     class NodeSerializer;
 }
 
-namespace zerosugar::xr::game
+namespace zerosugar::xr::ai
 {
     void RegisterTask(bt::NodeSerializer& serializer);
 }

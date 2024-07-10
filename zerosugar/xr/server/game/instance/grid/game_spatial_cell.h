@@ -1,6 +1,7 @@
 #pragma once
 #include "zerosugar/xr/server/game/instance/entity/game_entity_id.h"
-#include "zerosugar/xr/server/game/instance/snapshot/grid/game_spatial_id.h"
+#include "zerosugar/xr/server/game/instance/grid/game_spatial_id.h"
+#include "zerosugar/xr/server/game/instance/grid/game_spatial_mbr.h"
 
 namespace zerosugar::xr
 {
@@ -10,7 +11,9 @@ namespace zerosugar::xr
         using container_type = std::array<std::vector<game_entity_id_type>, static_cast<int32_t>(GameEntityType::Count)>;
 
     public:
-        GameSpatialCell(game_spatial_cell_id_type id, double leftX, double topY);
+        GameSpatialCell(game_spatial_cell_id_type id, const GameSpatialMBR& mbr);
+
+        bool Empty(GameEntityType type) const;
 
         bool HasEntity(GameEntityType type) const;
         bool HasEntity(game_entity_id_type id) const;
@@ -19,8 +22,9 @@ namespace zerosugar::xr
         void RemoveEntity(game_entity_id_type id);
 
         auto GetId() const -> game_spatial_cell_id_type;
-        auto GetLeftX() const -> double;
-        auto GetTopY() const -> double;
+        auto GetMBR() const -> const GameSpatialMBR&;
+        auto GetQuadIndex(const Eigen::Vector2d& position) const -> int64_t;
+
         auto GetSize() const -> int64_t;
         auto GetSize(GameEntityType type) const -> int64_t;
 
@@ -36,9 +40,10 @@ namespace zerosugar::xr
 
     private:
         game_spatial_cell_id_type _id;
-        double _leftX = 0.0;
-        double _topY = 0.0;
+        GameSpatialMBR _mbr;
+        double _halfX = 0.0;
+        double _halfY = 0.0;
 
-        std::array<std::vector<game_entity_id_type>, static_cast<int32_t>(GameEntityType::Count)> _entities;
+        std::array<std::vector<game_entity_id_type>, static_cast<int32_t>(GameEntityType::Count)> _entities = {};
     };
 }

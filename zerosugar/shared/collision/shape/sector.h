@@ -3,13 +3,13 @@
 
 namespace zerosugar::collision
 {
-    class Arc
+    class Sector
     {
     public:
-        Arc() = default;
-        Arc(Eigen::Vector2d center, double radius, double startAngle, double endAngle);
+        Sector() = default;
+        Sector(Eigen::Vector2d center, double radius, double startAngle, double endAngle);
 
-        bool Contains(double angle) const;
+        bool Contains(const Eigen::Vector2d& point) const;
 
         auto GetCenter() const -> Eigen::Vector2d;
         auto GetRadius() const -> double;

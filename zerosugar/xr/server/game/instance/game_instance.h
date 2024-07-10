@@ -13,6 +13,7 @@ namespace zerosugar::xr
     class GameEntityContainer;
 
     class GameSpatialContainer;
+    class GameSpatialScanner;
     class GameSnapshotContainer;
     class GameSnapshotView;
     class GameSnapshotController;
@@ -65,6 +66,9 @@ namespace zerosugar::xr
         auto GetSpatialContainer() -> GameSpatialContainer&;
         auto GetSpatialContainer() const -> const GameSpatialContainer&;
 
+        auto GetSpatialScanner() -> GameSpatialScanner&;
+        auto GetSpatialScanner() const -> const GameSpatialScanner&;
+
         auto GetSnapshotContainer() -> GameSnapshotContainer&;
         auto GetSnapshotContainer() const -> const GameSnapshotContainer&;
 
@@ -95,6 +99,8 @@ namespace zerosugar::xr
         UniquePtrNotNull<GameEntityContainer> _entityContainer;
 
         UniquePtrNotNull<GameSpatialContainer> _spatialContainer;
+        UniquePtrNotNull<GameSpatialScanner> _spatialScanner;
+
         UniquePtrNotNull<GameSnapshotContainer> _snapshotContainer;
         UniquePtrNotNull<GameSnapshotView> _snapshotView;
         UniquePtrNotNull<GameSnapshotController> _snapshotController;

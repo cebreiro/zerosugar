@@ -1,37 +1,72 @@
 #include "intersect.h"
 
-#include "zerosugar/shared/collision/shape/arc.h"
+#include <array>
+#include <numbers>
+#include "zerosugar/shared/collision/shape/sector.h"
 #include "zerosugar/shared/collision/shape/circle.h"
 #include "zerosugar/shared/collision/shape/obb.h"
 
 namespace zerosugar::collision
 {
-    auto GetAngle(const Eigen::Vector2d& v1, const Eigen::Vector2d& v2)
+    bool Intersect(const Sector& sector, const Circle& circle)
     {
-        const double dot = v1.dot(v2);
-        const double det = v1.x() * v2.y() - v1.y() * v2.x();
-
-        return std::atan2(det, dot);
-    }
-
-    bool Intersect(const Arc& arc, const Circle& circle)
-    {
-        Eigen::Vector2d diff = circle.GetCenter() - arc.GetCenter();
-        const double distance = diff.norm();
-
-        if (distance > arc.GetRadius() + circle.GetRadius())
-        {
-            return false;
-        }
-
-        if (distance <= circle.GetRadius())
+        if (sector.Contains(circle.GetCenter()))
         {
             return true;
         }
 
-        const double angle = GetAngle(Eigen::Vector2d(1, 0), diff.normalized());
+        const auto sectorCenter = sector.GetCenter();
+        const auto sectorRadius = sector.GetRadius();
+        const auto sectorStartAngle = sector.GetStartAngle();
+        const auto sectorEndAngle = sector.GetEndAngle();
 
-        return arc.Contains(angle);
+        const auto circleCenter = circle.GetCenter();
+        const auto circleRadius = circle.GetRadius();
+
+        const std::array<Eigen::Vector2d, 2> arcPoints = {
+            sectorCenter + sectorRadius * Eigen::Vector2d(std::cos(sectorStartAngle), std::sin(sectorStartAngle)),
+            sectorCenter + sectorRadius * Eigen::Vector2d(std::cos(sectorEndAngle), std::sin(sectorEndAngle))
+        };
+
+        for (const Eigen::Vector2d& point : arcPoints)
+        {
+            Eigen::Vector2d toCenter = circleCenter - point;
+
+            if (toCenter.norm() <= circleRadius)
+            {
+                return true;
+            }
+        }
+
+        const Eigen::Vector2d toCircle = circleCenter - sectorCenter;
+
+        double angleToCircle = std::atan2(toCircle.y(), toCircle.x());
+        if (angleToCircle < 0)
+        {
+            angleToCircle += 2 * std::numbers::pi;
+        }
+
+        bool contains = false;
+        if (sectorStartAngle < sectorEndAngle)
+        {
+            contains = angleToCircle >= sectorStartAngle && angleToCircle <= sectorEndAngle;
+        }
+        else
+        {
+            contains = (angleToCircle >= sectorStartAngle || angleToCircle <= sectorEndAngle);
+        }
+
+        if (contains)
+        {
+            const double sum = sectorRadius + circleRadius;
+
+            if (toCircle.squaredNorm() <= (sum * sum))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     bool Intersect(const OBB& obb, const Circle& circle)
@@ -56,9 +91,9 @@ namespace zerosugar::collision
         return distance <= (lhs.GetRadius() + rhs.GetRadius());
     }
 
-    bool Intersect(const Circle& circle, const Arc& arc)
+    bool Intersect(const Circle& circle, const Sector& sector)
     {
-        return Intersect(arc, circle);
+        return Intersect(sector, circle);
     }
 
     bool Intersect(const Circle& circle, const OBB& obb)

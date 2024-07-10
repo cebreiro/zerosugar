@@ -94,7 +94,7 @@ namespace zerosugar::xr
         return _gameInstance.GetAIControlService();
     }
 
-    auto GameExecutionSerial::GetNavigationService() -> NavigationService*
+    auto GameExecutionSerial::GetNavigationService() const -> NavigationService*
     {
         return _gameInstance.GetNavigationService();
     }

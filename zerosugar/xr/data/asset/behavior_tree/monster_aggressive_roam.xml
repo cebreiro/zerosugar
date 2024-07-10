@@ -1,13 +1,17 @@
 <root>
     <sequence>
-        <wait_until_player_in_view />
+        <suspend_until_player_in_view />
         <selector>
             <sequence>
-                <select_attack_target interval="3.0" />
+                <select_attack_target interval="1.5" />
+                <!-- player_in_distance distance="500" -->
                 <!-- suspend_forever / -->
                 <!--transition_behavior_tree target="monster_battle" / -->
             </sequence>
-            <monster_roam />
+            <sequence>
+                <time_elapsed_after_movement time="3.0" rand="1.0" />
+                <start_move_to_random_position radius ="1800" rand="700" />
+            </sequence>
         </selector>
     </sequence>
 </root>

@@ -1,5 +1,7 @@
 #include "select_attack_target.h"
 
+#include <boost/scope/scope_exit.hpp>
+#include "zerosugar/shared/ai/behavior_tree/behavior_tree.h"
 #include "zerosugar/shared/ai/behavior_tree/black_board.h"
 #include "zerosugar/shared/ai/behavior_tree/data/node_data_set_xml.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
@@ -7,88 +9,81 @@
 #include "zerosugar/xr/server/game/instance/snapshot/game_monster_snapshot.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_player_snapshot.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_container.h"
-#include "zerosugar/xr/server/game/instance/snapshot/grid/game_spatial_container.h"
+#include "zerosugar/xr/server/game/instance/grid/game_spatial_scanner.h"
 
-namespace zerosugar::xr::game
+namespace zerosugar::xr::ai
 {
     auto SelectAttackTarget::Run() -> bt::node::Result
     {
+        bt::BlackBoard& blackBoard = GetBlackBoard();
+
         const game_time_point_type now = game_clock_type::now();
-        if ((now - _lastScanTimePoint) < _interval)
+
+        if (game_time_point_type* lastScanTimePoint = blackBoard.GetIf<game_time_point_type>(name))
         {
-            co_return false;
+            if ((now - *lastScanTimePoint) < _interval)
+            {
+                co_return false;
+            }
+
+            *lastScanTimePoint = now;
+        }
+        else
+        {
+            blackBoard.Insert(name, now);
         }
 
-        _lastScanTimePoint = now;
+        AIController& controller = *blackBoard.Get<AIController*>(AIController::name);
 
-        bt::BlackBoard& blackBoard = GetBlackBoard();
-        AIController& controller = *blackBoard.Get<AIController*>("controller");
-
-        const GameInstance& gameInstance = controller.GetGameInstance();
+        GameInstance& gameInstance = controller.GetGameInstance();
         const GameSnapshotContainer& snapshotContainer = gameInstance.GetSnapshotContainer();
-        const GameSpatialContainer& spatialContainer = gameInstance.GetSpatialContainer();
 
-        const GameMonsterSnapshot* monster = snapshotContainer.FindMonster(controller.GetEntityId());
+        const game_entity_id_type entityId = controller.GetEntityId();
+        const GameMonsterSnapshot* monster = snapshotContainer.FindMonster(entityId);
         assert(monster);
 
         constexpr double selectDistance = 800.0;
-        constexpr double selectDistanceSq = selectDistance * selectDistance;
 
-        const auto& position = monster->GetPosition();
-        const double offsetX = position.x() + spatialContainer.GetPositionOffset();
-        const double offsetY = position.y() + spatialContainer.GetPositionOffset();
+        int64_t counter = controller.PublishEventCounter();
+        struct ScanComplete{};
 
-        const GameSpatialSector& sector = spatialContainer.GetSector(position.x(), position.y());
+        GameSpatialScanner& spatialScanner = gameInstance.GetSpatialScanner();
 
-        const GameSpatialCell& center = sector.GetCenter();
-        const auto filter = [&offsetX, &offsetY, &center, &selectDistanceSq](const GameSpatialCell& cell)
+        spatialScanner.Schedule(entityId, selectDistance, { GameEntityType::Player });
+        spatialScanner.SetSignalHandler(entityId, [weak = controller.weak_from_this(), counter]()
             {
-                if (!cell.HasEntity(GameEntityType::Player))
+                const auto controller = weak.lock();
+
+                if (!controller || controller->HasDifferenceEventCounter(counter))
                 {
-                    return false;
+                    return;
                 }
 
-                double diffX = 0.0;
-                double diffY = 0.0;
+                controller->InvokeOnBehaviorTree([](BehaviorTree& bt)
+                    {
+                        assert(bt.IsWaitFor<ScanComplete>());
+                        bt.Notify(ScanComplete{});
+                    });
+            });
 
-                if (center.GetId().GetX() != cell.GetId().GetX())
-                {
-                    diffX = std::abs(offsetX - cell.GetLeftX());
-                }
+        co_await bt::Event<ScanComplete>();
 
-                if (center.GetId().GetY() != cell.GetId().GetY())
-                {
-                    diffY = std::abs(offsetY - cell.GetTopY());
-                }
+        boost::scope::scope_exit exit([entityId, &spatialScanner]()
+            {
+                spatialScanner.CancelScheduled(entityId);
+            });
 
-                const double diffSq = (diffX * diffX) + (diffY * diffY);
-                if (diffSq > selectDistanceSq)
-                {
-                    return false;
-                }
-
-                return true;
-            };
-
-        auto range = sector.GetCells()
-            | std::views::filter(filter)
-            | std::views::transform([](const GameSpatialCell& cell) -> std::span<const game_entity_id_type>
-                {
-                    return cell.GetEntities(GameEntityType::Player);
-                })
-            | std::views::join;
-
-        for (const game_entity_id_type playerId : range)
+        for (game_entity_id_type playerId : spatialScanner.GetLastScanResult(controller.GetEntityId()))
         {
             const GamePlayerSnapshot* player = snapshotContainer.FindPlayer(playerId);
-            assert(player);
-
-            if ((position - player->GetPosition()).squaredNorm() <= selectDistanceSq)
+            if (!player)
             {
-                blackBoard.InsertOrUpdate<game_entity_id_type>("target", playerId);
-
-                co_return true;
+                continue;
             }
+
+            blackBoard.InsertOrUpdate<game_entity_id_type>("target", playerId);
+
+            co_return true;
         }
 
         co_return false;

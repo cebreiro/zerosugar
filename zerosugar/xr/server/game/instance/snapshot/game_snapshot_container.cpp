@@ -109,6 +109,45 @@ namespace zerosugar::xr
         return nullptr;
     }
 
+    auto GameSnapshotContainer::FindPosition(game_entity_id_type id) const -> std::optional<Eigen::Vector3d>
+    {
+        switch (id.GetType())
+        {
+        case GameEntityType::Player:
+        {
+            if (const GamePlayerSnapshot* snapshot = FindPlayer(id); snapshot)
+            {
+                return snapshot->GetPosition();
+            }
+
+            return std::nullopt;
+        }
+        case GameEntityType::Monster:
+        {
+            if (const GameMonsterSnapshot* snapshot = FindMonster(id); snapshot)
+            {
+                return snapshot->GetPosition();
+            }
+
+            return std::nullopt;
+        }
+        case GameEntityType::Spawner:
+        {
+            if (const auto iter = _spawners.find(id); iter != _spawners.end())
+            {
+                return iter->second->GetPosition();
+            }
+
+            return std::nullopt;
+        }
+        default:;
+        }
+
+        assert(false);
+
+        return std::nullopt;
+    }
+
     auto GameSnapshotContainer::FindPlayer(game_entity_id_type id) -> GamePlayerSnapshot*
     {
         assert(id.GetType() == GameEntityType::Player);

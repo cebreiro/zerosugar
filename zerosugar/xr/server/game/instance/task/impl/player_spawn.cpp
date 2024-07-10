@@ -95,5 +95,10 @@ namespace zerosugar::xr::game_task
                 statComponent.AddItemStat(StatType::Str, StatValue(*item.intell));
             }
         }
+
+        statComponent.SetMaxHP(StatValue(10000.0));
+        statComponent.SetHP(StatValue(10000.0));
+        statComponent.SetMaxMP(StatValue(10000.0));
+        statComponent.SetMP(StatValue(10000.0));
     }
 }

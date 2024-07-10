@@ -1,4 +1,4 @@
-#include "wait_for_seconds.h"
+#include "suspend_for_seconds.h"
 
 #include "zerosugar/shared/ai/behavior_tree/behavior_tree.h"
 #include "zerosugar/shared/ai/behavior_tree/black_board.h"
@@ -7,12 +7,12 @@
 #include "zerosugar/xr/server/game/instance/ai/ai_controller.h"
 #include "zerosugar/xr/server/game/instance/ai/behavior_tree/event/timer_event.h"
 
-namespace zerosugar::xr::game
+namespace zerosugar::xr::ai
 {
-    auto WaitForSeconds::Run() -> bt::node::Result
+    auto SuspendForSeconds::Run() -> bt::node::Result
     {
         bt::BlackBoard& blackBoard = GetBlackBoard();
-        AIController& controller = *blackBoard.Get<AIController*>("controller");
+        AIController& controller = *blackBoard.Get<AIController*>(AIController::name);
 
         const int64_t counter = controller.PublishEventCounter();
 
@@ -27,23 +27,23 @@ namespace zerosugar::xr::game
 
                 controller->InvokeOnBehaviorTree([](BehaviorTree& bt)
                     {
-                        assert(bt.IsWaitFor<event::AwakebehaviorTree>());
+                        assert(bt.IsWaitFor<event::AwakeBehaviorTree>());
 
-                        bt.Notify(event::AwakebehaviorTree {});
+                        bt.Notify(event::AwakeBehaviorTree {});
                     });
             });
 
-        co_await bt::Event<event::AwakebehaviorTree>();
+        co_await bt::Event<event::AwakeBehaviorTree>();
 
         co_return true;
     }
 
-    auto WaitForSeconds::GetName() const -> std::string_view
+    auto SuspendForSeconds::GetName() const -> std::string_view
     {
         return name;
     }
 
-    void from_xml(WaitForSeconds& self, const pugi::xml_node& xmlNode)
+    void from_xml(SuspendForSeconds& self, const pugi::xml_node& xmlNode)
     {
         if (const auto attr = xmlNode.attribute("time"); attr)
         {

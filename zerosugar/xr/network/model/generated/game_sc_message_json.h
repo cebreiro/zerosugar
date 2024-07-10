@@ -23,6 +23,9 @@ namespace zerosugar::xr::network::game::sc
     void from_json(const nlohmann::json& j, RemoveRemotePlayer& item);
     void to_json(nlohmann::json& j, const RemoveRemotePlayer& item);
 
+    void from_json(const nlohmann::json& j, BeAttackedPlayer& item);
+    void to_json(nlohmann::json& j, const BeAttackedPlayer& item);
+
     void from_json(const nlohmann::json& j, SpawnMonster& item);
     void to_json(nlohmann::json& j, const SpawnMonster& item);
 
@@ -31,6 +34,18 @@ namespace zerosugar::xr::network::game::sc
 
     void from_json(const nlohmann::json& j, RemoveMonster& item);
     void to_json(nlohmann::json& j, const RemoveMonster& item);
+
+    void from_json(const nlohmann::json& j, BattleTransitionMonster& item);
+    void to_json(nlohmann::json& j, const BattleTransitionMonster& item);
+
+    void from_json(const nlohmann::json& j, MoveMonster& item);
+    void to_json(nlohmann::json& j, const MoveMonster& item);
+
+    void from_json(const nlohmann::json& j, AttackMonster& item);
+    void to_json(nlohmann::json& j, const AttackMonster& item);
+
+    void from_json(const nlohmann::json& j, BeAttackedMonster& item);
+    void to_json(nlohmann::json& j, const BeAttackedMonster& item);
 
     void from_json(const nlohmann::json& j, MoveRemotePlayer& item);
     void to_json(nlohmann::json& j, const MoveRemotePlayer& item);

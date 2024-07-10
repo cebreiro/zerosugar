@@ -33,11 +33,25 @@ namespace zerosugar::xr::data
     {
         int32_t monsterId = 0;
 
+        struct Attack
+        {
+            double applyTimePoint = 0.0;
+
+            // box
+            double minX = 0.0;
+            double maxX = 0.0;
+            double minY = 0.0;
+            double maxY = 0.0;
+        };
+
         struct Value
         {
             std::string name;
-            double duration;
-            std::vector<double> attackPoints;
+            int32_t index = 0;
+            double duration = 0.0;
+            double forwardMovement = 0.0;
+
+            std::vector<Attack> attacks;
         };
 
         std::vector<Value> values;

@@ -1,5 +1,4 @@
 #pragma once
-#include <Eigen/Dense>
 #include <boost/container/flat_map.hpp>
 #include <boost/unordered/unordered_flat_map.hpp>
 #include "zerosugar/xr/navigation/navi_vector.h"
@@ -32,12 +31,11 @@ namespace zerosugar::xr::navi
 
         void Shutdown();
 
-        void AddDrawTarget(const AddVisualizeTargetParam& param);
-        void RemoveDrawTarget(const RemoveVisualizeTargetParam& param);
-        void UpdateDrawTarget(const UpdateVisualizeTargetParam& param);
+        void AddAgent(const AddVisualizeTargetParam& param);
+        void RemoveAgent(const RemoveVisualizeTargetParam& param);
+        void UpdateAgent(const UpdateVisualizeTargetParam& param);
 
-        void DrawBox(const FVector& min, const FVector& max, std::chrono::milliseconds milli);
-		void DrawOBB(const collision::OBB3d& obb, const std::chrono::milliseconds milli);
+		void AddOBB(const collision::OBB3d& obb, const std::chrono::milliseconds milli);
 
     public:
         void handleTools() override;
@@ -61,7 +59,7 @@ namespace zerosugar::xr::navi
     private:
         void RenderThreadMain();
 
-		void Tick();
+		void Tick(double delta);
 
     private:
         Strand& _strand;
@@ -74,6 +72,7 @@ namespace zerosugar::xr::navi
         std::unique_ptr<NavMeshTesterTool> _testTool;
 
         int32_t _drawMode = 0;
+        std::chrono::system_clock::time_point _lastTickTimePoint;
 
         struct DrawTarget
         {
@@ -82,11 +81,13 @@ namespace zerosugar::xr::navi
             DrawColor drawColor = DrawColor::LightBlue;
             Scalar radius;
 
-            std::optional<Vector> destPosition = std::nullopt;
+            double movementDuration = 0;
+            double destMovementDuration = 0;
+            std::optional<Eigen::Vector3d> startPosition = std::nullopt;
+            std::optional<Eigen::Vector3d> destPosition = std::nullopt;
             std::optional<DrawColor> destPositionDrawColor = std::nullopt;
         };
-        boost::unordered::unordered_flat_map<int64_t, DrawTarget> _drawTargets;
-        boost::container::flat_multimap<std::chrono::system_clock::time_point, std::pair<Vector, Vector>> _drawBoxes;
+        boost::unordered::unordered_flat_map<int64_t, DrawTarget> _agents;
 
     public:
 		struct OBB

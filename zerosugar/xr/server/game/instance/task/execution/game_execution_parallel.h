@@ -20,8 +20,11 @@ namespace zerosugar::xr
         explicit GameExecutionParallel(GameInstance& gameInstance);
         ~GameExecutionParallel();
 
+        auto Hold() -> std::shared_ptr<GameExecutionParallel>;
+
         void SummitTask(UniquePtrNotNull<GameTask> task, std::optional<game_controller_id_type> controllerId = std::nullopt);
 
+        auto GetExecutor() const -> execution::IExecutor&;
         auto GetServiceLocator() const -> ServiceLocator&;
 
         auto GetEntityContainer() -> GameEntityContainer&;

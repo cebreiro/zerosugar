@@ -8,8 +8,8 @@
 #include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_view.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_monster_snapshot.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_spawner_snapshot.h"
-#include "zerosugar/xr/server/game/instance/snapshot/grid/game_spatial_container.h"
-#include "zerosugar/xr/server/game/instance/snapshot/grid/game_spatial_sector.h"
+#include "zerosugar/xr/server/game/instance/grid/game_spatial_container.h"
+#include "zerosugar/xr/server/game/instance/grid/game_spatial_sector.h"
 #include "zerosugar/xr/server/game/packet/packet_builder.h"
 
 namespace zerosugar::xr
@@ -51,52 +51,49 @@ namespace zerosugar::xr
         sc::NotifyPlayerActivated activated;
         view.Sync(player->GetController(), activated);
 
-        GameSpatialSector& sector = spatialContainer.GetSector(player->GetPosition().x(), player->GetPosition().y());
-        if (!sector.Empty())
+        GameSpatialSector& sector = spatialContainer.GetSector(player->GetPosition());
+        if (!sector.Empty() && sector.HasEntitiesAtLeast(0))
         {
-            if (auto range = sector.GetEntities(); range.begin() != range.end())
+            sc::AddRemotePlayer addPlayer;
+            GamePacketBuilder::Build(addPlayer, *player);
+
+            sc::AddRemotePlayer newPlayers;
+            sc::AddMonster newMonsters;
+
+            for (const game_entity_id_type id : sector.GetEntities())
             {
-                sc::AddRemotePlayer addPlayer;
-                GamePacketBuilder::Build(addPlayer, *player);
-
-                sc::AddRemotePlayer newPlayers;
-                sc::AddMonster newMonsters;
-
-                for (const game_entity_id_type id : range)
+                if (id.GetType() == GameEntityType::Player)
                 {
-                    if (id.GetType() == GameEntityType::Player)
-                    {
-                        const GamePlayerSnapshot* newPlayer = snapshotContainer.FindPlayer(id);
-                        assert(newPlayer);
+                    const GamePlayerSnapshot* newPlayer = snapshotContainer.FindPlayer(id);
+                    assert(newPlayer);
 
-                        GamePacketBuilder::Build(newPlayers.players.emplace_back(), *newPlayer);
-                    }
-                    else if (id.GetType() == GameEntityType::Monster)
-                    {
-                        const GameMonsterSnapshot* newMonster = snapshotContainer.FindMonster(id);
-                        assert(newMonster);
+                    GamePacketBuilder::Build(newPlayers.players.emplace_back(), *newPlayer);
+                }
+                else if (id.GetType() == GameEntityType::Monster)
+                {
+                    const GameMonsterSnapshot* newMonster = snapshotContainer.FindMonster(id);
+                    assert(newMonster);
 
-                        GamePacketBuilder::Build(newMonsters.monsters.emplace_back(), *newMonster);
-                    }
-
-                    IGameController* controller = snapshotContainer.FindController(id);
-                    assert(controller);
-
-                    view.Sync(*controller, addPlayer);
+                    GamePacketBuilder::Build(newMonsters.monsters.emplace_back(), *newMonster);
                 }
 
-                newPlayers.playersCount = static_cast<int32_t>(newPlayers.players.size());
-                newMonsters.monstersCount = static_cast<int32_t>(newMonsters.monsters.size());
+                IGameController* controller = snapshotContainer.FindController(id);
+                assert(controller);
 
-                if (newPlayers.playersCount > 0)
-                {
-                    view.Sync(player->GetController(), newPlayers);
-                }
+                view.Sync(*controller, addPlayer);
+            }
 
-                if (newMonsters.monstersCount > 0)
-                {
-                    view.Sync(player->GetController(), newMonsters);
-                }
+            newPlayers.playersCount = static_cast<int32_t>(newPlayers.players.size());
+            newMonsters.monstersCount = static_cast<int32_t>(newMonsters.monsters.size());
+
+            if (newPlayers.playersCount > 0)
+            {
+                view.Sync(player->GetController(), newPlayers);
+            }
+
+            if (newMonsters.monstersCount > 0)
+            {
+                view.Sync(player->GetController(), newMonsters);
             }
         }
 
@@ -112,16 +109,13 @@ namespace zerosugar::xr
         GamePlayerSnapshot* snapshot = snapshotContainer.FindPlayer(entityId);
         assert(snapshot);
 
-        GameSpatialSector& sector = spatialContainer.GetSector(snapshot->GetPosition().x(), snapshot->GetPosition().y());
+        GameSpatialSector& sector = spatialContainer.GetSector(snapshot->GetPosition());
         sector.RemoveEntity(entityId);
 
-        if (!sector.Empty())
-        {
-            sc::RemoveRemotePlayer packet;
-            GamePacketBuilder::Build(packet, *snapshot);
+        sc::RemoveRemotePlayer packet;
+        GamePacketBuilder::Build(packet, *snapshot);
 
-            view.Broadcast(packet, sector);
-        }
+        view.Broadcast(packet, sector);
 
         [[maybe_unused]]
         const bool removed = snapshotContainer.Remove(entityId);
@@ -164,7 +158,7 @@ namespace zerosugar::xr
         GamePlayerSnapshot* snapshot = snapshotContainer.FindPlayer(id);
         assert(snapshot);
 
-        GameSpatialSector& sector = spatialContainer.GetSector(snapshot->GetPosition().x(), snapshot->GetPosition().y());
+        GameSpatialSector& sector = spatialContainer.GetSector(snapshot->GetPosition());
 
         sc::SprintRemotePlayer packet;
         packet.id = id.Unwrap();
@@ -181,7 +175,7 @@ namespace zerosugar::xr
         GamePlayerSnapshot* snapshot = snapshotContainer.FindPlayer(id);
         assert(snapshot);
 
-        GameSpatialSector& sector = spatialContainer.GetSector(snapshot->GetPosition().x(), snapshot->GetPosition().y());
+        GameSpatialSector& sector = spatialContainer.GetSector(snapshot->GetPosition());
 
         sc::RollDodgeRemotePlayer packet;
         packet.id = id.Unwrap();
@@ -220,34 +214,95 @@ namespace zerosugar::xr
 
         GameSpatialSector& sector = spatialContainer.GetSector(snapshot.GetPosition().x(), snapshot.GetPosition().y());
 
-        if (!sector.Empty())
-        {
-            sc::AddMonster packet;
-            GamePacketBuilder::Build(packet.monsters.emplace_back(), snapshot);
-            packet.monstersCount = 1;
+        sc::SpawnMonster packet;
+        GamePacketBuilder::Build(packet.monsters.emplace_back(), snapshot);
+        packet.monstersCount = 1;
 
-            view.Broadcast(packet, sector);
-        }
+        view.Broadcast(packet, sector);
 
         sector.AddEntity(snapshot.GetId());
+    }
+
+    void GameSnapshotController::ProcessMonsterMove(GameMonsterSnapshot& snapshot, const Eigen::Vector3d& position, float yaw)
+    {
+        snapshot.SetYaw(yaw);
+        const Eigen::Vector3d oldPos = snapshot.GetPosition();
+
+        HandleMonsterPositionChange(snapshot, oldPos, position);
+    }
+
+    void GameSnapshotController::ProcessMonsterAttack(GameMonsterSnapshot& snapshot, int32_t attackIndex,
+        const std::optional<Eigen::Vector3d>& destPos, const Eigen::Vector3d& rotation, double movementDuration)
+    {
+        const Eigen::Vector3d& position = snapshot.GetPosition();
+
+        sc::AttackMonster packet;
+        packet.id = snapshot.GetId().Unwrap();
+        packet.actionIndex = attackIndex;
+        packet.position.x = static_cast<float>(position.x());
+        packet.position.y = static_cast<float>(position.y());
+        packet.position.z = static_cast<float>(position.z());
+        packet.rotation.pitch = static_cast<float>(rotation.x());
+        packet.rotation.yaw = static_cast<float>(rotation.y());
+        packet.rotation.roll = static_cast<float>(rotation.z());
+
+        if (destPos.has_value())
+        {
+            packet.destPosition.x = static_cast<float>(destPos->x());
+            packet.destPosition.y = static_cast<float>(destPos->y());
+            packet.destPosition.z = static_cast<float>(destPos->z());
+            packet.destMovementDuration = movementDuration;
+        }
+        else
+        {
+            packet.destPosition = packet.position;
+        }
+
+        GameSnapshotView& view = _gameInstance.GetSnapshotView();
+        view.Broadcast(packet, _gameInstance.GetSpatialContainer().GetSector(snapshot.GetPosition()));
+
+        if (destPos.has_value())
+        {
+            const Eigen::Vector3d oldPos = snapshot.GetPosition();
+
+            HandleMonsterPositionChange(snapshot, oldPos, *destPos);
+        }
+    }
+
+    void GameSnapshotController::ProcessMonsterAttackEffect(game_entity_id_type attackerId, int32_t attackId,
+        game_entity_id_type targetId, float targetHP)
+    {
+        sc::BeAttackedPlayer packet;
+        packet.attackerId = attackerId.Unwrap();
+        packet.monsterActionIndex = attackId;
+        packet.attackedId = targetId.Unwrap();
+        packet.attackedHp = targetHP;
+
+        const GamePlayerSnapshot* attacked = _gameInstance.GetSnapshotContainer().FindPlayer(targetId);
+        assert(attacked);
+
+        _gameInstance.GetSnapshotView().Broadcast(packet,
+            _gameInstance.GetSpatialContainer().GetSector(attacked->GetPosition()));
     }
 
     void GameSnapshotController::ProcessSpawnerAdd(const GameSpawnerSnapshot& snapshot)
     {
         GameSpatialContainer& spatialContainer = _gameInstance.GetSpatialContainer();
-        GameSpatialSector& sector = spatialContainer.GetSector(snapshot.GetPosition().x(), snapshot.GetPosition().y());
+        GameSpatialSector& sector = spatialContainer.GetSector(snapshot.GetPosition());
 
         sector.AddEntity(snapshot.GetId());
     }
 
     void GameSnapshotController::HandlePlayerPositionChange(GamePlayerSnapshot& player, const Eigen::Vector3d& oldPos, const Eigen::Vector3d& newPos)
     {
+        player.SetPosition(newPos);
+
         GameSpatialContainer& spatialContainer = _gameInstance.GetSpatialContainer();
         GameSnapshotView& view = _gameInstance.GetSnapshotView();
         GameSnapshotContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
 
-        GameSpatialSector& oldSector = spatialContainer.GetSector(oldPos.x(), oldPos.y());
-        GameSpatialSector& newSector = spatialContainer.GetSector(newPos.x(), newPos.y());
+        GameSpatialSector& oldSector = spatialContainer.GetSector(oldPos);
+        GameSpatialSector& newSector = spatialContainer.GetSector(newPos);
 
         if (oldSector.GetId() == newSector.GetId())
         {
@@ -255,8 +310,6 @@ namespace zerosugar::xr
             GamePacketBuilder::Build(packet, player);
 
             view.Broadcast(packet, oldSector, player.GetId());
-
-            player.SetPosition(newPos);
 
             return;
         }
@@ -361,11 +414,10 @@ namespace zerosugar::xr
             }
         }
 
-        player.SetPosition(newPos);
         newSector.AddEntity(player.GetId());
 
         ZEROSUGAR_LOG_DEBUG(_gameInstance.GetServiceLocator(),
-            std::format("movement: old[{}, {}] new[{}, [{}], old_sector[{}, {}], new_sector[{}, {}]",
+            std::format("player movement: old[{}, {}] new[{}, [{}], old_sector[{}, {}], new_sector[{}, {}]",
                 oldPos.x(), oldPos.y(), newPos.x(), newPos.y(),
                 oldSector.GetId().GetX(), oldSector.GetId().GetY(),
                 newSector.GetId().GetX(), newSector.GetId().GetY()));
@@ -374,8 +426,68 @@ namespace zerosugar::xr
     void GameSnapshotController::HandleMonsterPositionChange(GameMonsterSnapshot& monster,
         const Eigen::Vector3d& oldPos, const Eigen::Vector3d& newPos)
     {
-        (void)monster;
-        (void)oldPos;
-        (void)newPos;
+        monster.SetPosition(newPos);
+
+        GameSpatialContainer& spatialContainer = _gameInstance.GetSpatialContainer();
+        GameSnapshotView& view = _gameInstance.GetSnapshotView();
+
+        GameSpatialSector& oldSector = spatialContainer.GetSector(oldPos);
+        GameSpatialSector& newSector = spatialContainer.GetSector(newPos);
+
+        if (oldSector.GetId() == newSector.GetId())
+        {
+            sc::MoveMonster packet;
+            packet.id = monster.GetId().Unwrap();
+            packet.position.x = static_cast<float>(monster.GetPosition().x());
+            packet.position.y = static_cast<float>(monster.GetPosition().y());
+            packet.position.z = static_cast<float>(monster.GetPosition().z());
+            packet.rotation.yaw = monster.GetYaw();
+
+            view.Broadcast(packet, oldSector);
+
+            return;
+        }
+
+        oldSector.RemoveEntity(monster.GetId());
+
+        if (GameSpatialSector::Subset outs = (oldSector - newSector); !outs.Empty())
+        {
+            sc::RemoveMonster removeMonster;
+            removeMonster.monstersCount = 1;
+            removeMonster.monsters.emplace_back(monster.GetId().Unwrap());
+
+            view.Broadcast(GameEntityType::Player, removeMonster, outs);
+        }
+
+        if (GameSpatialSector::Subset unchanged = (newSector & oldSector); !unchanged.Empty())
+        {
+            sc::MoveMonster packet;
+            packet.id = monster.GetId().Unwrap();
+            packet.position.x = static_cast<float>(monster.GetPosition().x());
+            packet.position.y = static_cast<float>(monster.GetPosition().y());
+            packet.position.z = static_cast<float>(monster.GetPosition().z());
+            packet.rotation.yaw = monster.GetYaw();
+
+            view.Broadcast(packet, unchanged, monster.GetId());
+        }
+
+        if (GameSpatialSector::Subset ins = (newSector - oldSector); !ins.Empty())
+        {
+            sc::AddMonster addMonster;
+            addMonster.monstersCount = 1;
+
+            GamePacketBuilder::Build(addMonster.monsters.emplace_back(), monster);
+
+            view.Broadcast(GameEntityType::Player, addMonster, ins);
+        }
+
+        newSector.AddEntity(monster.GetId());
+
+        ZEROSUGAR_LOG_DEBUG(_gameInstance.GetServiceLocator(),
+            std::format("monster movement: monster[{}] old[{}, {}] new[{}, [{}], old_sector[{}, {}], new_sector[{}, {}]",
+                monster.GetId().Unwrap(),
+                oldPos.x(), oldPos.y(), newPos.x(), newPos.y(),
+                oldSector.GetId().GetX(), oldSector.GetId().GetY(),
+                newSector.GetId().GetX(), newSector.GetId().GetY()));
     }
 }

@@ -1,6 +1,6 @@
 #pragma once
-#include "zerosugar/xr/server/game/instance/snapshot/grid/game_spatial_cell.h"
-#include "zerosugar/xr/server/game/instance/snapshot/grid/game_spatial_sector.h"
+#include "zerosugar/xr/server/game/instance/grid/game_spatial_cell.h"
+#include "zerosugar/xr/server/game/instance/grid/game_spatial_sector.h"
 
 namespace zerosugar::xr
 {
@@ -12,6 +12,10 @@ namespace zerosugar::xr
 
         auto GetSector(double x, double y) -> GameSpatialSector&;
         auto GetSector(double x, double y) const -> const GameSpatialSector&;
+        auto GetSector(const Eigen::Vector3d& pos) -> GameSpatialSector&;
+        auto GetSector(const Eigen::Vector3d& pos) const -> const GameSpatialSector&;
+        auto GetSector(const Eigen::Vector2d& pos) -> GameSpatialSector&;
+        auto GetSector(const Eigen::Vector2d& pos) const -> const GameSpatialSector&;
 
         auto GetPositionOffset() const -> double;
         auto GetLengthPerGrid() const -> int32_t;

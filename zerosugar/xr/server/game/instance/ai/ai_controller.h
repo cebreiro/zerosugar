@@ -20,12 +20,20 @@ namespace zerosugar::xr
     class GameInstance;
 }
 
+namespace zerosugar::xr::ai
+{
+    class MovementController;
+}
+
 namespace zerosugar::xr
 {
     class AIController final
         : public IGameController
         , public std::enable_shared_from_this<AIController>
     {
+    public:
+        static constexpr const char* name = "ai_controller";
+
     public:
         AIController(GameInstance& gameInstance, const bt::NodeSerializer& nodeSerializer,
             game_controller_id_type id, game_entity_id_type entityId, std::string btName);
@@ -55,8 +63,12 @@ namespace zerosugar::xr
         auto GetGameInstance() -> GameInstance&;
         auto GetGameInstance() const -> const GameInstance&;
         auto GetBlackBoard() -> bt::BlackBoard&;
+        auto GetRandomEngine() -> std::mt19937&;
 
-        void SetBehaviorTreeLogger(IBehaviorTreeLogger* logger);
+        auto GetMovementController() -> ai::MovementController&;
+        auto GetMovementController() const -> const ai::MovementController&;
+
+        void SetBehaviorTreeLogger(std::shared_ptr<IBehaviorTreeLogger> logger);
 
     private:
         auto RunAI() -> Future<void>;
@@ -71,11 +83,15 @@ namespace zerosugar::xr
         game_entity_id_type _entityId;
         std::string _behaviorTreeName;
 
-        IBehaviorTreeLogger* _behaviorTreeLogger = nullptr;
+        std::shared_ptr<IBehaviorTreeLogger> _behaviorTreeLogger;
 
         int64_t _eventCounter = 0;
         Future<void> _runAI;
         UniquePtrNotNull<bt::BlackBoard> _blackBoard;
         SharedPtrNotNull<BehaviorTree> _behaviorTree;
+
+        std::mt19937 _mt;
+
+        UniquePtrNotNull<ai::MovementController> _movementController;
     };
 }

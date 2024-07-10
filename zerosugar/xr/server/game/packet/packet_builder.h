@@ -19,6 +19,8 @@ namespace zerosugar::xr::network::game::sc
     struct AddRemotePlayer;
     struct RemoveRemotePlayer;
     struct MoveRemotePlayer;
+
+    struct MoveMonster;
 }
 
 namespace zerosugar::xr

@@ -24,7 +24,7 @@ namespace zerosugar::xr::game_task
         packet.type = static_cast<int32_t>(GetParam().first);
         packet.message = GetParam().second;
 
-        serialContext.GetSnapshotView().Broadcast(packet);
+        serialContext.GetSnapshotView().Broadcast(packet, std::nullopt);
     }
 
     void PlayerGlobalChat::Execute(GameExecutionParallel& parallelContext, NullSelector::target_type)

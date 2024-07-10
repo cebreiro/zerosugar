@@ -5,18 +5,57 @@
             "Animation": [
                 {
                     "Name": "NormalAttack1",
+                    "Index": 0,
+                    "Movement": 400.0,
                     "Duration": 1.9,
-                    "AttackTimePoint": [ 0.67 ]
+                    "Attack": [
+                        {
+                            "ApplyTimePoint": 0.67,
+                            "Collision": {
+                                "Type": "box",
+                                "MinX": 300,
+                                "MaxX": 700,
+                                "MinY": -125,
+                                "MaxY": 125
+                            }
+                        }
+                    ]
                 },
                 {
                     "Name": "NormalAttack2",
+                    "Index": 1,
+                    "Movement": 200.0,
                     "Duration": 1.5,
-                    "AttackTimePoint": [ 0.8 ]
+                    "Attack": [
+                        {
+                            "ApplyTimePoint": 0.8,
+                            "Collision": {
+                                "Type": "box",
+                                "MinX": 100,
+                                "MaxX": 475,
+                                "MinY": -75,
+                                "MaxY": 75
+                            }
+                        }
+                    ]
                 },
                 {
                     "Name": "NormalAttack3",
+                    "Index": 2,
+                    "Movement": 500.0,
                     "Duration": 4.0,
-                    "AttackTimePoint": [ 2.35 ]
+                    "Attack": [
+                        {
+                            "ApplyTimePoint": 2.35,
+                            "Collision": {
+                                "Type": "box",
+                                "MinX": 350,
+                                "MaxX": 850,
+                                "MinY": 0,
+                                "MaxY": 150
+                            }
+                        }
+                    ]
                 },
                 {
                     "Name": "Death",
@@ -29,18 +68,87 @@
             "Animation": [
                 {
                     "Name": "NormalAttack1",
+                    "Index": 0,
+                    "Movement": 600.0,
                     "Duration": 1.93,
-                    "AttackTimePoint": [ 1.7 ]
+                    "Attack": [
+                        {
+                            "ApplyTimePoint": 0.6,
+                            "Collision": {
+                                "Type": "box",
+                                "MinX": 0,
+                                "MaxX": 300,
+                                "MinY": 0,
+                                "MaxY": 150
+                            }
+                        },
+                        {
+                            "ApplyTimePoint": 0.77,
+                            "Collision": {
+                                "Type": "box",
+                                "MinX": 0,
+                                "MaxX": 300,
+                                "MinY": -150,
+                                "MaxY": 0
+                            }
+                        }
+                    ]
                 },
                 {
                     "Name": "NormalAttack2",
+                    "Index": 1,
+                    "Movement": 0.0,
                     "Duration": 1.5,
-                    "AttackTimePoint": [ 0.45, 0.9 ]
+                    "Attack": [
+                        {
+                            "ApplyTimePoint": 0.45,
+                            "Collision": {
+                                "Type": "box",
+                                "MinX": 0,
+                                "MaxX": 300,
+                                "MinY": -150,
+                                "MaxY": 0
+                            }
+                        },
+                        {
+                            "ApplyTimePoint": 0.9,
+                            "Collision": {
+                                "Type": "box",
+                                "MinX": 0,
+                                "MaxX": 300,
+                                "MinY": 0,
+                                "MaxY": 150
+                            }
+                        }
+                    ]
                 },
                 {
                     "Name": "NormalAttack3",
+                    "Index": 2,
+                    "Movement": 400.0,
                     "Duration": 2.0,
-                    "AttackTimePoint": [ 0.975, 1.45 ]
+                    "Attack": [
+                        {
+                            "ApplyTimePoint": 0.975,
+                            "Collision": {
+                                "Type": "box",
+                                "MinX": 0,
+                                "MaxX": 200,
+                                "MinY": -100,
+                                "MaxY": 100
+                            }
+                        },
+                        {
+                            "ApplyTimePoint": 1.45,
+                            "Collision": {
+                                "Type": "box",
+                                "MinX": 0,
+                                "MaxX": 350,
+                                "MinY": -100,
+                                "MaxY": 100
+                            }
+                        }
+                    ]
                 },
                 {
                     "Name": "Death",

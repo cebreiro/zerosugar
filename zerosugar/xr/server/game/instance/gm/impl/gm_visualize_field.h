@@ -6,7 +6,7 @@ namespace zerosugar::xr::gm
     class VisualizeField final : public IGMCommandT<>
     {
     public:
-        static constexpr const char* name = "visualize_field";
+        static constexpr const char* name = "vis";
 
     private:
         bool HandleCommand(GameExecutionSerial& serialContext, GamePlayerSnapshot& player) override;

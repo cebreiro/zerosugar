@@ -16,7 +16,7 @@ namespace zerosugar::xr
         auto Find(game_entity_id_type id) const -> SharedPtrNotNull<GameEntity>;
 
         template <typename T> requires std::same_as<std::ranges::range_value_t<T>, game_entity_id_type>
-        void FindRange(T range, const std::function<void(const SharedPtrNotNull<GameEntity>&)>& callback);
+        void FindRange(T range, const std::function<void(const SharedPtrNotNull<GameEntity>&)>& callback) const;
 
     private:
         boost::unordered::concurrent_flat_map<
@@ -26,16 +26,16 @@ namespace zerosugar::xr
     };
 
     template <typename T> requires std::same_as<std::ranges::range_value_t<T>, game_entity_id_type>
-    void GameEntityContainer::FindRange(T range, const std::function<void(const SharedPtrNotNull<GameEntity>&)>& callback)
+    void GameEntityContainer::FindRange(T range, const std::function<void(const SharedPtrNotNull<GameEntity>&)>& callback) const
     {
         assert(callback);
 
         std::array<game_entity_id_type, bulk_size> buffer = {};
-        const auto function = [&callback](const SharedPtrNotNull<GameEntity>& ptr)
+        const auto function = [&callback](const auto& pair)
             {
-                assert(ptr);
+                assert(pair.second);
 
-                callback(ptr);
+                callback(pair.second);
             };
 
         int64_t i = 0;

@@ -1,20 +1,20 @@
-#include "wait_until_player_in_view.h"
+#include "suspend_until_player_in_view.h"
 
 #include "zerosugar/shared/ai/behavior_tree/black_board.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/ai/ai_controller.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_monster_snapshot.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_container.h"
-#include "zerosugar/xr/server/game/instance/snapshot/grid/game_spatial_container.h"
-#include "zerosugar/xr/server/game/instance/snapshot/grid/game_spatial_sector.h"
+#include "zerosugar/xr/server/game/instance/grid/game_spatial_container.h"
+#include "zerosugar/xr/server/game/instance/grid/game_spatial_sector.h"
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
 
-namespace zerosugar::xr::game
+namespace zerosugar::xr::ai
 {
-    auto WaitUntilPlayerInView::Run() -> bt::node::Result
+    auto SuspendUntilPlayerInView::Run() -> bt::node::Result
     {
         bt::BlackBoard& blackBoard = GetBlackBoard();
-        AIController& controller = *blackBoard.Get<AIController*>("controller");
+        AIController& controller = *blackBoard.Get<AIController*>(AIController::name);
 
         const GameInstance& gameInstance = controller.GetGameInstance();
         const GameSnapshotContainer& snapshotContainer = gameInstance.GetSnapshotContainer();
@@ -36,12 +36,12 @@ namespace zerosugar::xr::game
         co_return true;
     }
 
-    auto WaitUntilPlayerInView::GetName() const -> std::string_view
+    auto SuspendUntilPlayerInView::GetName() const -> std::string_view
     {
         return name;
     }
 
-    void from_xml(WaitUntilPlayerInView&, const pugi::xml_node&)
+    void from_xml(SuspendUntilPlayerInView&, const pugi::xml_node&)
     {
     }
 }

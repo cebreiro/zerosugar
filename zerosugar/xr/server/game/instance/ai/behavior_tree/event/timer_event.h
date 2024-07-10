@@ -2,5 +2,5 @@
 
 namespace zerosugar::xr::event
 {
-    struct AwakebehaviorTree{};
+    struct AwakeBehaviorTree{};
 }

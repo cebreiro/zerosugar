@@ -53,6 +53,16 @@ namespace zerosugar::xr::navi
 
     auto Visualizer::Run() -> Future<void>
     {
+        _geom = std::make_unique<InputGeom>();
+        if (const bool success = _geom->load(nullptr, GetObjectFilePath()); !success)
+        {
+            assert(false);
+
+            co_return;
+        }
+
+        _testTool->init(this);
+
         Promise<void> promise;
         Future<void> future = promise.GetFuture();
 
@@ -73,50 +83,44 @@ namespace zerosugar::xr::navi
         _shutdown.store(true);
     }
 
-    void Visualizer::AddDrawTarget(const AddVisualizeTargetParam& param)
+    void Visualizer::AddAgent(const AddVisualizeTargetParam& param)
     {
         assert(ExecutionContext::IsEqualTo(_strand));
 
         const DrawTarget target{
             .id = param.id,
-            .position = param.position,
+            .position = navi::Vector(param.position),
             .drawColor = param.color,
             .radius = Scalar(param.radius),
         };
 
-        (void)_drawTargets.try_emplace(param.id, target);
+        (void)_agents.try_emplace(param.id, target);
     }
 
-    void Visualizer::RemoveDrawTarget(const RemoveVisualizeTargetParam& param)
+    void Visualizer::RemoveAgent(const RemoveVisualizeTargetParam& param)
     {
         assert(ExecutionContext::IsEqualTo(_strand));
 
-        _drawTargets.erase(param.id);
+        _agents.erase(param.id);
     }
 
-    void Visualizer::UpdateDrawTarget(const UpdateVisualizeTargetParam& param)
+    void Visualizer::UpdateAgent(const UpdateVisualizeTargetParam& param)
     {
         assert(ExecutionContext::IsEqualTo(_strand));
 
-        const auto iter = _drawTargets.find(param.id);
-        if (iter != _drawTargets.end())
+        const auto iter = _agents.find(param.id);
+        if (iter != _agents.end())
         {
-            iter->second.position = param.position;
+            iter->second.position = Vector(param.position);
+            iter->second.movementDuration = 0.0;
+            iter->second.startPosition = param.position;
+            iter->second.destMovementDuration = param.destMovementDuration.value_or(0.0);
             iter->second.destPosition = param.destPosition;
             iter->second.destPositionDrawColor = param.destPositionDrawColor;
         }
     }
 
-    void Visualizer::DrawBox(const FVector& min, const FVector& max, std::chrono::milliseconds milli)
-    {
-        assert(ExecutionContext::IsEqualTo(_strand));
-
-        auto now = std::chrono::system_clock::now();
-
-        _drawBoxes.emplace(now + milli, std::make_pair<Vector, Vector>(min, max));
-    }
-
-    void Visualizer::DrawOBB(const collision::OBB3d& obb, const std::chrono::milliseconds milli)
+    void Visualizer::AddOBB(const collision::OBB3d& obb, const std::chrono::milliseconds milli)
     {
         assert(ExecutionContext::IsEqualTo(_strand));
 
@@ -130,9 +134,9 @@ namespace zerosugar::xr::navi
         _drawOBBs.emplace(now + milli, temp);
     }
 
-    auto ComputeOBBVertices(const Visualizer::OBB& obb) -> std::vector<Vector>
+    auto ComputeOBBVertices(const Visualizer::OBB& obb) -> std::array<Vector, 8>
     {
-        std::vector<Vector> result(8);
+        std::array<Vector, 8> result;
 
         const std::array extents{
             obb.halfSize,
@@ -149,66 +153,62 @@ namespace zerosugar::xr::navi
         {
             const Eigen::Vector3d value = obb.center + obb.rotation * extents[i];
 
-            result[i] = Vector(FVector((float)value.x(), (float)value.y(), (float)value.z()));
+            result[i] = Vector(value);
         }
 
         return result;
     }
 
 
-    void Visualizer::Tick()
+    void Visualizer::Tick(double delta)
     {
         const auto drawCylinder = [this](const Vector& pos, float radius, DrawColor color)
             {
+                //duDebugDrawCylinder(_dd.get(),
                 duDebugDrawCylinder(_dd.get(),
                     pos.GetX() - radius, pos.GetY(), pos.GetZ() - radius,
                     pos.GetX() + radius, pos.GetY() + 3.f, pos.GetZ() + radius,
                     ToInt(color));
             };
 
-        for (const DrawTarget& drawTarget : _drawTargets | std::views::values)
+        for (DrawTarget& drawTarget : _agents | std::views::values)
         {
-            drawCylinder(drawTarget.position, drawTarget.radius.Get(), drawTarget.drawColor);
-
             if (drawTarget.destPosition)
             {
+                Vector destPosition(*drawTarget.destPosition);
+
                 const DrawColor color = drawTarget.destPositionDrawColor.value_or(drawTarget.drawColor);
-                drawCylinder(*drawTarget.destPosition, drawTarget.radius.Get(), color);
+                drawCylinder(destPosition, drawTarget.radius.Get(), color);
 
                 duDebugDrawArrow(_dd.get(),
                     drawTarget.position.GetX(), drawTarget.position.GetY(), drawTarget.position.GetZ(),
-                    drawTarget.destPosition->GetX(), drawTarget.destPosition->GetY(), drawTarget.destPosition->GetZ(),
+                    destPosition.GetX(), destPosition.GetY(), destPosition.GetZ(),
                     0, 2, ToInt(DrawColor::Green), 1);
+
+                assert(drawTarget.destMovementDuration > 0.0);
+
+                drawTarget.movementDuration += delta;
+                const double t = std::min(drawTarget.movementDuration + delta, drawTarget.destMovementDuration) / drawTarget.destMovementDuration;
+
+                const Eigen::Vector3d position = (1 - t) * (*drawTarget.startPosition) + t * (*drawTarget.destPosition);
+                drawTarget.position = Vector(position);
+
+                if (t >= 1.0)
+                {
+                    drawTarget.movementDuration = 0.0;
+                    drawTarget.destMovementDuration = 0.0;
+                    drawTarget.startPosition.reset();
+                    drawTarget.destPosition.reset();
+                    drawTarget.destPositionDrawColor.reset();
+                }
             }
+
+            drawCylinder(drawTarget.position, drawTarget.radius.Get(), drawTarget.drawColor);
         }
 
         const auto now = std::chrono::system_clock::now();
         std::array<uint32_t, 8> boxColor = {};
         boxColor.fill(ToInt(DrawColor::Brown));
-        {
-            auto removeIter = _drawBoxes.end();
-
-            for (auto iter = _drawBoxes.begin(); iter != _drawBoxes.end(); ++iter)
-            {
-                std::chrono::system_clock::time_point removeTimePoint = iter->first;
-                if (removeTimePoint < now)
-                {
-                    removeIter = iter;
-                }
-
-                const auto& [min, max] = iter->second;
-
-                duDebugDrawBox(_dd.get(),
-                    min.GetX(), min.GetY(), min.GetZ(),
-                    max.GetX(), max.GetY(), max.GetZ(),
-                    boxColor.data());
-            }
-
-            if (removeIter != _drawBoxes.end())
-            {
-                _drawBoxes.erase(_drawBoxes.begin(), std::next(removeIter));
-            }
-        }
         {
             auto removeIter = _drawOBBs.end();
 
@@ -221,8 +221,7 @@ namespace zerosugar::xr::navi
                 }
 
                 const OBB& obb = iter->second;
-
-                auto vertices = ComputeOBBVertices(obb);
+                const auto& vertices = ComputeOBBVertices(obb);
 
                 glBegin(GL_LINES);
 
@@ -396,16 +395,6 @@ namespace zerosugar::xr::navi
 
     void Visualizer::RenderThreadMain()
     {
-        this->_geom = std::make_unique<InputGeom>();
-        if (const bool success = _geom->load(nullptr, this->GetObjectFilePath()); !success)
-        {
-            assert(false);
-
-            return;
-        }
-
-        _testTool->init(this);
-
         // Init SDL
         if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
         {
@@ -523,6 +512,8 @@ namespace zerosugar::xr::navi
 
         glEnable(GL_CULL_FACE);
         glDepthFunc(GL_LEQUAL);
+
+        _lastTickTimePoint = std::chrono::system_clock::now();
 
         while (!_shutdown.load())
         {
@@ -676,6 +667,11 @@ namespace zerosugar::xr::navi
             {
                 std::this_thread::yield();
             }
+
+            auto now = std::chrono::system_clock::now();
+            auto delta = std::chrono::duration_cast<std::chrono::duration<double, std::chrono::seconds::period>>(now - _lastTickTimePoint).count();
+
+            _lastTickTimePoint = now;
 
             boost::scope::scope_exit exit([this, tid]()
                 {
@@ -835,7 +831,7 @@ namespace zerosugar::xr::navi
             if (test)
                 test->handleRender();
 
-            Tick();
+            Tick(delta);
 
             glDisable(GL_FOG);
 

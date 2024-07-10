@@ -86,7 +86,7 @@ namespace zerosugar::xr
 
                 for (const navi::AddVisualizeTargetParam& param : params)
                 {
-                    self->_visualizer->AddDrawTarget(param);
+                    self->_visualizer->AddAgent(param);
                 }
             });
     }
@@ -100,7 +100,7 @@ namespace zerosugar::xr
                     return;
                 }
 
-                self->_visualizer->AddDrawTarget(param);
+                self->_visualizer->AddAgent(param);
             });
     }
 
@@ -113,7 +113,7 @@ namespace zerosugar::xr
                     return;
                 }
 
-                self->_visualizer->RemoveDrawTarget(param);
+                self->_visualizer->RemoveAgent(param);
             });
     }
 
@@ -126,20 +126,7 @@ namespace zerosugar::xr
                     return;
                 }
 
-                self->_visualizer->UpdateDrawTarget(param);
-            });
-    }
-
-    void NavigationService::DrawBox(const navi::FVector& min, const navi::FVector& max, std::chrono::milliseconds milli)
-    {
-        Dispatch(*_strand, [self = shared_from_this(), min, max, milli]()
-            {
-                if (!self->_visualizer)
-                {
-                    return;
-                }
-
-                self->_visualizer->DrawBox(min, max, milli);
+                self->_visualizer->UpdateAgent(param);
             });
     }
 
@@ -152,7 +139,7 @@ namespace zerosugar::xr
                     return;
                 }
 
-                self->_visualizer->DrawOBB(obb, milli);
+                self->_visualizer->AddOBB(obb, milli);
             });
     }
 

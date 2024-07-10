@@ -67,6 +67,25 @@ namespace zerosugar::xr::network::game::sc
             };
     }
 
+    void from_json(const nlohmann::json& j, BeAttackedPlayer& item)
+    {
+        j.at("attackerId").get_to(item.attackerId);
+        j.at("attackedId").get_to(item.attackedId);
+        j.at("monsterActionIndex").get_to(item.monsterActionIndex);
+        j.at("attackedHp").get_to(item.attackedHp);
+    }
+
+    void to_json(nlohmann::json& j, const BeAttackedPlayer& item)
+    {
+        j = nlohmann::json
+            {
+                { "attackerId", item.attackerId },
+                { "attackedId", item.attackedId },
+                { "monsterActionIndex", item.monsterActionIndex },
+                { "attackedHp", item.attackedHp },
+            };
+    }
+
     void from_json(const nlohmann::json& j, SpawnMonster& item)
     {
         j.at("monstersCount").get_to(item.monstersCount);
@@ -109,6 +128,80 @@ namespace zerosugar::xr::network::game::sc
             {
                 { "monstersCount", item.monstersCount },
                 { "monsters", item.monsters },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, BattleTransitionMonster& item)
+    {
+        j.at("id").get_to(item.id);
+        j.at("position").get_to(item.position);
+        j.at("rotation").get_to(item.rotation);
+    }
+
+    void to_json(nlohmann::json& j, const BattleTransitionMonster& item)
+    {
+        j = nlohmann::json
+            {
+                { "id", item.id },
+                { "position", item.position },
+                { "rotation", item.rotation },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, MoveMonster& item)
+    {
+        j.at("id").get_to(item.id);
+        j.at("position").get_to(item.position);
+        j.at("rotation").get_to(item.rotation);
+    }
+
+    void to_json(nlohmann::json& j, const MoveMonster& item)
+    {
+        j = nlohmann::json
+            {
+                { "id", item.id },
+                { "position", item.position },
+                { "rotation", item.rotation },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, AttackMonster& item)
+    {
+        j.at("id").get_to(item.id);
+        j.at("actionIndex").get_to(item.actionIndex);
+        j.at("position").get_to(item.position);
+        j.at("rotation").get_to(item.rotation);
+        j.at("destPosition").get_to(item.destPosition);
+        j.at("destMovementDuration").get_to(item.destMovementDuration);
+    }
+
+    void to_json(nlohmann::json& j, const AttackMonster& item)
+    {
+        j = nlohmann::json
+            {
+                { "id", item.id },
+                { "actionIndex", item.actionIndex },
+                { "position", item.position },
+                { "rotation", item.rotation },
+                { "destPosition", item.destPosition },
+                { "destMovementDuration", item.destMovementDuration },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, BeAttackedMonster& item)
+    {
+        j.at("attackerId").get_to(item.attackerId);
+        j.at("attackedId").get_to(item.attackedId);
+        j.at("attackedHp").get_to(item.attackedHp);
+    }
+
+    void to_json(nlohmann::json& j, const BeAttackedMonster& item)
+    {
+        j = nlohmann::json
+            {
+                { "attackerId", item.attackerId },
+                { "attackedId", item.attackedId },
+                { "attackedHp", item.attackedHp },
             };
     }
 

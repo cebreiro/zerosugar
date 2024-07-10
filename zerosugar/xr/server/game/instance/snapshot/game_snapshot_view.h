@@ -9,12 +9,9 @@ namespace zerosugar::xr
     class IGameController;
     class GameInstance;
     class GamePlayerSnapshot;
-}
-
-namespace zerosugar::xr::detail::game
-{
     class GameSpatialSet;
 }
+
 
 namespace zerosugar::xr
 {
@@ -35,9 +32,11 @@ namespace zerosugar::xr
         bool RemoveObserver(const std::string& key);
 
     public:
-        void Broadcast(const IPacket& packet, std::optional<game_entity_id_type> excluded = std::nullopt);
+        void Broadcast(GameEntityType type, const IPacket& packet, const GameSpatialSet& set);
+
+        void Broadcast(const IPacket& packet, std::optional<game_entity_id_type> excluded);
         void Broadcast(const IPacket& packet, const GamePlayerSnapshot& center, std::optional<game_entity_id_type> excluded = std::nullopt);
-        void Broadcast(const IPacket& packet, const detail::game::GameSpatialSet& set, std::optional<game_entity_id_type> excluded = std::nullopt);
+        void Broadcast(const IPacket& packet, const GameSpatialSet& set, std::optional<game_entity_id_type> excluded = std::nullopt);
 
         void Sync(IGameController& controller, const IPacket& packet);
 

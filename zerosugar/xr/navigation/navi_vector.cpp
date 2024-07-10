@@ -9,6 +9,11 @@ namespace zerosugar::xr::navi
     {
     }
 
+    Vector::Vector(const Eigen::Vector3d& vector)
+        : _data({ static_cast<float>(-vector.x() / scale), static_cast<float>(vector.z()) / scale, static_cast<float>(-vector.y()) / scale })
+    {
+    }
+
     Vector::Vector(const FVector& vector)
         : _data({ -vector.GetX() / scale, vector.GetZ() / scale, -vector.GetY() / scale })
     {
@@ -57,6 +62,11 @@ namespace zerosugar::xr::navi
     auto Vector::GetData() const -> const float*
     {
         return _data.data();
+    }
+
+    FVector::FVector(const Eigen::Vector3d& vector)
+        : _data({ static_cast<float>(vector.x()), static_cast<float>(vector.y()), static_cast<float>(vector.z()) })
+    {
     }
 
     FVector::FVector(float x, float y, float z)

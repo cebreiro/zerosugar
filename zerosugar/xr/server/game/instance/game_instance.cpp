@@ -12,11 +12,12 @@
 #include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_container.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_controller.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_view.h"
-#include "zerosugar/xr/server/game/instance/snapshot/grid/game_spatial_container.h"
+#include "zerosugar/xr/server/game/instance/grid/game_spatial_container.h"
 #include "zerosugar/xr/server/game/instance/task/game_task.h"
 #include "zerosugar/xr/server/game/instance/task/game_task_scheduler.h"
 #include "zerosugar/xr/server/game/instance/task/impl/spawner_install.h"
 #include "zerosugar/xr/server/game/instance/gm/gm_command_factory.h"
+#include "zerosugar/xr/server/game/instance/grid/game_spatial_scanner.h"
 
 namespace zerosugar::xr
 {
@@ -32,6 +33,7 @@ namespace zerosugar::xr
         , _taskScheduler(std::make_unique<GameTaskScheduler>(*this))
         , _entityContainer(std::make_unique<GameEntityContainer>())
         , _spatialContainer(std::make_unique<GameSpatialContainer>(100000, 100000, 2000))
+        , _spatialScanner(std::make_unique<GameSpatialScanner>(*this))
         , _snapshotContainer(std::make_unique<GameSnapshotContainer>())
         , _snapshotView(std::make_unique<GameSnapshotView>(*this))
         , _snapshotController(std::make_unique<GameSnapshotController>(*this))
@@ -55,8 +57,13 @@ namespace zerosugar::xr
 
     GameInstance::~GameInstance()
     {
+        _aiControlService->ShutdownAndJoin().Get();
+
         _taskScheduler->Shutdown();
-        _taskScheduler->Join();
+        _taskScheduler->Join().Get();
+
+        _spatialScanner->Shutdown();
+        _spatialScanner->Join().Get();
     }
 
     void GameInstance::Start()
@@ -86,6 +93,8 @@ namespace zerosugar::xr
 
                 if (!task->SelectTargetIds(self->GetSerialContext()))
                 {
+                    task->OnFailTargetSelect(self->GetSerialContext());
+
                     return;
                 }
 
@@ -186,6 +195,16 @@ namespace zerosugar::xr
     auto GameInstance::GetSpatialContainer() const -> const GameSpatialContainer&
     {
         return *_spatialContainer;
+    }
+
+    auto GameInstance::GetSpatialScanner() -> GameSpatialScanner&
+    {
+        return *_spatialScanner;
+    }
+
+    auto GameInstance::GetSpatialScanner() const -> const GameSpatialScanner&
+    {
+        return *_spatialScanner;
     }
 
     auto GameInstance::GetSnapshotController() -> GameSnapshotController&

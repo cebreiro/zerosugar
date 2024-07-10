@@ -1,6 +1,4 @@
 #pragma once
-#include <Eigen/Dense>
-
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_id.h"
 

@@ -1,14 +1,11 @@
 add_library(zerosugar_xr_server_game)
 
-find_package(Eigen3 CONFIG REQUIRED)
-
 target_link_libraries(zerosugar_xr_server_game PRIVATE
     zerosugar_xr_pch
     zerosugar_xr_network
     zerosugar_xr_navigation
     zerosugar_xr_data
     zerosugar_xr_service_model
-    Eigen3::Eigen
 )
 
 target_precompile_headers(zerosugar_xr_server_game REUSE_FROM zerosugar_xr_pch)

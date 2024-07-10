@@ -16,9 +16,19 @@ namespace zerosugar::xr
     {
     }
 
+    auto GameExecutionParallel::Hold() -> std::shared_ptr<GameExecutionParallel>
+    {
+        return std::shared_ptr<GameExecutionParallel>(_gameInstance.shared_from_this(), this);
+    }
+
     void GameExecutionParallel::SummitTask(UniquePtrNotNull<GameTask> task, std::optional<game_controller_id_type> controllerId)
     {
         _gameInstance.Summit(std::move(task), controllerId);
+    }
+
+    auto GameExecutionParallel::GetExecutor() const -> execution::IExecutor&
+    {
+        return _gameInstance.GetExecutor();
     }
 
     auto GameExecutionParallel::GetServiceLocator() const -> ServiceLocator&

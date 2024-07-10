@@ -11,12 +11,12 @@
 #include "zerosugar/xr/server/game/instance/ai/behavior_tree/event/navigation_event.h"
 #include "zerosugar/xr/server/game/instance/task/impl/monster_spawn.h"
 
-namespace zerosugar::xr::game
+namespace zerosugar::xr::ai
 {
     auto SpawnMonster::Run() -> bt::node::Result
     {
         bt::BlackBoard& blackBoard = GetBlackBoard();
-        AIController& controller = *blackBoard.Get<AIController*>("controller");
+        AIController& controller = *blackBoard.Get<AIController*>(AIController::name);
         const data::MonsterSpawner& param = *blackBoard.Get<PtrNotNull<const data::MonsterSpawner>>("param");
 
         ServiceLocator& serviceLocator = controller.GetGameInstance().GetServiceLocator();

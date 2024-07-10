@@ -10,16 +10,6 @@
 
 namespace zerosugar::xr::gm
 {
-    auto Convert(const Eigen::Vector3d& vector) -> navi::FVector
-    {
-        const navi::FVector result(
-            static_cast<float>(vector.x()),
-            static_cast<float>(vector.y()),
-            static_cast<float>(vector.z()));
-
-        return result;
-    }
-
     bool VisualizeField::HandleCommand(GameExecutionSerial& serialContext, GamePlayerSnapshot& player)
     {
         (void)player;
@@ -42,9 +32,9 @@ namespace zerosugar::xr::gm
             navi::AddVisualizeTargetParam& param = params.emplace_back();
 
             param.id = snapshot->GetId().Unwrap();
-            param.position = Convert(snapshot->GetPosition());
+            param.position = snapshot->GetPosition();
             param.radius = game_constant::player_radius;
-            param.color = navi::DrawColor::Blue;
+            param.color = navi::DrawColor::Green;
         }
 
         for (const std::unique_ptr<GameMonsterSnapshot>& snapshot : snapshotContainer.GetMonsterRange())
@@ -52,7 +42,7 @@ namespace zerosugar::xr::gm
             navi::AddVisualizeTargetParam& param = params.emplace_back();
 
             param.id = snapshot->GetId().Unwrap();
-            param.position = Convert(snapshot->GetPosition());
+            param.position = snapshot->GetPosition();
             param.radius = 45.f;
             param.color = navi::DrawColor::Red;
         }
@@ -71,6 +61,8 @@ namespace zerosugar::xr::gm
                 view.RemoveObserver<sc::StopRemotePlayer>(observerKey);
 
                 view.RemoveObserver<sc::SpawnMonster>(observerKey);
+                view.RemoveObserver<sc::AttackMonster>(observerKey);
+                view.RemoveObserver<sc::MoveMonster>(observerKey);
                 // TODO: monster despawn, movement
             });
         navigationService->AddDrawTargets(std::move(params));
@@ -84,9 +76,9 @@ namespace zerosugar::xr::gm
 
                 navi::AddVisualizeTargetParam param;
                 param.id = packet.localPlayer.id;
-                param.position = navi::FVector(pos.x, pos.y, pos.z);
+                param.position = Eigen::Vector3d(pos.x, pos.y, pos.z);
                 param.radius = game_constant::player_radius;
-                param.color = navi::DrawColor::Blue;
+                param.color = navi::DrawColor::Green;
 
                 navi->AddDrawTarget(std::move(param));
             });
@@ -97,7 +89,7 @@ namespace zerosugar::xr::gm
 
                 navi::UpdateVisualizeTargetParam param;
                 param.id = packet.id;
-                param.position = navi::FVector(pos.x, pos.y, pos.z);
+                param.position = Eigen::Vector3d(pos.x, pos.y, pos.z);
 
                 navi->UpdateDrawTarget(std::move(param));
             });
@@ -108,11 +100,10 @@ namespace zerosugar::xr::gm
 
                 navi::UpdateVisualizeTargetParam param;
                 param.id = packet.id;
-                param.position = navi::FVector(pos.x, pos.y, pos.z);
+                param.position = Eigen::Vector3d(pos.x, pos.y, pos.z);
 
                 navi->UpdateDrawTarget(std::move(param));
             });
-
 
         view.AddObserver<sc::SpawnMonster>(observerKey, [navi](const sc::SpawnMonster& packet)
             {
@@ -122,15 +113,42 @@ namespace zerosugar::xr::gm
 
                     navi::AddVisualizeTargetParam param;
                     param.id = monster.id;
-                    param.position = navi::FVector(pos.x, pos.y, pos.z);
+                    param.position = Eigen::Vector3d(pos.x, pos.y, pos.z);
                     param.radius = game_constant::player_radius;
-                    param.color = navi::DrawColor::Blue;
+                    param.color = navi::DrawColor::Red;
 
                     navi->AddDrawTarget(std::move(param));
                 }
             });
 
-        
+        view.AddObserver<sc::AttackMonster>(observerKey, [navi](const sc::AttackMonster& packet)
+            {
+                const auto& pos = packet.position;
+                const auto& destPos = packet.destPosition;
+
+                navi::UpdateVisualizeTargetParam param;
+                param.id = packet.id;
+                param.position = Eigen::Vector3d(pos.x, pos.y, pos.z);
+                param.destPosition = Eigen::Vector3d(destPos.x, destPos.y, destPos.z);
+                param.destMovementDuration = packet.destMovementDuration;
+                param.destPositionDrawColor = navi::DrawColor::Yellow;
+
+                navi->UpdateDrawTarget(std::move(param));
+            });
+
+        view.AddObserver<sc::MoveMonster>(observerKey, [navi](const sc::MoveMonster& packet)
+            {
+                const auto& pos = packet.position;
+
+                // TODO: print yaw
+                (void)packet.rotation;
+
+                navi::UpdateVisualizeTargetParam param;
+                param.id = packet.id;
+                param.position = Eigen::Vector3d(pos.x, pos.y, pos.z);
+
+                navi->UpdateDrawTarget(std::move(param));
+            });
 
         return true;
     }

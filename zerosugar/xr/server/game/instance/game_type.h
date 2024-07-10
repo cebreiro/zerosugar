@@ -11,3 +11,8 @@ namespace zerosugar::xr
         (Global)
     )
 }
+
+namespace zerosugar::xr
+{
+    auto GetMilliFromGameSeconds(double seconds) -> std::chrono::milliseconds;
+}

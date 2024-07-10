@@ -40,9 +40,31 @@ namespace zerosugar::xr::data
                 element.at("Name").get_to(value.name);
                 element.at("Duration").get_to(value.duration);
 
-                if (const auto iter2 = element.find("AttackTimePoint"); iter2 != element.end())
+                if (const auto it = element.find("Movement"); it != element.end())
                 {
-                    iter2->get_to(value.attackPoints);
+                    it->get_to(value.forwardMovement);
+                }
+
+                if (const auto iter2 = element.find("Index"); iter2 != element.end())
+                {
+                    iter2->get_to(value.index);
+                }
+
+                if (const auto iter2 = element.find("Attack"); iter2 != element.end())
+                {
+                    for (const nlohmann::json& e : *iter2)
+                    {
+                        MonsterAnimation::Attack& attack = value.attacks.emplace_back();
+
+                        e.at("ApplyTimePoint").get_to(attack.applyTimePoint);
+
+                        const auto& collision = e.at("Collision");
+
+                        collision.at("MinX").get_to(attack.minX);
+                        collision.at("MaxX").get_to(attack.maxX);
+                        collision.at("MinY").get_to(attack.minY);
+                        collision.at("MaxY").get_to(attack.maxY);
+                    }
                 }
             }
         }

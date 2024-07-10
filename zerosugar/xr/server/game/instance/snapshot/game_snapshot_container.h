@@ -38,6 +38,7 @@ namespace zerosugar::xr
         bool Remove(game_entity_id_type id);
 
         auto FindController(game_entity_id_type id) -> IGameController*;
+        auto FindPosition(game_entity_id_type id) const -> std::optional<Eigen::Vector3d>;
 
         auto FindPlayer(game_entity_id_type id) -> GamePlayerSnapshot*;
         auto FindPlayer(game_entity_id_type id) const -> const GamePlayerSnapshot*;

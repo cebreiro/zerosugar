@@ -6,6 +6,7 @@
 #include "zerosugar/xr/data/game_data_provider.h"
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
+#include "zerosugar/xr/server/game/instance/ai/movement/movement_controller.h"
 
 namespace zerosugar::xr
 {
@@ -17,8 +18,10 @@ namespace zerosugar::xr
         , _entityId(entityId)
         , _behaviorTreeName(std::move(btName))
         , _blackBoard(std::make_unique<bt::BlackBoard>())
+        , _mt(std::random_device{}())
+        , _movementController(std::make_unique<ai::MovementController>(*this))
     {
-        _blackBoard->Insert<AIController*>("controller", this);
+        _blackBoard->Insert<AIController*>(name, this);
     }
 
     AIController::~AIController()
@@ -82,7 +85,7 @@ namespace zerosugar::xr
 
         auto newBehaviorTree = std::make_shared<BehaviorTree>(*_blackBoard);
         newBehaviorTree->Initialize(behaviorTreeName, dataSet->Deserialize(_nodeSerializer));
-        newBehaviorTree->SetLogger(_behaviorTreeLogger);
+        newBehaviorTree->SetLogger(_behaviorTreeLogger.get());
 
         if (_behaviorTree)
         {
@@ -185,11 +188,26 @@ namespace zerosugar::xr
         return *_blackBoard;
     }
 
-    void AIController::SetBehaviorTreeLogger(IBehaviorTreeLogger* logger)
+    auto AIController::GetRandomEngine() -> std::mt19937&
     {
-        _behaviorTreeLogger = logger;
+        return _mt;
+    }
 
-        _behaviorTree->SetLogger(_behaviorTreeLogger);
+    auto AIController::GetMovementController() -> ai::MovementController&
+    {
+        return *_movementController;
+    }
+
+    auto AIController::GetMovementController() const -> const ai::MovementController&
+    {
+        return *_movementController;
+    }
+
+    void AIController::SetBehaviorTreeLogger(std::shared_ptr<IBehaviorTreeLogger> logger)
+    {
+        _behaviorTreeLogger = std::move(logger);
+
+        _behaviorTree->SetLogger(_behaviorTreeLogger.get());
     }
 
     auto AIController::RunAI() -> Future<void>

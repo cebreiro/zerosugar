@@ -2,7 +2,7 @@
 #include "zerosugar/shared/ai/behavior_tree/node/bt_node.h"
 #include "zerosugar/xr/server/game/instance/game_type.h"
 
-namespace zerosugar::xr::game
+namespace zerosugar::xr::ai
 {
     class SelectAttackTarget final : public bt::Leaf
     {
@@ -17,7 +17,5 @@ namespace zerosugar::xr::game
 
     private:
         std::chrono::milliseconds _interval = std::chrono::seconds(3);
-
-        game_time_point_type _lastScanTimePoint = game_clock_type::now();
     };
 }

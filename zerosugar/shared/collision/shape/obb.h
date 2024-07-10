@@ -24,6 +24,8 @@ namespace zerosugar::collision
     public:
         OBB3d(const Eigen::Vector3d& center, const Eigen::Vector3d& halfSize, const Eigen::Matrix3d& rotation);
 
+        auto Project() const -> OBB;
+
         auto GetCenter() const -> const Eigen::Vector3d&;
         auto GetHalfSize() const -> const Eigen::Vector3d&;
         auto GetRotation() const -> const Eigen::Matrix3d&;

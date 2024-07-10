@@ -9,7 +9,7 @@
 #include "zerosugar/xr/server/game/instance/snapshot/game_monster_snapshot.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_container.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_player_snapshot.h"
-#include "zerosugar/xr/server/game/instance/snapshot/grid/game_spatial_container.h"
+#include "zerosugar/xr/server/game/instance/grid/game_spatial_container.h"
 
 namespace zerosugar::xr
 {
@@ -263,13 +263,14 @@ namespace zerosugar::xr
         result.transform.position.x = static_cast<float>(snapshot.GetPosition().x());
         result.transform.position.y = static_cast<float>(snapshot.GetPosition().y());
         result.transform.position.z = static_cast<float>(snapshot.GetPosition().z());
+        result.transform.rotation.yaw = snapshot.GetYaw();
         result.hp = snapshot.GetHp();
         result.maxHp = snapshot.GetAttackMax();
         result.attackMin = snapshot.GetAttackMin();
         result.attackMax = snapshot.GetAttackMax();
         result.attackRange = snapshot.GetAttackRange();
         result.attackSpeed = snapshot.GetAttackSpeed();
-        result.speed = 0.f;
+        result.speed = 50.f;
         result.defence = 0.f;
     }
 }

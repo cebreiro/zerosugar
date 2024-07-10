@@ -6,8 +6,8 @@
 #include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_player_snapshot.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_container.h"
-#include "zerosugar/xr/server/game/instance/snapshot/grid/game_spatial_container.h"
-#include "zerosugar/xr/server/game/instance/snapshot/grid/game_spatial_sector.h"
+#include "zerosugar/xr/server/game/instance/grid/game_spatial_container.h"
+#include "zerosugar/xr/server/game/instance/grid/game_spatial_sector.h"
 
 namespace zerosugar::xr
 {
@@ -40,6 +40,27 @@ namespace zerosugar::xr
         Send(packet, *controller);
     }
 
+    void GameSnapshotView::Broadcast(GameEntityType type, const IPacket& packet, const GameSpatialSet& set)
+    {
+        if (const auto iter = _observers.find(packet.GetOpcode()); iter != _observers.end())
+        {
+            for (const auto& function : iter->second | std::views::values)
+            {
+                function(packet);
+            }
+        }
+
+        GameSnapshotContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
+
+        for (const game_entity_id_type id : set.GetEntities(type))
+        {
+            IGameController* controller = snapshotContainer.FindController(id);
+            assert(controller);
+
+            Send(packet, *controller);
+        }
+    }
+
     void GameSnapshotView::Broadcast(const IPacket& packet, std::optional<game_entity_id_type> excluded)
     {
         if (const auto iter = _observers.find(packet.GetOpcode()); iter != _observers.end())
@@ -68,7 +89,7 @@ namespace zerosugar::xr
         Broadcast(packet, sector, excluded);
     }
 
-    void GameSnapshotView::Broadcast(const IPacket& packet, const detail::game::GameSpatialSet& set, std::optional<game_entity_id_type> excluded)
+    void GameSnapshotView::Broadcast(const IPacket& packet, const GameSpatialSet& set, std::optional<game_entity_id_type> excluded)
     {
         if (const auto iter = _observers.find(packet.GetOpcode()); iter != _observers.end())
         {

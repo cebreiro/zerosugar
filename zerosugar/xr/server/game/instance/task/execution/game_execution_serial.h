@@ -53,7 +53,7 @@ namespace zerosugar::xr
         auto GetSpatialContainer() const -> const GameSpatialContainer&;
 
         auto GetAIControlService() -> AIControlService&;
-        auto GetNavigationService() -> NavigationService*;
+        auto GetNavigationService() const -> NavigationService*;
 
         auto GetGMCommandFactory() const -> const IGMCommandFactory&;
 

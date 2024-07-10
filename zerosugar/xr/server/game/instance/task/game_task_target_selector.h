@@ -45,7 +45,7 @@ namespace zerosugar::xr::game_task
     class MainTargetSelector
     {
     public:
-        using target_type = GameEntity*;
+        using target_type = PtrNotNull<GameEntity>;
 
         explicit MainTargetSelector(game_entity_id_type targetId);
 
@@ -60,5 +60,30 @@ namespace zerosugar::xr::game_task
         std::shared_ptr<GameEntity> _entity;
     };
 
+    class BoxSkillTargetSelector
+    {
+    public:
+        using target_type = const std::vector<PtrNotNull<GameEntity>>&;
+
+    public:
+        BoxSkillTargetSelector(const Eigen::Vector3d& center, const Eigen::AlignedBox2d& box, float yaw, GameEntityType targetType);
+
+        bool SelectEntityId(const GameExecutionSerial& serial);
+        auto GetTargetId() const -> std::span<const game_entity_id_type>;
+
+        bool SelectEntity(const GameExecutionParallel& parallel);
+        auto GetTarget() const -> target_type;
+
+    private:
+        Eigen::Vector3d _center;
+        Eigen::AlignedBox2d _box;
+        float _yaw = 0.f;
+        GameEntityType _targetType = GameEntityType::Player;
+
+        std::vector<game_entity_id_type> _targetIds;
+        std::vector<PtrNotNull<GameEntity>> _targets;
+    };
+
+    static_assert(game_task_target_selector_concept<NullSelector>);
     static_assert(game_task_target_selector_concept<MainTargetSelector>);
 }

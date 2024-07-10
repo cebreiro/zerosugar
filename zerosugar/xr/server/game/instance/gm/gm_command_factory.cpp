@@ -6,6 +6,8 @@ namespace zerosugar::xr
 {
     GMCommandFactory::GMCommandFactory()
     {
+        Register<gm::LogBT>();
+        Register<gm::MonsterAttack>();
         Register<gm::SpawnMonster>();
         Register<gm::VisualizeField>();
     }

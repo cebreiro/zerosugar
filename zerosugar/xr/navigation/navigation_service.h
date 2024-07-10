@@ -35,7 +35,6 @@ namespace zerosugar::xr
 
         void UpdateDrawTarget(navi::UpdateVisualizeTargetParam param);
 
-        void DrawBox(const navi::FVector& min, const navi::FVector& max, std::chrono::milliseconds milli);
         void DrawOBB(const collision::OBB3d& obb, std::chrono::milliseconds milli);
 
     public:

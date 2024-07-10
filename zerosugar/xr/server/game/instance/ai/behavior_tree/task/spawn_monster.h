@@ -1,7 +1,7 @@
 #pragma once
 #include "zerosugar/shared/ai/behavior_tree/node/bt_node.h"
 
-namespace zerosugar::xr::game
+namespace zerosugar::xr::ai
 {
     class SpawnMonster : public bt::Leaf
     {
