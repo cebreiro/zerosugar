@@ -15,7 +15,7 @@ namespace zerosugar::xr::db::sp
 
     auto CharactersAdd::GetSQL() const -> std::string_view
     {
-        return "CALL characters_add(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        return "CALL characters_add(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     }
 
     auto CharactersAdd::GetInput() const -> boost::container::small_vector<boost::mysql::field, 16>
@@ -33,9 +33,6 @@ namespace zerosugar::xr::db::sp
         result.emplace_back(_input.hairId);
         result.emplace_back(_input.gold);
         result.emplace_back(_input.zoneId);
-        result.emplace_back(_input.x);
-        result.emplace_back(_input.y);
-        result.emplace_back(_input.z);
         result.emplace_back(nullptr);
 
         return result;

@@ -24,16 +24,6 @@ namespace zerosugar::xr
         entity->AddComponent(std::make_unique<StatComponent>());
 
         {
-            auto& movement = entity->GetComponent<MovementComponent>();
-
-            Eigen::Vector3d position;
-            position.x() = character.x;
-            position.y() = character.y;
-            position.z() = character.z;
-
-            movement.SetPosition(position);
-        }
-        {
             auto& inventory = entity->GetComponent<InventoryComponent>();
 
             [[maybe_unused]]

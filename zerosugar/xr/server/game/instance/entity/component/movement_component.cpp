@@ -193,8 +193,13 @@ namespace zerosugar::xr
         _movement = std::monostate{};
     }
 
+    void MovementComponent::SetYaw(float value)
+    {
+        _yaw = value;
+    }
+
     auto MovementComponent::Lerp(const Eigen::Vector3d& startPos, const Eigen::Vector3d& endPos,
-        game_time_point_type timePoint,  game_time_point_type startTimePoint, game_time_point_type endTimePoint)
+                                 game_time_point_type timePoint,  game_time_point_type startTimePoint, game_time_point_type endTimePoint)
         -> Eigen::Vector3d
     {
         const auto convert = []<typename T>(const T & duration) -> std::chrono::duration<double, std::chrono::nanoseconds::period>

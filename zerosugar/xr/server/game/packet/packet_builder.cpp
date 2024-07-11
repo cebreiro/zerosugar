@@ -1,58 +1,15 @@
 #include "packet_builder.h"
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
-#include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/entity/component/inventory_component.h"
 #include "zerosugar/xr/server/game/instance/entity/component/movement_component.h"
 #include "zerosugar/xr/server/game/instance/entity/component/player_component.h"
 #include "zerosugar/xr/server/game/instance/entity/component/stat_component.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_monster_snapshot.h"
-#include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_container.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_player_snapshot.h"
-#include "zerosugar/xr/server/game/instance/grid/game_spatial_container.h"
 
 namespace zerosugar::xr
 {
-    void GamePacketBuilder::Build(network::game::sc::EnterGame& result,
-        const GameInstance& gameInstance, const GameEntity& entity, const GameSpatialSector& sector)
-    {
-        result.zoneId = gameInstance.GetZoneId();
-
-        const GameSnapshotContainer& snapshotContainer = gameInstance.GetSnapshotContainer();
-        {
-            for (game_entity_id_type id : sector.GetEntities())
-            {
-                if (id == entity.GetId())
-                {
-                    continue;
-                }
-
-                if (id.GetType() == GameEntityType::Player)
-                {
-                    const GamePlayerSnapshot* player = snapshotContainer.FindPlayer(id);
-                    assert(player);
-
-                    network::game::RemotePlayer& item = result.remotePlayers.emplace_back();
-                    Build(item.base, *player);
-                    Build(item.equipment, *player);
-
-                    ++result.remotePlayersCount;
-                }
-                else if (id.GetType() == GameEntityType::Monster)
-                {
-                    const GameMonsterSnapshot* monster = snapshotContainer.FindMonster(id);
-                    assert(monster);
-
-                    Build(result.monsters.emplace_back(), *monster);
-
-                    ++result.monstersCount;
-                }
-            }
-        }
-
-        Build(result.localPlayer, entity);
-    }
-
     void GamePacketBuilder::Build(network::game::sc::EnterGame& result, const GameEntity& entity, int32_t mapId)
     {
         result.zoneId = mapId;
@@ -136,8 +93,10 @@ namespace zerosugar::xr
         auto& playerComponent = entity.GetComponent<PlayerComponent>();
         auto& statComponent = entity.GetComponent<StatComponent>();
 
-        result.hp = 100;// statComponent.GetHP().As<float>();
-        result.maxHp = 100;// statComponent.GetMaxHP().As<float>();
+        auto now = game_clock_type::now();
+
+        result.hp = statComponent.GetHP(now).As<float>();
+        result.maxHp = statComponent.GetMaxHP().As<float>();
         result.attackMin = statComponent.Get(StatType::Attack).As<float>();
         result.attackMax = statComponent.Get(StatType::Attack).As<float>();
         result.speed = 10.f;
@@ -149,7 +108,7 @@ namespace zerosugar::xr
         result.str = statComponent.Get(StatType::Str).As<int32_t>();
         result.dex = statComponent.Get(StatType::Dex).As<int32_t>();
         result.intell = statComponent.Get(StatType::Intell).As<int32_t>();
-        result.stamina = statComponent.GetStamina().As<float>();
+        result.stamina = statComponent.GetStamina(now).As<float>();
         result.staminaMax = statComponent.GetMaxStamina().As<float>();
     }
 

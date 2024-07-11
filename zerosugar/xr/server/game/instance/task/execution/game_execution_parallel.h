@@ -5,6 +5,8 @@
 
 namespace zerosugar::xr
 {
+    class MapData;
+
     class GameInstance;
     class GameTask;
     class GameEntityContainer;
@@ -24,6 +26,7 @@ namespace zerosugar::xr
 
         void SummitTask(UniquePtrNotNull<GameTask> task, std::optional<game_controller_id_type> controllerId = std::nullopt);
 
+        auto GetMapData() const -> const MapData&;
         auto GetExecutor() const -> execution::IExecutor&;
         auto GetServiceLocator() const -> ServiceLocator&;
 

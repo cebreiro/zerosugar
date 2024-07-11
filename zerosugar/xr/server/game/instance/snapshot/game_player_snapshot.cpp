@@ -19,8 +19,10 @@ namespace zerosugar::xr
         auto& playerComponent = entity.GetComponent<PlayerComponent>();
         auto& statComponent = entity.GetComponent<StatComponent>();
 
-        _hp = 100;// statComponent.GetHP().As<float>();
-        _maxHP = 100;// statComponent.GetMaxHP().As<float>();
+        auto now = game_clock_type::now();
+
+        _hp = statComponent.GetHP(now).As<float>();
+        _maxHP = statComponent.GetMaxHP().As<float>();
         _attackMin = statComponent.Get(StatType::Attack).As<float>();
         _attackMax = statComponent.Get(StatType::Attack).As<float>();
         _speed = 10.f;
@@ -32,8 +34,8 @@ namespace zerosugar::xr
         _str = statComponent.Get(StatType::Str).As<int32_t>();
         _dex = statComponent.Get(StatType::Dex).As<int32_t>();
         _intell = statComponent.Get(StatType::Intell).As<int32_t>();
-        _stamina = statComponent.GetStamina().As<float>();
-        _staminaMax = statComponent.GetStamina().As<float>();
+        _stamina = statComponent.GetStamina(now).As<float>();
+        _staminaMax = statComponent.GetMaxStamina().As<float>();
 
         _position = entity.GetComponent<MovementComponent>().GetPosition();
 

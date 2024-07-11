@@ -27,6 +27,7 @@ namespace zerosugar::xr
         auto GetYaw() const -> double;
 
         void SetPosition(const Eigen::Vector3d& position);
+        void SetYaw(float value);
 
     private:
         static auto Lerp(const Eigen::Vector3d& startPos, const Eigen::Vector3d& endPos,

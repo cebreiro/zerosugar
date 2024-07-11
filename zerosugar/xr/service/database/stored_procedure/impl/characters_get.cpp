@@ -55,9 +55,6 @@ namespace zerosugar::xr::db::sp
             _result.faceId = static_cast<int32_t>(row.at(index++).as_int64());
             _result.hairId = static_cast<int32_t>(row.at(index++).as_int64());
             _result.zoneId = static_cast<int32_t>(row.at(index++).as_int64());
-            _result.x = row.at(index++).as_float();
-            _result.y = row.at(index++).as_float();
-            _result.z = row.at(index++).as_float();
         }
 
         const boost::mysql::resultset_view& itemSet = result.at(1);

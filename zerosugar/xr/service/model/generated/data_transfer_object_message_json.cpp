@@ -135,9 +135,6 @@ namespace zerosugar::xr::service
         j.at("hairId").get_to(item.hairId);
         j.at("gold").get_to(item.gold);
         j.at("zoneId").get_to(item.zoneId);
-        j.at("x").get_to(item.x);
-        j.at("y").get_to(item.y);
-        j.at("z").get_to(item.z);
     }
 
     void to_json(nlohmann::json& j, const DTOCharacterAdd& item)
@@ -156,9 +153,6 @@ namespace zerosugar::xr::service
                 { "hairId", item.hairId },
                 { "gold", item.gold },
                 { "zoneId", item.zoneId },
-                { "x", item.x },
-                { "y", item.y },
-                { "z", item.z },
             };
     }
 
@@ -224,9 +218,6 @@ namespace zerosugar::xr::service
         j.at("faceId").get_to(item.faceId);
         j.at("hairId").get_to(item.hairId);
         j.at("zoneId").get_to(item.zoneId);
-        j.at("x").get_to(item.x);
-        j.at("y").get_to(item.y);
-        j.at("z").get_to(item.z);
         j.at("items").get_to(item.items);
         j.at("equipments").get_to(item.equipments);
     }
@@ -245,9 +236,6 @@ namespace zerosugar::xr::service
                 { "faceId", item.faceId },
                 { "hairId", item.hairId },
                 { "zoneId", item.zoneId },
-                { "x", item.x },
-                { "y", item.y },
-                { "z", item.z },
                 { "items", item.items },
                 { "equipments", item.equipments },
             };

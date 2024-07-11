@@ -52,9 +52,6 @@ message DTOCharacterAdd
     int32 hair_id = 10;
     int32 gold = 11;
     int32 zone_id = 12;
-    float x = 13;
-    float y = 14;
-    float z = 15;
 }
 
 message DTOLobbyItem
@@ -92,10 +89,7 @@ message DTOCharacter
     int32 face_id = 8;
     int32 hair_id = 9;
     int32 zone_id = 10;
-    float x = 11;
-    float y = 12;
-    float z = 13;
 
-    repeated DTOItem items = 14;
-    repeated DTOEquipment equipments = 15;
+    repeated DTOItem items = 11;
+    repeated DTOEquipment equipments = 12;
 }

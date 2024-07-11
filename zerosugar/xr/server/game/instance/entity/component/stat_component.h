@@ -26,14 +26,15 @@ namespace zerosugar::xr
 
         void SetHP(StatValue value, std::chrono::system_clock::time_point now = GameExecutionParallel::GetBaseTimePoint());
         void SetMP(StatValue value, std::chrono::system_clock::time_point now = GameExecutionParallel::GetBaseTimePoint());
+        void SetStamina(StatValue value, std::chrono::system_clock::time_point now = GameExecutionParallel::GetBaseTimePoint());
         void SetMaxHP(StatValue value);
         void SetMaxMP(StatValue value);
+        void SetMaxStamina(StatValue value);
 
     private:
         auto GetStableStat(StatType type) -> StableStat&;
         auto GetStableStat(StatType type) const -> const StableStat&;
 
-        auto CalculateCache(StatType type, StableStat& stat);
         auto CalculateFinalStat(StatType type, const StableStat& stat) const -> StatValue;
 
     private:

@@ -57,9 +57,6 @@ namespace zerosugar::xr::service
         int32_t hairId = {};
         int32_t gold = {};
         int32_t zoneId = {};
-        float x = {};
-        float y = {};
-        float z = {};
     };
 
     struct DTOLobbyItem
@@ -96,9 +93,6 @@ namespace zerosugar::xr::service
         int32_t faceId = {};
         int32_t hairId = {};
         int32_t zoneId = {};
-        float x = {};
-        float y = {};
-        float z = {};
         std::vector<DTOItem> items = {};
         std::vector<DTOEquipment> equipments = {};
     };

@@ -1,5 +1,7 @@
 #include "player_roll_dodge.h"
 
+#include "zerosugar/xr/server/game/instance/entity/game_entity.h"
+#include "zerosugar/xr/server/game/instance/entity/component/player_component.h"
 #include "zerosugar/xr/server/game/instance/task/execution/game_execution_serial.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_controller.h"
 
@@ -15,7 +17,8 @@ namespace zerosugar::xr::game_task
     void PlayerRollDodge::Execute(GameExecutionParallel& parallelContext, MainTargetSelector::target_type target)
     {
         (void)parallelContext;
-        (void)target;
+
+        target->GetComponent<PlayerComponent>().SetRollDodgeStartTimePoint(GetBaseTime());
 
         const network::game::Rotation& rotation = GetParam().rotation;
 

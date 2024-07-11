@@ -42,8 +42,6 @@ namespace zerosugar::xr
     public:
         GamePacketBuilder() = delete;
 
-        static void Build(network::game::sc::EnterGame& result,
-            const GameInstance& gameInstance, const GameEntity& entity, const GameSpatialSector& sector);
         static void Build(network::game::sc::EnterGame& result, const GameEntity& entity, int32_t mapId);
         static void Build(network::game::sc::AddRemotePlayer& result, const GamePlayerSnapshot& player);
         static void Build(network::game::sc::RemoveRemotePlayer& result, const GamePlayerSnapshot& player);

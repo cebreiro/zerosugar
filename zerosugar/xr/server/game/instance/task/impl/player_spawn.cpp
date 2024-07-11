@@ -4,6 +4,7 @@
 #include "zerosugar/xr/server/game/instance/controller/game_controller_interface.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_container.h"
+#include "zerosugar/xr/server/game/instance/entity/component/movement_component.h"
 #include "zerosugar/xr/server/game/instance/entity/component/stat_component.h"
 #include "zerosugar/xr/server/game/instance/task/game_task_scheduler.h"
 #include "zerosugar/xr/server/game/instance/task/execution/game_execution_parallel.h"
@@ -42,6 +43,7 @@ namespace zerosugar::xr::game_task
         assert(added);
 
         ConfigureStat(*GetParam());
+        ConfigurePosition(parallelContext , *GetParam());
     }
 
     void PlayerSpawn::OnComplete(GameExecutionSerial& serialContext)
@@ -96,9 +98,23 @@ namespace zerosugar::xr::game_task
             }
         }
 
-        statComponent.SetMaxHP(StatValue(10000.0));
-        statComponent.SetHP(StatValue(10000.0));
-        statComponent.SetMaxMP(StatValue(10000.0));
-        statComponent.SetMP(StatValue(10000.0));
+        const auto initValue = StatValue(100.0);
+
+        statComponent.SetMaxHP(initValue);
+        statComponent.SetHP(initValue);
+        statComponent.SetMaxMP(initValue);
+        statComponent.SetMP(initValue);
+        statComponent.SetMaxStamina(initValue);
+        statComponent.SetStamina(initValue);
+    }
+
+    void PlayerSpawn::ConfigurePosition(const GameExecutionParallel& parallelContext, GameEntity& entity)
+    {
+        const data::PlayerSpawnPoint& spawnPoint = parallelContext.GetMapData().GetPlayerSpawnPoint();
+
+        MovementComponent& movementComponent = entity.GetComponent<MovementComponent>();
+
+        movementComponent.SetPosition(Eigen::Vector3d(spawnPoint.x, spawnPoint.y, spawnPoint.z + game_constant::player_height / 2));
+        movementComponent.SetYaw(spawnPoint.yaw);
     }
 }

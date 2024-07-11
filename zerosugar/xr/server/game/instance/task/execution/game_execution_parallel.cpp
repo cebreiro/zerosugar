@@ -26,6 +26,11 @@ namespace zerosugar::xr
         _gameInstance.Summit(std::move(task), controllerId);
     }
 
+    auto GameExecutionParallel::GetMapData() const -> const MapData&
+    {
+        return _gameInstance.GetMapData();
+    }
+
     auto GameExecutionParallel::GetExecutor() const -> execution::IExecutor&
     {
         return _gameInstance.GetExecutor();

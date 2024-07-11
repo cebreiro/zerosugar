@@ -10,7 +10,6 @@
 #include "zerosugar/xr/application/bot_client/controller/ai/behavior_tree/task/login.h"
 #include "zerosugar/xr/application/bot_client/controller/ai/behavior_tree/task/select_character.h"
 #include "zerosugar/xr/application/bot_client/controller/ai/behavior_tree/task/shutdown_behavior_tree.h"
-#include "zerosugar/xr/application/bot_client/controller/ai/behavior_tree/task/suspend_forever.h"
 #include "zerosugar/xr/application/bot_client/controller/ai/behavior_tree/task/transition_behavior_tree.h"
 
 namespace zerosugar::xr::bot
@@ -26,7 +25,6 @@ namespace zerosugar::xr::bot
         serializer.RegisterXML<Login>();
         serializer.RegisterXML<SelectCharacter>();
         serializer.RegisterXML<ShutdownBehaviorTree>();
-        serializer.RegisterXML<SuspendForever>();
         serializer.RegisterXML<TransitionBehaviorTree>();
     }
 }

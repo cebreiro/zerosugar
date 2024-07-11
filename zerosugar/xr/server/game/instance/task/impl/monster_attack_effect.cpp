@@ -2,6 +2,7 @@
 
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
 #include "zerosugar/xr/server/game/instance/entity/component/monster_motion_component.h"
+#include "zerosugar/xr/server/game/instance/entity/component/player_component.h"
 #include "zerosugar/xr/server/game/instance/entity/component/stat_component.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_controller.h"
 #include "zerosugar/xr/server/game/instance/task/execution/game_execution_serial.h"
@@ -20,6 +21,8 @@ namespace zerosugar::xr::game_task
         MainTargetSelector::target_type monster,
         BoxSkillTargetSelector::target_type targets)
     {
+        (void)parallelContext;
+
         const MonsterAttackEffectContext& context = GetParam();
         MonsterMotionComponent& motionComponent = monster->GetComponent<MonsterMotionComponent>();
 
@@ -33,6 +36,11 @@ namespace zerosugar::xr::game_task
 
         for (PtrNotNull<GameEntity> target : targets)
         {
+            if (target->GetComponent<PlayerComponent>().IsDodgeState())
+            {
+                continue;
+            }
+
             StatComponent& statComponent = target->GetComponent<StatComponent>();
 
             const StatValue currentHP = statComponent.GetHP();
@@ -40,24 +48,6 @@ namespace zerosugar::xr::game_task
 
             statComponent.SetHP(resultHP);
             _results.emplace_back(target->GetId(), resultHP.As<float>());
-        }
-
-        if (!targets.empty())
-        {
-            std::ostringstream oss;
-            for (PtrNotNull<GameEntity> target : targets)
-            {
-                oss << target->GetId().Unwrap() << ' ';
-            }
-
-            std::string str = oss.str();
-            if (!str.empty())
-            {
-                str.pop_back();
-            }
-
-            ZEROSUGAR_LOG_DEBUG(parallelContext.GetServiceLocator(),
-                std::format("monster attack effect. selected target: {}", str));
         }
     }
 

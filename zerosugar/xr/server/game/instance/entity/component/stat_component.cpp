@@ -70,6 +70,11 @@ namespace zerosugar::xr
         _mp.SetValue(value, now);
     }
 
+    void StatComponent::SetStamina(StatValue value, std::chrono::system_clock::time_point now)
+    {
+        _stamina.SetValue(value, now);
+    }
+
     void StatComponent::SetMaxHP(StatValue value)
     {
         _hp.SetMaxValue(value);
@@ -78,6 +83,11 @@ namespace zerosugar::xr
     void StatComponent::SetMaxMP(StatValue value)
     {
         _mp.SetMaxValue(value);
+    }
+
+    void StatComponent::SetMaxStamina(StatValue value)
+    {
+        _stamina.SetMaxValue(value);
     }
 
     auto StatComponent::GetStableStat(StatType type) -> StableStat&

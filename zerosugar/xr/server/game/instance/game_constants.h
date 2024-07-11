@@ -12,4 +12,5 @@ namespace zerosugar::xr::game_constant
     // CharacterData.csv
     constexpr float player_height = 90.f;
     constexpr float player_radius = 45.f;
+    constexpr double player_roll_dodge_seconds = 1.0;
 }

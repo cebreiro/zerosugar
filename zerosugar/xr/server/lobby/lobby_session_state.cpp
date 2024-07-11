@@ -264,9 +264,6 @@ namespace zerosugar::xr::lobby
             addParam.hairId = request.hairId;
             addParam.gold = 0;
             addParam.zoneId = 100;
-            addParam.x = -1800.f;
-            addParam.y = 100.f;
-            addParam.z = 250.f;
         }
         {
             constexpr std::array equipItems{
@@ -309,9 +306,9 @@ namespace zerosugar::xr::lobby
             outPacket.character.hairId = param.characterAdd.hairId;
             outPacket.character.gold = param.characterAdd.gold;
             outPacket.character.zoneId = param.characterAdd.zoneId;
-            outPacket.character.x = param.characterAdd.x;
-            outPacket.character.y = param.characterAdd.y;
-            outPacket.character.z = param.characterAdd.z;
+            outPacket.character.x = 0;
+            outPacket.character.y = 0;
+            outPacket.character.z = 0;
         }
 
         session.Send(Packet::ToBuffer(outPacket));
