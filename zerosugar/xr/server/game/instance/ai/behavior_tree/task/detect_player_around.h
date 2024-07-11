@@ -4,18 +4,19 @@
 
 namespace zerosugar::xr::ai
 {
-    class SelectAttackTarget final : public bt::Leaf
+    class DetectPlayerAround final : public bt::Leaf
     {
     public:
-        static constexpr const char* name = "select_attack_target";
+        static constexpr const char* name = "detect_player_around";
 
         auto Run() -> bt::node::Result override;
 
         auto GetName() const->std::string_view override;
 
-        friend void from_xml(SelectAttackTarget& self, const pugi::xml_node& xmlNode);
+        friend void from_xml(DetectPlayerAround& self, const pugi::xml_node& xmlNode);
 
     private:
+        double _radius = 0.0;
         std::chrono::milliseconds _interval = std::chrono::seconds(3);
     };
 }

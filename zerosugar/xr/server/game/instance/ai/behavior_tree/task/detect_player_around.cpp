@@ -1,19 +1,19 @@
-#include "select_attack_target.h"
+#include "detect_player_around.h"
 
+#include <pugixml.hpp>
 #include <boost/scope/scope_exit.hpp>
 #include "zerosugar/shared/ai/behavior_tree/behavior_tree.h"
 #include "zerosugar/shared/ai/behavior_tree/black_board.h"
-#include "zerosugar/shared/ai/behavior_tree/data/node_data_set_xml.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/ai/ai_controller.h"
+#include "zerosugar/xr/server/game/instance/ai/aggro/aggro_container.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_monster_snapshot.h"
-#include "zerosugar/xr/server/game/instance/snapshot/game_player_snapshot.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_container.h"
 #include "zerosugar/xr/server/game/instance/grid/game_spatial_scanner.h"
 
 namespace zerosugar::xr::ai
 {
-    auto SelectAttackTarget::Run() -> bt::node::Result
+    auto DetectPlayerAround::Run() -> bt::node::Result
     {
         bt::BlackBoard& blackBoard = GetBlackBoard();
 
@@ -42,14 +42,12 @@ namespace zerosugar::xr::ai
         const GameMonsterSnapshot* monster = snapshotContainer.FindMonster(entityId);
         assert(monster);
 
-        constexpr double selectDistance = 800.0;
-
         int64_t counter = controller.PublishEventCounter();
         struct ScanComplete{};
 
         GameSpatialScanner& spatialScanner = gameInstance.GetSpatialScanner();
 
-        spatialScanner.Schedule(entityId, selectDistance, { GameEntityType::Player });
+        spatialScanner.Schedule(entityId, _radius, { GameEntityType::Player });
         spatialScanner.SetSignalHandler(entityId, [weak = controller.weak_from_this(), counter]()
             {
                 const auto controller = weak.lock();
@@ -73,15 +71,27 @@ namespace zerosugar::xr::ai
                 spatialScanner.CancelScheduled(entityId);
             });
 
+        std::optional<game_entity_id_type> target = std::nullopt;
+        double minDistanceSq = std::numeric_limits<double>::max();
+
         for (game_entity_id_type playerId : spatialScanner.GetLastScanResult(controller.GetEntityId()))
         {
-            const GamePlayerSnapshot* player = snapshotContainer.FindPlayer(playerId);
-            if (!player)
+            const std::optional<Eigen::Vector3d> pos = snapshotContainer.FindPosition(playerId);
+            if (!pos.has_value())
             {
                 continue;
             }
 
-            blackBoard.InsertOrUpdate<game_entity_id_type>("target", playerId);
+            const double distanceSq = (*pos - monster->GetPosition()).squaredNorm();
+            if (distanceSq < minDistanceSq)
+            {
+                target = playerId;
+            }
+        }
+
+        if (target.has_value())
+        {
+            controller.GetAggroContainer().Add(*target, 1);
 
             co_return true;
         }
@@ -89,17 +99,25 @@ namespace zerosugar::xr::ai
         co_return false;
     }
 
-    auto SelectAttackTarget::GetName() const -> std::string_view
+    auto DetectPlayerAround::GetName() const -> std::string_view
     {
         return name;
     }
 
-    void from_xml(SelectAttackTarget& self, const pugi::xml_node& xmlNode)
+    void from_xml(DetectPlayerAround& self, const pugi::xml_node& xmlNode)
     {
+        if (const auto attr = xmlNode.attribute("radius"); attr)
+        {
+            self._radius = attr.as_double();
+        }
+        else
+        {
+            assert(false);
+        }
+
         if (const auto attr = xmlNode.attribute("interval"); attr)
         {
-            const auto seconds = std::chrono::duration<double, std::chrono::seconds::period>(attr.as_double());
-            self._interval = std::chrono::duration_cast<std::chrono::milliseconds>(seconds);
+            self._interval = GetMilliFromGameSeconds(attr.as_double());
         }
         else
         {

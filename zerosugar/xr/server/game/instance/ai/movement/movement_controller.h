@@ -26,6 +26,8 @@ namespace zerosugar::xr::ai
         void MoveTo(const Eigen::Vector3d& startPos, const Eigen::Vector3d& destPosition, double speed);
         void MovePath(const std::span<const navi::FVector>& paths, double speed);
 
+        void StopMovement();
+
         void Shutdown();
         auto Join() -> Future<void>;
 

@@ -22,6 +22,7 @@ namespace zerosugar::xr
 
 namespace zerosugar::xr::ai
 {
+    class AggroContainer;
     class MovementController;
 }
 
@@ -32,6 +33,7 @@ namespace zerosugar::xr
         , public std::enable_shared_from_this<AIController>
     {
     public:
+        static constexpr int64_t max_prev_behavior_tree_stack_size = 1;
         static constexpr const char* name = "ai_controller";
 
     public:
@@ -46,11 +48,11 @@ namespace zerosugar::xr
         auto Join() -> Future<void>;
 
         auto Transition(const std::string& behaviorTreeName) -> Future<void>;
+        auto ReturnPrevBehaviorTree() -> Future<bool>;
 
         bool HasDifferenceEventCounter(int64_t counter) const;
         auto PublishEventCounter() -> int64_t;
-        
-        bool IsSubscriberOf(int32_t opcode) const override;
+
         void Notify(const IPacket& packet) override;
 
         void InvokeOnBehaviorTree(const std::function<void(BehaviorTree&)>& function);
@@ -65,6 +67,8 @@ namespace zerosugar::xr
         auto GetBlackBoard() -> bt::BlackBoard&;
         auto GetRandomEngine() -> std::mt19937&;
 
+        auto GetAggroContainer() -> ai::AggroContainer&;
+        auto GetAggroContainer() const -> const ai::AggroContainer&;
         auto GetMovementController() -> ai::MovementController&;
         auto GetMovementController() const -> const ai::MovementController&;
 
@@ -89,9 +93,11 @@ namespace zerosugar::xr
         Future<void> _runAI;
         UniquePtrNotNull<bt::BlackBoard> _blackBoard;
         SharedPtrNotNull<BehaviorTree> _behaviorTree;
+        std::vector<SharedPtrNotNull<BehaviorTree>> _prevBehaviorTreeStack;
 
         std::mt19937 _mt;
 
+        UniquePtrNotNull<ai::AggroContainer> _aggroContainer;
         UniquePtrNotNull<ai::MovementController> _movementController;
     };
 }

@@ -104,13 +104,6 @@ namespace zerosugar::xr
         return _entityId;
     }
 
-    bool GameClient::IsSubscriberOf(int32_t opcode) const
-    {
-        (void)opcode;
-
-        return true;
-    }
-
     auto GameClient::GetWorldUserUniqueId() const -> int64_t
     {
         return _worldUserUniqueId;

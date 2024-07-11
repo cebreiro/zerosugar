@@ -14,7 +14,6 @@ namespace zerosugar::xr
     public:
         virtual ~IGameController() = default;
 
-        virtual bool IsSubscriberOf(int32_t opcode) const = 0;
         virtual void Notify(const IPacket& packet) = 0;
 
         virtual auto GetControllerId() const -> game_controller_id_type = 0;

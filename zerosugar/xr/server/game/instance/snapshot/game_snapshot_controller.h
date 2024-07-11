@@ -53,7 +53,8 @@ namespace zerosugar::xr
 
     private:
         void HandlePlayerPositionChange(GamePlayerSnapshot& player, const Eigen::Vector3d& oldPos, const Eigen::Vector3d& newPos);
-        void HandleMonsterPositionChange(GameMonsterSnapshot& monster, const Eigen::Vector3d& oldPos, const Eigen::Vector3d& newPos);
+        void HandleMonsterPositionChange(GameMonsterSnapshot& monster, const Eigen::Vector3d& oldPos, const Eigen::Vector3d& newPos,
+            bool syncMovement);
 
     private:
         GameInstance& _gameInstance;

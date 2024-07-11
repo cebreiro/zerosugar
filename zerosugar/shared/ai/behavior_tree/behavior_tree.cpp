@@ -113,7 +113,7 @@ namespace zerosugar
     {
         assert(!_signalHandler);
 
-        if (CanResume())
+        if (CanResume() || _stopRequested)
         {
             function();
         }

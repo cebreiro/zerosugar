@@ -3,10 +3,11 @@
         <suspend_until_player_in_view />
         <selector>
             <sequence>
-                <select_attack_target interval="1.5" />
-                <!-- player_in_distance distance="500" -->
-                <!-- suspend_forever / -->
-                <!--transition_behavior_tree target="monster_battle" / -->
+                <selector>
+                    <detect_under_attack />
+                    <detect_player_around radius="800" interval="1.5" />
+                </selector>
+                <transition_behavior_tree name="monster_battle" />
             </sequence>
             <sequence>
                 <time_elapsed_after_movement time="3.0" rand="1.0" />

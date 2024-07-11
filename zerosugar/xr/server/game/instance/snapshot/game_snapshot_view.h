@@ -41,9 +41,6 @@ namespace zerosugar::xr
         void Sync(IGameController& controller, const IPacket& packet);
 
     private:
-        void Send(const IPacket& packet, IGameController& controller);
-
-    private:
         GameInstance& _gameInstance;
 
         std::unordered_map<int32_t, boost::unordered::unordered_flat_map<std::string, std::function<void(const IPacket&)>>> _observers;

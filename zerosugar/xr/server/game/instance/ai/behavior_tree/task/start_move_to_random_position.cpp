@@ -1,8 +1,9 @@
 #include "start_move_to_random_position.h"
 
+#include <pugixml.hpp>
 #include "zerosugar/shared/ai/behavior_tree/behavior_tree.h"
 #include "zerosugar/shared/ai/behavior_tree/black_board.h"
-#include "zerosugar/shared/ai/behavior_tree/data/node_data_set_xml.h"
+#include "zerosugar/xr/data/table/monster.h"
 #include "zerosugar/xr/navigation/navigation_service.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/ai/ai_controller.h"
@@ -23,6 +24,8 @@ namespace zerosugar::xr::ai
         const double radius = SelectRandomRadius(controller.GetRandomEngine());
         const GameMonsterSnapshot* monster = gameInstance.GetSnapshotContainer().FindMonster(controller.GetEntityId());
         assert(monster);
+
+        const float speed = GetSpeedFromClientValue(monster->GetData().GetBase().speed * 10.f);
 
         std::optional<Eigen::Vector3d> destPosition = std::nullopt;
 
@@ -106,13 +109,13 @@ namespace zerosugar::xr::ai
 
             if (!points.empty())
             {
-                controller.GetMovementController().MovePath(points, 500.f);
+                controller.GetMovementController().MovePath(points, speed);
 
                 co_return true;
             }
         }
 
-        controller.GetMovementController().MoveTo(monster->GetPosition(), *destPosition, 500.f);
+        controller.GetMovementController().MoveTo(monster->GetPosition(), *destPosition, speed);
 
         co_return true;
     }

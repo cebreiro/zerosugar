@@ -1,7 +1,7 @@
 #include "time_elapsed_after_movement.h"
 
+#include <pugixml.hpp>
 #include "zerosugar/shared/ai/behavior_tree/black_board.h"
-#include "zerosugar/shared/ai/behavior_tree/data/node_data_set_xml.h"
 #include "zerosugar/xr/server/game/instance/ai/ai_controller.h"
 #include "zerosugar/xr/server/game/instance/ai/movement/movement_controller.h"
 

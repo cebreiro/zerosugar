@@ -69,6 +69,11 @@ namespace zerosugar::xr::ai
         }
     }
 
+    void MovementController::StopMovement()
+    {
+        _paths.clear();
+    }
+
     void MovementController::Shutdown()
     {
         _shutdown = true;

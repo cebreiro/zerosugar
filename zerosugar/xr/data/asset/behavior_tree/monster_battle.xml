@@ -1,0 +1,16 @@
+<root>
+    <sequence>
+        <update_battle_target />
+        <selector>
+            <detect_under_attack />
+            <return_to_prev_behavior_tree />
+        </selector>
+        <selector>
+            <sequence>
+                <battle_target_within distance="300" />
+                <use_random_skill />
+            </sequence>
+            <move_to_battle_target path_update ="0.4" />
+        </selector>
+    </sequence>
+</root>

@@ -12,7 +12,7 @@
                 <login />
             </force_success>
             <close_socket />
-            <transition_behavior_tree target="bot_select_character" />
+            <transition_behavior_tree name="bot_select_character" />
         </sequence>
     </sequence>
 </root>

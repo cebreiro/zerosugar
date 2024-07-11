@@ -15,4 +15,5 @@ namespace zerosugar::xr
 namespace zerosugar::xr
 {
     auto GetMilliFromGameSeconds(double seconds) -> std::chrono::milliseconds;
+    auto GetSpeedFromClientValue(float speed) -> float;
 }

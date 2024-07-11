@@ -19,8 +19,6 @@ namespace zerosugar::xr
             int64_t worldUserUniqueId, WeakPtrNotNull<GameInstance> gameInstance);
         ~GameClient() override;
 
-        bool IsSubscriberOf(int32_t opcode) const override;
-
         void Notify(const IPacket& packet) override;
 
         auto GetControllerId() const -> game_controller_id_type override;

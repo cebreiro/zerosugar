@@ -2,18 +2,18 @@
 
 #include <pugixml.hpp>
 #include "zerosugar/shared/ai/behavior_tree/black_board.h"
-#include "zerosugar/xr/application/bot_client/controller/bot_controller.h"
+#include "zerosugar/xr/server/game/instance/ai/ai_controller.h"
 
-namespace zerosugar::xr::bot
+namespace zerosugar::xr::ai
 {
     auto TransitionBehaviorTree::Run() -> bt::node::Result
     {
         bt::BlackBoard& blackBoard = GetBlackBoard();
-        BotController& controller = *blackBoard.Get<BotController*>("owner");
+        AIController& controller = *blackBoard.Get<AIController*>(AIController::name);
 
         controller.Transition(_name);
 
-        struct SuspendForever{};
+        struct SuspendForever {};
 
         // block this bt execution. this coroutine will be destructed on BehaviorTree::Finalize()
         co_await bt::Event<SuspendForever>{};

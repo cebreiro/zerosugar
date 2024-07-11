@@ -1,8 +1,8 @@
 #include "suspend_for_seconds.h"
 
+#include <pugixml.hpp>
 #include "zerosugar/shared/ai/behavior_tree/behavior_tree.h"
 #include "zerosugar/shared/ai/behavior_tree/black_board.h"
-#include "zerosugar/shared/ai/behavior_tree/data/node_data_set_xml.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/ai/ai_controller.h"
 #include "zerosugar/xr/server/game/instance/ai/behavior_tree/event/timer_event.h"
@@ -47,8 +47,7 @@ namespace zerosugar::xr::ai
     {
         if (const auto attr = xmlNode.attribute("time"); attr)
         {
-            const auto seconds = std::chrono::duration<double, std::chrono::seconds::period>(attr.as_double());
-            self._duration = std::chrono::duration_cast<std::chrono::milliseconds>(seconds);
+            self._duration = GetMilliFromGameSeconds(attr.as_double());
         }
         else
         {

@@ -129,9 +129,13 @@ namespace zerosugar::xr::gm
                 navi::UpdateVisualizeTargetParam param;
                 param.id = packet.id;
                 param.position = Eigen::Vector3d(pos.x, pos.y, pos.z);
-                param.destPosition = Eigen::Vector3d(destPos.x, destPos.y, destPos.z);
-                param.destMovementDuration = packet.destMovementDuration;
-                param.destPositionDrawColor = navi::DrawColor::Yellow;
+
+                if (packet.destMovementDuration > 0.0)
+                {
+                    param.destPosition = Eigen::Vector3d(destPos.x, destPos.y, destPos.z);
+                    param.destMovementDuration = packet.destMovementDuration;
+                    param.destPositionDrawColor = navi::DrawColor::Yellow;
+                }
 
                 navi->UpdateDrawTarget(std::move(param));
             });

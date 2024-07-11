@@ -1,7 +1,7 @@
 #pragma once
 #include "zerosugar/shared/ai/behavior_tree/node/bt_node.h"
 
-namespace zerosugar::xr::bot
+namespace zerosugar::xr::ai
 {
     class TransitionBehaviorTree final : public bt::Leaf
     {
@@ -10,7 +10,7 @@ namespace zerosugar::xr::bot
 
         auto Run() -> bt::node::Result override;
 
-        auto GetName() const -> std::string_view override;
+        auto GetName() const->std::string_view override;
 
         friend void from_xml(TransitionBehaviorTree& self, const pugi::xml_node& node);
 

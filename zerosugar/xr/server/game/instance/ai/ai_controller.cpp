@@ -3,9 +3,11 @@
 #include "zerosugar/shared/ai/behavior_tree/behavior_tree.h"
 #include "zerosugar/shared/ai/behavior_tree/black_board.h"
 #include "zerosugar/shared/ai/behavior_tree/data/node_data_set_interface.h"
+#include "zerosugar/shared/ai/behavior_tree/log/behavior_tree_log_service_adapter.h"
 #include "zerosugar/xr/data/game_data_provider.h"
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
+#include "zerosugar/xr/server/game/instance/ai/aggro/aggro_container.h"
 #include "zerosugar/xr/server/game/instance/ai/movement/movement_controller.h"
 
 namespace zerosugar::xr
@@ -19,9 +21,12 @@ namespace zerosugar::xr
         , _behaviorTreeName(std::move(btName))
         , _blackBoard(std::make_unique<bt::BlackBoard>())
         , _mt(std::random_device{}())
+        , _aggroContainer(std::make_unique<ai::AggroContainer>(*this))
         , _movementController(std::make_unique<ai::MovementController>(*this))
     {
         _blackBoard->Insert<AIController*>(name, this);
+
+        _prevBehaviorTreeStack.reserve(max_prev_behavior_tree_stack_size);
     }
 
     AIController::~AIController()
@@ -73,6 +78,9 @@ namespace zerosugar::xr
     {
         assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
 
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
         const GameDataProvider& gameDataProvider = _gameInstance.GetServiceLocator().Get<GameDataProvider>();
 
         const bt::INodeDataSet* dataSet = gameDataProvider.FindBehaviorTree(behaviorTreeName);
@@ -90,7 +98,15 @@ namespace zerosugar::xr
         if (_behaviorTree)
         {
             _behaviorTree->RequestStop();
-            _behaviorTree.reset();
+
+            if (std::ssize(_prevBehaviorTreeStack) == max_prev_behavior_tree_stack_size)
+            {
+                assert(!_prevBehaviorTreeStack.empty());
+
+                _prevBehaviorTreeStack.erase(_prevBehaviorTreeStack.begin());
+            }
+
+            _prevBehaviorTreeStack.push_back(std::move(_behaviorTree));
         }
 
         if (_runAI.IsValid())
@@ -100,7 +116,36 @@ namespace zerosugar::xr
 
         ++_eventCounter;
         _behaviorTree = std::move(newBehaviorTree);
+
         _runAI = RunAI();
+    }
+
+    auto AIController::ReturnPrevBehaviorTree() -> Future<bool>
+    {
+        if (_prevBehaviorTreeStack.empty())
+        {
+            co_return false;
+        }
+
+        SharedPtrNotNull<BehaviorTree> prevBehaviorTree = std::move(_prevBehaviorTreeStack.back());
+        _prevBehaviorTreeStack.pop_back();
+
+        assert(_behaviorTree);
+
+        _behaviorTree->RequestStop();
+        _behaviorTree.reset();
+
+        if (_runAI.IsValid())
+        {
+            co_await _runAI;
+        }
+
+        ++_eventCounter;
+        _behaviorTree = std::move(prevBehaviorTree);
+
+        _runAI = RunAI();
+
+        co_return true;
     }
 
     bool AIController::HasDifferenceEventCounter(int64_t counter) const
@@ -113,39 +158,33 @@ namespace zerosugar::xr
         return ++_eventCounter;
     }
 
-    bool AIController::IsSubscriberOf(int32_t opcode) const
-    {
-        assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
-
-        if (!_behaviorTree)
-        {
-            return false;
-        }
-
-        if (_behaviorTree->IsAwaiting())
-        {
-            return _behaviorTree->IsWaitFor(network::game::sc::GetPacketTypeInfo(opcode));
-        }
-
-        return false;
-    }
-
     void AIController::Notify(const IPacket& packet)
     {
         assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
-        assert(_behaviorTree);
-        assert(_behaviorTree->IsAwaiting());
 
-        network::game::sc::Visit(packet, [this]<typename T>(const T& item)
+        if (const auto* message = packet.Cast<network::game::sc::BeAttackedMonster>();
+            message && game_entity_id_type::FromInt64(message->attackedId) == GetEntityId())
         {
-            _behaviorTree->Notify(item);
-        });
+            _aggroContainer->Add(game_entity_id_type::FromInt64(message->attackerId), 100);
+        }
 
-        assert(_behaviorTree->CanResume());
+        if (_behaviorTree && _behaviorTree->IsWaitFor(network::game::sc::GetPacketTypeInfo(packet.GetOpcode())))
+        {
+            assert(_behaviorTree->IsAwaiting());
+
+            network::game::sc::Visit(packet, [this]<typename T>(const T & item)
+            {
+                _behaviorTree->Notify(item);
+            });
+
+            assert(_behaviorTree->CanResume());
+        }
     }
 
     void AIController::InvokeOnBehaviorTree(const std::function<void(BehaviorTree&)>& function)
     {
+        ++_eventCounter;
+
         assert(function);
 
         function(*_behaviorTree);
@@ -193,6 +232,16 @@ namespace zerosugar::xr
         return _mt;
     }
 
+    auto AIController::GetAggroContainer() -> ai::AggroContainer&
+    {
+        return *_aggroContainer;
+    }
+
+    auto AIController::GetAggroContainer() const -> const ai::AggroContainer&
+    {
+        return *_aggroContainer;
+    }
+
     auto AIController::GetMovementController() -> ai::MovementController&
     {
         return *_movementController;
@@ -223,9 +272,14 @@ namespace zerosugar::xr
         while (true)
         {
             constexpr auto tickInterval = std::chrono::milliseconds(200);
-            co_await Delay(tickInterval);
 
+            co_await Delay(tickInterval);
             assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
+
+            if (bt->StopRequested())
+            {
+                break;
+            }
 
             bt->RunOnce();
 
@@ -246,11 +300,6 @@ namespace zerosugar::xr
                 }
 
                 bt->Resume();
-            }
-
-            if (bt->StopRequested())
-            {
-                break;
             }
         }
 

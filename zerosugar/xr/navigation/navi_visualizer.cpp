@@ -113,10 +113,14 @@ namespace zerosugar::xr::navi
         {
             iter->second.position = Vector(param.position);
             iter->second.movementDuration = 0.0;
-            iter->second.startPosition = param.position;
-            iter->second.destMovementDuration = param.destMovementDuration.value_or(0.0);
-            iter->second.destPosition = param.destPosition;
-            iter->second.destPositionDrawColor = param.destPositionDrawColor;
+
+            if (param.destPosition.has_value() && param.destMovementDuration.value_or(0.0) > 0.0)
+            {
+                iter->second.startPosition = param.position;
+                iter->second.destMovementDuration = *param.destMovementDuration;
+                iter->second.destPosition = param.destPosition;
+                iter->second.destPositionDrawColor = param.destPositionDrawColor;
+            }
         }
     }
 
@@ -164,7 +168,6 @@ namespace zerosugar::xr::navi
     {
         const auto drawCylinder = [this](const Vector& pos, float radius, DrawColor color)
             {
-                //duDebugDrawCylinder(_dd.get(),
                 duDebugDrawCylinder(_dd.get(),
                     pos.GetX() - radius, pos.GetY(), pos.GetZ() - radius,
                     pos.GetX() + radius, pos.GetY() + 3.f, pos.GetZ() + radius,
@@ -175,26 +178,29 @@ namespace zerosugar::xr::navi
         {
             if (drawTarget.destPosition)
             {
-                Vector destPosition(*drawTarget.destPosition);
-
-                const DrawColor color = drawTarget.destPositionDrawColor.value_or(drawTarget.drawColor);
-                drawCylinder(destPosition, drawTarget.radius.Get(), color);
-
-                duDebugDrawArrow(_dd.get(),
-                    drawTarget.position.GetX(), drawTarget.position.GetY(), drawTarget.position.GetZ(),
-                    destPosition.GetX(), destPosition.GetY(), destPosition.GetZ(),
-                    0, 2, ToInt(DrawColor::Green), 1);
-
                 assert(drawTarget.destMovementDuration > 0.0);
 
                 drawTarget.movementDuration += delta;
-                const double t = std::min(drawTarget.movementDuration + delta, drawTarget.destMovementDuration) / drawTarget.destMovementDuration;
+                const double t = std::min(drawTarget.movementDuration, drawTarget.destMovementDuration) / drawTarget.destMovementDuration;
 
                 const Eigen::Vector3d position = (1 - t) * (*drawTarget.startPosition) + t * (*drawTarget.destPosition);
-                drawTarget.position = Vector(position);
+
+                Vector startPos(*drawTarget.startPosition);
+                Vector destPosition(*drawTarget.destPosition);
+                Vector currentPosition(position);
+
+                const DrawColor color = drawTarget.destPositionDrawColor.value_or(DrawColor::Brown);
+                drawCylinder(currentPosition, drawTarget.radius.Get(), color);
+
+                duDebugDrawArrow(_dd.get(),
+                    startPos.GetX(), startPos.GetY(), startPos.GetZ(),
+                    destPosition.GetX(), destPosition.GetY(), destPosition.GetZ(),
+                    0, 2, ToInt(DrawColor::Green), 1);
 
                 if (t >= 1.0)
                 {
+                    drawTarget.position = destPosition;
+
                     drawTarget.movementDuration = 0.0;
                     drawTarget.destMovementDuration = 0.0;
                     drawTarget.startPosition.reset();

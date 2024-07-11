@@ -228,7 +228,9 @@ namespace zerosugar::xr
         snapshot.SetYaw(yaw);
         const Eigen::Vector3d oldPos = snapshot.GetPosition();
 
-        HandleMonsterPositionChange(snapshot, oldPos, position);
+        constexpr bool syncMovement = true;
+
+        HandleMonsterPositionChange(snapshot, oldPos, position, syncMovement);
     }
 
     void GameSnapshotController::ProcessMonsterAttack(GameMonsterSnapshot& snapshot, int32_t attackIndex,
@@ -253,10 +255,6 @@ namespace zerosugar::xr
             packet.destPosition.z = static_cast<float>(destPos->z());
             packet.destMovementDuration = movementDuration;
         }
-        else
-        {
-            packet.destPosition = packet.position;
-        }
 
         GameSnapshotView& view = _gameInstance.GetSnapshotView();
         view.Broadcast(packet, _gameInstance.GetSpatialContainer().GetSector(snapshot.GetPosition()));
@@ -265,7 +263,9 @@ namespace zerosugar::xr
         {
             const Eigen::Vector3d oldPos = snapshot.GetPosition();
 
-            HandleMonsterPositionChange(snapshot, oldPos, *destPos);
+            constexpr bool syncMovement = false;
+
+            HandleMonsterPositionChange(snapshot, oldPos, *destPos, syncMovement);
         }
     }
 
@@ -424,7 +424,7 @@ namespace zerosugar::xr
     }
 
     void GameSnapshotController::HandleMonsterPositionChange(GameMonsterSnapshot& monster,
-        const Eigen::Vector3d& oldPos, const Eigen::Vector3d& newPos)
+        const Eigen::Vector3d& oldPos, const Eigen::Vector3d& newPos, bool syncMovement)
     {
         monster.SetPosition(newPos);
 
@@ -436,14 +436,17 @@ namespace zerosugar::xr
 
         if (oldSector.GetId() == newSector.GetId())
         {
-            sc::MoveMonster packet;
-            packet.id = monster.GetId().Unwrap();
-            packet.position.x = static_cast<float>(monster.GetPosition().x());
-            packet.position.y = static_cast<float>(monster.GetPosition().y());
-            packet.position.z = static_cast<float>(monster.GetPosition().z());
-            packet.rotation.yaw = monster.GetYaw();
+            if (syncMovement)
+            {
+                sc::MoveMonster packet;
+                packet.id = monster.GetId().Unwrap();
+                packet.position.x = static_cast<float>(monster.GetPosition().x());
+                packet.position.y = static_cast<float>(monster.GetPosition().y());
+                packet.position.z = static_cast<float>(monster.GetPosition().z());
+                packet.rotation.yaw = monster.GetYaw();
 
-            view.Broadcast(packet, oldSector);
+                view.Broadcast(packet, oldSector);
+            }
 
             return;
         }
@@ -459,16 +462,19 @@ namespace zerosugar::xr
             view.Broadcast(GameEntityType::Player, removeMonster, outs);
         }
 
-        if (GameSpatialSector::Subset unchanged = (newSector & oldSector); !unchanged.Empty())
+        if (syncMovement)
         {
-            sc::MoveMonster packet;
-            packet.id = monster.GetId().Unwrap();
-            packet.position.x = static_cast<float>(monster.GetPosition().x());
-            packet.position.y = static_cast<float>(monster.GetPosition().y());
-            packet.position.z = static_cast<float>(monster.GetPosition().z());
-            packet.rotation.yaw = monster.GetYaw();
+            if (GameSpatialSector::Subset unchanged = (newSector & oldSector); !unchanged.Empty())
+            {
+                sc::MoveMonster packet;
+                packet.id = monster.GetId().Unwrap();
+                packet.position.x = static_cast<float>(monster.GetPosition().x());
+                packet.position.y = static_cast<float>(monster.GetPosition().y());
+                packet.position.z = static_cast<float>(monster.GetPosition().z());
+                packet.rotation.yaw = monster.GetYaw();
 
-            view.Broadcast(packet, unchanged, monster.GetId());
+                view.Broadcast(packet, unchanged, monster.GetId());
+            }
         }
 
         if (GameSpatialSector::Subset ins = (newSector - oldSector); !ins.Empty())

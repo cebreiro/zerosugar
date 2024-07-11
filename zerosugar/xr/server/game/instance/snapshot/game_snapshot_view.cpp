@@ -37,7 +37,7 @@ namespace zerosugar::xr
         packet.type = static_cast<int32_t>(ChattingType::Local);
         packet.message = message;
 
-        Send(packet, *controller);
+        controller->Notify(packet);
     }
 
     void GameSnapshotView::Broadcast(GameEntityType type, const IPacket& packet, const GameSpatialSet& set)
@@ -57,7 +57,7 @@ namespace zerosugar::xr
             IGameController* controller = snapshotContainer.FindController(id);
             assert(controller);
 
-            Send(packet, *controller);
+            controller->Notify(packet);
         }
     }
 
@@ -78,7 +78,7 @@ namespace zerosugar::xr
                 continue;
             }
 
-            Send(packet, snapshot->GetController());
+            snapshot->GetController().Notify(packet);
         }
     }
 
@@ -111,7 +111,7 @@ namespace zerosugar::xr
             IGameController* controller = snapshotContainer.FindController(id);
             assert(controller);
 
-            Send(packet, *controller);
+            controller->Notify(packet);
         }
     }
 
@@ -125,14 +125,6 @@ namespace zerosugar::xr
             }
         }
 
-        Send(packet, controller);
-    }
-
-    void GameSnapshotView::Send(const IPacket& packet, IGameController& controller)
-    {
-        if (controller.IsSubscriberOf(packet.GetOpcode()))
-        {
-            controller.Notify(packet);
-        }
+        controller.Notify(packet);
     }
 }

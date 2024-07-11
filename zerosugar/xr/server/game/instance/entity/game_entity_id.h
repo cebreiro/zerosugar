@@ -23,6 +23,7 @@ namespace zerosugar::xr
 
             auto Unwrap() const -> int64_t;
 
+            static auto FromInt64(int64_t value) -> GameEntityId;
             static auto Null() -> GameEntityId;
 
         public:
