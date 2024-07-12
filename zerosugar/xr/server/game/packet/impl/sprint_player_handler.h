@@ -7,6 +7,7 @@ namespace zerosugar::xr
     class SprintPlayerHandler final : public IGamePacketHandlerT<network::game::cs::SprintPlayer>
     {
     public:
-        auto HandlePacket(GameServer& server, Session& session, const network::game::cs::SprintPlayer& packet) -> Future<void> override;
+        auto HandlePacket(GameServer& server, Session& session,
+            UniquePtrNotNull<network::game::cs::SprintPlayer> packet) -> Future<void> override;
     };
 }

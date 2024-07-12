@@ -7,6 +7,7 @@ namespace zerosugar::xr
     class StopPlayerHandler final : public IGamePacketHandlerT<network::game::cs::StopPlayer>
     {
     public:
-        auto HandlePacket(GameServer& server, Session& session, const network::game::cs::StopPlayer& packet) -> Future<void> override;
+        auto HandlePacket(GameServer& server, Session& session,
+            UniquePtrNotNull<network::game::cs::StopPlayer> packet) -> Future<void> override;
     };
 }

@@ -8,7 +8,10 @@
 
 namespace zerosugar::xr
 {
-    auto StopPlayerHandler::HandlePacket(GameServer& server, Session& session, const network::game::cs::StopPlayer& packet) -> Future<void>
+    using network::game::cs::StopPlayer;
+
+    auto StopPlayerHandler::HandlePacket(GameServer& server, Session& session,
+        UniquePtrNotNull<StopPlayer> packet) -> Future<void>
     {
         SharedPtrNotNull<GameClient> client = server.FindClient(session.GetId());
         if (!client)
@@ -26,7 +29,7 @@ namespace zerosugar::xr
             co_return;
         }
 
-        auto task = std::make_unique<game_task::PlayerStop>(this->ReleasePacket(), client->GetGameEntityId());
+        auto task = std::make_unique<game_task::PlayerStop>(std::move(packet), client->GetGameEntityId());
 
         instance->Summit(std::move(task), client->GetControllerId());
     }

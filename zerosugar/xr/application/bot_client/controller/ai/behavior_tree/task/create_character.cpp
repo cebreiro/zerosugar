@@ -11,7 +11,7 @@ namespace zerosugar::xr::bot
     auto CreateCharacter::Run() -> bt::node::Result
     {
         bt::BlackBoard& blackBoard = GetBlackBoard();
-        BotController& controller = *blackBoard.Get<BotController*>("owner");
+        BotController& controller = *blackBoard.Get<BotController*>(BotController::name);
 
         using namespace network::lobby;
 
@@ -21,7 +21,7 @@ namespace zerosugar::xr::bot
         packet.character.faceId = 120;
         packet.character.hairId = 110;
 
-        controller.Send(Packet::ToBuffer(packet));
+        controller.SendToServer(Packet::ToBuffer(packet));
 
         std::variant<sc::ResultCreateCharacter> va = co_await bt::Event<sc::ResultCreateCharacter>();
         const sc::ResultCreateCharacter& result = std::get<sc::ResultCreateCharacter>(va);

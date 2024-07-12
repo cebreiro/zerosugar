@@ -3,6 +3,7 @@ add_executable(zerosugar_xr_application_bot_client)
 target_link_libraries(zerosugar_xr_application_bot_client PRIVATE
     zerosugar_xr_pch
     zerosugar_xr_network
+    zerosugar_xr_navigation
     zerosugar_xr_data
 )
 

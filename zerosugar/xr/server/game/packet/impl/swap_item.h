@@ -7,6 +7,7 @@ namespace zerosugar::xr
     class SwapItemHandler final : public IGamePacketHandlerT<network::game::cs::SwapItem>
     {
     public:
-        auto HandlePacket(GameServer& server, Session& session, const network::game::cs::SwapItem& packet) -> Future<void> override;
+        auto HandlePacket(GameServer& server, Session& session,
+            UniquePtrNotNull<network::game::cs::SwapItem> packet) -> Future<void> override;
     };
 }

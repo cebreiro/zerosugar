@@ -193,17 +193,20 @@ namespace zerosugar::xr
 
     void GameTaskScheduler::Schedule(std::unique_ptr<GameTask> task, std::optional<game_controller_id_type> controllerId)
     {
-        _scheduledTaskCount.fetch_add(1);
-
         Dispatch(_gameInstance.GetStrand(), [this, task = std::move(task), controllerId = controllerId]() mutable
             {
                 ScheduleImpl(std::move(task), controllerId ? controllerId->Unwrap() : std::optional<int64_t>{});
             });
     }
 
-    auto GameTaskScheduler::GetScheduledTaskCount() const -> int64_t
+    auto GameTaskScheduler::GetCompleteTaskCount() const -> int64_t
     {
-        return _scheduledTaskCount.load();
+        return _completeTaskCount.load();
+    }
+
+    void GameTaskScheduler::ResetCompletionTaskCount()
+    {
+        _completeTaskCount.store(0);
     }
 
     void GameTaskScheduler::ScheduleImpl(std::unique_ptr<GameTask> task, std::optional<int64_t> processId)
@@ -396,7 +399,7 @@ namespace zerosugar::xr
         assert(process.GetState() == Process::State::Running);
         assert(process.HasTask());
 
-        _scheduledTaskCount.fetch_sub(1);
+        ++_completeTaskCount;
 
         DeallocateResource(process);
 

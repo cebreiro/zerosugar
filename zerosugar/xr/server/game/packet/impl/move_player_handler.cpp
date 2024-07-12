@@ -8,7 +8,9 @@
 
 namespace zerosugar::xr
 {
-    auto MovePlayerHandler::HandlePacket(GameServer& server, Session& session, const network::game::cs::MovePlayer& packet)
+    using network::game::cs::MovePlayer;
+
+    auto MovePlayerHandler::HandlePacket(GameServer& server, Session& session, UniquePtrNotNull<MovePlayer> packet)
         -> Future<void>
     {
         SharedPtrNotNull<GameClient> client = server.FindClient(session.GetId());
@@ -27,7 +29,7 @@ namespace zerosugar::xr
             co_return;
         }
 
-        auto task = std::make_unique<game_task::PlayerMove>(this->ReleasePacket(), client->GetGameEntityId());
+        auto task = std::make_unique<game_task::PlayerMove>(std::move(packet), client->GetGameEntityId());
 
         instance->Summit(std::move(task), client->GetControllerId());
 

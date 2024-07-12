@@ -9,7 +9,7 @@ namespace zerosugar::xr::bot
     auto IsConnectedToLogin::Run() -> bt::node::Result
     {
         bt::BlackBoard& blackBoard = GetBlackBoard();
-        BotController& controller = *blackBoard.Get<BotController*>("owner");
+        BotController& controller = *blackBoard.Get<BotController*>(BotController::name);
 
         if (controller.GetSessionState() == BotSessionStateType::Login && controller.GetSocket().IsOpen())
         {

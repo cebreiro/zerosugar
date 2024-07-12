@@ -18,7 +18,6 @@ namespace zerosugar::xr
     class IGamePacketHandlerFactory;
     class ICommandHandlerFactory;
     class IGameRepository;
-    class IGameEntitySerializer;
 }
 
 namespace zerosugar::xr
@@ -49,7 +48,6 @@ namespace zerosugar::xr
         auto GetClientContainer() -> GameClientContainer&;
         auto GetGameInstanceContainer() -> GameInstanceContainer&;
         auto GetCommandHandlerFactory() -> ICommandHandlerFactory&;
-        auto GetGameEntitySerializer() const -> IGameEntitySerializer&;
 
         void SetPublicIP(std::string ip);
 
@@ -84,7 +82,6 @@ namespace zerosugar::xr
         UniquePtrNotNull<GameInstanceContainer> _gameInstanceContainer;
         UniquePtrNotNull<IGamePacketHandlerFactory> _gamePacketHandlerFactory;
         UniquePtrNotNull<ICommandHandlerFactory> _commandHandlerFactory;
-        UniquePtrNotNull<IGameEntitySerializer> _gameEntitySerializer;
     };
 
     template <typename T> requires std::derived_from<T, IPacket>

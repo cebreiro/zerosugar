@@ -66,7 +66,7 @@ namespace zerosugar::xr
     concept game_task_param_concept = requires (TBase& base)
     {
         requires std::derived_from<TParam, TBase>;
-        { base.template Cast<TParam>() } -> std::same_as<const TParam*>;
+        { base.template Cast<TParam>() } -> std::same_as<TParam*>;
     };
 
     template <game_task_target_selector_concept... TSelector>

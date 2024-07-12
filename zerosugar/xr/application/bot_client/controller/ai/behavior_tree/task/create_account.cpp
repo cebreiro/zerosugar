@@ -11,7 +11,7 @@ namespace zerosugar::xr::bot
     auto CreateAccount::Run() -> bt::node::Result
     {
         bt::BlackBoard& blackBoard = GetBlackBoard();
-        BotController& controller = *blackBoard.Get<BotController*>("owner");
+        BotController& controller = *blackBoard.Get<BotController*>(BotController::name);
 
         const auto id = std::format("bot{}", controller.GetId());
 
@@ -21,7 +21,7 @@ namespace zerosugar::xr::bot
         packet.account = id;
         packet.password = id;
 
-        controller.Send(Packet::ToBuffer(packet));
+        controller.SendToServer(Packet::ToBuffer(packet));
 
         std::variant<sc::CreateAccountResult> va = co_await bt::Event<sc::CreateAccountResult>();
         const sc::CreateAccountResult& result = std::get<sc::CreateAccountResult>(va);

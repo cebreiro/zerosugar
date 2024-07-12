@@ -13,7 +13,7 @@ namespace zerosugar::xr::bot
     auto ConnectTo::Run() -> bt::node::Result
     {
         bt::BlackBoard& blackBoard = GetBlackBoard();
-        BotController& controller = *blackBoard.Get<BotController*>("owner");
+        BotController& controller = *blackBoard.Get<BotController*>(BotController::name);
 
         if (controller.GetSocket().IsOpen())
         {

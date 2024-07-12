@@ -1,21 +1,26 @@
 #include "authenticate_handler.h"
 
 #include "zerosugar/shared/network/session/session.h"
+#include "zerosugar/xr/navigation/navigation_service.h"
 #include "zerosugar/xr/server/game/game_server.h"
 #include "zerosugar/xr/server/game/client/game_client.h"
+#include "zerosugar/xr/server/game/instance/game_constants.h"
 #include "zerosugar/xr/server/game/repository/game_repository_interface.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/game_instance_container.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_serializer_interface.h"
+#include "zerosugar/xr/server/game/instance/entity/component/movement_component.h"
 #include "zerosugar/xr/server/game/instance/task/impl/player_spawn.h"
 #include "zerosugar/xr/service/model/generated/coordination_service.h"
 #include "zerosugar/xr/service/model/generated/coordination_service_message.h"
 
 namespace zerosugar::xr
 {
+    using network::game::cs::Authenticate;
+
     auto AuthenticateHandler::HandlePacket(GameServer& server, Session& session,
-        const network::game::cs::Authenticate& packet) -> Future<void>
+        UniquePtrNotNull<Authenticate> packet) -> Future<void>
     {
         using namespace service;
 
@@ -33,7 +38,7 @@ namespace zerosugar::xr
 
         AuthenticatePlayerParam authParam;
         authParam.serverId = server.GetServerId();
-        authParam.authenticationToken = packet.authenticationToken;
+        authParam.authenticationToken = packet->authenticationToken;
 
         AuthenticatePlayerResult authResult = co_await serviceLocator.Get<ICoordinationService>().AuthenticatePlayerAsync(authParam);
         if (authResult.errorCode != CoordinationServiceErrorCode::CoordinationErrorNone)
@@ -88,13 +93,29 @@ namespace zerosugar::xr
         const game_controller_id_type controllerId = gameInstance->PublishControllerId();
         const game_entity_id_type entityId = gameInstance->PublishEntityId(GameEntityType::Player);
 
-        SharedPtrNotNull<GameEntity> entity = server.GetGameEntitySerializer().Deserialize(*character);
+        SharedPtrNotNull<GameEntity> entity = gameInstance->GetEntitySerializer().Deserialize(*character);
         entity->SetId(entityId);
         entity->SetController(client);
 
         client->SetGameInstance(gameInstance);
         client->SetControllerId(controllerId);
         client->SetGameEntityId(entity->GetId());
+
+
+        if (auto naviation = gameInstance->GetNavigationService(); naviation)
+        {
+            MovementComponent& movementComponent = entity->GetComponent<MovementComponent>();
+            const Eigen::Vector3d& pos = entity->GetComponent<MovementComponent>().GetPosition();
+
+            const navi::FVector naviPos(pos);
+            constexpr float radius = 1600.0;
+
+            std::optional<navi::FVector> randPos = co_await naviation->GetRandomPointAroundCircle(naviPos, radius);
+            if (randPos.has_value())
+            {
+                movementComponent.SetPosition(Eigen::Vector3d(randPos->GetX(), randPos->GetY(), randPos->GetZ() + game_constant::player_height / 2));
+            }
+        }
 
         auto task = std::make_unique<game_task::PlayerSpawn>(std::move(entity));
         gameInstance->Summit(std::move(task), controllerId);

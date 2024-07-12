@@ -7,6 +7,7 @@ namespace zerosugar::xr
     class RollDodgePlayerHandler final : public IGamePacketHandlerT<network::game::cs::RollDodgePlayer>
     {
     public:
-        auto HandlePacket(GameServer& server, Session& session, const network::game::cs::RollDodgePlayer& packet) -> Future<void> override;
+        auto HandlePacket(GameServer& server, Session& session,
+            UniquePtrNotNull<network::game::cs::RollDodgePlayer> packet) -> Future<void> override;
     };
 }

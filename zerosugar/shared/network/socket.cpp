@@ -117,7 +117,7 @@ namespace zerosugar
 
     auto Socket::ReceiveAsync(Buffer& buffer) -> Future<std::expected<int64_t, IOError>>
     {
-        if (ExecutionContext::IsEqualTo(*_strand))
+        if (!ExecutionContext::IsEqualTo(*_strand))
         {
             co_await *_strand;
         }

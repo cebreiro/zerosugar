@@ -26,6 +26,8 @@ namespace zerosugar::xr::game_task
 
     void PlayerStop::OnComplete(GameExecutionSerial& serialContext)
     {
-        serialContext.GetSnapshotController().ProcessStop(_id, _newPosition);
+        const auto selfId = GetSelector<MainTargetSelector>().GetTargetId()[0];
+
+        serialContext.GetSnapshotController().ProcessStop(selfId, _newPosition);
     }
 }

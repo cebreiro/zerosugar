@@ -11,7 +11,7 @@ namespace zerosugar::xr::bot
     auto CloseSocket::Run() -> bt::node::Result
     {
         bt::BlackBoard& blackBoard = GetBlackBoard();
-        BotController& controller = *blackBoard.Get<BotController*>("owner");
+        BotController& controller = *blackBoard.Get<BotController*>(BotController::name);
 
         controller.Close().Then(controller.GetStrand(), [controller = controller.shared_from_this()]()
             {

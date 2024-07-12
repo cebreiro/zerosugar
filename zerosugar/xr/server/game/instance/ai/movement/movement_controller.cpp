@@ -1,7 +1,5 @@
 #include "movement_controller.h"
 
-#include <boost/process/environment.hpp>
-
 #include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/ai/ai_controller.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_view.h"
@@ -86,6 +84,7 @@ namespace zerosugar::xr::ai
             co_await _runFuture;
         }
     }
+
     auto MovementController::GetLastMovementEndTimePoint() const -> game_time_point_type
     {
         return _lastMovementEndTimePoint;

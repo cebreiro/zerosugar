@@ -9,7 +9,7 @@ namespace zerosugar::xr::bot
     auto TransitionBehaviorTree::Run() -> bt::node::Result
     {
         bt::BlackBoard& blackBoard = GetBlackBoard();
-        BotController& controller = *blackBoard.Get<BotController*>("owner");
+        BotController& controller = *blackBoard.Get<BotController*>(BotController::name);
 
         controller.Transition(_name);
 

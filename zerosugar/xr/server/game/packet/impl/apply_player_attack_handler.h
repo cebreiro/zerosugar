@@ -7,6 +7,6 @@ namespace zerosugar::xr
     class ApplyPlayerAttackHandler final : public IGamePacketHandlerT<network::game::cs::ApplyPlayerAttack>
     {
     public:
-        auto HandlePacket(GameServer& server, Session& session, const network::game::cs::ApplyPlayerAttack& packet) -> Future<void> override;
+        auto HandlePacket(GameServer& server, Session& session, UniquePtrNotNull<network::game::cs::ApplyPlayerAttack> packet) -> Future<void> override;
     };
 }

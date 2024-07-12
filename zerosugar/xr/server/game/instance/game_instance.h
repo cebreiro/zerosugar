@@ -9,6 +9,7 @@ namespace zerosugar::xr
 {
     class MapData;
 
+    class IGameEntitySerializer;
     class GameEntity;
     class GameEntityContainer;
 
@@ -37,6 +38,9 @@ namespace zerosugar::xr
         ~GameInstance();
 
         void Start();
+        void Shutdown();
+        auto Join() -> Future<void>;
+
         void Summit(UniquePtrNotNull<GameTask> task, std::optional<game_controller_id_type> controllerId);
 
         auto PublishControllerId() -> game_controller_id_type;
@@ -56,6 +60,8 @@ namespace zerosugar::xr
 
         auto GetSerialContext() -> GameExecutionSerial&;
         auto GetSerialContext() const -> const GameExecutionSerial&;
+
+        auto GetEntitySerializer() const -> const IGameEntitySerializer&;
 
         auto GetTaskScheduler() -> GameTaskScheduler&;
         auto GetTaskScheduler() const -> const GameTaskScheduler&;
@@ -94,6 +100,8 @@ namespace zerosugar::xr
 
         GameExecutionParallel _parallel;
         GameExecutionSerial _serial;
+
+        UniquePtrNotNull<IGameEntitySerializer> _entitySerializer;
 
         UniquePtrNotNull<GameTaskScheduler> _taskScheduler;
         UniquePtrNotNull<GameEntityContainer> _entityContainer;

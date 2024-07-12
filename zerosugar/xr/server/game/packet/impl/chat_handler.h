@@ -7,6 +7,6 @@ namespace zerosugar::xr
     class ChatHandler final : public IGamePacketHandlerT<network::game::cs::Chat>
     {
     public:
-        auto HandlePacket(GameServer& server, Session& session, const network::game::cs::Chat& packet) -> Future<void> override;
+        auto HandlePacket(GameServer& server, Session& session, std::unique_ptr<network::game::cs::Chat> packet) -> Future<void> override;
     };
 }

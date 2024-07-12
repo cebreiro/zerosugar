@@ -266,7 +266,7 @@ namespace zerosugar::xr
 
         for (auto& [dungeonId, matchQueue] : _matchQueues)
         {
-            constexpr int64_t matchOrganizeSize = 1;
+            constexpr int64_t matchOrganizeSize = 5;
 
             while (std::ssize(matchQueue) >= matchOrganizeSize)
             {
@@ -275,7 +275,7 @@ namespace zerosugar::xr
 
                 for (int64_t i = 0; i < matchOrganizeSize; ++i)
                 {
-                    PtrNotNull<DungeonMatchUser> user = matchQueue[i];
+                    PtrNotNull<DungeonMatchUser> user = matchQueue.front();
                     matchQueue.pop_front();
 
                     assert(user->GetState() == DungeonMatchUserState::Waiting);

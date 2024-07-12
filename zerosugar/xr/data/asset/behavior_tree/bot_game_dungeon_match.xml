@@ -1,0 +1,14 @@
+<root>
+    <selector>
+        <sequence>
+            <connect_to target="game" />
+            <authenticate_game />
+            <dungeon_match map_id="111" />
+            <close_socket />
+            <connect_to target="game_dungeon" />
+            <authenticate_game />
+            <transition_behavior_tree name="bot_game_battle" />
+        </sequence>
+        <shutdown_behavior_tree />
+    </selector>
+</root>

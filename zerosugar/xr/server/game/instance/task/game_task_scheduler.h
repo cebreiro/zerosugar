@@ -92,7 +92,9 @@ namespace zerosugar::xr
 
         void Schedule(std::unique_ptr<GameTask> task, std::optional<game_controller_id_type> controllerId = std::nullopt);
 
-        auto GetScheduledTaskCount() const -> int64_t;
+
+        auto GetCompleteTaskCount() const -> int64_t;
+        void ResetCompletionTaskCount();
 
     private:
         void ScheduleImpl(std::unique_ptr<GameTask> task, std::optional<int64_t> processId);
@@ -126,7 +128,8 @@ namespace zerosugar::xr
 
         bool _shutdown = false;
         std::optional<Promise<void>> _shutdownJoinPromise;
-        std::atomic<int64_t> _scheduledTaskCount = 0;
+
+        std::atomic<int64_t> _completeTaskCount = 0;
 
         int64_t _nextTaskQueueId = 0;
         int64_t _nextTempProcessId = -1;

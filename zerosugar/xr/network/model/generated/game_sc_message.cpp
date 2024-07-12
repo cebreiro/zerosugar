@@ -47,6 +47,24 @@ namespace zerosugar::xr::network::game::sc
         (void)writer;
     }
 
+    void SpawnRemotePlayer::Deserialize(PacketReader& reader)
+    {
+        playersCount = reader.Read<int32_t>();
+        for (int32_t i = 0; i < playersCount; ++i)
+        {
+            players.emplace_back(reader.Read<RemotePlayer>());
+        }
+    }
+
+    void SpawnRemotePlayer::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int32_t>(playersCount);
+        for (const auto& item : players)
+        {
+            writer.WriteObject(item);
+        }
+    }
+
     void AddRemotePlayer::Deserialize(PacketReader& reader)
     {
         playersCount = reader.Read<int32_t>();
@@ -81,6 +99,22 @@ namespace zerosugar::xr::network::game::sc
         {
             writer.WriteObject(item);
         }
+    }
+
+    void RemotePlayerAttack::Deserialize(PacketReader& reader)
+    {
+        id = reader.Read<int64_t>();
+        motionId = reader.Read<int32_t>();
+        position = reader.Read<Position>();
+        rotation = reader.Read<Rotation>();
+    }
+
+    void RemotePlayerAttack::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int64_t>(id);
+        writer.Write<int32_t>(motionId);
+        writer.Write(position);
+        writer.Write(rotation);
     }
 
     void BeAttackedPlayer::Deserialize(PacketReader& reader)
@@ -396,6 +430,13 @@ namespace zerosugar::xr::network::game::sc
 
                 return item;
             }
+            case SpawnRemotePlayer::opcode:
+            {
+                auto item = std::make_unique<SpawnRemotePlayer>();
+                item->Deserialize(reader);
+
+                return item;
+            }
             case AddRemotePlayer::opcode:
             {
                 auto item = std::make_unique<AddRemotePlayer>();
@@ -406,6 +447,13 @@ namespace zerosugar::xr::network::game::sc
             case RemoveRemotePlayer::opcode:
             {
                 auto item = std::make_unique<RemoveRemotePlayer>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case RemotePlayerAttack::opcode:
+            {
+                auto item = std::make_unique<RemotePlayerAttack>();
                 item->Deserialize(reader);
 
                 return item;
@@ -573,6 +621,13 @@ namespace zerosugar::xr::network::game::sc
 
                 return item;
             }
+            case SpawnRemotePlayer::opcode:
+            {
+                SpawnRemotePlayer item;
+                item.Deserialize(reader);
+
+                return item;
+            }
             case AddRemotePlayer::opcode:
             {
                 AddRemotePlayer item;
@@ -583,6 +638,13 @@ namespace zerosugar::xr::network::game::sc
             case RemoveRemotePlayer::opcode:
             {
                 RemoveRemotePlayer item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case RemotePlayerAttack::opcode:
+            {
+                RemotePlayerAttack item;
                 item.Deserialize(reader);
 
                 return item;
@@ -743,6 +805,10 @@ namespace zerosugar::xr::network::game::sc
             {
                 return typeid(NotifyPlayerActivated);
             }
+            case SpawnRemotePlayer::opcode:
+            {
+                return typeid(SpawnRemotePlayer);
+            }
             case AddRemotePlayer::opcode:
             {
                 return typeid(AddRemotePlayer);
@@ -750,6 +816,10 @@ namespace zerosugar::xr::network::game::sc
             case RemoveRemotePlayer::opcode:
             {
                 return typeid(RemoveRemotePlayer);
+            }
+            case RemotePlayerAttack::opcode:
+            {
+                return typeid(RemotePlayerAttack);
             }
             case BeAttackedPlayer::opcode:
             {

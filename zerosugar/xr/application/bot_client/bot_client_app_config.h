@@ -10,6 +10,8 @@ namespace zerosugar::xr
         std::string loginIP;
         uint16_t loginPort = 0;
 
+        int64_t botCount = 1;
+
         friend void from_json(const nlohmann::json& j, BotClientAppConfig& config)
         {
             config.workerCount = j.at("executor_thread_count").get<int64_t>();
@@ -18,6 +20,8 @@ namespace zerosugar::xr
 
             config.loginIP = j.at("login_ip").get<std::string>();
             config.loginPort = j.at("login_port").get<uint16_t>();
+
+            config.botCount = j.at("bot_count").get<int64_t>();
         }
     };
 }

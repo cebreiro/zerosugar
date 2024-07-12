@@ -8,6 +8,6 @@ namespace zerosugar::xr
     {
     public:
         auto HandlePacket(GameServer& server, Session& session,
-            const network::game::cs::RejectDungeonMatch& packet) -> Future<void> override;
+            UniquePtrNotNull<network::game::cs::RejectDungeonMatch> packet) -> Future<void> override;
     };
 }

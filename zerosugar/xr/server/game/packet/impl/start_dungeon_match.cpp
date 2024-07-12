@@ -10,8 +10,10 @@
 
 namespace zerosugar::xr
 {
+    using network::game::cs::StartDungeonMatch;
+
     auto StartDungeonMatchHandler::HandlePacket(GameServer& server, Session& session,
-        const network::game::cs::StartDungeonMatch& packet) -> Future<void>
+        UniquePtrNotNull<StartDungeonMatch> packet) -> Future<void>
     {
         SharedPtrNotNull<GameClient> client = server.FindClient(session.GetId());
         if (!client)
@@ -33,7 +35,7 @@ namespace zerosugar::xr
         param.serverId = server.GetServerId();
         param.gameInstanceId = instance->GetId().Unwrap();
         param.authenticationToken = client->GetAuthenticationToken();
-        param.dungeonId = packet.deugeonId;
+        param.dungeonId = packet->deugeonId;
 
         service::RequestDungeonMatchResult result = co_await server.GetServiceLocator().Get<service::ICoordinationService>()
             .RequestDungeonMatchAsync(std::move(param));

@@ -17,7 +17,7 @@ namespace zerosugar::xr::ai
 
         controller.ReturnPrevBehaviorTree()
             .Then(controller.GetGameInstance().GetStrand(),
-                [weak = controller.weak_from_this(), eventCount](bool result)
+                [weak = controller.weak_from_this(), eventCount]([[maybe_unused]] bool result)
                 {
                     assert(result);
 

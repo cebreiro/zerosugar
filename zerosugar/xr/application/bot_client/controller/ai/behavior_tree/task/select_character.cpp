@@ -11,7 +11,7 @@ namespace zerosugar::xr::bot
     auto SelectCharacter::Run() -> bt::node::Result
     {
         bt::BlackBoard& blackBoard = GetBlackBoard();
-        BotController& controller = *blackBoard.Get<BotController*>("owner");
+        BotController& controller = *blackBoard.Get<BotController*>(BotController::name);
 
         using namespace network::lobby;
 
@@ -34,7 +34,7 @@ namespace zerosugar::xr::bot
         cs::SelectCharacter packet;
         packet.slot = iter->slot;
 
-        controller.Send(Packet::ToBuffer(packet));
+        controller.SendToServer(Packet::ToBuffer(packet));
 
         const std::variant<sc::SuccessSelectCharacter> va = co_await bt::Event<sc::SuccessSelectCharacter>();
         const sc::SuccessSelectCharacter& result = std::get<sc::SuccessSelectCharacter>(va);

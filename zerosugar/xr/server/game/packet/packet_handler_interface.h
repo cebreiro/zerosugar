@@ -27,28 +27,17 @@ namespace zerosugar::xr
     public:
         auto Handle(GameServer& server, SharedPtrNotNull<Session> session, UniquePtrNotNull<IPacket> packet) -> Future<void> final
         {
-            _packet = std::move(packet);
+            UniquePtrNotNull<T> casted(packet->Cast<T>());
+            (void)packet.release();
 
-            const T* casted = _packet->Cast<T>();
             assert(casted);
 
-            co_await this->HandlePacket(server, *session, *casted);
+            co_await this->HandlePacket(server, *session, std::move(casted));
 
             co_return;
         }
 
-    protected:
-        auto ReleasePacket() -> UniquePtrNotNull<IPacket>
-        {
-            assert(_packet);
-
-            return std::move(_packet);
-        }
-
     private:
-        virtual auto HandlePacket(GameServer& server, Session& session, const T& packet) -> Future<void> = 0;
-
-    private:
-        UniquePtrNotNull<IPacket> _packet;
+        virtual auto HandlePacket(GameServer& server, Session& session, UniquePtrNotNull<T> packet) -> Future<void> = 0;
     };
 }

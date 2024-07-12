@@ -11,7 +11,7 @@ namespace zerosugar::xr::bot
     auto AuthenticateLobby::Run() -> bt::node::Result
     {
         bt::BlackBoard& blackBoard = GetBlackBoard();
-        BotController& controller = *blackBoard.Get<BotController*>("owner");
+        BotController& controller = *blackBoard.Get<BotController*>(BotController::name);
 
         const std::string* authToken = blackBoard.GetIf<std::string>("auth_token");
         if (!authToken)
@@ -24,9 +24,9 @@ namespace zerosugar::xr::bot
         cs::Authenticate packet;
         packet.authenticationToken = *authToken;
 
-        controller.Send(Packet::ToBuffer(packet));
+        controller.SendToServer(Packet::ToBuffer(packet));
 
-        auto va = co_await bt::Event<sc::NotifyCharacterList, sc::FailAuthenticate>();
+        const auto va = co_await bt::Event<sc::NotifyCharacterList, sc::FailAuthenticate>();
 
         const bool result = std::visit([&]<typename T>(const T& va) -> bool
             {

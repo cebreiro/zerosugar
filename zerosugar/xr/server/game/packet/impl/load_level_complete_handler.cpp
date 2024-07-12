@@ -11,7 +11,7 @@ namespace zerosugar::xr
     using network::game::cs::LoadLevelComplete;
 
     auto LoadLevelCompleteHandler::HandlePacket(GameServer& server, Session& session,
-        const LoadLevelComplete& packet) -> Future<void>
+        UniquePtrNotNull<LoadLevelComplete> packet) -> Future<void>
     {
         SharedPtrNotNull<GameClient> client = server.FindClient(session.GetId());
         if (!client)

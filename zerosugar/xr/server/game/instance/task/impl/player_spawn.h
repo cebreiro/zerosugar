@@ -18,6 +18,5 @@ namespace zerosugar::xr::game_task
 
     private:
         static void ConfigureStat(GameEntity& entity);
-        static void ConfigurePosition(const GameExecutionParallel& parallelContext, GameEntity& entity);
     };
 }

@@ -10,8 +10,10 @@
 
 namespace zerosugar::xr
 {
+    using network::game::cs::ApproveDungeonMatch;
+
     auto ApproveDungeonMatchHandler::HandlePacket(GameServer& server, Session& session,
-        const network::game::cs::ApproveDungeonMatch& packet) -> Future<void>
+        UniquePtrNotNull<ApproveDungeonMatch> packet) -> Future<void>
     {
         SharedPtrNotNull<GameClient> client = server.FindClient(session.GetId());
         if (!client)

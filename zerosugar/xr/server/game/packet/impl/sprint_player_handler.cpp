@@ -8,8 +8,10 @@
 
 namespace zerosugar::xr
 {
+    using network::game::cs::SprintPlayer;
+
     auto SprintPlayerHandler::HandlePacket(GameServer& server, Session& session,
-        const network::game::cs::SprintPlayer& packet) -> Future<void>
+        UniquePtrNotNull<SprintPlayer> packet) -> Future<void>
     {
         SharedPtrNotNull<GameClient> client = server.FindClient(session.GetId());
         if (!client)
@@ -27,7 +29,7 @@ namespace zerosugar::xr
             co_return;
         }
 
-        auto task = std::make_unique<game_task::PlayerSprint>(this->ReleasePacket(), client->GetGameEntityId());
+        auto task = std::make_unique<game_task::PlayerSprint>(std::move(packet), client->GetGameEntityId());
 
         instance->Summit(std::move(task), client->GetControllerId());
     }

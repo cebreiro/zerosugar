@@ -29,6 +29,8 @@ namespace zerosugar
 
     void Strand::release(const std::thread::id& tid)
     {
+        (void)tid;
+
         int32_t taskCount = 0;
         {
             std::lock_guard lock(_spinMutex);

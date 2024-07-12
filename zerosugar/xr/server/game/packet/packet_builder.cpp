@@ -46,35 +46,34 @@ namespace zerosugar::xr
         result.intell = item.attack.value_or(0);
     }
 
-    void GamePacketBuilder::Build(network::game::Player& player, const GameEntity& entity)
+    void GamePacketBuilder::Build(network::game::Player& result, const GameEntity& entity)
     {
-        player.id = entity.GetId().Unwrap();
+        result.id = entity.GetId().Unwrap();
 
-        Build(player.base, entity);
-        Build(player.equipment, entity);
+        Build(result.base, entity);
+        Build(result.equipment, entity);
 
         {
             auto& movementComponent = entity.GetComponent<MovementComponent>();
 
-            network::game::Position& position = player.transform.position;
+            network::game::Position& position = result.transform.position;
 
             position.x = static_cast<float>(movementComponent.GetX());
             position.y = static_cast<float>(movementComponent.GetY());
             position.z = static_cast<float>(movementComponent.GetZ());
 
-            player.transform.rotation.yaw = static_cast<float>(movementComponent.GetYaw());
+            result.transform.rotation.yaw = static_cast<float>(movementComponent.GetYaw());
         }
         {
             auto& inventoryComponent = entity.GetComponent<InventoryComponent>();
 
-            player.gold = 123123;
+            result.gold = 123123;
 
             for (const InventoryItem& item : inventoryComponent.GetInventoryItemsRange())
             {
-                network::game::PlayerInventoryItem& result = player.items.emplace_back();
-                Build(result, item);
+                Build(result.items.emplace_back(), item);
 
-                ++player.itemsCount;
+                ++result.itemsCount;
             }
         }
     }

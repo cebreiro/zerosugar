@@ -22,6 +22,16 @@ namespace zerosugar::bt
 namespace zerosugar::xr
 {
     class IPacket;
+    class NavigationService;
+}
+
+namespace zerosugar::xr::bot
+{
+    struct SharedContext;
+
+    class VisualObjectContainer;
+    class LocalPlayer;
+    class MovementController;
 }
 
 namespace zerosugar::xr
@@ -29,8 +39,11 @@ namespace zerosugar::xr
     class BotController : public std::enable_shared_from_this<BotController>
     {
     public:
-        BotController(const ServiceLocator& locator, SharedPtrNotNull<execution::AsioStrand> strand,
-        int64_t id, const bt::NodeSerializer& nodeSerializer, std::string defaultBehaviorTree);
+        static constexpr const char* name = "bot_controller";
+
+    public:
+        BotController(const ServiceLocator& locator, SharedPtrNotNull<Strand> strand, bot::SharedContext& sharedContext,
+            SharedPtrNotNull<Socket> socket, int64_t id, const bt::NodeSerializer& nodeSerializer, std::string defaultBehaviorTree);
         ~BotController();
 
         void Start();
@@ -42,13 +55,22 @@ namespace zerosugar::xr
         auto ConnectTo(std::string ip, uint16_t port, int32_t retryMilli) -> Future<void>;
         auto Close() -> Future<void>;
 
-        void Send(Buffer buffer);
+        void SendToServer(Buffer buffer);
 
         auto GetId() const -> int64_t;
         auto GetName() const -> std::string;
-        auto GetStrand() const -> execution::AsioStrand&;
+        auto GetStrand() const -> Strand&;
         auto GetSocket() -> Socket&;
+        auto GetRandomEngine() -> std::mt19937&;
         auto GetSessionState() const -> BotSessionStateType;
+        auto GetLocalPlayer() -> bot::LocalPlayer&;
+        auto GetLocalPlayer() const -> const bot::LocalPlayer&;
+        auto GetVisualObjectContainer() -> bot::VisualObjectContainer&;
+        auto GetVisualObjectContainer() const -> const bot::VisualObjectContainer&;
+        auto GetMovementController() -> bot::MovementController&;
+        auto GetMovementController() const -> const bot::MovementController&;
+
+        auto GetNavigation() -> NavigationService*;
 
         void SetLogger(IBehaviorTreeLogger* logger);
         void SetSessionState(BotSessionStateType sessionState);
@@ -57,9 +79,13 @@ namespace zerosugar::xr
         auto RunIO() -> Future<void>;
         auto RunAI() -> Future<void>;
 
+        void TryCreateNavigation(int32_t mapId);
+        void TryRemoveNavigation(int32_t mapId);
+
     private:
         ServiceLocator _serviceLocator;
-        SharedPtrNotNull<execution::AsioStrand> _strand;
+        SharedPtrNotNull<Strand> _strand;
+        bot::SharedContext& _sharedContext;
         int64_t _id;
 
         const bt::NodeSerializer& _nodeSerializer;
@@ -72,7 +98,13 @@ namespace zerosugar::xr
         SharedPtrNotNull<Socket> _socket;
         Future<void> _runIOFuture;
 
+        std::mt19937 _randomEngine;
+
         UniquePtrNotNull<bt::BlackBoard> _blackBoard;
         SharedPtrNotNull<BehaviorTree> _behaviorTree;
+
+        std::unique_ptr<bot::LocalPlayer> _localPlayer;
+        UniquePtrNotNull<bot::VisualObjectContainer> _visualObjectContainer;
+        UniquePtrNotNull<bot::MovementController> _movementController;
     };
 }

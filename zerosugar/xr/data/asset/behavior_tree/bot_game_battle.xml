@@ -1,0 +1,16 @@
+<root>
+    <sequence>
+        <update_battle_target />
+        <force_success>
+            <selector>
+                <sequence>
+                    <battle_target_within distance="300" />
+                    <attack_target />
+                </sequence>
+                <move_to_battle_target path_update ="0.4" />
+            </selector>
+        </force_success>
+        <time_elapsed_after_movement time="3.0" rand="1.0" />
+        <start_move_to_random_position radius ="1800" rand="700" />
+    </sequence>
+</root>

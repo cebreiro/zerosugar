@@ -15,7 +15,6 @@ namespace zerosugar::xr::game_task
         void OnComplete(GameExecutionSerial& serialContext) override;
 
     private:
-        game_entity_id_type _id;
         Eigen::Vector3d _newPosition;
     };
 }

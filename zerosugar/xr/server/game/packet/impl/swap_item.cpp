@@ -8,7 +8,10 @@
 
 namespace zerosugar::xr
 {
-    auto SwapItemHandler::HandlePacket(GameServer& server, Session& session, const network::game::cs::SwapItem& packet) -> Future<void>
+    using network::game::cs::SwapItem;
+
+    auto SwapItemHandler::HandlePacket(GameServer& server, Session& session,
+        UniquePtrNotNull<SwapItem> packet) -> Future<void>
     {
         SharedPtrNotNull<GameClient> client = server.FindClient(session.GetId());
         if (!client)
@@ -26,7 +29,7 @@ namespace zerosugar::xr
             co_return;
         }
 
-        auto task = std::make_unique<game_task::PlayerSwapItem>(this->ReleasePacket(), client->GetGameEntityId());
+        auto task = std::make_unique<game_task::PlayerSwapItem>(std::move(packet), client->GetGameEntityId());
 
         instance->Summit(std::move(task), client->GetControllerId());
     }

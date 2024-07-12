@@ -30,11 +30,13 @@ namespace zerosugar::xr
             co_return;
         }
 
-        assert(_runFuture.IsValid());
+        if (_runFuture.IsValid())
+        {
+            co_await _runFuture;
 
-        co_await _runFuture;
+            _runFuture = Future<void>();
+        }
 
-        _runFuture = Future<void>();
         _running = false;
 
         co_return;

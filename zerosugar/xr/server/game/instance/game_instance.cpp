@@ -4,6 +4,7 @@
 #include "zerosugar/xr/navigation/navigation_service.h"
 #include "zerosugar/xr/navigation/navi_data_provider.h"
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
+#include "zerosugar/xr/server/game/instance/entity/game_entity_serializer.h"
 #include "zerosugar/xr/server/game/instance/ai/ai_control_service.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_container.h"
@@ -41,7 +42,6 @@ namespace zerosugar::xr
         , _gmCommandFactory(std::make_unique<GMCommandFactory>())
     {
         const GameDataProvider& gameDataProvider = serviceLocator.Get<GameDataProvider>();
-
         _data = gameDataProvider.Find(map_data_id_type(_zoneId));
         assert(_data);
 
@@ -53,17 +53,12 @@ namespace zerosugar::xr
             _navigationService = std::make_shared<NavigationService>(_serviceLocator,
                 std::make_shared<Strand>(_executor), std::move(naviData));
         }
+
+        _entitySerializer = std::make_unique<GameEntitySerializer>(*_data);
     }
 
     GameInstance::~GameInstance()
     {
-        _aiControlService->ShutdownAndJoin().Get();
-
-        _taskScheduler->Shutdown();
-        _taskScheduler->Join().Get();
-
-        _spatialScanner->Shutdown();
-        _spatialScanner->Join().Get();
     }
 
     void GameInstance::Start()
@@ -72,6 +67,26 @@ namespace zerosugar::xr
         {
             Summit(std::make_unique<game_task::SpawnerInstall>(&spawnData), std::nullopt);
         }
+    }
+
+    void GameInstance::Shutdown()
+    {
+        Dispatch(*_strand, [self = shared_from_this()]()
+            {
+                self->_taskScheduler->Shutdown();
+                self->_spatialScanner->Shutdown();
+            });
+    }
+
+    auto GameInstance::Join() -> Future<void>
+    {
+        auto future1 = _aiControlService->ShutdownAndJoin();
+        auto future2 = _taskScheduler->Join();
+        auto future3 = _spatialScanner->Join();
+
+        co_await WaitAll(GetExecutor(), future1, future2, future3);
+
+        co_return;
     }
 
     void GameInstance::Summit(UniquePtrNotNull<GameTask> task, std::optional<game_controller_id_type> controllerId)
@@ -165,6 +180,11 @@ namespace zerosugar::xr
     auto GameInstance::GetSerialContext() const -> const GameExecutionSerial&
     {
         return _serial;
+    }
+
+    auto GameInstance::GetEntitySerializer() const -> const IGameEntitySerializer&
+    {
+        return *_entitySerializer;
     }
 
     auto GameInstance::GetTaskScheduler() -> GameTaskScheduler&

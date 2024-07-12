@@ -1,5 +1,6 @@
 #pragma once
 #include "zerosugar/xr/data/enum/equip_position.h"
+#include "zerosugar/xr/network/model/generated/game_cs_message.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity_id.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_monster_snapshot.h"
 
@@ -40,6 +41,7 @@ namespace zerosugar::xr
         void ProcessStop(game_entity_id_type playerId, const Eigen::Vector3d& position);
         void ProcessSprint(game_entity_id_type id);
         void ProcessRollDodge(game_entity_id_type id, const Eigen::Vector3d& rotation);
+        void ProcessPlayerAttack(game_entity_id_type playerId, int32_t attackId, const Eigen::Vector3d& position, const Eigen::Vector3d& rotation);
 
         void ProcessPlayerEquipItemChange(game_entity_id_type id, data::EquipPosition pos, const InventoryItem* item);
 
@@ -52,7 +54,7 @@ namespace zerosugar::xr
         void ProcessSpawnerAdd(const GameSpawnerSnapshot& snapshot);
 
     private:
-        void HandlePlayerPositionChange(GamePlayerSnapshot& player, const Eigen::Vector3d& oldPos, const Eigen::Vector3d& newPos);
+        void HandlePlayerPositionChange(GamePlayerSnapshot& player, const Eigen::Vector3d& oldPos, const Eigen::Vector3d& newPos, bool syncMovement);
         void HandleMonsterPositionChange(GameMonsterSnapshot& monster, const Eigen::Vector3d& oldPos, const Eigen::Vector3d& newPos,
             bool syncMovement);
 

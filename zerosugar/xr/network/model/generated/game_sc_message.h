@@ -34,9 +34,21 @@ namespace zerosugar::xr::network::game::sc
         auto GetOpcode() const -> int32_t final { return opcode; }
     };
 
-    struct AddRemotePlayer final : IPacket
+    struct SpawnRemotePlayer final : IPacket
     {
         static constexpr int32_t opcode = 1001;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        int32_t playersCount = {};
+        std::vector<RemotePlayer> players = {};
+    };
+
+    struct AddRemotePlayer final : IPacket
+    {
+        static constexpr int32_t opcode = 5001;
 
         void Deserialize(PacketReader& reader) final;
         void Serialize(PacketWriter& writer) const final;
@@ -58,9 +70,23 @@ namespace zerosugar::xr::network::game::sc
         std::vector<int64_t> players = {};
     };
 
+    struct RemotePlayerAttack final : IPacket
+    {
+        static constexpr int32_t opcode = 1003;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        int64_t id = {};
+        int32_t motionId = {};
+        Position position = {};
+        Rotation rotation = {};
+    };
+
     struct BeAttackedPlayer final : IPacket
     {
-        static constexpr int32_t opcode = 5001;
+        static constexpr int32_t opcode = 5002;
 
         void Deserialize(PacketReader& reader) final;
         void Serialize(PacketWriter& writer) const final;
@@ -152,7 +178,7 @@ namespace zerosugar::xr::network::game::sc
 
     struct BeAttackedMonster final : IPacket
     {
-        static constexpr int32_t opcode = 5002;
+        static constexpr int32_t opcode = 5003;
 
         void Deserialize(PacketReader& reader) final;
         void Serialize(PacketWriter& writer) const final;
@@ -327,6 +353,12 @@ namespace zerosugar::xr::network::game::sc
                 visitor.template operator()<NotifyPlayerActivated>(*packet.Cast<NotifyPlayerActivated>());
             }
             break;
+            case SpawnRemotePlayer::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const SpawnRemotePlayer&>);
+                visitor.template operator()<SpawnRemotePlayer>(*packet.Cast<SpawnRemotePlayer>());
+            }
+            break;
             case AddRemotePlayer::opcode:
             {
                 static_assert(std::is_invocable_v<TVisitor, const AddRemotePlayer&>);
@@ -337,6 +369,12 @@ namespace zerosugar::xr::network::game::sc
             {
                 static_assert(std::is_invocable_v<TVisitor, const RemoveRemotePlayer&>);
                 visitor.template operator()<RemoveRemotePlayer>(*packet.Cast<RemoveRemotePlayer>());
+            }
+            break;
+            case RemotePlayerAttack::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const RemotePlayerAttack&>);
+                visitor.template operator()<RemotePlayerAttack>(*packet.Cast<RemotePlayerAttack>());
             }
             break;
             case BeAttackedPlayer::opcode:

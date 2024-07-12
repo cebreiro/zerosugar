@@ -3,15 +3,18 @@
 #include "zerosugar/shared/ai/behavior_tree/data/node_serializer.h"
 #include "zerosugar/shared/ai/behavior_tree/log/behavior_tree_log_service_adapter.h"
 #include "zerosugar/shared/execution/executor/impl/asio_executor.h"
+#include "zerosugar/shared/network/socket.h"
 #include "zerosugar/xr/application/bot_client/controller/bot_controller.h"
 #include "zerosugar/xr/application/bot_client/controller/ai/behavior_tree/register_task.h"
 
 namespace zerosugar::xr
 {
-    BotControlService::BotControlService(SharedPtrNotNull<execution::AsioExecutor> executor,
-        const ServiceLocator& locator, int64_t concurrency, int64_t botCount, const std::string& btName)
-        : _executor(std::move(executor))
-        , _serviceLocator(locator)
+    BotControlService::BotControlService(const ServiceLocator& locator,
+        SharedPtrNotNull<execution::AsioExecutor> ioExecutor, SharedPtrNotNull<execution::IExecutor> gameExecutor,
+        int64_t concurrency, int64_t botCount, const std::string& btName)
+        : _serviceLocator(locator)
+        , _ioExecutor(std::move(ioExecutor))
+        , _gameExecutor(std::move(gameExecutor))
         , _strands(std::max<int64_t>(1, concurrency))
         , _botControllers(std::max<int64_t>(1, botCount))
         , _behaviorTreeLogger(std::make_unique<BehaviorTreeLogServiceAdapter>(_serviceLocator.Get<ILogService>(), LogLevel::Debug))
@@ -19,15 +22,25 @@ namespace zerosugar::xr
     {
         bot::RegisterTask(*_nodeSerializer);
 
+        _sharedContexts.resize(std::ssize(_strands));
+
+        std::vector<SharedPtrNotNull<execution::AsioStrand>> ioStrand(std::ssize(_strands));
+
         for (int64_t i = 0; i < std::ssize(_strands); ++i)
         {
-            _strands[i] = _executor->MakeStrand();
+            ioStrand[i] = _ioExecutor->MakeStrand();
+
+            _sharedContexts[i].naviStrand = std::make_shared<Strand>(_gameExecutor);
+            _strands[i] = std::make_shared<Strand>(_gameExecutor);
         }
 
         for (int64_t i = 0; i < std::ssize(_botControllers); ++i)
         {
+            const int64_t index = i % std::ssize(_strands);
+            auto socket = std::make_shared<Socket>(ioStrand[index]);
+
             _botControllers[i] = std::make_shared<BotController>(_serviceLocator,
-                _strands[i % std::ssize(_strands)], i, *_nodeSerializer, btName);
+                _strands[index], _sharedContexts[index], std::move(socket), i, *_nodeSerializer, btName);
             _botControllers[i]->SetLogger(_behaviorTreeLogger.get());
         }
     }

@@ -11,7 +11,9 @@
 
 namespace zerosugar::xr
 {
-    auto ChatHandler::HandlePacket(GameServer& server, Session& session, const network::game::cs::Chat& packet) -> Future<void>
+    using network::game::cs::Chat;
+
+    auto ChatHandler::HandlePacket(GameServer& server, Session& session, UniquePtrNotNull<Chat> packet) -> Future<void>
     {
         SharedPtrNotNull<GameClient> client = server.FindClient(session.GetId());
         if (!client)
@@ -29,9 +31,9 @@ namespace zerosugar::xr
             co_return;
         }
 
-        if (packet.message.starts_with("/") && client->GetGMLevel() > 0)
+        if (packet->message.starts_with("/") && client->GetGMLevel() > 0)
         {
-            const std::string_view input(packet.message.data() + 1, std::ssize(packet.message) - 1);
+            const std::string_view input(packet->message.data() + 1, std::ssize(packet->message) - 1);
             std::vector<std::string> result;
 
             split(result, input, boost::is_any_of(" "));
@@ -47,9 +49,9 @@ namespace zerosugar::xr
             }
         }
 
-        if (packet.message.starts_with("~"))
+        if (packet->message.starts_with("~"))
         {
-            std::string message = packet.message.substr(2);
+            std::string message = packet->message.substr(2);
             if (message.empty())
             {
                 co_return;
@@ -73,7 +75,7 @@ namespace zerosugar::xr
         }
         else
         {
-            auto task = std::make_unique<game_task::PlayerLocalChat>(ReleasePacket(), client->GetGameEntityId());
+            auto task = std::make_unique<game_task::PlayerLocalChat>(std::move(packet), client->GetGameEntityId());
 
             instance->Summit(std::move(task), client->GetControllerId());
         }

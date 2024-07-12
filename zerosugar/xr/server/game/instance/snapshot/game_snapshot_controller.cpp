@@ -131,8 +131,10 @@ namespace zerosugar::xr
             return;
         }
 
+        constexpr bool syncMovement = true;
         const Eigen::Vector3d oldPosition = snapshot->GetPosition();
-        HandlePlayerPositionChange(*snapshot, oldPosition, position);
+
+        HandlePlayerPositionChange(*snapshot, oldPosition, position, syncMovement);
     }
 
     void GameSnapshotController::ProcessStop(game_entity_id_type playerId, const Eigen::Vector3d& position)
@@ -145,8 +147,10 @@ namespace zerosugar::xr
             return;
         }
 
+        constexpr bool syncMovement = true;
         const Eigen::Vector3d oldPosition = snapshot->GetPosition();
-        HandlePlayerPositionChange(*snapshot, oldPosition, position);
+
+        HandlePlayerPositionChange(*snapshot, oldPosition, position, syncMovement);
     }
 
     void GameSnapshotController::ProcessSprint(game_entity_id_type id)
@@ -184,6 +188,33 @@ namespace zerosugar::xr
         packet.rotation.roll = static_cast<float>(rotation.z());
 
         view.Broadcast(packet, sector, id);
+    }
+
+    void GameSnapshotController::ProcessPlayerAttack(game_entity_id_type playerId, int32_t attackId,
+        const Eigen::Vector3d& position, const Eigen::Vector3d& rotation)
+    {
+        GameSnapshotContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
+        GamePlayerSnapshot* snapshot = snapshotContainer.FindPlayer(playerId);
+        assert(snapshot);
+
+        const Eigen::Vector3d oldPos = snapshot->GetPosition();
+
+        if (oldPos != position)
+        {
+            constexpr bool syncMovement = false;
+
+            HandlePlayerPositionChange(*snapshot, oldPos, position, syncMovement);
+        }
+
+        sc::RemotePlayerAttack packet;
+        packet.id = playerId.Unwrap();
+        packet.motionId = attackId;
+        packet.position.x = static_cast<float>(position.x());
+        packet.position.y = static_cast<float>(position.y());
+        packet.position.z = static_cast<float>(position.z());
+        packet.rotation.yaw = static_cast<float>(rotation.y());
+
+        _gameInstance.GetSnapshotView().Broadcast(packet, playerId);
     }
 
     void GameSnapshotController::ProcessPlayerEquipItemChange(game_entity_id_type id, data::EquipPosition pos, const InventoryItem* item)
@@ -293,7 +324,7 @@ namespace zerosugar::xr
         sector.AddEntity(snapshot.GetId());
     }
 
-    void GameSnapshotController::HandlePlayerPositionChange(GamePlayerSnapshot& player, const Eigen::Vector3d& oldPos, const Eigen::Vector3d& newPos)
+    void GameSnapshotController::HandlePlayerPositionChange(GamePlayerSnapshot& player, const Eigen::Vector3d& oldPos, const Eigen::Vector3d& newPos, bool syncMovement)
     {
         player.SetPosition(newPos);
 
@@ -358,12 +389,15 @@ namespace zerosugar::xr
             }
         }
 
-        if (GameSpatialSector::Subset unchanged = (newSector & oldSector); !unchanged.Empty())
+        if (syncMovement)
         {
-            sc::MoveRemotePlayer packet;
-            GamePacketBuilder::Build(packet, player);
+            if (GameSpatialSector::Subset unchanged = (newSector & oldSector); !unchanged.Empty())
+            {
+                sc::MoveRemotePlayer packet;
+                GamePacketBuilder::Build(packet, player);
 
-            view.Broadcast(packet, unchanged, player.GetId());
+                view.Broadcast(packet, unchanged, player.GetId());
+            }
         }
 
         if (GameSpatialSector::Subset ins = (newSector - oldSector); !ins.Empty())

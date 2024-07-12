@@ -37,6 +37,21 @@ namespace zerosugar::xr::network::game::sc
         (void)item;
     }
 
+    void from_json(const nlohmann::json& j, SpawnRemotePlayer& item)
+    {
+        j.at("playersCount").get_to(item.playersCount);
+        j.at("players").get_to(item.players);
+    }
+
+    void to_json(nlohmann::json& j, const SpawnRemotePlayer& item)
+    {
+        j = nlohmann::json
+            {
+                { "playersCount", item.playersCount },
+                { "players", item.players },
+            };
+    }
+
     void from_json(const nlohmann::json& j, AddRemotePlayer& item)
     {
         j.at("playersCount").get_to(item.playersCount);
@@ -64,6 +79,25 @@ namespace zerosugar::xr::network::game::sc
             {
                 { "playersCount", item.playersCount },
                 { "players", item.players },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, RemotePlayerAttack& item)
+    {
+        j.at("id").get_to(item.id);
+        j.at("motionId").get_to(item.motionId);
+        j.at("position").get_to(item.position);
+        j.at("rotation").get_to(item.rotation);
+    }
+
+    void to_json(nlohmann::json& j, const RemotePlayerAttack& item)
+    {
+        j = nlohmann::json
+            {
+                { "id", item.id },
+                { "motionId", item.motionId },
+                { "position", item.position },
+                { "rotation", item.rotation },
             };
     }
 

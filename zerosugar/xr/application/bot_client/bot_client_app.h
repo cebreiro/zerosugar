@@ -4,11 +4,14 @@
 namespace zerosugar::execution
 {
     class AsioExecutor;
+    class GameExecutor;
 }
 
 namespace zerosugar::xr
 {
     class GameDataProvider;
+    class NavigationDataProvider;
+
     struct BotClientAppConfig;
     class BotControlService;
 }
@@ -35,10 +38,13 @@ namespace zerosugar::xr
 
     private:
         UniquePtrNotNull<BotClientAppConfig> _config;
-        SharedPtrNotNull<execution::AsioExecutor> _executor;
+        SharedPtrNotNull<execution::AsioExecutor> _ioExecutor;
+        SharedPtrNotNull<execution::GameExecutor> _gameExecutor;
         SharedPtrNotNull<LogService> _logService;
 
         SharedPtrNotNull<GameDataProvider> _gameDataProvider;
+        SharedPtrNotNull<NavigationDataProvider> _navigationDataProvider;
+
         SharedPtrNotNull<BotControlService> _botControlService;
     };
 }

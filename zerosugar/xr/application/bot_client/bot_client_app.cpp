@@ -1,11 +1,13 @@
 #include "bot_client_app.h"
 
 #include "zerosugar/shared/execution/executor/impl/asio_executor.h"
+#include "zerosugar/shared/execution/executor/impl/game_executor.h"
 #include "zerosugar/shared/log/spdlog/spdlog_logger.h"
 #include "zerosugar/shared/log/spdlog/spdlog_logger_builder.h"
 #include "zerosugar/xr/application/bot_client/bot_client_app_config.h"
 #include "zerosugar/xr/application/bot_client/controller/bot_control_service.h"
 #include "zerosugar/xr/data/game_data_provider.h"
+#include "zerosugar/xr/navigation/navi_data_provider.h"
 
 namespace zerosugar::xr
 {
@@ -13,11 +15,13 @@ namespace zerosugar::xr
         : _config(std::make_unique<BotClientAppConfig>())
         , _logService(std::make_shared<LogService>())
         , _gameDataProvider(std::make_shared<GameDataProvider>())
+        , _navigationDataProvider(std::make_shared<NavigationDataProvider>())
     {
         ServiceLocator& serviceLocator = GetServiceLocator();
 
         serviceLocator.Add<ILogService>(_logService);
         serviceLocator.Add<GameDataProvider>(_gameDataProvider);
+        serviceLocator.Add<NavigationDataProvider>(_navigationDataProvider);
     }
 
     BotClientApp::~BotClientApp()
@@ -92,10 +96,12 @@ namespace zerosugar::xr
     {
         ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize executor", GetName()));
 
-        _executor = std::make_shared<execution::AsioExecutor>(_config->workerCount);
+        _ioExecutor = std::make_shared<execution::AsioExecutor>(_config->workerCount);
+        _gameExecutor = std::make_shared<execution::GameExecutor>(_config->workerCount);
 
-        ExecutionContext::PushExecutor(_executor.get());
-        _executor->Run();
+        ExecutionContext::PushExecutor(_ioExecutor.get());
+        _ioExecutor->Run();
+        _gameExecutor->Run();
 
         ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize executor --> Done", GetName()));
     }
@@ -105,6 +111,7 @@ namespace zerosugar::xr
         ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize game data", GetName()));
 
         _gameDataProvider->Initialize(serviceLocator);
+        _navigationDataProvider->Initialize(serviceLocator, _gameDataProvider->GetBaseDirectory());
 
         ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize game data --> Done", GetName()));
     }
@@ -113,8 +120,8 @@ namespace zerosugar::xr
     {
         ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize bot control service", GetName()));
 
-        _botControlService = std::make_shared<BotControlService>(_executor, GetServiceLocator(),
-            _config->workerCount, 1, "bot_login");
+        _botControlService = std::make_shared<BotControlService>(GetServiceLocator(),
+            _ioExecutor, _gameExecutor, _config->workerCount, _config->botCount, "bot_login");
         _botControlService->Start();
 
         ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize bot control service --> Done", GetName()));

@@ -86,7 +86,7 @@ namespace zerosugar::xr::ai
             const auto va = co_await bt::Event<event::NaviCompleteFindStraightPath>();
             const auto& points = std::get<event::NaviCompleteFindStraightPath>(va).points;
 
-            if (!points.empty())
+            if (std::ssize(points) > 1)
             {
                 controller.GetMovementController().MovePath(points, speed);
 

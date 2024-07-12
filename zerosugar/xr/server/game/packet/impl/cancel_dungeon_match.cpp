@@ -8,8 +8,10 @@
 
 namespace zerosugar::xr
 {
+    using network::game::cs::CancelDungeonMatch;
+
     auto CancelDungeonMatchHandler::HandlePacket(GameServer& server, Session& session,
-        const network::game::cs::CancelDungeonMatch& packet) -> Future<void>
+        UniquePtrNotNull<CancelDungeonMatch> packet) -> Future<void>
     {
         SharedPtrNotNull<GameClient> client = server.FindClient(session.GetId());
         if (!client)

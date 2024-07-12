@@ -10,6 +10,20 @@ namespace zerosugar::xr
         virtual ~IPacket() = default;
 
         template <typename T> requires std::derived_from<T, IPacket>
+        auto Cast() -> T*
+        {
+            if (this->GetOpcode() == T::opcode)
+            {
+                T* ptr = static_cast<T*>(this);
+                assert(ptr == dynamic_cast<T*>(this));
+
+                return ptr;
+            }
+
+            return nullptr;
+        }
+
+        template <typename T> requires std::derived_from<T, IPacket>
         auto Cast() const -> const T*
         {
             if (this->GetOpcode() == T::opcode)

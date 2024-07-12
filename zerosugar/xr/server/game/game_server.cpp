@@ -28,7 +28,6 @@ namespace zerosugar::xr
         , _gameInstanceContainer(std::make_unique<GameInstanceContainer>())
         , _gamePacketHandlerFactory(std::make_unique<GamePacketHandlerFactory>())
         , _commandHandlerFactory(std::make_unique<CommandHandlerFactory>())
-        , _gameEntitySerializer(std::make_unique<GameEntitySerializer>())
     {
     }
 
@@ -138,11 +137,6 @@ namespace zerosugar::xr
     auto GameServer::GetCommandHandlerFactory() -> ICommandHandlerFactory&
     {
         return *_commandHandlerFactory;
-    }
-
-    auto GameServer::GetGameEntitySerializer() const -> IGameEntitySerializer&
-    {
-        return *_gameEntitySerializer;
     }
 
     void GameServer::SetPublicIP(std::string ip)

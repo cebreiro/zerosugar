@@ -27,6 +27,9 @@ namespace zerosugar::bt
         auto Get(const std::string& key) -> T&;
 
         template <typename T>
+        auto GetOr(const std::string& key, T defaultValue) -> T;
+
+        template <typename T>
         auto GetIf(const std::string& key) -> T*;
 
     private:
@@ -64,6 +67,17 @@ namespace zerosugar::bt
         assert(result);
 
         return *result;
+    }
+
+    template <typename T>
+    auto BlackBoard::GetOr(const std::string& key, T defaultValue) -> T
+    {
+        if (T* result = GetIf<T>(key); result)
+        {
+            return *result;
+        }
+
+        return defaultValue;
     }
 
     template <typename T>
