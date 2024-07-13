@@ -13,7 +13,7 @@ namespace zerosugar::xr
     RPCClient::RPCClient(SharedPtrNotNull<execution::AsioExecutor> executor)
         : _executor(std::move(executor))
         , _strand(_executor->MakeStrand())
-        , _socket(std::make_shared<Socket>(_strand))
+        , _socket(std::make_shared<Socket>(_executor->MakeStrand()))
     {
     }
 
@@ -78,12 +78,15 @@ namespace zerosugar::xr
         auto self = shared_from_this();
 
         Buffer receiveBuffer;
-        receiveBuffer.Add(buffer::Fragment::Create(1024));
-
         Buffer receivedBuffer;
 
         while (_socket->IsOpen())
         {
+            if (receiveBuffer.GetSize() < 4)
+            {
+                receiveBuffer.Add(buffer::Fragment::Create(1024));
+            }
+
             const std::expected<int64_t, IOError> receiveResult = co_await _socket->ReceiveAsync(receiveBuffer);
 
             if (receiveResult.has_value())
@@ -113,10 +116,7 @@ namespace zerosugar::xr
                     const int32_t packetSize = reader.Read<int32_t>();
                     if (receivedBuffer.GetSize() < packetSize)
                     {
-                        if (receiveBuffer.GetSize() < packetSize - 4)
-                        {
-                            receiveBuffer.Add(buffer::Fragment::Create(packetSize));
-                        }
+                        receiveBuffer.Add(buffer::Fragment::Create(1024 + packetSize));
 
                         break;
                     }
@@ -292,6 +292,7 @@ namespace zerosugar::xr
         resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorNone;
         resultRPC.rpcId = request.rpcId;
         resultRPC.serviceName = request.serviceName;
+        resultRPC.rpcName = request.rpcName;
 
         auto iterProcedure = _procedures.find(MakeProcedureKey(request.serviceName, request.rpcName));
         if (iterProcedure == _procedures.end())
@@ -491,8 +492,8 @@ namespace zerosugar::xr
         callback(result.errorCode, result.rpcResult);
 
         ZEROSUGAR_LOG_DEBUG(_serviceLocator,
-            std::format("[rpc_client] rpc is removed. rpc_id: {}, service: {}, error: {}",
-                result.rpcId, result.serviceName, GetEnumName(result.errorCode)));
+            std::format("[rpc_client] rpc is removed. rpc_id: {}, rpc: {}::{}, error: {}",
+                result.rpcId, result.serviceName, result.rpcName, GetEnumName(result.errorCode)));
     }
 
     void RPCClient::HandleServerStreaming(const network::SendServerStreaming& serverStreaming)

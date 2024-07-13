@@ -63,7 +63,7 @@ namespace zerosugar::xr::gm
                 view.RemoveObserver<sc::SpawnMonster>(observerKey);
                 view.RemoveObserver<sc::AttackMonster>(observerKey);
                 view.RemoveObserver<sc::MoveMonster>(observerKey);
-                // TODO: monster despawn, movement
+                view.RemoveObserver<sc::BeAttackedMonster>(observerKey);
             });
         navigationService->AddDrawTargets(std::move(params));
 
@@ -152,6 +152,17 @@ namespace zerosugar::xr::gm
                 param.position = Eigen::Vector3d(pos.x, pos.y, pos.z);
 
                 navi->UpdateDrawTarget(std::move(param));
+            });
+
+        view.AddObserver<sc::BeAttackedMonster>(observerKey, [navi](const sc::BeAttackedMonster& packet)
+            {
+                if (packet.attackedHp <= 0.f)
+                {
+                    navi::RemoveVisualizeTargetParam param;
+                    param.id = packet.attackedId;
+
+                    navi->RemoveDrawTarget(std::move(param));
+                }
             });
 
         return true;

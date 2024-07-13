@@ -50,7 +50,7 @@ namespace zerosugar::xr
             });
     }
 
-    auto BotController::Transition(const std::string& behaviorTreeName) -> Future<void>
+    auto BotController::Transition(std::string behaviorTreeName) -> Future<void>
     {
         assert(ExecutionContext::IsEqualTo(*_strand));
 
@@ -81,6 +81,10 @@ namespace zerosugar::xr
         {
             co_await _runAI;
         }
+
+        ZEROSUGAR_LOG_INFO(GetServiceLocator(),
+            std::format("[{}] behavior transition: {}",
+                GetName(), behaviorTreeName));
 
         _behaviorTree = std::move(newBehaviorTree);
         _runAI = RunAI();
@@ -197,13 +201,17 @@ namespace zerosugar::xr
         auto self = shared_from_this();
 
         Buffer receiveBuffer;
-        receiveBuffer.Add(buffer::Fragment::Create(1024));
-
         Buffer receivedBuffer;
 
         while (_socket->IsOpen())
         {
+            if (receiveBuffer.GetSize() < 2)
+            {
+                receiveBuffer.Add(buffer::Fragment::Create(4096));
+            }
+
             const std::expected<int64_t, IOError> receiveResult = co_await _socket->ReceiveAsync(receiveBuffer);
+            assert(ExecutionContext::IsEqualTo(*_strand));
 
             if (receiveResult.has_value())
             {
@@ -232,20 +240,10 @@ namespace zerosugar::xr
                     const int32_t packetSize = reader.Read<int16_t>();
                     if (receivedBuffer.GetSize() < packetSize)
                     {
-                        if (receiveBuffer.GetSize() < packetSize - 2)
-                        {
-                            receiveBuffer.Add(buffer::Fragment::Create(packetSize));
-                        }
+                        receiveBuffer.Add(buffer::Fragment::Create(packetSize + 2048));
 
                         break;
                     }
-
-                    boost::scope::scope_exit exit([&receivedBuffer, packetSize]()
-                        {
-                            Buffer temp;
-                            [[maybe_unused]] bool sliced = receivedBuffer.SliceFront(temp, packetSize);
-                            assert(sliced);
-                        });
 
                     switch (_sessionState)
                     {
@@ -314,11 +312,37 @@ namespace zerosugar::xr
                                 for (const int64_t id : packet.monsters)
                                 {
                                     [[maybe_unused]]
-                                    const bool added = _visualObjectContainer->Remove(id);
-                                    assert(added);
+                                    const bool removed = _visualObjectContainer->Remove(id);
+                                    assert(removed);
+
+                                    ZEROSUGAR_LOG_INFO(this->GetServiceLocator(),
+                                        std::format("removed: {}", id));
+                                }
+                            }
+                            else if constexpr (std::is_same_v<T, game::sc::DespawnMonster>)
+                            {
+                                for (const int64_t id : packet.monsters)
+                                {
+                                    [[maybe_unused]]
+                                    const bool removed = _visualObjectContainer->Remove(id);
+                                    assert(removed);
+
+                                    ZEROSUGAR_LOG_INFO(this->GetServiceLocator(),
+                                        std::format("despawn: {}", id));
                                 }
                             }
                             else if constexpr (std::is_same_v<T, game::sc::MoveMonster>)
+                            {
+                                bot::Monster* monster = _visualObjectContainer->FindMonster(packet.id);
+                                assert(monster);
+
+                                const Eigen::Vector3d pos(packet.position.x, packet.position.y, packet.position.z);
+                                const Eigen::Vector3d rot(packet.rotation.pitch, packet.rotation.yaw, packet.rotation.roll);
+
+                                monster->SetPosition(pos);
+                                monster->SetRotation(rot);
+                            }
+                            else if constexpr (std::is_same_v<T, game::sc::AttackMonster>)
                             {
                                 bot::Monster* monster = _visualObjectContainer->FindMonster(packet.id);
                                 assert(monster);
@@ -338,6 +362,10 @@ namespace zerosugar::xr
                     }
                     break;
                     }
+
+                    Buffer temp;
+                    [[maybe_unused]] bool sliced = receivedBuffer.SliceFront(temp, packetSize);
+                    assert(sliced);
                 }
             }
             else
@@ -365,9 +393,6 @@ namespace zerosugar::xr
 
             assert(ExecutionContext::IsEqualTo(*_strand));
 
-            ZEROSUGAR_LOG_DEBUG(_serviceLocator,
-                std::format("[{}] behavior_tree[{}] tick", GetName(), bt->GetName()));
-
             bt->RunOnce();
 
             while (bt->IsAwaiting())
@@ -380,9 +405,6 @@ namespace zerosugar::xr
                     });
 
                 co_await Future<void>(completionToken);
-
-                ZEROSUGAR_LOG_DEBUG(_serviceLocator,
-                    std::format("[{}] behavior_tree[{}] resume", GetName(), bt->GetName()));
 
                 if (bt->StopRequested())
                 {
@@ -433,6 +455,11 @@ namespace zerosugar::xr
     auto BotController::GetStrand() const -> Strand&
     {
         return *_strand;
+    }
+
+    auto BotController::GetServiceLocator() -> ServiceLocator&
+    {
+        return _serviceLocator;
     }
 
     auto BotController::GetLocalPlayer() -> bot::LocalPlayer&

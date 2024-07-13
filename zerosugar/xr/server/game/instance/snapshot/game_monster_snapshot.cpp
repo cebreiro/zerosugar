@@ -14,6 +14,11 @@ namespace zerosugar::xr
     {
     }
 
+    bool GameMonsterSnapshot::IsDead() const
+    {
+        return _hp <= 0.f;
+    }
+
     void GameMonsterSnapshot::Initialize(const GameEntity& entity)
     {
         const MovementComponent& movementComponent = entity.GetComponent<MovementComponent>();

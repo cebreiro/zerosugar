@@ -42,7 +42,11 @@ namespace zerosugar::xr::network::game::cs
     void ApplyPlayerAttack::Deserialize(PacketReader& reader)
     {
         id = reader.Read<int64_t>();
-        targetId = reader.Read<int64_t>();
+        targetCount = reader.Read<int32_t>();
+        for (int32_t i = 0; i < targetCount; ++i)
+        {
+            targets.emplace_back(reader.Read<int64_t>());
+        }
         skillId = reader.Read<int32_t>();
         position = reader.Read<Position>();
         rotation = reader.Read<Rotation>();
@@ -51,7 +55,11 @@ namespace zerosugar::xr::network::game::cs
     void ApplyPlayerAttack::Serialize(PacketWriter& writer) const
     {
         writer.Write<int64_t>(id);
-        writer.Write<int64_t>(targetId);
+        writer.Write<int32_t>(targetCount);
+        for (const auto& item : targets)
+        {
+            writer.WriteObject(item);
+        }
         writer.Write<int32_t>(skillId);
         writer.Write(position);
         writer.Write(rotation);

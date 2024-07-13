@@ -86,4 +86,11 @@ namespace zerosugar::xr
 
         return iter != _userIdIndexer.end() ? iter->second : nullptr;
     }
+
+    auto GameClientContainer::GetCount() const -> int64_t
+    {
+        std::shared_lock lock(_mutex);
+
+        return std::ssize(_clients);
+    }
 }

@@ -51,7 +51,8 @@ namespace zerosugar::xr::network::game::cs
         auto GetOpcode() const -> int32_t final { return opcode; }
 
         int64_t id = {};
-        int64_t targetId = {};
+        int32_t targetCount = {};
+        std::vector<int64_t> targets = {};
         int32_t skillId = {};
         Position position = {};
         Rotation rotation = {};

@@ -95,13 +95,12 @@ message RemoveMonster
     repeated int64 monsters = 2 [(size_element) = "monsters_count"];
 }
 
-message BattleTransitionMonster
+message DespawnMonster
 {
     option (opcode) = 4004;
 
-    int64 id = 1;
-    Position position = 2;
-    Rotation rotation = 3;
+    int32 monsters_count = 1;
+    repeated int64 monsters = 2 [(size_element) = "monsters_count"];
 }
 
 message MoveMonster
@@ -231,4 +230,10 @@ message NotifyDungeonMatchGroupApproved
 
     string ip = 1;
     int32 port = 2;
+}
+
+// for event
+message SpawnerMonsterDead
+{
+    option (opcode) = 100001;
 }

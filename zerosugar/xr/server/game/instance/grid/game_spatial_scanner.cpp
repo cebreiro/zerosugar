@@ -23,7 +23,10 @@ namespace zerosugar::xr
 
     auto GameSpatialScanner::Join() -> Future<void>
     {
-        assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
+        if (!ExecutionContext::IsEqualTo(_gameInstance.GetStrand()))
+        {
+            co_await _gameInstance.GetStrand();
+        }
 
         if (!_running)
         {

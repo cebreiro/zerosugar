@@ -18,7 +18,7 @@ namespace zerosugar::xr::bot
 
         if (std::shared_ptr<Monster>* item = blackBoard.GetIf<std::shared_ptr<Monster>>("battle_target"); item)
         {
-            if (visualObjectContainer.Contains((*item)->GetData().id))
+            if (visualObjectContainer.Contains((*item)->GetData().id) && (*item)->GetData().hp > 0.f)
             {
                 return true;
             }
@@ -34,6 +34,11 @@ namespace zerosugar::xr::bot
 
             for (Monster& mob : visualObjectContainer.GetMonsterRange())
             {
+                if (mob.GetData().hp <= 0.f)
+                {
+                    continue;
+                }
+
                 const double distanceSq = (position - mob.GetPosition()).squaredNorm();
                 if (distanceSq < minDistanceSq)
                 {

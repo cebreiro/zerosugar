@@ -24,6 +24,8 @@ namespace zerosugar::xr
 
         auto ShutdownAndJoin() -> Future<void>;
 
+        bool Contains(game_controller_id_type id) const;
+
         auto CreateAIController(game_entity_id_type entityId, const std::string& btName) -> SharedPtrNotNull<AIController>;
         auto DeleteAIController(game_controller_id_type id) -> Future<void>;
 

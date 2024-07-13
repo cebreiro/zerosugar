@@ -17,6 +17,8 @@ namespace zerosugar::xr
         auto Find(session::id_type sessionId) -> std::shared_ptr<GameClient>;
         auto FindByUserId(int64_t userId) -> std::shared_ptr<GameClient>;
 
+        auto GetCount() const -> int64_t;
+
     private:
         mutable std::shared_mutex _mutex;
 

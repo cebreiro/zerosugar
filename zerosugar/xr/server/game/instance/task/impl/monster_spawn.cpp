@@ -96,5 +96,8 @@ namespace zerosugar::xr::game_task
         serialContext.GetSnapshotController().ProcessMonsterSpawn(*snapshot);
 
         _aiController->Start();
+
+        ZEROSUGAR_LOG_INFO(serialContext.GetServiceLocator(),
+            std::format("monster spawned. id: {}", snapshot->GetId().Unwrap()));
     }
 }

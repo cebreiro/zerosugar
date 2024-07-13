@@ -135,6 +135,11 @@ namespace zerosugar
         if (bt::node::Result::promise_type& promise = _runningNodeCoroutine.promise();
             promise.IsWaitingFor(any.type()))
         {
+            if (_logger)
+            {
+                _logger->LogNodeResumeEvent(GetName(), GetCurrentNodeName(), any.type().name());
+            }
+
             promise.SetEvent(any);
 
             Signal();
@@ -330,6 +335,8 @@ namespace zerosugar
 
         if (_stack.empty())
         {
+            assert(_currentState != bt::node::State::Running);
+
             if (_logger)
             {
                 _logger->LogBehaviorTreeEnd(GetName(), _currentState == bt::node::State::Success);
@@ -347,6 +354,7 @@ namespace zerosugar
         }
 
         _visited.clear();
+        _currentState = bt::node::State::Success;
     }
 
     void BehaviorTree::Signal()

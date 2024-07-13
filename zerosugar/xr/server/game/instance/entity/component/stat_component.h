@@ -15,18 +15,21 @@ namespace zerosugar::xr
         void AddItemStat(StatType type, StatValue value);
         void SubItemStat(StatType type, StatValue value);
 
-        auto GetHP(std::chrono::system_clock::time_point now = GameExecutionParallel::GetBaseTimePoint()) const -> StatValue;
-        auto GetMP(std::chrono::system_clock::time_point now = GameExecutionParallel::GetBaseTimePoint()) const -> StatValue;
-        auto GetStamina(std::chrono::system_clock::time_point now = GameExecutionParallel::GetBaseTimePoint()) const -> StatValue;
+        auto GetHP(game_time_point_type now = GameExecutionParallel::GetBaseTimePoint()) const -> StatValue;
+        auto GetMP(game_time_point_type now = GameExecutionParallel::GetBaseTimePoint()) const -> StatValue;
+        auto GetStamina(game_time_point_type now = GameExecutionParallel::GetBaseTimePoint()) const -> StatValue;
         auto Get(StatType type) const -> StatValue;
 
         auto GetMaxHP() const -> StatValue;
         auto GetMaxMP() const -> StatValue;
         auto GetMaxStamina() const -> StatValue;
 
-        void SetHP(StatValue value, std::chrono::system_clock::time_point now = GameExecutionParallel::GetBaseTimePoint());
-        void SetMP(StatValue value, std::chrono::system_clock::time_point now = GameExecutionParallel::GetBaseTimePoint());
-        void SetStamina(StatValue value, std::chrono::system_clock::time_point now = GameExecutionParallel::GetBaseTimePoint());
+        void SetHP(StatValue value, game_time_point_type now = GameExecutionParallel::GetBaseTimePoint());
+        void SetMP(StatValue value, game_time_point_type now = GameExecutionParallel::GetBaseTimePoint());
+        void SetStamina(StatValue value, game_time_point_type now = GameExecutionParallel::GetBaseTimePoint());
+
+        void SetHPRegen(bool value, game_time_point_type now = GameExecutionParallel::GetBaseTimePoint());
+
         void SetMaxHP(StatValue value);
         void SetMaxMP(StatValue value);
         void SetMaxStamina(StatValue value);

@@ -54,6 +54,7 @@ namespace zerosugar::xr
         RegisterToCoordinationService();
         OpenCoordinationCommandChannel();
         //ScheduleServerStatusReport();
+        ScheduleSessionCountReport();
     }
 
     void GameServer::Shutdown()
@@ -63,6 +64,11 @@ namespace zerosugar::xr
         if (_serverStatusReportStopSource.stop_possible())
         {
             _serverStatusReportStopSource.request_stop();
+        }
+
+        if (_serverSessionCountStopSource.stop_possible())
+        {
+            _serverSessionCountStopSource.request_stop();
         }
     }
 
@@ -186,7 +192,7 @@ namespace zerosugar::xr
             }
         }
 
-        Delay(std::chrono::seconds(5))
+        Delay(std::chrono::seconds(60))
             .Then(GetExecutor(), [self = SharedFromThis(), id = session.GetId(), weak = session.weak_from_this()]()
                 {
                     if (self->HasClient(id))
@@ -398,5 +404,31 @@ namespace zerosugar::xr
                 }
 
             }, SharedFromThis(), _serverStatusReportStopSource.get_token());
+    }
+
+    void GameServer::ScheduleSessionCountReport()
+    {
+        _serverStatusReportStopSource = std::stop_source();
+
+        Post(GetExecutor(), [](SharedPtrNotNull<GameServer> self, std::stop_token token) -> Future<void>
+            {
+                while (true)
+                {
+                    for (int64_t i = 0; i < 5; ++i)
+                    {
+                        co_await Delay(std::chrono::seconds(1));
+
+                        if (token.stop_requested())
+                        {
+                            break;
+                        }
+                    }
+
+                    ZEROSUGAR_LOG_INFO(self->GetServiceLocator(),
+                        std::format("[{}] current session count: {}"
+                            , self->GetName(), self->GetClientContainer().GetCount()));
+                }
+
+            }, SharedFromThis(), _serverStatusReportStopSource.get_token());;
     }
 }

@@ -42,10 +42,12 @@ namespace zerosugar::xr
         void ProcessSprint(game_entity_id_type id);
         void ProcessRollDodge(game_entity_id_type id, const Eigen::Vector3d& rotation);
         void ProcessPlayerAttack(game_entity_id_type playerId, int32_t attackId, const Eigen::Vector3d& position, const Eigen::Vector3d& rotation);
+        void ProcessPlayerAttackEffect(game_entity_id_type playerId, std::span<const std::pair<game_entity_id_type, float>> results);
 
         void ProcessPlayerEquipItemChange(game_entity_id_type id, data::EquipPosition pos, const InventoryItem* item);
 
         void ProcessMonsterSpawn(const GameMonsterSnapshot& snapshot);
+        void ProcessMonsterDespawn(game_entity_id_type entityId);
         void ProcessMonsterMove(GameMonsterSnapshot& snapshot, const Eigen::Vector3d& position, float yaw);
         void ProcessMonsterAttack(GameMonsterSnapshot& snapshot, int32_t attackIndex,
             const std::optional<Eigen::Vector3d>& destPos, const Eigen::Vector3d& rotation, double movementDuration);

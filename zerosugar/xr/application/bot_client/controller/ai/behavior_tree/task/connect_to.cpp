@@ -32,11 +32,12 @@ namespace zerosugar::xr::bot
                 {
                     controller->InvokeOnBehaviorTree([](BehaviorTree& behaviorTree)
                         {
-                            behaviorTree.NotifyAndResume(event::SocketConnected {});
+                            behaviorTree.Notify(event::SocketConnected {});
                         });
                 });
 
-        co_await bt::Event<event::SocketConnected>();
+        [[maybe_unused]]
+        const auto va = co_await bt::Event<event::SocketConnected>();
 
         // TODO: fix
         if (_target.starts_with("login"))

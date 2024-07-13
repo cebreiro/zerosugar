@@ -7,7 +7,7 @@
 
 namespace zerosugar::xr::game_task
 {
-    PlayerAttack::PlayerAttack(UniquePtrNotNull<IPacket> param, game_entity_id_type targetId,
+    PlayerAttack::PlayerAttack(UniquePtrNotNull<network::game::cs::StartPlayerAttack> param, game_entity_id_type targetId,
         game_time_point_type creationTimePoint)
         : GameTaskBaseParamT(creationTimePoint, std::move(param), MainTargetSelector(targetId))
     {

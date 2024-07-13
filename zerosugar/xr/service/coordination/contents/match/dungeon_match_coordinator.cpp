@@ -240,7 +240,7 @@ namespace zerosugar::xr
         int64_t removeCount = 0;
 
         const auto now = std::chrono::system_clock::now();
-        constexpr auto groupExpiredInterval = std::chrono::seconds(10);
+        constexpr auto groupExpiredInterval = std::chrono::seconds(30);
 
         for (auto iter = _matchGroups.begin(); iter != _matchGroups.end(); )
         {

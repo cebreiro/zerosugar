@@ -41,8 +41,9 @@ namespace zerosugar::xr
         SharedPtrNotNull<execution::AsioExecutor> _ioExecutor;
         SharedPtrNotNull<execution::IExecutor> _gameExecutor;
 
+        int64_t _concurrency = 1;
+
         std::vector<bot::SharedContext> _sharedContexts;
-        std::vector<std::shared_ptr<Strand>> _strands;
         std::vector<SharedPtrNotNull<BotController>> _botControllers;
 
         UniquePtrNotNull<IBehaviorTreeLogger> _behaviorTreeLogger;

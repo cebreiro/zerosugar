@@ -41,8 +41,8 @@ namespace zerosugar::xr::network::game::sc
     void from_json(const nlohmann::json& j, RemoveMonster& item);
     void to_json(nlohmann::json& j, const RemoveMonster& item);
 
-    void from_json(const nlohmann::json& j, BattleTransitionMonster& item);
-    void to_json(nlohmann::json& j, const BattleTransitionMonster& item);
+    void from_json(const nlohmann::json& j, DespawnMonster& item);
+    void to_json(nlohmann::json& j, const DespawnMonster& item);
 
     void from_json(const nlohmann::json& j, MoveMonster& item);
     void to_json(nlohmann::json& j, const MoveMonster& item);
@@ -88,5 +88,8 @@ namespace zerosugar::xr::network::game::sc
 
     void from_json(const nlohmann::json& j, NotifyDungeonMatchGroupApproved& item);
     void to_json(nlohmann::json& j, const NotifyDungeonMatchGroupApproved& item);
+
+    void from_json(const nlohmann::json& j, SpawnerMonsterDead& item);
+    void to_json(nlohmann::json& j, const SpawnerMonsterDead& item);
 
 }

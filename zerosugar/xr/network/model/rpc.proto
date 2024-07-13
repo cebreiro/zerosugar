@@ -54,7 +54,8 @@ message ResultRemoteProcedureCall
     RemoteProcedureCallErrorCode error_code = 1;
     int32 rpc_id = 2;
     string service_name = 3;
-    string rpc_result = 4;
+    string rpc_name = 4;
+    string rpc_result = 5;
 }
 
 message SendServerStreaming

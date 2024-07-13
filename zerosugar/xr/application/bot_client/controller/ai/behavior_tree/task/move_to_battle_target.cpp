@@ -33,7 +33,7 @@ namespace zerosugar::xr::bot
         {
             if ((now - *lastPathUpdateTime) < _pathUpdateInterval)
             {
-                co_return false;
+                co_return true;
             }
 
             *lastPathUpdateTime = now;

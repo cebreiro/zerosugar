@@ -69,6 +69,7 @@ namespace zerosugar::xr::network
         errorCode = reader.Read<RemoteProcedureCallErrorCode>();
         rpcId = reader.Read<int32_t>();
         serviceName = reader.ReadString();
+        rpcName = reader.ReadString();
         rpcResult = reader.ReadString();
     }
 
@@ -77,6 +78,7 @@ namespace zerosugar::xr::network
         writer.Write(errorCode);
         writer.Write<int32_t>(rpcId);
         writer.Write(serviceName);
+        writer.Write(rpcName);
         writer.Write(rpcResult);
     }
 

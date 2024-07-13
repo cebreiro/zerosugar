@@ -15,32 +15,30 @@ namespace zerosugar::xr
         : _serviceLocator(locator)
         , _ioExecutor(std::move(ioExecutor))
         , _gameExecutor(std::move(gameExecutor))
-        , _strands(std::max<int64_t>(1, concurrency))
+        , _concurrency(std::max<int64_t>(1, concurrency))
         , _botControllers(std::max<int64_t>(1, botCount))
         , _behaviorTreeLogger(std::make_unique<BehaviorTreeLogServiceAdapter>(_serviceLocator.Get<ILogService>(), LogLevel::Debug))
         , _nodeSerializer(std::make_unique<bt::NodeSerializer>())
     {
         bot::RegisterTask(*_nodeSerializer);
 
-        _sharedContexts.resize(std::ssize(_strands));
+        _sharedContexts.resize(_concurrency);
 
-        std::vector<SharedPtrNotNull<execution::AsioStrand>> ioStrand(std::ssize(_strands));
-
-        for (int64_t i = 0; i < std::ssize(_strands); ++i)
+        for (int64_t i = 0; i < concurrency; ++i)
         {
-            ioStrand[i] = _ioExecutor->MakeStrand();
-
             _sharedContexts[i].naviStrand = std::make_shared<Strand>(_gameExecutor);
-            _strands[i] = std::make_shared<Strand>(_gameExecutor);
         }
 
         for (int64_t i = 0; i < std::ssize(_botControllers); ++i)
         {
-            const int64_t index = i % std::ssize(_strands);
-            auto socket = std::make_shared<Socket>(ioStrand[index]);
-
             _botControllers[i] = std::make_shared<BotController>(_serviceLocator,
-                _strands[index], _sharedContexts[index], std::move(socket), i, *_nodeSerializer, btName);
+                std::make_shared<Strand>(_gameExecutor),
+                _sharedContexts[i % concurrency],
+                std::make_shared<Socket>(_ioExecutor->MakeStrand()),
+                i,
+                *_nodeSerializer,
+                btName);
+
             _botControllers[i]->SetLogger(_behaviorTreeLogger.get());
         }
     }

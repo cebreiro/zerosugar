@@ -35,6 +35,7 @@ namespace zerosugar::xr::bot
             return;
         }
 
+        _paths.clear();
         _paths.reserve(paths.size());
 
         const Eigen::Vector3d startPos(paths[0].GetX(), paths[0].GetY(), paths[0].GetZ());
@@ -71,6 +72,8 @@ namespace zerosugar::xr::bot
     void MovementController::StopMovement()
     {
         _paths.clear();
+
+        _lastMovementEndTimePoint = std::chrono::system_clock::now();
     }
 
     void MovementController::Shutdown()

@@ -3,6 +3,7 @@
 #include "zerosugar/xr/server/game/instance/entity/game_entity_container.h"
 #include "zerosugar/xr/server/game/instance/grid/game_spatial_query.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_monster_snapshot.h"
+#include "zerosugar/xr/server/game/instance/snapshot/game_player_snapshot.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_container.h"
 #include "zerosugar/xr/server/game/instance/task/execution/game_execution_parallel.h"
 #include "zerosugar/xr/server/game/instance/task/execution/game_execution_serial.h"
@@ -58,6 +59,57 @@ namespace zerosugar::xr::game_task
     auto MainTargetSelector::GetTarget() const -> target_type
     {
         return _entity.get();
+    }
+
+    PlayerAttackEffectTargetSelector::PlayerAttackEffectTargetSelector(game_entity_id_type playerId, std::span<const game_entity_id_type> targetIds)
+        : _playerId(playerId)
+        , _targetIds(targetIds.begin(), targetIds.end())
+    {
+        assert(!targetIds.empty());
+    }
+
+    bool PlayerAttackEffectTargetSelector::SelectEntityId(const GameExecutionSerial& serial)
+    {
+        const GameSnapshotContainer& snapshotContainer = serial.GetSnapshotContainer();
+
+        const GamePlayerSnapshot* player = snapshotContainer.FindPlayer(_playerId);
+        if (!player)
+        {
+            return false;
+        }
+
+        std::erase_if(_targetIds, [this, &snapshotContainer](game_entity_id_type targetId) -> bool
+            {
+                const GameMonsterSnapshot* target = snapshotContainer.FindMonster(targetId);
+                if (!target)
+                {
+                    return true;
+                }
+
+                return false;
+            });
+
+        return !_targetIds.empty();
+    }
+
+    auto PlayerAttackEffectTargetSelector::GetTargetId() const -> std::span<const game_entity_id_type>
+    {
+        return _targetIds;
+    }
+
+    bool PlayerAttackEffectTargetSelector::SelectEntity(const GameExecutionParallel& parallel)
+    {
+        parallel.GetEntityContainer().FindRange(_targetIds, [this](const SharedPtrNotNull<GameEntity>& entity)
+            {
+                this->_targets.push_back(entity.get());
+            });
+
+        return !_targets.empty();
+    }
+
+    auto PlayerAttackEffectTargetSelector::GetTarget() const -> target_type
+    {
+        return _targets;
     }
 
     BoxSkillTargetSelector::BoxSkillTargetSelector(const Eigen::Vector3d& center, const Eigen::AlignedBox2d& box, float yaw, GameEntityType targetType)

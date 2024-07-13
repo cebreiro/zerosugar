@@ -8,7 +8,7 @@ namespace zerosugar::xr::game_task
     class PlayerAttack final : public GameTaskBaseParamT<IPacket, network::game::cs::StartPlayerAttack, MainTargetSelector>
     {
     public:
-        PlayerAttack(UniquePtrNotNull<IPacket> param, game_entity_id_type targetId,
+        PlayerAttack(UniquePtrNotNull<network::game::cs::StartPlayerAttack> param, game_entity_id_type targetId,
             game_time_point_type creationTimePoint = game_clock_type::now());
 
     private:

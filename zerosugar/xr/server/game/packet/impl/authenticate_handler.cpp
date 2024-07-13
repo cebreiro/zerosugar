@@ -108,12 +108,12 @@ namespace zerosugar::xr
             const Eigen::Vector3d& pos = entity->GetComponent<MovementComponent>().GetPosition();
 
             const navi::FVector naviPos(pos);
-            constexpr float radius = 1600.0;
+            constexpr float radius = 600.0;
 
             std::optional<navi::FVector> randPos = co_await naviation->GetRandomPointAroundCircle(naviPos, radius);
             if (randPos.has_value())
             {
-                movementComponent.SetPosition(Eigen::Vector3d(randPos->GetX(), randPos->GetY(), randPos->GetZ() + game_constant::player_height / 2));
+                movementComponent.SetPosition(Eigen::Vector3d(randPos->GetX(), randPos->GetY(), randPos->GetZ()));
             }
         }
 

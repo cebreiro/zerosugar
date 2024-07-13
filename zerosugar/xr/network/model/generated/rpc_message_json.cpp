@@ -58,6 +58,7 @@ namespace zerosugar::xr::network
         j.at("errorCode").get_to(item.errorCode);
         j.at("rpcId").get_to(item.rpcId);
         j.at("serviceName").get_to(item.serviceName);
+        j.at("rpcName").get_to(item.rpcName);
         j.at("rpcResult").get_to(item.rpcResult);
     }
 
@@ -68,6 +69,7 @@ namespace zerosugar::xr::network
                 { "errorCode", item.errorCode },
                 { "rpcId", item.rpcId },
                 { "serviceName", item.serviceName },
+                { "rpcName", item.rpcName },
                 { "rpcResult", item.rpcResult },
             };
     }

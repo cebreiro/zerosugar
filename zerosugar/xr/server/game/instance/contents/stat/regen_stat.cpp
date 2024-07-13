@@ -33,7 +33,10 @@ namespace zerosugar::xr
             return _value;
         }
 
-        const_cast<RegenStat*>(this)->Update(now);
+        if (_regen)
+        {
+            const_cast<RegenStat*>(this)->Update(now);
+        }
 
         return _value;
     }
@@ -45,7 +48,10 @@ namespace zerosugar::xr
 
     void RegenStat::ChangeRegenValue(StatValue regenValue, game_time_point_type now)
     {
-        Update(now);
+        if (_regen)
+        {
+            Update(now);
+        }
 
         _regenValue = regenValue;
     }
@@ -60,6 +66,18 @@ namespace zerosugar::xr
     void RegenStat::SetMaxValue(StatValue value)
     {
         _max = value;
+    }
+
+    void RegenStat::SetRegen(bool value, game_time_point_type current)
+    {
+        bool prev = _regen;
+
+        _regen = value;
+
+        if (!prev && value)
+        {
+            _lastUpdateTimePoint = current;
+        }
     }
 
     void RegenStat::Update(game_time_point_type now)

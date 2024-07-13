@@ -16,17 +16,17 @@ namespace zerosugar::xr
         GetStableStat(type).AddItemStat(-value);
     }
 
-    auto StatComponent::GetHP(std::chrono::system_clock::time_point now) const -> StatValue
+    auto StatComponent::GetHP(game_time_point_type now) const -> StatValue
     {
         return _hp.GetValue(now);
     }
 
-    auto StatComponent::GetMP(std::chrono::system_clock::time_point now) const -> StatValue
+    auto StatComponent::GetMP(game_time_point_type now) const -> StatValue
     {
         return _mp.GetValue(now);
     }
 
-    auto StatComponent::GetStamina(std::chrono::system_clock::time_point now) const -> StatValue
+    auto StatComponent::GetStamina(game_time_point_type now) const -> StatValue
     {
         return _stamina.GetValue(now);
     }
@@ -60,19 +60,24 @@ namespace zerosugar::xr
         return _stamina.GetMaxValue();
     }
 
-    void StatComponent::SetHP(StatValue value, std::chrono::system_clock::time_point now)
+    void StatComponent::SetHP(StatValue value, game_time_point_type now)
     {
         _hp.SetValue(value, now);
     }
 
-    void StatComponent::SetMP(StatValue value, std::chrono::system_clock::time_point now)
+    void StatComponent::SetMP(StatValue value, game_time_point_type now)
     {
         _mp.SetValue(value, now);
     }
 
-    void StatComponent::SetStamina(StatValue value, std::chrono::system_clock::time_point now)
+    void StatComponent::SetStamina(StatValue value, game_time_point_type now)
     {
         _stamina.SetValue(value, now);
+    }
+
+    void StatComponent::SetHPRegen(bool value, game_time_point_type now)
+    {
+        _hp.SetRegen(value, now);
     }
 
     void StatComponent::SetMaxHP(StatValue value)

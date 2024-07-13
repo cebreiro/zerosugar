@@ -49,7 +49,7 @@ namespace zerosugar::xr::ai
             return;
         }
 
-        const auto iter = std::ranges::find_if(_descSortedArray, [id](const Aggro& aggro)
+        auto iter = std::ranges::find_if(_descSortedArray, [id](const Aggro& aggro)
             {
                 return id == aggro.GetSourceId();
             });
@@ -59,17 +59,20 @@ namespace zerosugar::xr::ai
 
             if (value > 0)
             {
-                auto next = iter;
-                for (auto prev = std::prev(next); prev != _descSortedArray.end(); next = prev--)
+                while (iter != _descSortedArray.begin())
                 {
-                    if (CompareAggroValue(*next, *prev))
+                    auto prev = std::prev(iter);
+
+                    if (CompareAggroValue(*iter, *prev))
                     {
-                        std::iter_swap(next, prev);
+                        std::iter_swap(iter, prev);
                     }
                     else
                     {
                         break;
                     }
+
+                    iter = prev;
                 }
             }
             else

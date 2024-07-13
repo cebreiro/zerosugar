@@ -134,7 +134,7 @@ namespace zerosugar::xr::network::game::sc
         std::vector<int64_t> monsters = {};
     };
 
-    struct BattleTransitionMonster final : IPacket
+    struct DespawnMonster final : IPacket
     {
         static constexpr int32_t opcode = 4004;
 
@@ -142,9 +142,8 @@ namespace zerosugar::xr::network::game::sc
         void Serialize(PacketWriter& writer) const final;
         auto GetOpcode() const -> int32_t final { return opcode; }
 
-        int64_t id = {};
-        Position position = {};
-        Rotation rotation = {};
+        int32_t monstersCount = {};
+        std::vector<int64_t> monsters = {};
     };
 
     struct MoveMonster final : IPacket
@@ -332,6 +331,15 @@ namespace zerosugar::xr::network::game::sc
         int32_t port = {};
     };
 
+    struct SpawnerMonsterDead final : IPacket
+    {
+        static constexpr int32_t opcode = 100001;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+    };
+
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>;
     auto CreateAnyFrom(PacketReader& reader) -> std::any;
     auto GetPacketTypeInfo(int32_t opcode) -> const std::type_info&;
@@ -401,10 +409,10 @@ namespace zerosugar::xr::network::game::sc
                 visitor.template operator()<RemoveMonster>(*packet.Cast<RemoveMonster>());
             }
             break;
-            case BattleTransitionMonster::opcode:
+            case DespawnMonster::opcode:
             {
-                static_assert(std::is_invocable_v<TVisitor, const BattleTransitionMonster&>);
-                visitor.template operator()<BattleTransitionMonster>(*packet.Cast<BattleTransitionMonster>());
+                static_assert(std::is_invocable_v<TVisitor, const DespawnMonster&>);
+                visitor.template operator()<DespawnMonster>(*packet.Cast<DespawnMonster>());
             }
             break;
             case MoveMonster::opcode:
@@ -495,6 +503,12 @@ namespace zerosugar::xr::network::game::sc
             {
                 static_assert(std::is_invocable_v<TVisitor, const NotifyDungeonMatchGroupApproved&>);
                 visitor.template operator()<NotifyDungeonMatchGroupApproved>(*packet.Cast<NotifyDungeonMatchGroupApproved>());
+            }
+            break;
+            case SpawnerMonsterDead::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const SpawnerMonsterDead&>);
+                visitor.template operator()<SpawnerMonsterDead>(*packet.Cast<SpawnerMonsterDead>());
             }
             break;
         }

@@ -49,7 +49,7 @@ namespace zerosugar::xr
         void Start();
         void Shutdown(const std::string& reason);
 
-        auto Transition(const std::string& behaviorTreeName) -> Future<void>;
+        auto Transition(std::string behaviorTreeName) -> Future<void>;
         void InvokeOnBehaviorTree(const std::function<void(BehaviorTree&)>& func);
 
         auto ConnectTo(std::string ip, uint16_t port, int32_t retryMilli) -> Future<void>;
@@ -60,6 +60,8 @@ namespace zerosugar::xr
         auto GetId() const -> int64_t;
         auto GetName() const -> std::string;
         auto GetStrand() const -> Strand&;
+        auto GetServiceLocator() -> ServiceLocator&;
+
         auto GetSocket() -> Socket&;
         auto GetRandomEngine() -> std::mt19937&;
         auto GetSessionState() const -> BotSessionStateType;

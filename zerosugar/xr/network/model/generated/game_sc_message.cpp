@@ -187,18 +187,22 @@ namespace zerosugar::xr::network::game::sc
         }
     }
 
-    void BattleTransitionMonster::Deserialize(PacketReader& reader)
+    void DespawnMonster::Deserialize(PacketReader& reader)
     {
-        id = reader.Read<int64_t>();
-        position = reader.Read<Position>();
-        rotation = reader.Read<Rotation>();
+        monstersCount = reader.Read<int32_t>();
+        for (int32_t i = 0; i < monstersCount; ++i)
+        {
+            monsters.emplace_back(reader.Read<int64_t>());
+        }
     }
 
-    void BattleTransitionMonster::Serialize(PacketWriter& writer) const
+    void DespawnMonster::Serialize(PacketWriter& writer) const
     {
-        writer.Write<int64_t>(id);
-        writer.Write(position);
-        writer.Write(rotation);
+        writer.Write<int32_t>(monstersCount);
+        for (const auto& item : monsters)
+        {
+            writer.WriteObject(item);
+        }
     }
 
     void MoveMonster::Deserialize(PacketReader& reader)
@@ -411,6 +415,16 @@ namespace zerosugar::xr::network::game::sc
         writer.Write<int32_t>(port);
     }
 
+    void SpawnerMonsterDead::Deserialize(PacketReader& reader)
+    {
+        (void)reader;
+    }
+
+    void SpawnerMonsterDead::Serialize(PacketWriter& writer) const
+    {
+        (void)writer;
+    }
+
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>
     {
         const int16_t opcode = reader.Read<int16_t>();
@@ -486,9 +500,9 @@ namespace zerosugar::xr::network::game::sc
 
                 return item;
             }
-            case BattleTransitionMonster::opcode:
+            case DespawnMonster::opcode:
             {
-                auto item = std::make_unique<BattleTransitionMonster>();
+                auto item = std::make_unique<DespawnMonster>();
                 item->Deserialize(reader);
 
                 return item;
@@ -598,6 +612,13 @@ namespace zerosugar::xr::network::game::sc
 
                 return item;
             }
+            case SpawnerMonsterDead::opcode:
+            {
+                auto item = std::make_unique<SpawnerMonsterDead>();
+                item->Deserialize(reader);
+
+                return item;
+            }
         }
         return {};
     }
@@ -677,9 +698,9 @@ namespace zerosugar::xr::network::game::sc
 
                 return item;
             }
-            case BattleTransitionMonster::opcode:
+            case DespawnMonster::opcode:
             {
-                BattleTransitionMonster item;
+                DespawnMonster item;
                 item.Deserialize(reader);
 
                 return item;
@@ -789,6 +810,13 @@ namespace zerosugar::xr::network::game::sc
 
                 return item;
             }
+            case SpawnerMonsterDead::opcode:
+            {
+                SpawnerMonsterDead item;
+                item.Deserialize(reader);
+
+                return item;
+            }
         }
         return {};
     }
@@ -837,9 +865,9 @@ namespace zerosugar::xr::network::game::sc
             {
                 return typeid(RemoveMonster);
             }
-            case BattleTransitionMonster::opcode:
+            case DespawnMonster::opcode:
             {
-                return typeid(BattleTransitionMonster);
+                return typeid(DespawnMonster);
             }
             case MoveMonster::opcode:
             {
@@ -900,6 +928,10 @@ namespace zerosugar::xr::network::game::sc
             case NotifyDungeonMatchGroupApproved::opcode:
             {
                 return typeid(NotifyDungeonMatchGroupApproved);
+            }
+            case SpawnerMonsterDead::opcode:
+            {
+                return typeid(SpawnerMonsterDead);
             }
         }
         assert(false);

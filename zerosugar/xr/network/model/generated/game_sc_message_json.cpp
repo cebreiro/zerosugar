@@ -165,20 +165,18 @@ namespace zerosugar::xr::network::game::sc
             };
     }
 
-    void from_json(const nlohmann::json& j, BattleTransitionMonster& item)
+    void from_json(const nlohmann::json& j, DespawnMonster& item)
     {
-        j.at("id").get_to(item.id);
-        j.at("position").get_to(item.position);
-        j.at("rotation").get_to(item.rotation);
+        j.at("monstersCount").get_to(item.monstersCount);
+        j.at("monsters").get_to(item.monsters);
     }
 
-    void to_json(nlohmann::json& j, const BattleTransitionMonster& item)
+    void to_json(nlohmann::json& j, const DespawnMonster& item)
     {
         j = nlohmann::json
             {
-                { "id", item.id },
-                { "position", item.position },
-                { "rotation", item.rotation },
+                { "monstersCount", item.monstersCount },
+                { "monsters", item.monsters },
             };
     }
 
@@ -421,6 +419,18 @@ namespace zerosugar::xr::network::game::sc
                 { "ip", item.ip },
                 { "port", item.port },
             };
+    }
+
+    void from_json(const nlohmann::json& j, SpawnerMonsterDead& item)
+    {
+        (void)j;
+        (void)item;
+    }
+
+    void to_json(nlohmann::json& j, const SpawnerMonsterDead& item)
+    {
+        (void)j;
+        (void)item;
     }
 
 }

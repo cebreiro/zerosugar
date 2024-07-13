@@ -20,7 +20,10 @@ namespace zerosugar::xr
 
     auto AIControlService::ShutdownAndJoin() -> Future<void>
     {
-        assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
+        if (!ExecutionContext::IsEqualTo(_gameInstance.GetStrand()))
+        {
+            co_await _gameInstance.GetStrand();
+        }
 
         std::vector<Future<void>> futures;
         futures.reserve(_controllers.size());
@@ -35,6 +38,13 @@ namespace zerosugar::xr
         assert(_controllers.empty());
 
         co_return;
+    }
+
+    bool AIControlService::Contains(game_controller_id_type id) const
+    {
+        assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
+
+        return _controllers.contains(id);
     }
 
     auto AIControlService::CreateAIController(game_entity_id_type entityId, const std::string& btName) -> SharedPtrNotNull<AIController>

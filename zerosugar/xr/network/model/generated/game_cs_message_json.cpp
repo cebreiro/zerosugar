@@ -47,7 +47,8 @@ namespace zerosugar::xr::network::game::cs
     void from_json(const nlohmann::json& j, ApplyPlayerAttack& item)
     {
         j.at("id").get_to(item.id);
-        j.at("targetId").get_to(item.targetId);
+        j.at("targetCount").get_to(item.targetCount);
+        j.at("targets").get_to(item.targets);
         j.at("skillId").get_to(item.skillId);
         j.at("position").get_to(item.position);
         j.at("rotation").get_to(item.rotation);
@@ -58,7 +59,8 @@ namespace zerosugar::xr::network::game::cs
         j = nlohmann::json
             {
                 { "id", item.id },
-                { "targetId", item.targetId },
+                { "targetCount", item.targetCount },
+                { "targets", item.targets },
                 { "skillId", item.skillId },
                 { "position", item.position },
                 { "rotation", item.rotation },

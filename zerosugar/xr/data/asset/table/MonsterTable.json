@@ -7,7 +7,7 @@
             "MonsterAnimBP": 0,
             "MonsterBT": 0,
             "MonsterBB": 0,
-            "MonsterMaxHP": 300,
+            "MonsterMaxHP": 100,
             "MonsterAttackMin": 50,
             "MonsterAttackMax": 70,
             "MonsterAttackRange": 50,

@@ -38,7 +38,7 @@ namespace zerosugar::xr::bot
         {
         case 1:
         case 2:
-        case 3:;
+        case 3:
         {
             const Eigen::AngleAxisd axis(yaw * std::numbers::pi / 180.0, Eigen::Vector3d::UnitZ());
             const auto rotation = axis.toRotationMatrix();
@@ -85,8 +85,8 @@ namespace zerosugar::xr::bot
 
             const PlayerAttack& data = attacks[comboCount - 1];
 
-            const auto diff = (player.GetPosition() - target->GetPosition());
-            const float yaw = static_cast<float>(std::atan2(diff.y(), diff.x()));
+            const auto diff = target->GetPosition() - player.GetPosition();
+            const float yaw = static_cast<float>(std::atan2(diff.y(), diff.x()) * 180.0 / std::numbers::pi);
 
             network::game::cs::StartPlayerAttack startPlayerAttack;
             startPlayerAttack.skillId = comboCount;
@@ -100,53 +100,62 @@ namespace zerosugar::xr::bot
             const std::chrono::milliseconds skillDuration = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::duration<double, std::chrono::seconds::period>(data.duration));
 
+            player.SetRotation(Eigen::Vector3d(0.0, yaw, 0.0));
             player.SetAttack(comboCount, std::chrono::system_clock::now() + skillDuration);
 
-            Eigen::Vector2d targetPos2d(target->GetPosition().x(), target->GetPosition().y());
-            const collision::Circle targetCollision(targetPos2d, 50.0);
+            bool hitMonster = false;
 
-            const bool intersection = std::visit([&targetCollision]<typename T>(const T& shape) -> bool
+            for (const auto attackEffectDelay : data.attackEffectDelay)
             {
-                return collision::Intersect(targetCollision, shape);
+                const auto milli = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::duration<double, std::chrono::seconds::period>(attackEffectDelay));
 
-            }, MakeCollisionShape(player.GetPosition(), yaw, comboCount));
-
-            network::game::cs::StartPlayerAttack packet;
-
-            if (intersection)
-            {
-                for (const auto attackEffectDelay : data.attackEffectDelay)
-                {
-                    const auto milli = std::chrono::duration_cast<std::chrono::milliseconds>(
-                        std::chrono::duration<double, std::chrono::seconds::period>(attackEffectDelay));
-
-                    Delay(milli).Then(controller.GetStrand(),
-                        [weak = controller.weak_from_this(), zoneId = player.GetZoneId(), startPlayerAttack, targetId = target->GetData().id]()
+                Delay(milli).Then(controller.GetStrand(),
+                    [&hitMonster, weak = controller.weak_from_this(), zoneId = player.GetZoneId(), startPlayerAttack, shape = MakeCollisionShape(player.GetPosition(), yaw, comboCount)]()
+                    {
+                        const auto controller = weak.lock();
+                        if (!controller || controller->GetLocalPlayer().GetZoneId() != zoneId)
                         {
-                            const auto controller = weak.lock();
-                            if (!controller || controller->GetLocalPlayer().GetZoneId() != zoneId)
+                            return;
+                        }
+
+                        if (!controller->GetLocalPlayer().IsAttackState(startPlayerAttack.skillId, std::chrono::system_clock::now()))
+                        {
+                            return;
+                        }
+
+                        network::game::cs::ApplyPlayerAttack applyPlayerAttack;
+                        applyPlayerAttack.id = controller->GetLocalPlayer().GetData().id;
+                        
+                        applyPlayerAttack.skillId = startPlayerAttack.skillId;
+                        applyPlayerAttack.position = startPlayerAttack.position;
+                        applyPlayerAttack.rotation = startPlayerAttack.rotation;
+
+                        for (const Monster& monster : controller->GetVisualObjectContainer().GetMonsterRange())
+                        {
+                            Eigen::Vector2d monsterPos2d(monster.GetPosition().x(), monster.GetPosition().y());
+                            const collision::Circle monsterCollision(monsterPos2d, 100.0);
+
+                            if (std::visit([&monsterCollision]<typename T>(const T & shape) -> bool
                             {
-                                return;
-                            }
+                                return collision::Intersect(monsterCollision, shape);
 
-                            if (!controller->GetLocalPlayer().IsAttackState(startPlayerAttack.skillId, std::chrono::system_clock::now()))
+                            }, shape))
                             {
-                                return;
+                                ++applyPlayerAttack.targetCount;
+                                applyPlayerAttack.targets.push_back(monster.GetData().id);
                             }
+                        }
 
-                            network::game::cs::ApplyPlayerAttack applyPlayerAttack;
-                            applyPlayerAttack.id = controller->GetLocalPlayer().GetData().id;
-                            applyPlayerAttack.targetId = targetId;
-                            applyPlayerAttack.skillId = startPlayerAttack.skillId;
-                            applyPlayerAttack.position = startPlayerAttack.position;
-                            applyPlayerAttack.rotation = startPlayerAttack.rotation;
-
+                        if (applyPlayerAttack.targetCount > 0)
+                        {
                             controller->SendToServer(Packet::ToBuffer(applyPlayerAttack));
-                        });
-                }
+
+                            hitMonster = true;
+                        }
+                    });
             }
 
-            // TOD: knock-back
             struct SuspendUntilSkillEnd{};
 
             Delay(skillDuration).Then(controller.GetStrand(), [weak = controller.weak_from_this()]()
@@ -166,12 +175,14 @@ namespace zerosugar::xr::bot
 
             co_await bt::Event<SuspendUntilSkillEnd>();
 
-            if (!intersection)
+            if (hitMonster)
             {
-                break;
+                ++comboCount;
             }
-
-            ++comboCount;
+            else
+            {
+                co_return false;
+            }
         }
 
         co_return true;

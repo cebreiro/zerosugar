@@ -2,6 +2,8 @@
 
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
+#include "zerosugar/xr/server/game/instance/ai/ai_controller.h"
+#include "zerosugar/xr/server/game/instance/ai/ai_control_service.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_player_snapshot.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_container.h"
@@ -217,6 +219,37 @@ namespace zerosugar::xr
         _gameInstance.GetSnapshotView().Broadcast(packet, playerId);
     }
 
+    void GameSnapshotController::ProcessPlayerAttackEffect(game_entity_id_type playerId, std::span<const std::pair<game_entity_id_type, float>> results)
+    {
+        GameSnapshotContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
+        GameSpatialContainer& spatialContainer = _gameInstance.GetSpatialContainer();
+        AIControlService& aiControlService = _gameInstance.GetAIControlService();
+        GameSnapshotView& view = _gameInstance.GetSnapshotView();
+
+        for (auto [monsterId, resultHP] : results)
+        {
+            GameMonsterSnapshot* monster = snapshotContainer.FindMonster(monsterId);
+            assert(monster);
+
+            monster->SetHp(resultHP);
+
+            sc::BeAttackedMonster packet;
+            packet.attackerId = playerId.Unwrap();
+            packet.attackedId = monsterId.Unwrap();
+            packet.attackedHp = resultHP;
+
+            view.Broadcast(packet, spatialContainer.GetSector(monster->GetPosition()));
+
+            if (resultHP <= 0.f)
+            {
+                if (const AIController* aiController = aiControlService.FindAIController(monsterId))
+                {
+                    _gameInstance.GetAIControlService().DeleteAIController(aiController->GetId());
+                }
+            }
+        }
+    }
+
     void GameSnapshotController::ProcessPlayerEquipItemChange(game_entity_id_type id, data::EquipPosition pos, const InventoryItem* item)
     {
         assert(IsValid(pos));
@@ -243,7 +276,7 @@ namespace zerosugar::xr
         GameSpatialContainer& spatialContainer = _gameInstance.GetSpatialContainer();
         GameSnapshotView& view = _gameInstance.GetSnapshotView();
 
-        GameSpatialSector& sector = spatialContainer.GetSector(snapshot.GetPosition().x(), snapshot.GetPosition().y());
+        GameSpatialSector& sector = spatialContainer.GetSector(snapshot.GetPosition());
 
         sc::SpawnMonster packet;
         GamePacketBuilder::Build(packet.monsters.emplace_back(), snapshot);
@@ -252,6 +285,29 @@ namespace zerosugar::xr
         view.Broadcast(packet, sector);
 
         sector.AddEntity(snapshot.GetId());
+    }
+
+    void GameSnapshotController::ProcessMonsterDespawn(game_entity_id_type entityId)
+    {
+        GameSnapshotContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
+        GameSpatialContainer& spatialContainer = _gameInstance.GetSpatialContainer();
+        GameSnapshotView& view = _gameInstance.GetSnapshotView();
+
+        GameMonsterSnapshot* monster = snapshotContainer.FindMonster(entityId);
+        assert(monster);
+
+        GameSpatialSector& sector = spatialContainer.GetSector(monster->GetPosition());
+        sector.RemoveEntity(entityId);
+
+        sc::DespawnMonster packet;
+        packet.monstersCount = 1;
+        packet.monsters.push_back(entityId.Unwrap());
+
+        view.Broadcast(packet, sector);
+
+        [[maybe_unused]]
+        const bool removed = snapshotContainer.Remove(entityId);
+        assert(removed);
     }
 
     void GameSnapshotController::ProcessMonsterMove(GameMonsterSnapshot& snapshot, const Eigen::Vector3d& position, float yaw)
@@ -449,12 +505,6 @@ namespace zerosugar::xr
         }
 
         newSector.AddEntity(player.GetId());
-
-        ZEROSUGAR_LOG_DEBUG(_gameInstance.GetServiceLocator(),
-            std::format("player movement: old[{}, {}] new[{}, [{}], old_sector[{}, {}], new_sector[{}, {}]",
-                oldPos.x(), oldPos.y(), newPos.x(), newPos.y(),
-                oldSector.GetId().GetX(), oldSector.GetId().GetY(),
-                newSector.GetId().GetX(), newSector.GetId().GetY()));
     }
 
     void GameSnapshotController::HandleMonsterPositionChange(GameMonsterSnapshot& monster,
@@ -522,12 +572,5 @@ namespace zerosugar::xr
         }
 
         newSector.AddEntity(monster.GetId());
-
-        ZEROSUGAR_LOG_DEBUG(_gameInstance.GetServiceLocator(),
-            std::format("monster movement: monster[{}] old[{}, {}] new[{}, [{}], old_sector[{}, {}], new_sector[{}, {}]",
-                monster.GetId().Unwrap(),
-                oldPos.x(), oldPos.y(), newPos.x(), newPos.y(),
-                oldSector.GetId().GetX(), oldSector.GetId().GetY(),
-                newSector.GetId().GetX(), newSector.GetId().GetY()));
     }
 }

@@ -60,6 +60,26 @@ namespace zerosugar::xr::game_task
         std::shared_ptr<GameEntity> _entity;
     };
 
+    class PlayerAttackEffectTargetSelector
+    {
+    public:
+        using target_type = const std::vector<PtrNotNull<GameEntity>>&;
+
+    public:
+        PlayerAttackEffectTargetSelector(game_entity_id_type playerId, std::span<const game_entity_id_type> targetIds);
+
+        bool SelectEntityId(const GameExecutionSerial& serial);
+        auto GetTargetId() const -> std::span<const game_entity_id_type>;
+
+        bool SelectEntity(const GameExecutionParallel& parallel);
+        auto GetTarget() const -> target_type;
+
+    private:
+        game_entity_id_type _playerId;
+        std::vector<game_entity_id_type> _targetIds;
+        std::vector<PtrNotNull<GameEntity>> _targets;
+    };
+
     class BoxSkillTargetSelector
     {
     public:

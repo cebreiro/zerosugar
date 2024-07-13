@@ -4,6 +4,7 @@
 #include "zerosugar/xr/server/game/game_server.h"
 #include "zerosugar/xr/server/game/client/game_client.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
+#include "zerosugar/xr/server/game/instance/task/impl/player_attack_effect_apply.h"
 
 namespace zerosugar::xr
 {
@@ -28,7 +29,14 @@ namespace zerosugar::xr
             co_return;
         }
 
-        (void)client;
-        (void)instance;
+        const auto range = packet->targets | std::views::transform([](int64_t value)
+            {
+                return game_entity_id_type::FromInt64(value);
+            }) | std::ranges::to<std::vector>();
+
+        auto task = std::make_unique<game_task::PlayerAttackEffectApply>(std::move(packet),
+            client->GetGameEntityId(), range);
+
+        instance->Summit(std::move(task), client->GetControllerId());
     }
 }

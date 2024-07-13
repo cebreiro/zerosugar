@@ -58,16 +58,21 @@ namespace zerosugar::xr
             return;
         }
 
+        ++_eventCounter;
+
         _shutdown = true;
         _behaviorTree->RequestStop();
     }
 
     auto AIController::Join() -> Future<void>
     {
-        assert(_runAI.IsValid());
         assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
+        assert(_shutdown);
 
-        co_await _runAI;
+        if (_runAI.IsValid())
+        {
+            co_await _runAI;
+        }
 
         _runAI = Future<void>();
 
@@ -91,6 +96,8 @@ namespace zerosugar::xr
             co_return;
         }
 
+        ++_eventCounter;
+
         auto newBehaviorTree = std::make_shared<BehaviorTree>(*_blackBoard);
         newBehaviorTree->Initialize(behaviorTreeName, dataSet->Deserialize(_nodeSerializer));
         newBehaviorTree->SetLogger(_behaviorTreeLogger.get());
@@ -109,13 +116,12 @@ namespace zerosugar::xr
             _prevBehaviorTreeStack.push_back(std::move(_behaviorTree));
         }
 
+        _behaviorTree = std::move(newBehaviorTree);
+
         if (_runAI.IsValid())
         {
             co_await _runAI;
         }
-
-        ++_eventCounter;
-        _behaviorTree = std::move(newBehaviorTree);
 
         _runAI = RunAI();
     }
@@ -127,6 +133,8 @@ namespace zerosugar::xr
             co_return false;
         }
 
+        ++_eventCounter;
+
         SharedPtrNotNull<BehaviorTree> prevBehaviorTree = std::move(_prevBehaviorTreeStack.back());
         _prevBehaviorTreeStack.pop_back();
 
@@ -135,13 +143,12 @@ namespace zerosugar::xr
         _behaviorTree->RequestStop();
         _behaviorTree.reset();
 
+        _behaviorTree = std::move(prevBehaviorTree);
+
         if (_runAI.IsValid())
         {
             co_await _runAI;
         }
-
-        ++_eventCounter;
-        _behaviorTree = std::move(prevBehaviorTree);
 
         _runAI = RunAI();
 

@@ -72,6 +72,7 @@ namespace zerosugar::xr::network
         RemoteProcedureCallErrorCode errorCode = {};
         int32_t rpcId = {};
         std::string serviceName = {};
+        std::string rpcName = {};
         std::string rpcResult = {};
     };
 

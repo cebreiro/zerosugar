@@ -110,4 +110,17 @@ namespace zerosugar::xr
     {
         return *_base;
     }
+
+    auto MonsterData::GetDeadAnimation() const -> const data::MonsterAnimation::Value&
+    {
+        const auto iter = _animations.find("Death");
+        if (iter == _animations.end())
+        {
+            static const data::MonsterAnimation::Value nullObject;
+
+            return nullObject;
+        }
+
+        return *iter->second;
+    }
 }

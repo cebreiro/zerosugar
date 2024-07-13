@@ -62,6 +62,7 @@ namespace zerosugar::xr
         void RegisterToCoordinationService();
         void OpenCoordinationCommandChannel();
         void ScheduleServerStatusReport();
+        void ScheduleSessionCountReport();
 
     private:
         ServiceLocator _serviceLocator;
@@ -73,6 +74,7 @@ namespace zerosugar::xr
         SharedPtrNotNull<Channel<service::CoordinationCommandResponse>> _responseChannel;
         SharedPtrNotNull<CommandChannelRunner> _channelRunner;
         std::stop_source _serverStatusReportStopSource;
+        std::stop_source _serverSessionCountStopSource;
 
         tbb::concurrent_hash_map<session::id_type, Buffer> _sessionReceiveBuffers;
         UniquePtrNotNull<GameClientContainer> _clientContainer;

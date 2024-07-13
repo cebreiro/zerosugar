@@ -35,6 +35,7 @@ namespace zerosugar::xr::ai
             return;
         }
 
+        _paths.clear();
         _paths.reserve(paths.size());
 
         const Eigen::Vector3d startPos(paths[0].GetX(), paths[0].GetY(), paths[0].GetZ());

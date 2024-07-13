@@ -16,6 +16,8 @@ namespace zerosugar::xr
     public:
         GameMonsterSnapshot(IGameController& controller, game_entity_id_type id, const MonsterData& data);
 
+        bool IsDead() const;
+
         void Initialize(const GameEntity& entity);
 
         auto GetController() const -> IGameController&;

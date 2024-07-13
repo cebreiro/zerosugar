@@ -4,9 +4,10 @@ namespace zerosugar::bt::node
 {
     auto SuspendForever::Run() -> Result
     {
-        struct SuspendForever{};
+        struct Foo{};
 
-        co_await bt::Event<SuspendForever>();
+        [[maybe_unused]]
+        const auto va = co_await bt::Event<SuspendForever>();
 
         co_return false;
     }

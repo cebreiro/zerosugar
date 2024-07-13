@@ -76,6 +76,8 @@ namespace zerosugar::xr
         auto FindAnimation(const std::string& name) const -> const data::MonsterAnimation::Value*;
 
         auto GetBase() const -> const data::Monster&;
+        auto GetDeadAnimation() const -> const data::MonsterAnimation::Value&;
+
         inline auto GetSkills() const;
 
     private:

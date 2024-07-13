@@ -22,6 +22,11 @@ struct AddTask : Leaf
         return true;
     }
 
+    auto GetName() const -> std::string_view override
+    {
+        return name;
+    }
+
     friend void from_xml(AddTask& task, const pugi::xml_node& node)
     {
         if (auto attr = node.attribute("value"); attr)
@@ -48,6 +53,11 @@ struct MultiplyTask : Leaf
         }
 
         return false;
+    }
+
+    auto GetName() const -> std::string_view override
+    {
+        return name;
     }
 
     friend void from_xml(MultiplyTask& task, const pugi::xml_node& node)
@@ -85,6 +95,11 @@ struct RunningTask : Leaf
                 }
             }
         }
+    }
+
+    auto GetName() const -> std::string_view override
+    {
+        return name;
     }
 
     friend void from_xml(RunningTask& task, const pugi::xml_node& node)
