@@ -56,9 +56,9 @@ TEST_F(AsyncEnumerableTest, YieldIntValue)
     TestContext context;
 
     // act
-    Post(executor, [](TestContext& context) -> Future<void>
+    Post(executor, [&](TestContext& context) -> Future<void>
         {
-            auto asyncEnumerableFunction = []() -> AsyncEnumerable<int32_t>
+            auto asyncEnumerableFunction = [&]() -> AsyncEnumerable<int32_t>
                 {
                     co_yield expected0;
                     co_yield expected1;

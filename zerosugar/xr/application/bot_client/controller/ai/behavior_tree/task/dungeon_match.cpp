@@ -22,20 +22,28 @@ namespace zerosugar::xr::bot
             cs::StartDungeonMatch start;
             start.deugeonId = _mapId;
 
+
             controller.SendToServer(Packet::ToBuffer(start));
 
             const auto event = bt::Event<sc::NotifyDungeonMatchGroupCreation, sc::NotifyDungeonMatchFailure>();
             if (const auto va = co_await event;
                 std::holds_alternative<sc::NotifyDungeonMatchFailure>(va))
             {
+                ZEROSUGAR_LOG_ERROR(controller.GetServiceLocator(),
+                    fmt::format("[{}] [{}] dungon group creation fail!!", controller.GetName(), GetName()));
+
                 continue;
             }
+
 
             controller.SendToServer(Packet::ToBuffer(cs::ApproveDungeonMatch{}));
 
             const auto va = co_await bt::Event<sc::NotifyDungeonMatchGroupApproved, sc::NotifyDungeonMatchFailure>();
             if (std::holds_alternative<sc::NotifyDungeonMatchFailure>(va))
             {
+                ZEROSUGAR_LOG_INFO(controller.GetServiceLocator(),
+                    fmt::format("[{}] [{}] dungon group rejected", controller.GetName(), GetName()));
+
                 continue;
             }
 

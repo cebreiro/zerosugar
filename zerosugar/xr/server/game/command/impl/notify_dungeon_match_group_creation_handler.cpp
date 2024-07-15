@@ -18,6 +18,10 @@ namespace zerosugar::xr
         std::shared_ptr<GameClient> client = server.GetClientContainer().FindByUserId(command.userId);
         if (!client)
         {
+            ZEROSUGAR_LOG_WARN(server.GetServiceLocator(),
+                fmt::format("[{}] fail to find dungeon match group user. user_id: {}",
+                    server.GetName(), command.userId));
+
             co_return;
         }
 

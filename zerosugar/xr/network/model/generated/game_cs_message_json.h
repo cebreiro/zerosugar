@@ -11,6 +11,9 @@
 
 namespace zerosugar::xr::network::game::cs
 {
+    void from_json(const nlohmann::json& j, Ping& item);
+    void to_json(nlohmann::json& j, const Ping& item);
+
     void from_json(const nlohmann::json& j, Authenticate& item);
     void to_json(nlohmann::json& j, const Authenticate& item);
 

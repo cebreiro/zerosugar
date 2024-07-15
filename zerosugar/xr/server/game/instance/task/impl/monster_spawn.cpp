@@ -98,6 +98,6 @@ namespace zerosugar::xr::game_task
         _aiController->Start();
 
         ZEROSUGAR_LOG_INFO(serialContext.GetServiceLocator(),
-            std::format("monster spawned. id: {}", snapshot->GetId().Unwrap()));
+            fmt::format("monster spawned. id: {}", snapshot->GetId().Unwrap()));
     }
 }

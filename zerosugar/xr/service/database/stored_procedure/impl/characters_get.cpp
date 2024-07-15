@@ -31,13 +31,13 @@ namespace zerosugar::xr::db::sp
         const size_t size = result.size();
         if (size < 3)
         {
-            throw std::runtime_error(std::format("invalid result"));
+            throw std::runtime_error(fmt::format("invalid result"));
         }
 
         const boost::mysql::resultset_view& characterSet = result.at(0);
         if (characterSet.rows().empty())
         {
-            throw std::runtime_error(std::format("invalid result. fail to find character"));
+            throw std::runtime_error(fmt::format("invalid result. fail to find character"));
         }
         else
         {

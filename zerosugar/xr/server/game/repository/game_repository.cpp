@@ -28,7 +28,7 @@ namespace zerosugar::xr
         if (result.errorCode != service::DatabaseServiceErrorCode::DatabaseErrorNone)
         {
             ZEROSUGAR_LOG_CRITICAL(_serviceLocator,
-                std::format("[{}] fail to get character data fro database service. character_id: {}, error: {}",
+                fmt::format("[{}] fail to get character data fro database service. character_id: {}, error: {}",
                     GetName(), characterId, GetEnumName(result.errorCode)));
 
             co_return std::nullopt;
@@ -175,7 +175,7 @@ namespace zerosugar::xr
             if (result.errorCode != service::DatabaseServiceErrorCode::DatabaseErrorNone)
             {
                 ZEROSUGAR_LOG_CRITICAL(_serviceLocator,
-                    std::format("fail to save item change. error: {}, character_id: {}, param: {}",
+                    fmt::format("fail to save item change. error: {}, character_id: {}, param: {}",
                         GetEnumName(result.errorCode), transaction->GetCharacterId(), jsonArray.dump()));
             }
         }

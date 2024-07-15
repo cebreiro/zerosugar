@@ -168,17 +168,17 @@ namespace zerosugar
     {
         if (field.optional)
         {
-            return std::format("std::optional<{}>", field.type);
+            return fmt::format("std::optional<{}>", field.type);
         }
 
         if (field.map.has_value())
         {
-            return std::format("std::map<{}, {}>", field.map->first, field.map->second);
+            return fmt::format("std::map<{}, {}>", field.map->first, field.map->second);
         }
 
         if (field.repeated)
         {
-            return std::format("std::vector<{}>", field.type);
+            return fmt::format("std::vector<{}>", field.type);
         }
 
         return field.type;

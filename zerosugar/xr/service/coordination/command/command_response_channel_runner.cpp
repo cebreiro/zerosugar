@@ -91,7 +91,7 @@ namespace zerosugar::xr::coordination
                     if (!server)
                     {
                         ZEROSUGAR_LOG_WARN(_coordinationService.GetServiceLocator(),
-                            std::format("[{}] fail to get game server instance", GetName()));
+                            fmt::format("[{}] fail to get game server instance", GetName()));
 
                         co_return;
                     }
@@ -104,7 +104,7 @@ namespace zerosugar::xr::coordination
                         assert(false);
 
                         ZEROSUGAR_LOG_CRITICAL(_coordinationService.GetServiceLocator(),
-                            std::format("[{}] fail to find response handler. opcode: {}", GetName(), response.opcode));
+                            fmt::format("[{}] fail to find response handler. opcode: {}", GetName(), response.opcode));
 
                         continue;
                     }
@@ -127,7 +127,7 @@ namespace zerosugar::xr::coordination
         catch (const std::exception& e)
         {
             ZEROSUGAR_LOG_ERROR(_coordinationService.GetServiceLocator(),
-                std::format("[{}] handler throws. exception: {}", GetName(), e.what()));
+                fmt::format("[{}] handler throws. exception: {}", GetName(), e.what()));
         }
     }
 }

@@ -60,7 +60,7 @@ namespace zerosugar::xr
         }
         else
         {
-            throw std::runtime_error(std::format("fail to send bytes to rpc server. error: {}", ioResult.error().message));
+            throw std::runtime_error(fmt::format("fail to send bytes to rpc server. error: {}", ioResult.error().message));
         }
     }
 
@@ -84,14 +84,14 @@ namespace zerosugar::xr
         {
             if (receiveBuffer.GetSize() < 4)
             {
-                receiveBuffer.Add(buffer::Fragment::Create(1024));
+                receiveBuffer.Add(buffer::Fragment::Create(4096));
             }
 
-            const std::expected<int64_t, IOError> receiveResult = co_await _socket->ReceiveAsync(receiveBuffer);
+            const std::expected<int64_t, IOError> ioResult = co_await _socket->ReceiveAsync(receiveBuffer);
 
-            if (receiveResult.has_value())
+            if (ioResult.has_value())
             {
-                const int64_t receiveSize = receiveResult.value();
+                const int64_t receiveSize = ioResult.value();
                 assert(receiveSize <= receiveBuffer.GetSize());
 
                 receivedBuffer.MergeBack([&]() -> Buffer
@@ -104,19 +104,14 @@ namespace zerosugar::xr
                         return temp;
                     }());
 
-                while(true)
+                while (receivedBuffer.GetSize() >= 4)
                 {
-                    if (receivedBuffer.GetSize() < 4)
-                    {
-                        break;
-                    }
-
                     PacketReader reader(receivedBuffer.cbegin(), receivedBuffer.cend());
 
                     const int32_t packetSize = reader.Read<int32_t>();
                     if (receivedBuffer.GetSize() < packetSize)
                     {
-                        receiveBuffer.Add(buffer::Fragment::Create(1024 + packetSize));
+                        receiveBuffer.Add(buffer::Fragment::Create(4096 + packetSize));
 
                         break;
                     }
@@ -144,7 +139,7 @@ namespace zerosugar::xr
                             {
                                 if (result.errorCode != network::RemoteProcedureCallErrorCode::RpcErrorNone)
                                 {
-                                    throw std::runtime_error(std::format("fail to register rpc client. error: {}", GetEnumName(result.errorCode)));
+                                    throw std::runtime_error(fmt::format("fail to register rpc client. error: {}", GetEnumName(result.errorCode)));
                                 }
 
                                 promise.Set();
@@ -203,7 +198,7 @@ namespace zerosugar::xr
             else
             {
                 ZEROSUGAR_LOG_CRITICAL(_serviceLocator,
-                    std::format("[rpc_client] receive error. error: {}", receiveResult.error().message));
+                    fmt::format("[rpc_client] receive error. error: {}", ioResult.error().message));
                 
                 co_return;
             }
@@ -320,7 +315,7 @@ namespace zerosugar::xr
                 resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorInternalError;
 
                 ZEROSUGAR_LOG_ERROR(self->_serviceLocator,
-                    std::format("[rpc_client] rpc throws. id: {}, service: {}, rpc: {}, exception: {}",
+                    fmt::format("[rpc_client] rpc throws. id: {}, service: {}, rpc: {}, exception: {}",
                         request.rpcId, request.serviceName, request.rpcName, e.what()));
             }
 
@@ -359,7 +354,7 @@ namespace zerosugar::xr
             catch (const std::exception& e)
             {
                 ZEROSUGAR_LOG_ERROR(self->_serviceLocator,
-                    std::format("[rpc_client] server streaming rpc throws. id: {}, service: {}, rpc: {}, exception: {}",
+                    fmt::format("[rpc_client] server streaming rpc throws. id: {}, service: {}, rpc: {}, exception: {}",
                         request.rpcId, request.serviceName, request.rpcName, e.what()));
 
                 resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorStreamingClosedByServer;
@@ -386,7 +381,7 @@ namespace zerosugar::xr
                 catch (const std::exception& e)
                 {
                     ZEROSUGAR_LOG_ERROR(self->_serviceLocator,
-                        std::format("[rpc_client] client streaming rpc throws. id: {}, service: {}, rpc: {}, exception: {}",
+                        fmt::format("[rpc_client] client streaming rpc throws. id: {}, service: {}, rpc: {}, exception: {}",
                             request.rpcId, request.serviceName, request.rpcName, e.what()));
 
                     resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorStreamingClosedByServer;
@@ -442,7 +437,7 @@ namespace zerosugar::xr
                 catch (const std::exception& e)
                 {
                     ZEROSUGAR_LOG_ERROR(self->_serviceLocator,
-                        std::format("[rpc_client] server-client streaming rpc throws. id: {}, service: {}, rpc: {}, exception: {}",
+                        fmt::format("[rpc_client] server-client streaming rpc throws. id: {}, service: {}, rpc: {}, exception: {}",
                             request.rpcId, request.serviceName, request.rpcName, e.what()));
 
                     resultRPC.errorCode = network::RemoteProcedureCallErrorCode::RpcErrorStreamingClosedByServer;
@@ -492,7 +487,7 @@ namespace zerosugar::xr
         callback(result.errorCode, result.rpcResult);
 
         ZEROSUGAR_LOG_DEBUG(_serviceLocator,
-            std::format("[rpc_client] rpc is removed. rpc_id: {}, rpc: {}::{}, error: {}",
+            fmt::format("[rpc_client] rpc is removed. rpc_id: {}, rpc: {}::{}, error: {}",
                 result.rpcId, result.serviceName, result.rpcName, GetEnumName(result.errorCode)));
     }
 
@@ -524,7 +519,7 @@ namespace zerosugar::xr
         iter->second.first(serverStreaming.rpcResult);
 
         ZEROSUGAR_LOG_DEBUG(_serviceLocator,
-            std::format("[rpc_client] receive server streaming. rpc_id: {}, service: {}",
+            fmt::format("[rpc_client] receive server streaming. rpc_id: {}, service: {}",
                 serverStreaming.rpcId, serverStreaming.serviceName));
     }
 

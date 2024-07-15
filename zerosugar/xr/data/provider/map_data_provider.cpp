@@ -10,7 +10,7 @@ namespace zerosugar::xr
         if (!exists(directory))
         {
             ZEROSUGAR_LOG_ERROR(serviceLocator,
-                std::format("[{}] fail to find map directory. path: {}",
+                fmt::format("[{}] fail to find map directory. path: {}",
                     GetName(), directory.generic_string()));
 
             return;
@@ -48,7 +48,7 @@ namespace zerosugar::xr
             catch (const std::exception& e)
             {
                 ZEROSUGAR_LOG_ERROR(serviceLocator,
-                    std::format("[{}] fail to initialize map data. exception: {}, path: {}",
+                    fmt::format("[{}] fail to initialize map data. exception: {}, path: {}",
                         GetName(), e.what(), path.generic_string()));
             }
         }

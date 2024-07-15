@@ -1,5 +1,8 @@
 #pragma once
 #include <boost/callable_traits.hpp>
+#include <boost/scope_exit.hpp>
+#include <boost/scope/scope_exit.hpp>
+
 #include "zerosugar/shared/service/service_interface.h"
 #include "zerosugar/shared/execution/executor/impl/asio_strand.h"
 #include "zerosugar/xr/network/model/generated/rpc_message.h"
@@ -139,6 +142,9 @@ namespace zerosugar::xr
                             const bool completeExternContext = externContext->IsComplete();
                             const bool completeOutputContext = outputContext->IsComplete();
 
+                            externContext->Reset();
+                            outputContext->Reset();
+
                             if (completeExternContext)
                             {
                                 std::variant<std::string, std::exception_ptr> item;
@@ -163,9 +169,6 @@ namespace zerosugar::xr
 
                                     inputChannel->Send(std::move(param), channel::ChannelSignal::NotifyOne);
                                 }
-
-                                externContext->Reset();
-                                outputContext->Reset();
 
                                 if (externChannel->IsOpen())
                                 {
@@ -202,9 +205,6 @@ namespace zerosugar::xr
 
                                     co_yield str;
                                 }
-
-                                externContext->Reset();
-                                outputContext->Reset();
 
                                 if (outputChannel->IsOpen())
                                 {
@@ -375,7 +375,7 @@ namespace zerosugar::xr
                 {
                     try
                     {
-                        throw std::runtime_error(std::format("rpc error. rpc_id: {}, rpc_name: {}::{}, error_code: {}",
+                        throw std::runtime_error(fmt::format("rpc error. rpc_id: {}, rpc_name: {}::{}, error_code: {}",
                             rpcId, serviceName, rpcName, GetEnumName(ec)));
                     }
                     catch (...)
@@ -426,7 +426,7 @@ namespace zerosugar::xr
 
                     try
                     {
-                        throw std::runtime_error(std::format("rpc error. rpc_id: {}, rpc_name: {}::{}, error_code: {}",
+                        throw std::runtime_error(fmt::format("rpc error. rpc_id: {}, rpc_name: {}::{}, error_code: {}",
                             rpcId, serviceName, rpcName, GetEnumName(ec)));
                     }
                     catch (...)
@@ -480,7 +480,7 @@ namespace zerosugar::xr
         catch (const std::exception& e)
         {
             ZEROSUGAR_LOG_ERROR(_serviceLocator,
-                std::format("[rpc_client] call client streaming rpc channel throws. service: {}, rpc: {}, exception: {}",
+                fmt::format("[rpc_client] call client streaming rpc channel throws. service: {}, rpc: {}, exception: {}",
                     serviceName, rpcName, e.what()));
 
             this->SendAbortClientStreaming(rpcId, serviceName);
@@ -530,7 +530,7 @@ namespace zerosugar::xr
                         {
                             try
                             {
-                                throw std::runtime_error(std::format("rpc error. rpc_id: {}, rpc_name: {}::{}, error_code: {}",
+                                throw std::runtime_error(fmt::format("rpc error. rpc_id: {}, rpc_name: {}::{}, error_code: {}",
                                     rpcId, serviceName, rpcName, GetEnumName(ec)));
                             }
                             catch (...)
@@ -588,7 +588,7 @@ namespace zerosugar::xr
                         {
                             try
                             {
-                                throw std::runtime_error(std::format("rpc error. rpc_id: {}, rpc_name: {}::{}, error_code: {}",
+                                throw std::runtime_error(fmt::format("rpc error. rpc_id: {}, rpc_name: {}::{}, error_code: {}",
                                     rpcId, serviceName, rpcName, GetEnumName(ec)));
                             }
                             catch (...)
@@ -632,7 +632,7 @@ namespace zerosugar::xr
                 catch (const std::exception& e)
                 {
                     ZEROSUGAR_LOG_ERROR(self->_serviceLocator,
-                        std::format("[rpc_client] call client streaming rpc channel throws. service: {}, rpc: {}, exception: {}",
+                        fmt::format("[rpc_client] call client streaming rpc channel throws. service: {}, rpc: {}, exception: {}",
                             serviceName, rpcName, e.what()));
 
                     self->SendAbortClientStreaming(rpcId, serviceName);

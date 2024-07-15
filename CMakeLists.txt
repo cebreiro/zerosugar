@@ -8,6 +8,7 @@ add_definitions(-DDT_POLYREF64=1)
 
 project(zerosugar)
 
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/compile_option.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/msvc.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/find_packages.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/protobuf.cmake)

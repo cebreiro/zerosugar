@@ -54,6 +54,7 @@ namespace zerosugar
         auto GetName() const -> const std::string&;
         auto GetBlackBoard() -> bt::BlackBoard&;
         auto GetBlackBoard() const -> const bt::BlackBoard&;
+        auto GetCurrentVisitNodeName() const -> std::optional<std::string>;
 
         void SetLogger(IBehaviorTreeLogger* logger);
 

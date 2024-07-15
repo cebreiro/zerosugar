@@ -9,6 +9,19 @@
 
 namespace zerosugar::xr::network::game::sc
 {
+    struct Pong final : IPacket
+    {
+        static constexpr int32_t opcode = 100000;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        int64_t sequence = {};
+        int64_t clientTimePoint = {};
+        int64_t serverTimePoint = {};
+    };
+
     struct EnterGame final : IPacket
     {
         static constexpr int32_t opcode = 1000;
@@ -349,6 +362,12 @@ namespace zerosugar::xr::network::game::sc
     {
         switch(packet.GetOpcode())
         {
+            case Pong::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const Pong&>);
+                visitor.template operator()<Pong>(*packet.Cast<Pong>());
+            }
+            break;
             case EnterGame::opcode:
             {
                 static_assert(std::is_invocable_v<TVisitor, const EnterGame&>);

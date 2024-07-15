@@ -48,7 +48,7 @@ namespace zerosugar::xr::lobby
             if (result.errorCode != service::LoginServiceErrorCode::LoginErrorNone)
             {
                 ZEROSUGAR_LOG_WARN(_serviceLocator,
-                    std::format("[lobby_session_connected_state] fail to authenticate. session: {}", *session));
+                    fmt::format("[lobby_session_connected_state] fail to authenticate. session: {}", *session));
 
                 session->Close();
             }
@@ -63,7 +63,7 @@ namespace zerosugar::xr::lobby
         break;
         }
 
-        throw std::runtime_error(std::format("unhandled packet. opcode: {}", inPacket->GetOpcode()));
+        throw std::runtime_error(fmt::format("unhandled packet. opcode: {}", inPacket->GetOpcode()));
     }
 
     AuthenticatedState::AuthenticatedState(LobbySessionStateMachine& stateMachine, ServiceLocator& serviceLocator, IUniqueIDGenerator& idGenerator, Session& session)
@@ -234,7 +234,7 @@ namespace zerosugar::xr::lobby
         if (HasCharacter(packet.character.slot))
         {
             ZEROSUGAR_LOG_WARN(_serviceLocator,
-                std::format("[lobby_stete_authenticated] invalid request - character slot already used. session: {}, packet: {}",
+                fmt::format("[lobby_stete_authenticated] invalid request - character slot already used. session: {}, packet: {}",
                     session, nlohmann::json(packet).dump()));
 
             network::lobby::sc::ResultCreateCharacter outPacket;
@@ -320,7 +320,7 @@ namespace zerosugar::xr::lobby
         if (!character)
         {
             ZEROSUGAR_LOG_WARN(_serviceLocator,
-                std::format("[lobby_stete_authenticated] invalid request - character slot is empty. session: {}, slot: {}",
+                fmt::format("[lobby_stete_authenticated] invalid request - character slot is empty. session: {}, slot: {}",
                     session, packet.slot));
 
             co_return;
@@ -388,7 +388,7 @@ namespace zerosugar::xr::lobby
         } while (false);
 
         ZEROSUGAR_LOG_WARN(_serviceLocator,
-            std::format("[lobby_stete_authenticated] fail to select character. session: {}, packet: {}",
+            fmt::format("[lobby_stete_authenticated] fail to select character. session: {}, packet: {}",
                 session, nlohmann::json(packet).dump()));
     }
 

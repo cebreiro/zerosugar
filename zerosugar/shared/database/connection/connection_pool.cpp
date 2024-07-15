@@ -144,7 +144,7 @@ namespace zerosugar::db
             if (ec)
             {
                 ZEROSUGAR_LOG_CRITICAL(_serviceLocator,
-                    std::format("[connection_pool] database ping error. error: {}, diagnostics: {}",
+                    fmt::format("[connection_pool] database ping error. error: {}, diagnostics: {}",
                         ec.message(), diagnostics.server_message().data()));
             }
             else

@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
-#include <format>
+#include <fmt/core.h>
+#include <fmt/format.h>
 #include <boost/asio.hpp>
 #include "zerosugar/shared/network/session/event.h"
 
@@ -84,15 +85,15 @@ namespace zerosugar
     };
 }
 
-namespace std
+namespace fmt
 {
     template <>
-    struct formatter<zerosugar::Session> : formatter<string>
+    struct formatter<zerosugar::Session> : formatter<std::string>
     {
         auto format(const zerosugar::Session& session, format_context& ctx) const
         {
-            return formatter<string>::format(
-                std::format("{{ id: \"{}\", address: \"{}:{}\" }}",
+            return formatter<std::string>::format(
+                fmt::format("{{ id: \"{}\", address: \"{}:{}\" }}",
                     session.GetId(), session.GetRemoteAddress(), session.GetRemotePort()), ctx);
         }
     };

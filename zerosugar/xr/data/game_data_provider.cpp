@@ -24,7 +24,7 @@ namespace zerosugar::xr
         if (!baseDirectory)
         {
             ZEROSUGAR_LOG_CRITICAL(serviceLocator,
-                std::format("[{}] fail to find game data base directory.", GetName()));
+                fmt::format("[{}] fail to find game data base directory.", GetName()));
 
             throw std::runtime_error("fail to initialize game data");
         }

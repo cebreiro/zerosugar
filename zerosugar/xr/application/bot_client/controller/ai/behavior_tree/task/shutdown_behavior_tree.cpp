@@ -10,7 +10,7 @@ namespace zerosugar::xr::bot
         bt::BlackBoard& blackBoard = GetBlackBoard();
         BotController& controller = *blackBoard.Get<BotController*>(BotController::name);
 
-        controller.Shutdown(std::format("called on {}", name));
+        controller.Shutdown(fmt::format("called on {}", name));
 
 
         struct SuspendForever{};

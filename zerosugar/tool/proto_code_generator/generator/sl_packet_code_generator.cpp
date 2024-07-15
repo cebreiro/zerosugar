@@ -44,7 +44,7 @@ namespace zerosugar
                         continue;
                     }
 
-                    includes.emplace_back(std::format("{}/{}.h", option.includePath,
+                    includes.emplace_back(fmt::format("{}/{}.h", option.includePath,
                         GetMessageFileName(imported.name)));
                 }
 
@@ -65,14 +65,14 @@ namespace zerosugar
 
         {
             std::unique_ptr<io::ZeroCopyOutputStream> stream(
-                context.OpenForInsert(std::format("{}.h", GetMessageFileName(file.name())), ""));
+                context.OpenForInsert(fmt::format("{}.h", GetMessageFileName(file.name())), ""));
 
             io::Printer printer(stream.get(), '$');
             printer.Print(header.c_str());
         }
         {
             std::unique_ptr<io::ZeroCopyOutputStream> stream(
-                context.OpenForInsert(std::format("{}.cpp", GetMessageFileName(file.name())), ""));
+                context.OpenForInsert(fmt::format("{}.cpp", GetMessageFileName(file.name())), ""));
 
             io::Printer printer(stream.get(), '$');
             printer.Print(cpp.c_str());
@@ -95,7 +95,7 @@ namespace zerosugar
                         continue;
                     }
 
-                    includes.emplace_back(std::format("{}/{}.h", option.includePath,
+                    includes.emplace_back(fmt::format("{}/{}.h", option.includePath,
                         GetMessageFileName(imported.name)));
                 }
 
@@ -116,14 +116,14 @@ namespace zerosugar
 
         {
             std::unique_ptr<io::ZeroCopyOutputStream> stream(
-                context.OpenForInsert(std::format("{}.h", GetMessageFileName(file.name())), ""));
+                context.OpenForInsert(fmt::format("{}.h", GetMessageFileName(file.name())), ""));
 
             io::Printer printer(stream.get(), '$');
             printer.Print(header.c_str());
         }
         {
             std::unique_ptr<io::ZeroCopyOutputStream> stream(
-                context.OpenForInsert(std::format("{}.cpp", GetMessageFileName(file.name())), ""));
+                context.OpenForInsert(fmt::format("{}.cpp", GetMessageFileName(file.name())), ""));
 
             io::Printer printer(stream.get(), '$');
             printer.Print(cpp.c_str());

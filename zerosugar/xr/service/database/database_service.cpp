@@ -115,14 +115,14 @@ namespace zerosugar::xr
         {
             if (const DatabaseError error = co_await StartTransaction(conn); error)
             {
-                LogError(std::format("{} start transaction", __FUNCTION__), error);
+                LogError(fmt::format("{} start transaction", __FUNCTION__), error);
 
                 break;
             }
 
             if (const DatabaseError error = co_await characterAdd.ExecuteAsync(); error)
             {
-                LogError(std::format("{} characterAdd", __FUNCTION__), error);
+                LogError(fmt::format("{} characterAdd", __FUNCTION__), error);
 
                 break;
             }
@@ -132,14 +132,14 @@ namespace zerosugar::xr
 
             if (const DatabaseError error = co_await equipItemsAdd.ExecuteAsync(); error)
             {
-                LogError(std::format("{} equipItemsAdd", __FUNCTION__), error);
+                LogError(fmt::format("{} equipItemsAdd", __FUNCTION__), error);
 
                 break;
             }
 
             if (const DatabaseError error = co_await Commit(conn); error)
             {
-                LogError(std::format("{} commit", __FUNCTION__), error);
+                LogError(fmt::format("{} commit", __FUNCTION__), error);
 
                 break;
             }
@@ -155,7 +155,7 @@ namespace zerosugar::xr
         {
             if (const DatabaseError error = co_await Rollback(conn); error)
             {
-                LogError(std::format("{} rollback", __FUNCTION__), error);
+                LogError(fmt::format("{} rollback", __FUNCTION__), error);
             }
         }
 
@@ -233,7 +233,7 @@ namespace zerosugar::xr
         {
             result.errorCode = service::DatabaseServiceErrorCode::DatabaseErrorInternalError;
 
-            LogError(__FUNCTION__, error, std::format("param: {}", param.itemChangeLogs));
+            LogError(__FUNCTION__, error, fmt::format("param: {}", param.itemChangeLogs));
         }
 
         co_return result;
@@ -274,12 +274,12 @@ namespace zerosugar::xr
         if (additionalLog.has_value())
         {
             ZEROSUGAR_LOG_ERROR(_serviceLocator,
-                std::format("[{}] {} query error. {}, error: {}", name, function, *additionalLog, error.What()));
+                fmt::format("[{}] {} query error. {}, error: {}", name, function, *additionalLog, error.What()));
         }
         else
         {
             ZEROSUGAR_LOG_ERROR(_serviceLocator,
-                std::format("[{}] {} query error. error: {}", name, function, error.What()));
+                fmt::format("[{}] {} query error. error: {}", name, function, error.What()));
         }
     }
 }

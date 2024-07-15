@@ -214,7 +214,7 @@ namespace zerosugar
                         {
                             if (!field.option.sizeElement.has_value())
                             {
-                                throw std::runtime_error(std::format("field option-size element- not found. field: {}", field.name));
+                                throw std::runtime_error(fmt::format("field option-size element- not found. field: {}", field.name));
                             }
 
                             _cxxPrinter.AddLine(fieldIndent, "for (int32_t i = 0; i < {}; ++i)", *field.option.sizeElement);
@@ -380,12 +380,12 @@ namespace zerosugar
     {
         if (field.repeated)
         {
-            return std::format("std::vector<{}>", field.type);
+            return fmt::format("std::vector<{}>", field.type);
         }
 
         if (field.map.has_value())
         {
-            return std::format("std::map<{}, {}>", field.map->first, field.map->second);
+            return fmt::format("std::map<{}, {}>", field.map->first, field.map->second);
         }
 
         if (field.type.starts_with("int") && field.option.length.has_value())

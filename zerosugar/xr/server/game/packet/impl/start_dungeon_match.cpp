@@ -43,7 +43,7 @@ namespace zerosugar::xr
         if (result.errorCode != service::CoordinationServiceErrorCode::CoordinationErrorNone)
         {
             ZEROSUGAR_LOG_WARN(server.GetServiceLocator(),
-                std::format("[start_dungeon_match_handler] fail to start. session: {}, error: {}",
+                fmt::format("[start_dungeon_match_handler] fail to start. session: {}, error: {}",
                     session, GetEnumName(result.errorCode)));
 
             const network::game::sc::NotifyDungeonMatchFailure failure;

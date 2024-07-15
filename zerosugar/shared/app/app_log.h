@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
-#include <format>
 #include <source_location>
+#include <fmt/format.h>
 #include "zerosugar/shared/app/app.h"
 #include "zerosugar/shared/log/log_service.h"
 

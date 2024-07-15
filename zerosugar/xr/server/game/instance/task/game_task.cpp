@@ -43,6 +43,7 @@ namespace zerosugar::xr
         boost::scope::scope_exit exit([this]()
             {
                 assert(_localInstance == this);
+                (void)this;
 
                 _localInstance = nullptr;
             });

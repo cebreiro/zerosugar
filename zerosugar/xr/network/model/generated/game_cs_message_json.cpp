@@ -2,6 +2,23 @@
 
 namespace zerosugar::xr::network::game::cs
 {
+    void from_json(const nlohmann::json& j, Ping& item)
+    {
+        j.at("sequence").get_to(item.sequence);
+        j.at("clientTimePoint").get_to(item.clientTimePoint);
+        j.at("serverTimePoint").get_to(item.serverTimePoint);
+    }
+
+    void to_json(nlohmann::json& j, const Ping& item)
+    {
+        j = nlohmann::json
+            {
+                { "sequence", item.sequence },
+                { "clientTimePoint", item.clientTimePoint },
+                { "serverTimePoint", item.serverTimePoint },
+            };
+    }
+
     void from_json(const nlohmann::json& j, Authenticate& item)
     {
         j.at("authenticationToken").get_to(item.authenticationToken);

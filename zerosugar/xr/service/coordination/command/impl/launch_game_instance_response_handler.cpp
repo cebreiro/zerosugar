@@ -26,7 +26,7 @@ namespace zerosugar::xr::coordination
         {
             assert(false);
 
-            throw std::runtime_error(std::format("[{}] fail to add game_instance to NodeContainer", __FUNCTION__));
+            throw std::runtime_error(fmt::format("[{}] fail to add game_instance to NodeContainer", __FUNCTION__));
         }
 
         co_return;

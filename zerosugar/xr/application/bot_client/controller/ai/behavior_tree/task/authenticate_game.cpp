@@ -17,6 +17,10 @@ namespace zerosugar::xr::bot
         const std::string* authToken = blackBoard.GetIf<std::string>("auth_token");
         if (!authToken)
         {
+            ZEROSUGAR_LOG_ERROR(controller.GetServiceLocator(),
+                fmt::format("[{}] fail to find auth token from black bloard",
+                    controller.GetName()));
+
             co_return false;
         }
 

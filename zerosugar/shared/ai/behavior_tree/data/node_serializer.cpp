@@ -1,7 +1,7 @@
 #include "node_serializer.h"
 
 #include <stdexcept>
-#include <format>
+#include <fmt/format.h>
 #include <pugixml.hpp>
 #include "zerosugar/shared/ai/behavior_tree/node/branch/selector.h"
 #include "zerosugar/shared/ai/behavior_tree/node/branch/sequence.h"
@@ -35,7 +35,7 @@ namespace zerosugar::bt
         {
             assert(false);
 
-            throw std::runtime_error(std::format(
+            throw std::runtime_error(fmt::format(
                 "[bt node deserializer] fail to find node adl function. node name: {}", name));
         }
 

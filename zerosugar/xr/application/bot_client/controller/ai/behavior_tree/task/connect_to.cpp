@@ -21,7 +21,7 @@ namespace zerosugar::xr::bot
         }
 
         const auto* address = blackBoard.GetIf<std::pair<std::string, int32_t>>(
-            std::format("{}_address", _target));
+            fmt::format("{}_address", _target));
         if (!address)
         {
             co_return false;

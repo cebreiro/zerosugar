@@ -17,7 +17,7 @@ namespace zerosugar::xr::bot
 
         cs::CreateCharacter packet;
         packet.character.slot = 0;
-        packet.character.name = std::format("bot{}", controller.GetId());
+        packet.character.name = fmt::format("bot{}", controller.GetId());
         packet.character.faceId = 120;
         packet.character.hairId = 110;
 

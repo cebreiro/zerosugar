@@ -128,22 +128,22 @@ namespace zerosugar::xr
 
         GetServiceLocator().Add<ILogService>(_logService);
 
-        ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize logger --> Done. log_file_path: {}", GetName(), logFilePath.string()));
+        ZEROSUGAR_LOG_INFO(GetServiceLocator(), fmt::format("[{}] initialize logger --> Done. log_file_path: {}", GetName(), logFilePath.string()));
     }
 
     void AllInOneApp::InitializeExecutor()
     {
-        ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize executor", GetName()));
+        ZEROSUGAR_LOG_INFO(GetServiceLocator(), fmt::format("[{}] initialize executor", GetName()));
 
         ExecutionContext::PushExecutor(_executor.get());
         _executor->Run();
 
-        ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize executor --> Done", GetName()));
+        ZEROSUGAR_LOG_INFO(GetServiceLocator(), fmt::format("[{}] initialize executor --> Done", GetName()));
     }
 
     void AllInOneApp::InitializeDatabaseConnection()
     {
-        ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize database connection", GetName()));
+        ZEROSUGAR_LOG_INFO(GetServiceLocator(), fmt::format("[{}] initialize database connection", GetName()));
 
         const auto endPoint = boost::asio::ip::tcp::endpoint(
             boost::asio::ip::make_address(_config->databaseIP), _config->databasePort);
@@ -154,34 +154,34 @@ namespace zerosugar::xr
         _connectionPool->Initialize(GetServiceLocator());
         _connectionPool->Start(option);
 
-        ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize database connection --> Done", GetName()));
+        ZEROSUGAR_LOG_INFO(GetServiceLocator(), fmt::format("[{}] initialize database connection --> Done", GetName()));
     }
 
     void AllInOneApp::InitializeGameData(ServiceLocator& serviceLocator)
     {
-        ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize game data", GetName()));
+        ZEROSUGAR_LOG_INFO(GetServiceLocator(), fmt::format("[{}] initialize game data", GetName()));
 
         _gameDataProvider->Initialize(serviceLocator);
-        _navigationDataProvider->Initialize(serviceLocator, _gameDataProvider->GetBaseDirectory());
+        _navigationDataProvider->InitializeData(serviceLocator, _gameDataProvider->GetBaseDirectory());
 
-        ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize game data --> Done", GetName()));
+        ZEROSUGAR_LOG_INFO(GetServiceLocator(), fmt::format("[{}] initialize game data --> Done", GetName()));
     }
 
     void AllInOneApp::InitializeService(ServiceLocator& serviceLocator)
     {
-        ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize service", GetName()));
+        ZEROSUGAR_LOG_INFO(GetServiceLocator(), fmt::format("[{}] initialize service", GetName()));
 
         for (const SharedPtrNotNull<IService>& service : _services)
         {
             service->Initialize(serviceLocator);
         }
 
-        ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize service --> Done", GetName()));
+        ZEROSUGAR_LOG_INFO(GetServiceLocator(), fmt::format("[{}] initialize service --> Done", GetName()));
     }
 
     void AllInOneApp::InitializeServer(ServiceLocator& serviceLocator)
     {
-        ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize network", GetName()));
+        ZEROSUGAR_LOG_INFO(GetServiceLocator(), fmt::format("[{}] initialize network", GetName()));
 
         _rpcServer->Initialize(serviceLocator);
         _rpcClient->Initialize(serviceLocator);
@@ -203,12 +203,12 @@ namespace zerosugar::xr
             {
                 std::this_thread::sleep_for(std::chrono::seconds(3));
 
-                ZEROSUGAR_LOG_INFO(serviceLocator, std::format("[rpc_client] pending connection to rpc server..."));
+                ZEROSUGAR_LOG_INFO(serviceLocator, fmt::format("[rpc_client] pending connection to rpc server..."));
             }
 
             future.Get();
 
-            ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[rpc_client] connecting to rpc server --> Done"));
+            ZEROSUGAR_LOG_INFO(GetServiceLocator(), fmt::format("[rpc_client] connecting to rpc server --> Done"));
         }
         {
             for (const SharedPtrNotNull<IService>& service : _services)
@@ -218,7 +218,7 @@ namespace zerosugar::xr
                 Future<void> future = _rpcClient->RegisterToServer(name, _config->rpcServerIP, _config->rpcServerPort);
                 future.Get();
 
-                ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[rpc_client] register {} to rpc server --> Done", name));
+                ZEROSUGAR_LOG_INFO(GetServiceLocator(), fmt::format("[rpc_client] register {} to rpc server --> Done", name));
             }
         }
 
@@ -227,6 +227,6 @@ namespace zerosugar::xr
 
         _gameServer->StartUp(_config->gamePort);
 
-        ZEROSUGAR_LOG_INFO(GetServiceLocator(), std::format("[{}] initialize network --> Done", GetName()));
+        ZEROSUGAR_LOG_INFO(GetServiceLocator(), fmt::format("[{}] initialize network --> Done", GetName()));
     }
 }

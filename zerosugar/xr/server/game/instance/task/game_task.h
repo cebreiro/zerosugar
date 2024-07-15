@@ -88,7 +88,7 @@ namespace zerosugar::xr
         {
             const auto select = [&serialContext]<typename T, size_t... I>(T && tuple, std::index_sequence<I...>)
             {
-                return (... & std::get<I>(tuple).SelectEntityId(serialContext));
+                return (... && std::get<I>(tuple).SelectEntityId(serialContext));
             };
 
             const bool success = select(_tuple, sequence);
@@ -111,7 +111,7 @@ namespace zerosugar::xr
         {
             const auto select = [&parallelContext]<typename T, size_t... I>(T && tuple, std::index_sequence<I...>)
             {
-                return (... & std::get<I>(tuple).SelectEntity(parallelContext));
+                return (... && std::get<I>(tuple).SelectEntity(parallelContext));
             };
 
             const bool success = select(_tuple, sequence);

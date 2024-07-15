@@ -186,7 +186,7 @@ namespace zerosugar::xr
                 else
                 {
                     ZEROSUGAR_LOG_ERROR(_serviceLocator,
-                        std::format("[{}] fail to find service. service_name: {}", GetName(), request.serviceName));
+                        fmt::format("[{}] fail to find service. service_name: {}", GetName(), request.serviceName));
 
                     ResultRemoteProcedureCall result;
                     result.errorCode = RemoteProcedureCallErrorCode::RpcErrorInternalError;
@@ -209,7 +209,7 @@ namespace zerosugar::xr
                 else
                 {
                     ZEROSUGAR_LOG_ERROR(_serviceLocator,
-                        std::format("[{}] fail to find service. service_name: {}", GetName(), result.serviceName));
+                        fmt::format("[{}] fail to find service. service_name: {}", GetName(), result.serviceName));
                 }
             }
             break;
@@ -225,7 +225,7 @@ namespace zerosugar::xr
                 else
                 {
                     ZEROSUGAR_LOG_ERROR(_serviceLocator,
-                        std::format("[{}] fail to find service. service_name: {}", GetName(), serverStreaming.serviceName));
+                        fmt::format("[{}] fail to find service. service_name: {}", GetName(), serverStreaming.serviceName));
                 }
             }
             break;
@@ -241,7 +241,7 @@ namespace zerosugar::xr
                 else
                 {
                     ZEROSUGAR_LOG_ERROR(_serviceLocator,
-                        std::format("[{}] fail to find service. service_name: {}", GetName(), clientSteaming.serviceName));
+                        fmt::format("[{}] fail to find service. service_name: {}", GetName(), clientSteaming.serviceName));
                 }
             }
             break;
@@ -257,7 +257,7 @@ namespace zerosugar::xr
                 else
                 {
                     ZEROSUGAR_LOG_ERROR(_serviceLocator,
-                        std::format("[{}] fail to find service. service_name: {}", GetName(), abort.serviceName));
+                        fmt::format("[{}] fail to find service. service_name: {}", GetName(), abort.serviceName));
                 }
             }
             break;

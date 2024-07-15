@@ -48,6 +48,8 @@ namespace zerosugar::xr
                     callback();
                 }
             });
+
+        co_return true;
     }
 
     void NavigationService::StopVisualize()

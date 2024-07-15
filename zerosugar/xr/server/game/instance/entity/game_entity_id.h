@@ -52,14 +52,17 @@ namespace std
             return std::hash<int64_t>{}(value.Unwrap());
         }
     };
+}
 
+namespace fmt
+{
     template <>
-    struct formatter<zerosugar::xr::detail::game::GameEntityId> : std::formatter<std::string>
+    struct formatter<zerosugar::xr::detail::game::GameEntityId> : formatter<std::string>
     {
-        auto format(zerosugar::xr::detail::game::GameEntityId value, std::format_context& context) const
-            -> std::format_context::iterator
+        auto format(zerosugar::xr::detail::game::GameEntityId value, format_context& context) const
+            -> fmt::format_context::iterator
         {
-            return std::formatter<std::string>::format(std::format("[{}, {}]",
+            return fmt::formatter<std::string>::format(fmt::format("[{}, {}]",
                 ToString(value.GetType()), value.GetValue()), context);
         }
     };

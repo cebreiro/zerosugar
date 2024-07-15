@@ -87,7 +87,7 @@ namespace zerosugar::xr
                     {
                         std::uniform_int_distribution<int64_t> dist;
 
-                        const std::string& token = Encode(std::format("{}{}", param.account, dist(_mt)));
+                        const std::string& token = Encode(fmt::format("{}{}", param.account, dist(_mt)));
 
                         if (_authenticationTokens.try_emplace(token, dto.accountId).second)
                         {
@@ -181,20 +181,20 @@ namespace zerosugar::xr
                     throw std::runtime_error("test");
                 }
 
-                ZEROSUGAR_LOG_INFO(_serviceLocator, std::format("{}, {}, {}", __FUNCTION__, asd.token, i));
+                ZEROSUGAR_LOG_INFO(_serviceLocator, fmt::format("{}, {}, {}", __FUNCTION__, asd.token, i));
             }
         }
         catch (const std::exception& e)
         {
-            ZEROSUGAR_LOG_WARN(_serviceLocator, std::format("{}, exception: {}", __FUNCTION__, e.what()));
+            ZEROSUGAR_LOG_WARN(_serviceLocator, fmt::format("{}, exception: {}", __FUNCTION__, e.what()));
 
             throw;
         }
 
         service::TestResult result;
-        result.token = std::format("{} END", __FUNCTION__);
+        result.token = fmt::format("{} END", __FUNCTION__);
 
-        ZEROSUGAR_LOG_INFO(_serviceLocator, std::format("{}, {} END", __FUNCTION__, i));
+        ZEROSUGAR_LOG_INFO(_serviceLocator, fmt::format("{}, {} END", __FUNCTION__, i));
 
         co_return result;
     }
@@ -214,12 +214,12 @@ namespace zerosugar::xr
             co_await Delay(std::chrono::milliseconds(1));
 
             service::TestResult result;
-            result.token = std::format("{}:{}", __FUNCTION__, i);
+            result.token = fmt::format("{}:{}", __FUNCTION__, i);
 
             co_yield result;
         }
 
-        ZEROSUGAR_LOG_DEBUG(_serviceLocator, std::format("{} END", __FUNCTION__));
+        ZEROSUGAR_LOG_DEBUG(_serviceLocator, fmt::format("{} END", __FUNCTION__));
 
         co_return;
     }
@@ -241,17 +241,17 @@ namespace zerosugar::xr
                 service::TestResult result;
                 result.token = asd.token;
 
-                ZEROSUGAR_LOG_DEBUG(_serviceLocator, std::format("{} : {}", __FUNCTION__, asd.token));
+                ZEROSUGAR_LOG_DEBUG(_serviceLocator, fmt::format("{} : {}", __FUNCTION__, asd.token));
 
                 co_yield result;
             }
         }
         catch (const std::exception& e)
         {
-            ZEROSUGAR_LOG_WARN(_serviceLocator, std::format("{}, exception: {}", __FUNCTION__, e.what()));
+            ZEROSUGAR_LOG_WARN(_serviceLocator, fmt::format("{}, exception: {}", __FUNCTION__, e.what()));
         }
 
-        ZEROSUGAR_LOG_DEBUG(_serviceLocator, std::format("{} END", __FUNCTION__));
+        ZEROSUGAR_LOG_DEBUG(_serviceLocator, fmt::format("{} END", __FUNCTION__));
 
         co_return;
     }

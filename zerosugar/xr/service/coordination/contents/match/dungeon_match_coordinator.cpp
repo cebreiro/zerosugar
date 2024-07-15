@@ -262,11 +262,23 @@ namespace zerosugar::xr
 
     bool DungeonMatchCoordinator::CreateMatchingGroup()
     {
+        auto now = std::chrono::system_clock::now();
+        bool updateLastMatchLogTimePoint = false;
+
         int64_t makingCount = 0;
 
         for (auto& [dungeonId, matchQueue] : _matchQueues)
         {
-            constexpr int64_t matchOrganizeSize = 5;
+            if (now - _lastMatchLogTimePoint > std::chrono::seconds(5))
+            {
+                updateLastMatchLogTimePoint = true;
+
+                ZEROSUGAR_LOG_INFO(_coordinationService.GetServiceLocator(),
+                    fmt::format("[{}] [dungeon: {}] current match queue size: {}",
+                        GetName(), dungeonId, std::ssize(matchQueue)));
+            }
+
+            constexpr int64_t matchOrganizeSize = 600;
 
             while (std::ssize(matchQueue) >= matchOrganizeSize)
             {
@@ -297,6 +309,11 @@ namespace zerosugar::xr
 
                 HandleMatchGroupCreation(iter->second);
             }
+        }
+
+        if (updateLastMatchLogTimePoint)
+        {
+            _lastMatchLogTimePoint = now;
         }
 
         return makingCount > 0;
@@ -441,5 +458,10 @@ namespace zerosugar::xr
         assert(gameServer);
 
         return gameServer;
+    }
+
+    auto DungeonMatchCoordinator::GetName() const -> std::string_view
+    {
+        return "dungeon_match_coordinator";
     }
 }

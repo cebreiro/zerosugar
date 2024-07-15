@@ -140,7 +140,7 @@ namespace zerosugar::xr::login
             co_return;
         }
 
-        throw std::runtime_error(std::format("unhandled packet. opcode: {}", inPacket->GetOpcode()));
+        throw std::runtime_error(fmt::format("unhandled packet. opcode: {}", inPacket->GetOpcode()));
     }
 
     AuthenticatedState::AuthenticatedState(Session& session)

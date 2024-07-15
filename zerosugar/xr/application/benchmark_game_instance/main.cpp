@@ -18,7 +18,7 @@
 using namespace zerosugar;
 using namespace zerosugar::xr;
 
-constexpr int64_t playerCount = 500;
+constexpr int64_t playerCount = 3000;
 
 constexpr auto moveSyncPerSecond = 4;
 constexpr auto simulationSecond = std::chrono::seconds(10);
@@ -191,7 +191,7 @@ void TestDataBench(GameInstance& instance, const std::string& executorName)
 {
     size_t i = 0;
 
-    ankerl::nanobench::Bench().run(std::format("{}) make simulation data", executorName), [&]()
+    ankerl::nanobench::Bench().run(fmt::format("{}) make simulation data", executorName), [&]()
         {
             auto testData = MakeTestData(instance, seeds[i++]);
             ankerl::nanobench::doNotOptimizeAway(testData);
@@ -202,7 +202,7 @@ void StartBench(GameInstance& instance, const std::string& executorName)
 {
     size_t i = 0;
 
-    ankerl::nanobench::Bench().run(std::format("{}) simulate movement", executorName), [&]()
+    ankerl::nanobench::Bench().run(fmt::format("{}) simulate movement", executorName), [&]()
         {
             auto data = MakeTestData(instance, seeds[i++]);
 
@@ -415,12 +415,12 @@ int main()
     constexpr int64_t seedSize = 10000;
     seeds.resize(seedSize);
 
+    std::random_device rnd;
+
     for (int64_t i = 0; i < seedSize; ++i)
     {
-        seeds[i] = std::random_device{}();
+        seeds[i] = rnd();
     }
-
-    std::cout << "asioExecutor test start\n";
 
     asioExecutor->Run();
     {
@@ -491,7 +491,7 @@ int main()
         instance1->Join();
 
         auto instance2 = std::make_shared<GameInstance>(gameExecutor, locator, game_instance_id_type{}, 100);
-        StartBench(*instance2, "game executor");
+        StartBench(*instance2, "work stealing executor");
 
         instance2->Shutdown();
         instance2->Join();

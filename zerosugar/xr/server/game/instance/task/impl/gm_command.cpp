@@ -39,7 +39,7 @@ namespace zerosugar::xr::game_task
         if (!gmCommand)
         {
             serialContext.GetSnapshotView().DisplaySystemMessage(playerId,
-                std::format("fail to find gm command[{}]", args[0]));
+                fmt::format("fail to find gm command[{}]", args[0]));
 
             return;
         }
@@ -62,7 +62,7 @@ namespace zerosugar::xr::game_task
             }
 
             serialContext.GetSnapshotView().DisplaySystemMessage(playerId,
-                std::format("fail to handle gm command[{}], args: [{}]", args[0], argsStr));
+                fmt::format("fail to handle gm command[{}], args: [{}]", args[0], argsStr));
         }
     }
 

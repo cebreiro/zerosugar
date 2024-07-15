@@ -37,7 +37,7 @@ namespace zerosugar::xr
                         return parser.Parse(item, args, static_cast<int64_t>(J));
                     };
 
-                    const bool result = (... & parseImpl.template operator()<I>(parser, std::get<I>(tuple), args));
+                    const bool result = (... && parseImpl.template operator()<I>(parser, std::get<I>(tuple), args));
 
                     return result;
                 };

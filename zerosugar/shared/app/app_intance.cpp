@@ -2,8 +2,7 @@
 
 #include <cassert>
 #include <iostream>
-#include <format>
-
+#include <fmt/format.h>
 #include "zerosugar/shared/app/app.h"
 
 namespace zerosugar
@@ -26,7 +25,7 @@ namespace zerosugar
         }
         catch (const std::exception& e)
         {
-            std::cout << std::format("fail to start application. exception: {}", e.what());
+            std::cout << fmt::format("fail to start application. exception: {}", e.what());
 
             return EXIT_FAILURE;
         }

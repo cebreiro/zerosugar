@@ -33,7 +33,7 @@ namespace zerosugar::xr
         if (res.errorCode != service::CoordinationServiceErrorCode::CoordinationErrorNone)
         {
             ZEROSUGAR_LOG_CRITICAL(_serviceLocator,
-                std::format("[{}] fail to get snowflake key: {}", GetName(), GetEnumName(res.errorCode)));
+                fmt::format("[{}] fail to get snowflake key: {}", GetName(), GetEnumName(res.errorCode)));
 
             return;
         }
@@ -47,7 +47,7 @@ namespace zerosugar::xr
         if (addResult.errorCode != service::GatewayServiceErrorCode::GatewayErrorNone)
         {
             ZEROSUGAR_LOG_CRITICAL(_serviceLocator,
-                std::format("[{}] fail to add game service. erorr: {}", GetName(), GetEnumName(addResult.errorCode)));
+                fmt::format("[{}] fail to add game service. erorr: {}", GetName(), GetEnumName(addResult.errorCode)));
         }
 
         _snowflake.emplace(res.snowflakeKey);
@@ -63,7 +63,7 @@ namespace zerosugar::xr
         assert(_snowflake.has_value());
 
         ZEROSUGAR_LOG_DEBUG(_serviceLocator,
-            std::format("[{}] accept session. session: {}", GetName(), session));
+            fmt::format("[{}] accept session. session: {}", GetName(), session));
 
         auto stateMachine = std::make_shared<LobbySessionStateMachine>(_serviceLocator, *_snowflake, session);
 
@@ -117,7 +117,7 @@ namespace zerosugar::xr
         assert(ExecutionContext::IsEqualTo(session.GetStrand()));
 
         ZEROSUGAR_LOG_DEBUG(_serviceLocator,
-            std::format("[{}] session io error. session: {}, error: {}", GetName(), session, error.message()));
+            fmt::format("[{}] session io error. session: {}, error: {}", GetName(), session, error.message()));
 
         std::shared_ptr<LobbySessionStateMachine> stateMachine;
         {

@@ -7,7 +7,7 @@ namespace zerosugar::xr
 {
     auto Packet::ToBuffer(const IPacket& packet) -> Buffer
     {
-        using length_type = int16_t;
+        using length_type = int32_t;
         using opcode_type = int16_t;
 
         PacketWriter packetWriter;

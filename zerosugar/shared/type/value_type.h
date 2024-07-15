@@ -1,8 +1,8 @@
 #pragma once
 #include <concepts>
 #include <string>
-#include <format>
 #include <functional>
+#include <fmt/color.h>
 #include <boost/container_hash/hash.hpp>
 
 namespace zerosugar
@@ -89,14 +89,17 @@ namespace std
             return std::hash<T>{}(value.Unwrap());
         }
     };
+}
 
+namespace fmt
+{
     template <std::integral T, typename Tag>
-    struct formatter<zerosugar::ValueType<T, Tag>> : std::formatter<std::string>
+    struct formatter<zerosugar::ValueType<T, Tag>> : formatter<std::string>
     {
-        auto format(zerosugar::ValueType<T, Tag> value, std::format_context& context) const
-            -> std::format_context::iterator
+        auto format(zerosugar::ValueType<T, Tag> value, format_context& context) const
+            -> format_context::iterator
         {
-            return std::formatter<std::string>::format(std::format("{}", value.Unwrap()), context);
+            return formatter<std::string>::format(fmt::format("{}", value.Unwrap()), context);
         }
     };
 }

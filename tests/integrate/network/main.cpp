@@ -72,7 +72,7 @@ TEST(IntegarteNetwork, EchoCompareBytes)
 
         for (int64_t i = 0; i < std::min(sendBufferSize, receiveBufferSize); ++i)
         {
-            EXPECT_EQ(sendBuffer[i], receiveBuffer[i]) << std::format("diff i={}", i);
+            EXPECT_EQ(sendBuffer[i], receiveBuffer[i]) << fmt::format("diff i={}", i);
         }
     }
 }

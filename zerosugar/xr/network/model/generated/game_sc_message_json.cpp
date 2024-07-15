@@ -2,6 +2,23 @@
 
 namespace zerosugar::xr::network::game::sc
 {
+    void from_json(const nlohmann::json& j, Pong& item)
+    {
+        j.at("sequence").get_to(item.sequence);
+        j.at("clientTimePoint").get_to(item.clientTimePoint);
+        j.at("serverTimePoint").get_to(item.serverTimePoint);
+    }
+
+    void to_json(nlohmann::json& j, const Pong& item)
+    {
+        j = nlohmann::json
+            {
+                { "sequence", item.sequence },
+                { "clientTimePoint", item.clientTimePoint },
+                { "serverTimePoint", item.serverTimePoint },
+            };
+    }
+
     void from_json(const nlohmann::json& j, EnterGame& item)
     {
         j.at("zoneId").get_to(item.zoneId);

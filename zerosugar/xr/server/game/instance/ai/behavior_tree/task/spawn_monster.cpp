@@ -26,7 +26,7 @@ namespace zerosugar::xr::ai
         if (!data)
         {
             ZEROSUGAR_LOG_ERROR(serviceLocator,
-                std::format("[{}] fail to find monster data. id: {}", GetName(), param.monsterId));
+                fmt::format("[{}] fail to find monster data. id: {}", GetName(), param.monsterId));
 
             co_return false;
         }

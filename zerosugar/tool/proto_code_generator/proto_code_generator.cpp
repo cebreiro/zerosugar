@@ -2,8 +2,7 @@
 
 #include <google/protobuf/compiler/code_generator.h>
 #include <nlohmann/json.hpp>
-#include <format>
-
+#include <fmt/format.h>
 #include "zerosugar/tool/proto_code_generator/proto_code_generator_option.h"
 #include "zerosugar/tool/proto_code_generator/generator/code_generator_factory.h"
 #include "zerosugar/tool/proto_code_generator/generator/code_generator_interface.h"
@@ -40,7 +39,7 @@ namespace zerosugar
             }
             else
             {
-                throw std::runtime_error(std::format("fail to find code generator. generator: {}", option.generator));
+                throw std::runtime_error(fmt::format("fail to find code generator. generator: {}", option.generator));
             }
         }
         catch (const std::exception& e)

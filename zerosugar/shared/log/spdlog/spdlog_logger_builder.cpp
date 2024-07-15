@@ -42,7 +42,7 @@ namespace zerosugar
         static std::atomic<int64_t> counter = 0;
         auto makeLoggerName = [&]() -> std::string
             {
-                return std::format("logger[{}]", ++counter);
+                return fmt::format("logger[{}]", ++counter);
             };
 
         std::shared_ptr<spdlog::logger> syncLogger;

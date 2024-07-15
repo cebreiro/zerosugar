@@ -155,6 +155,21 @@ namespace zerosugar
         Buffer& sendBuffer = _sendBuffer.emplace();
         sendBuffer.MergeBack(std::move(buffer));
 
+        constexpr int64_t maxSize = std::numeric_limits<uint16_t>::max();
+
+        if (sendBuffer.GetSize() > maxSize)
+        {
+            Buffer temp;
+
+            [[maybe_unused]]
+            const bool sliced = sendBuffer.SliceFront(temp, maxSize);
+            assert(sliced);
+
+            std::swap(temp, sendBuffer);
+
+            _sendWaitQueue.insert(_sendWaitQueue.begin(), std::move(temp));
+        }
+
         WriteAsync(ConfigureConstBuffer(sendBuffer));
     }
 

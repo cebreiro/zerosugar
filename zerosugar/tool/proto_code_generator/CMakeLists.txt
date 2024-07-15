@@ -8,6 +8,7 @@ target_link_libraries(zerosugar_proto_code_generator PUBLIC
     Boost::boost
     nlohmann_json
     nlohmann_json::nlohmann_json
+    fmt::fmt
 )
 
 file(GLOB_RECURSE ZEROSUGAR_PROTO_CODE_GENERATOR_SRC_FILES CONFIGURE_DEPENDS

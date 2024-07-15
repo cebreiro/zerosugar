@@ -1,7 +1,6 @@
 #include "game_task_scheduler.h"
 
 #include "zerosugar/xr/server/game/instance/game_instance.h"
-#include "zerosugar/xr/server/game/instance/task/game_task.h"
 
 namespace zerosugar::xr
 {
@@ -522,6 +521,7 @@ namespace zerosugar::xr
                 Resource& resource = iter->second;
                 assert(resource.state == Resource::StateType::Assigned);
                 assert(resource.acquired && resource.acquired == &process);
+                (void)process;
 
                 resource.state = Resource::StateType::Free;
                 resource.acquired = nullptr;

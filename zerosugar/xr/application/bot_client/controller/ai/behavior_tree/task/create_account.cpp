@@ -13,7 +13,7 @@ namespace zerosugar::xr::bot
         bt::BlackBoard& blackBoard = GetBlackBoard();
         BotController& controller = *blackBoard.Get<BotController*>(BotController::name);
 
-        const auto id = std::format("bot{}", controller.GetId());
+        const auto id = fmt::format("bot{}", controller.GetId());
 
         using namespace network::login;
 

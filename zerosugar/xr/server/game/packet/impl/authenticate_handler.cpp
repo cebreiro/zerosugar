@@ -29,7 +29,8 @@ namespace zerosugar::xr
         if (server.HasClient(session.GetId()))
         {
             ZEROSUGAR_LOG_WARN(server.GetServiceLocator(),
-                std::format("[{}] authenticate - invalid request. session: {}, error: {}", server.GetName(), session));
+                fmt::format("[{}] authenticate - invalid request. session: {}",
+                    server.GetName(), session));
 
             session.Close();
 
@@ -44,7 +45,7 @@ namespace zerosugar::xr
         if (authResult.errorCode != CoordinationServiceErrorCode::CoordinationErrorNone)
         {
             ZEROSUGAR_LOG_WARN(server.GetServiceLocator(),
-                std::format("[{}] fail to authenticate session. session: {}, error: {}",
+                fmt::format("[{}] fail to authenticate session. session: {}, error: {}",
                     server.GetName(), session, GetEnumName(authResult.errorCode)));
 
             session.Close();
@@ -60,7 +61,7 @@ namespace zerosugar::xr
             // TODO: remove auth
 
             ZEROSUGAR_LOG_CRITICAL(server.GetServiceLocator(),
-                std::format("[{}] fail to find character from repository. session: {}, auth_token: {}, character_id: {}",
+                fmt::format("[{}] fail to find character from repository. session: {}, auth_token: {}, character_id: {}",
                     server.GetName(), session, authParam.authenticationToken, authResult.characterId));
 
             session.Close();
@@ -75,7 +76,7 @@ namespace zerosugar::xr
             // TODO: remove auth
             
             ZEROSUGAR_LOG_CRITICAL(server.GetServiceLocator(),
-                std::format("[{}] fail to find game instance. session: {}, instance_id: {}",
+                fmt::format("[{}] fail to find game instance. session: {}, instance_id: {}",
                     server.GetName(), session, authResult.gameInstanceId));
 
             session.Close();

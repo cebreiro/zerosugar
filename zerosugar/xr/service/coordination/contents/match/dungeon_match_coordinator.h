@@ -53,6 +53,8 @@ namespace zerosugar::xr
         auto FindGroup(int64_t id) -> DungeonMatchGroup*;
         auto FindServerWith(coordination::game_user_id_type id) -> coordination::GameServer*;
 
+        auto GetName() const -> std::string_view;
+
     private:
         CoordinationService& _coordinationService;
         bool _shutdown = false;
@@ -60,6 +62,7 @@ namespace zerosugar::xr
         std::vector<Future<void>> _pending;
 
         int64_t _nextGroupId = 0;
+        std::chrono::system_clock::time_point _lastMatchLogTimePoint = std::chrono::system_clock::now();
 
         std::unordered_map<coordination::game_user_id_type, DungeonMatchUser> _matchUsers;
         boost::unordered::unordered_flat_map<int32_t, std::deque<PtrNotNull<DungeonMatchUser>>> _matchQueues;

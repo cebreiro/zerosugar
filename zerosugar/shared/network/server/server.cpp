@@ -42,7 +42,7 @@ namespace zerosugar
         }
         catch (const std::exception& e)
         {
-            ZEROSUGAR_LOG_CRITICAL(_locator, std::format("[{}] fail to start. exception: {}",
+            ZEROSUGAR_LOG_CRITICAL(_locator, fmt::format("[{}] fail to start. exception: {}",
                 GetName(), e.what()));
         }
 
@@ -75,7 +75,7 @@ namespace zerosugar
 
         if (ec)
         {
-            ZEROSUGAR_LOG_CRITICAL(_locator, std::format("[{}] has a error on shutdown process. errorCode: [{}, {}]",
+            ZEROSUGAR_LOG_CRITICAL(_locator, fmt::format("[{}] has a error on shutdown process. errorCode: [{}, {}]",
                 GetName(), ec.value(), ec.message()));
         }
     }
@@ -149,6 +149,9 @@ namespace zerosugar
         {
             if (ec == boost::asio::error::operation_aborted)
             {
+                ZEROSUGAR_LOG_CRITICAL(_locator,
+                    fmt::format("[{}] accept operation aborted", GetName()));
+
                 return;
             }
 
@@ -176,6 +179,9 @@ namespace zerosugar
         }
         else
         {
+            ZEROSUGAR_LOG_CRITICAL(_locator,
+                fmt::format("[{}] duplicated session id. id: {}", GetName(), id.Unwrap()));
+
             session->Close();
             assert(false);
 
@@ -197,7 +203,7 @@ namespace zerosugar
     {
         if (ec)
         {
-            ZEROSUGAR_LOG_CRITICAL(_locator, std::format("[{}] fail to accept session. errorCode: [{}, {}]",
+            ZEROSUGAR_LOG_CRITICAL(_locator, fmt::format("[{}] fail to accept session. errorCode: [{}, {}]",
                 GetName(), ec.value(), ec.message()));
         }
     }
@@ -222,7 +228,7 @@ namespace zerosugar
             }
             catch (const std::exception& e)
             {
-                ZEROSUGAR_LOG_WARN(_locator, std::format("[{}] session event handler throw an exception. exception: {}",
+                ZEROSUGAR_LOG_WARN(_locator, fmt::format("[{}] session event handler throw an exception. exception: {}",
                     GetName(), e.what()));
                 co_return;
             }
@@ -287,7 +293,7 @@ namespace zerosugar
         const int64_t prev = _sessionCount.fetch_sub(1);
 
         ZEROSUGAR_LOG_DEBUG(_locator,
-            std::format("[{}] session[{}] destured. current session count: {}", GetName(), event.id, prev - 1));
+            fmt::format("[{}] session[{}] destured. current session count: {}", GetName(), event.id, prev - 1));
     }
 
     auto Server::PublishSessionId() -> session::id_type

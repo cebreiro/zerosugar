@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <sstream>
-#include <format>
+#include <fmt/format.h>
 
 namespace zerosugar
 {
@@ -43,13 +43,13 @@ namespace zerosugar
         {
             if constexpr (sizeof...(Args) == 0)
             {
-                _oss << std::format("{}{}", str, line_feed);
+                _oss << fmt::format("{}{}", str, line_feed);
             }
             else
             {
                 auto formatStr = std::vformat(str, std::make_format_args(args...));
 
-                _oss << std::format("{}\r\n", std::move(formatStr));
+                _oss << fmt::format("{}\r\n", std::move(formatStr));
             }
 
             return;
@@ -63,13 +63,13 @@ namespace zerosugar
 
         if constexpr (sizeof...(Args) == 0)
         {
-            _oss << std::format("{}{}{}", oss.str(), str, line_feed);
+            _oss << fmt::format("{}{}{}", oss.str(), str, line_feed);
         }
         else
         {
             auto formatStr = std::vformat(str, std::make_format_args(args...));
 
-            _oss << std::format("{}{}{}", oss.str(), std::move(formatStr), line_feed);
+            _oss << fmt::format("{}{}{}", oss.str(), std::move(formatStr), line_feed);
         }
     }
 }

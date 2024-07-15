@@ -15,6 +15,7 @@ target_link_libraries(zerosugar_shared PUBLIC
     Boost::system
     Boost::filesystem
     Eigen3::Eigen
+    fmt::fmt
 )
 
 file(GLOB_RECURSE ZEROSUGAR_SHARED_SRC_FILES CONFIGURE_DEPENDS

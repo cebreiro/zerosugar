@@ -173,7 +173,7 @@ namespace zerosugar::xr
     void GameServer::OnAccept(Session& session)
     {
         ZEROSUGAR_LOG_DEBUG(_serviceLocator,
-            std::format("[{}] accept session. session: {}", GetName(), session));
+            fmt::format("[{}] accept session. session: {}", GetName(), session));
 
         {
             decltype(_sessionReceiveBuffers)::accessor accessor;
@@ -233,16 +233,11 @@ namespace zerosugar::xr
         {
             receiveBuffer->MergeBack(std::move(buffer));
 
-            while (true)
+            while (receiveBuffer->GetSize() >= 4)
             {
-                if (receiveBuffer->GetSize() < 2)
-                {
-                    break;
-                }
-
                 PacketReader reader(receiveBuffer->cbegin(), receiveBuffer->cend());
 
-                const int64_t packetSize = reader.Read<int16_t>();
+                const int64_t packetSize = reader.Read<int32_t>();
                 if (receiveBuffer->GetSize() < packetSize)
                 {
                     break;
@@ -257,7 +252,7 @@ namespace zerosugar::xr
                 if (!packet)
                 {
                     ZEROSUGAR_LOG_WARN(_serviceLocator,
-                        std::format("[{}] unnkown packet. session: {}", GetName(), session));
+                        fmt::format("[{}] unnkown packet. session: {}", GetName(), session));
 
                     //session.Close();
 
@@ -272,7 +267,7 @@ namespace zerosugar::xr
                 else
                 {
                     ZEROSUGAR_LOG_WARN(_serviceLocator,
-                        std::format("[{}] unnkown packet. session: {}, opcode: {}", GetName(), session, packet->GetOpcode()));
+                        fmt::format("[{}] unnkown packet. session: {}, opcode: {}", GetName(), session, packet->GetOpcode()));
 
                     //session.Close();
                 }
@@ -280,7 +275,7 @@ namespace zerosugar::xr
         }
         catch (const std::exception& e)
         {
-            ZEROSUGAR_LOG_WARN(_serviceLocator, std::format("[{}] throws. session: {}, exsception: {}",
+            ZEROSUGAR_LOG_WARN(_serviceLocator, fmt::format("[{}] throws. session: {}, exsception: {}",
                 GetName(), session, e.what()));
 
             session.Close();
@@ -290,7 +285,7 @@ namespace zerosugar::xr
     void GameServer::OnError(Session& session, const boost::system::error_code& error)
     {
         ZEROSUGAR_LOG_DEBUG(_serviceLocator,
-            std::format("[{}] session io error. session: {}, error: {}", GetName(), session, error.message()));
+            fmt::format("[{}] session io error. session: {}, error: {}", GetName(), session, error.message()));
 
         _sessionReceiveBuffers.erase(session.GetId());
 
@@ -302,14 +297,14 @@ namespace zerosugar::xr
         auto& coordinationService = _serviceLocator.Get<service::ICoordinationService>();
 
         service::RegisterServerParam registerServerParam;
-        registerServerParam.name = std::format("{}.{}:{}", GetName(), _ip, _port);
+        registerServerParam.name = fmt::format("{}.{}:{}", GetName(), _ip, _port);
         registerServerParam.ip = _ip;
         registerServerParam.port = _port;
 
         service::RegisterServerResult result = coordinationService.RegisterServerAsync(std::move(registerServerParam)).Get();
         if (result.errorCode != service::CoordinationServiceErrorCode::CoordinationErrorNone)
         {
-            throw std::runtime_error(std::format("fail to start game server. error: {}", GetEnumName(result.errorCode)));
+            throw std::runtime_error(fmt::format("fail to start game server. error: {}", GetEnumName(result.errorCode)));
         }
 
         _serverId = result.serverId;
@@ -389,7 +384,7 @@ namespace zerosugar::xr
                         if (result.errorCode != service::CoordinationServiceErrorCode::CoordinationErrorNone)
                         {
                             ZEROSUGAR_LOG_ERROR(self->_serviceLocator,
-                                std::format("[{}] report server status to coordination service error. error: {}",
+                                fmt::format("[{}] report server status to coordination service error. error: {}",
                                     self->GetName(), GetEnumName(result.errorCode)));
 
                             co_return;
@@ -399,7 +394,7 @@ namespace zerosugar::xr
                 catch (const std::exception& e)
                 {
                     ZEROSUGAR_LOG_CRITICAL(self->_serviceLocator,
-                        std::format("[{}] report server status exit by exception. exception: {}",
+                        fmt::format("[{}] report server status exit by exception. exception: {}",
                             self->GetName(), e.what()));
                 }
 
@@ -425,7 +420,7 @@ namespace zerosugar::xr
                     }
 
                     ZEROSUGAR_LOG_INFO(self->GetServiceLocator(),
-                        std::format("[{}] current session count: {}"
+                        fmt::format("[{}] current session count: {}"
                             , self->GetName(), self->GetClientContainer().GetCount()));
                 }
 

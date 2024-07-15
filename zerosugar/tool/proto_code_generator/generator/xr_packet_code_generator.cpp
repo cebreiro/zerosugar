@@ -51,7 +51,7 @@ namespace zerosugar
                         continue;
                     }
 
-                    includes.emplace_back(std::format("{}/{}.h", option.includePath,
+                    includes.emplace_back(fmt::format("{}/{}.h", option.includePath,
                         GetMessageFileName(imported.name)));
                 }
 
@@ -72,14 +72,14 @@ namespace zerosugar
 
         {
             std::unique_ptr<io::ZeroCopyOutputStream> stream(
-                context.OpenForInsert(std::format("{}.h", _messageFileName), ""));
+                context.OpenForInsert(fmt::format("{}.h", _messageFileName), ""));
 
             io::Printer printer(stream.get(), '$');
             printer.Print(header.c_str());
         }
         {
             std::unique_ptr<io::ZeroCopyOutputStream> stream(
-                context.OpenForInsert(std::format("{}.cpp", _messageFileName), ""));
+                context.OpenForInsert(fmt::format("{}.cpp", _messageFileName), ""));
 
             io::Printer printer(stream.get(), '$');
             printer.Print(cpp.c_str());
@@ -104,7 +104,7 @@ namespace zerosugar
                         continue;
                     }
 
-                    includes.emplace_back(std::format("{}/{}.h", option.includePath,
+                    includes.emplace_back(fmt::format("{}/{}.h", option.includePath,
                         GetMessageFileName(imported.name)));
                 }
 
@@ -125,14 +125,14 @@ namespace zerosugar
 
         {
             std::unique_ptr<io::ZeroCopyOutputStream> stream(
-                context.OpenForInsert(std::format("{}.h", _messageFileName), ""));
+                context.OpenForInsert(fmt::format("{}.h", _messageFileName), ""));
 
             io::Printer printer(stream.get(), '$');
             printer.Print(header.c_str());
         }
         {
             std::unique_ptr<io::ZeroCopyOutputStream> stream(
-                context.OpenForInsert(std::format("{}.cpp", _messageFileName), ""));
+                context.OpenForInsert(fmt::format("{}.cpp", _messageFileName), ""));
 
             io::Printer printer(stream.get(), '$');
             printer.Print(cpp.c_str());
@@ -150,7 +150,7 @@ namespace zerosugar
                 std::vector<std::string> includes;
                 includes.reserve((input.imports.size() * 2) + 1);
 
-                includes.emplace_back(std::format("{}/{}.h", option.includePath, _messageFileName));
+                includes.emplace_back(fmt::format("{}/{}.h", option.includePath, _messageFileName));
 
                 for (const Import& imported : input.imports)
                 {
@@ -159,9 +159,9 @@ namespace zerosugar
                         continue;
                     }
 
-                    includes.emplace_back(std::format("{}/{}.h", option.includePath,
+                    includes.emplace_back(fmt::format("{}/{}.h", option.includePath,
                         GetMessageFileName(imported.name)));
-                    includes.emplace_back(std::format("{}/{}.h", option.includePath,
+                    includes.emplace_back(fmt::format("{}/{}.h", option.includePath,
                         GetMessageFileName(imported.name) + "_json"));
                 }
 
@@ -177,14 +177,14 @@ namespace zerosugar
 
         {
             std::unique_ptr<io::ZeroCopyOutputStream> stream(
-                context.OpenForInsert(std::format("{}.h", _messageJsonFileName), ""));
+                context.OpenForInsert(fmt::format("{}.h", _messageJsonFileName), ""));
 
             io::Printer printer(stream.get(), '$');
             printer.Print(header.c_str());
         }
         {
             std::unique_ptr<io::ZeroCopyOutputStream> stream(
-                context.OpenForInsert(std::format("{}.cpp", _messageJsonFileName), ""));
+                context.OpenForInsert(fmt::format("{}.cpp", _messageJsonFileName), ""));
 
             io::Printer printer(stream.get(), '$');
             printer.Print(cpp.c_str());

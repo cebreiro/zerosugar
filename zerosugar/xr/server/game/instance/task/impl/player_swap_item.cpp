@@ -117,7 +117,7 @@ namespace zerosugar::xr::game_task
         to_json(j, param);
 
         ZEROSUGAR_LOG_WARN(parallelContext.GetServiceLocator(),
-            std::format("[player_swap_equip_item] invalid request. cid: {}, name: {}, param: {}",
+            fmt::format("[player_swap_equip_item] invalid request. cid: {}, name: {}, param: {}",
                 playerComponent.GetCharacterId(), playerComponent.GetName(), j.dump()));
     }
 

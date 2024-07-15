@@ -78,7 +78,7 @@ namespace zerosugar::xr::game_task
             return false;
         }
 
-        std::erase_if(_targetIds, [this, &snapshotContainer](game_entity_id_type targetId) -> bool
+        std::erase_if(_targetIds, [&snapshotContainer](game_entity_id_type targetId) -> bool
             {
                 const GameMonsterSnapshot* target = snapshotContainer.FindMonster(targetId);
                 if (!target)

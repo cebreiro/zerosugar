@@ -22,7 +22,7 @@ namespace zerosugar::xr
         else
         {
             ZEROSUGAR_LOG_ERROR(serviceLocator,
-                std::format("[{}] fail to find bot behavior tree directory. path: {}",
+                fmt::format("[{}] fail to find bot behavior tree directory. path: {}",
                     GetName(), directory.generic_string()));
         }
     }
@@ -82,7 +82,7 @@ namespace zerosugar::xr
             catch (const std::exception& e)
             {
                 ZEROSUGAR_LOG_ERROR(serviceLocator,
-                    std::format("[{}] fail to add behavior tree data. exception: {}, path: {}",
+                    fmt::format("[{}] fail to add behavior tree data. exception: {}, path: {}",
                         GetName(), e.what(), path.generic_string()));
             }
         }

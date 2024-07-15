@@ -24,13 +24,13 @@ namespace
 
 namespace zerosugar::xr
 {
-    void NavigationDataProvider::Initialize(ServiceLocator& serviceLocator, const std::filesystem::path& basePath)
+    void NavigationDataProvider::InitializeData(ServiceLocator& serviceLocator, const std::filesystem::path& basePath)
     {
         const auto directory = basePath / "navigation";
         if (!exists(directory))
         {
             ZEROSUGAR_LOG_ERROR(serviceLocator,
-                std::format("[{}] fail to find navigation directory. path: {}",
+                fmt::format("[{}] fail to find navigation directory. path: {}",
                     GetName(), directory.generic_string()));
 
             return;
@@ -56,7 +56,7 @@ namespace zerosugar::xr
             catch (const std::exception& e)
             {
                 ZEROSUGAR_LOG_ERROR(serviceLocator,
-                    std::format("[{}] fail to load navigation data. exception: {}, path: {}",
+                    fmt::format("[{}] fail to load navigation data. exception: {}, path: {}",
                         GetName(), e.what(), path.generic_string()));
             }
         }
@@ -159,7 +159,7 @@ namespace zerosugar::xr
         }
 
         const int32_t id = boost::lexical_cast<int32_t>(filePath.stem().generic_string());
-        const std::filesystem::path objectFilePath = filePath.parent_path() / std::format("{}.obj", filePath.stem().generic_string());
+        const std::filesystem::path objectFilePath = filePath.parent_path() / fmt::format("{}.obj", filePath.stem().generic_string());
 
         return navi::Data(id, objectFilePath.generic_string(), std::move(mesh), std::move(query));
     }

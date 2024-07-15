@@ -22,7 +22,7 @@ namespace zerosugar::xr
     void LoginServer::OnAccept(Session& session)
     {
         ZEROSUGAR_LOG_DEBUG(_serviceLocator,
-            std::format("[{}] accept session. session: {}", GetName(), session));
+            fmt::format("[{}] accept session. session: {}", GetName(), session));
 
         auto stateMachine = std::make_shared<LoginSessionStateMachine>(_serviceLocator, session);
         {
@@ -75,7 +75,7 @@ namespace zerosugar::xr
         assert(ExecutionContext::IsEqualTo(session.GetStrand()));
 
         ZEROSUGAR_LOG_DEBUG(_serviceLocator,
-            std::format("[{}] session io error. session: {}, error: {}", GetName(), session, error.message()));
+            fmt::format("[{}] session io error. session: {}, error: {}", GetName(), session, error.message()));
 
         std::shared_ptr<LoginSessionStateMachine> stateMachine;
         {

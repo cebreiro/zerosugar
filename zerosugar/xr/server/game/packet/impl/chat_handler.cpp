@@ -69,7 +69,7 @@ namespace zerosugar::xr
             if (result.errorCode != service::CoordinationServiceErrorCode::CoordinationErrorNone)
             {
                 ZEROSUGAR_LOG_WARN(server.GetServiceLocator(),
-                    std::format("[chat_handler] fail to broadcast chatting. server_id: {}, game_instance_id: {}, auth: {}, message: {}",
+                    fmt::format("[chat_handler] fail to broadcast chatting. server_id: {}, game_instance_id: {}, auth: {}, message: {}",
                         param.serverId, param.gameInstanceId, param.authenticationToken, param.message));
             }
         }

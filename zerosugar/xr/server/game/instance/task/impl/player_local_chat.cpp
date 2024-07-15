@@ -27,7 +27,7 @@ namespace zerosugar::xr::game_task
         const GamePlayerSnapshot* snapshot = serialContext.GetSnapshotContainer().FindPlayer(_id);
         assert(snapshot);
 
-        std::string chatMessage = std::format("[{}] : {}", snapshot->GetName(), GetParam().message);
+        std::string chatMessage = fmt::format("[{}] : {}", snapshot->GetName(), GetParam().message);
 
         network::game::sc::NotifyChattingMessage packet;
         packet.type = static_cast<int32_t>(ChattingType::Local);

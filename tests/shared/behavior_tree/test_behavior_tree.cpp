@@ -1,4 +1,5 @@
 #include <pugixml.hpp>
+#include <fmt/format.h>
 #include "zerosugar/shared/ai/behavior_tree/behavior_tree.h"
 #include "zerosugar/shared/ai/behavior_tree/black_board.h"
 #include "zerosugar/shared/ai/behavior_tree/data/node_data_set_xml.h"
@@ -132,7 +133,7 @@ TEST_F(BehaviorTreeTest, TestSequence)
     static constexpr int32_t value1 = 3;
     static constexpr int32_t value2 = 5;
 
-    const std::string test_xml = std::format(R""""(
+    const std::string test_xml = fmt::format(R""""(
  <root>
     <sequence>
         <add    value="{}" />
@@ -173,7 +174,7 @@ TEST_F(BehaviorTreeTest, TestSequenceOrder)
     static constexpr int32_t value4 = 4;
     static constexpr int32_t value5 = 5;
 
-    const std::string test_xml = std::format(R""""(
+    const std::string test_xml = fmt::format(R""""(
  <root>
     <sequence>
         <add    value="{}" />
@@ -219,7 +220,7 @@ TEST_F(BehaviorTreeTest, TestRunning)
     static constexpr int32_t value4 = 4;
     static constexpr int32_t value5 = 5;
 
-    const std::string test_xml = std::format(R""""(
+    const std::string test_xml = fmt::format(R""""(
  <root>
     <sequence>
         <running />

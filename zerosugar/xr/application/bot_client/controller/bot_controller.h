@@ -47,6 +47,7 @@ namespace zerosugar::xr
         ~BotController();
 
         void Start();
+        void StartDebugOutputString();
         void Shutdown(const std::string& reason);
 
         auto Transition(std::string behaviorTreeName) -> Future<void>;
@@ -99,6 +100,8 @@ namespace zerosugar::xr
         BotSessionStateType _sessionState = BotSessionStateType::Login;
         SharedPtrNotNull<Socket> _socket;
         Future<void> _runIOFuture;
+        Buffer _receivedBuffer;
+        Buffer _receiveBuffer;
 
         std::mt19937 _randomEngine;
 

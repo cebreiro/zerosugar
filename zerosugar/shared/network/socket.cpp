@@ -39,7 +39,7 @@ namespace zerosugar
             Future<bool> future = promise.GetFuture();
 
             _socket.async_connect(endpoint,
-                [this, p = std::move(promise)](const boost::system::error_code& ec) mutable
+                [p = std::move(promise)](const boost::system::error_code& ec) mutable
                 {
                     p.Set(ec ? true : false);
                 });

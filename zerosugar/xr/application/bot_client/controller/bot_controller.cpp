@@ -5,6 +5,7 @@
 #include "zerosugar/shared/ai/behavior_tree/black_board.h"
 #include "zerosugar/shared/ai/behavior_tree/data/node_data_set_interface.h"
 #include "zerosugar/shared/execution/executor/impl/asio_strand.h"
+#include "zerosugar/shared/execution/executor/operation/schedule.h"
 #include "zerosugar/shared/network/socket.h"
 #include "zerosugar/xr/application/bot_client/controller/bot_shared_context.h"
 #include "zerosugar/xr/application/bot_client/controller/ai/movement/bot_movement_controller.h"
@@ -50,6 +51,32 @@ namespace zerosugar::xr
             });
     }
 
+    void BotController::StartDebugOutputString()
+    {
+        constexpr auto delay = std::chrono::seconds(15);
+
+        Schedule(*_strand, [weak = weak_from_this()]()
+            {
+                auto self = weak.lock();
+                if (!self)
+                {
+                    return;
+                }
+
+                ZEROSUGAR_LOG_INFO(self->GetServiceLocator(),
+                    fmt::format("[{}] socket: {}, state: {}, behavior_tree: {}, awaiting: {}, current_node: {}, receive_buffer: {}, received_buffer: {}",
+                        self->GetName(),
+                        self->GetSocket().IsOpen() ? "open" : "closed",
+                        ToString(self->GetSessionState()),
+                        self->_behaviorTree ? self->_behaviorTree->GetName() : "null",
+                        self->_behaviorTree ? (self->_behaviorTree->IsAwaiting() ? "true" : "false") : "null",
+                        self->_behaviorTree ? self->_behaviorTree->GetCurrentVisitNodeName().value_or("null") : "null",
+                        self->_receiveBuffer.GetSize(),
+                        self->_receivedBuffer.GetSize()));
+
+            }, delay, delay);
+    }
+
     auto BotController::Transition(std::string behaviorTreeName) -> Future<void>
     {
         assert(ExecutionContext::IsEqualTo(*_strand));
@@ -83,7 +110,7 @@ namespace zerosugar::xr
         }
 
         ZEROSUGAR_LOG_INFO(GetServiceLocator(),
-            std::format("[{}] behavior transition: {}",
+            fmt::format("[{}] behavior transition: {}",
                 GetName(), behaviorTreeName));
 
         _behaviorTree = std::move(newBehaviorTree);
@@ -200,47 +227,42 @@ namespace zerosugar::xr
         [[maybe_unused]]
         auto self = shared_from_this();
 
-        Buffer receiveBuffer;
-        Buffer receivedBuffer;
+        _receiveBuffer.Clear();
+        _receivedBuffer.Clear();
 
         while (_socket->IsOpen())
         {
-            if (receiveBuffer.GetSize() < 2)
+            if (_receiveBuffer.GetSize() < 4)
             {
-                receiveBuffer.Add(buffer::Fragment::Create(4096));
+                _receiveBuffer.Add(buffer::Fragment::Create(4096));
             }
 
-            const std::expected<int64_t, IOError> receiveResult = co_await _socket->ReceiveAsync(receiveBuffer);
+            const std::expected<int64_t, IOError> receiveResult = co_await _socket->ReceiveAsync(_receiveBuffer);
             assert(ExecutionContext::IsEqualTo(*_strand));
 
             if (receiveResult.has_value())
             {
                 const int64_t receiveSize = receiveResult.value();
-                assert(receiveSize <= receiveBuffer.GetSize());
+                assert(receiveSize <= _receiveBuffer.GetSize());
 
-                receivedBuffer.MergeBack([&]() -> Buffer
+                _receivedBuffer.MergeBack([&]() -> Buffer
                     {
                         Buffer temp;
 
-                        [[maybe_unused]] bool result = receiveBuffer.SliceFront(temp, receiveSize);
+                        [[maybe_unused]] bool result = _receiveBuffer.SliceFront(temp, receiveSize);
                         assert(result);
 
                         return temp;
                     }());
 
-                while (true)
+                while (_receivedBuffer.GetSize() >= 4)
                 {
-                    if (receivedBuffer.GetSize() < 2)
-                    {
-                        break;
-                    }
+                    PacketReader reader(_receivedBuffer.cbegin(), _receivedBuffer.cend());
 
-                    PacketReader reader(receivedBuffer.cbegin(), receivedBuffer.cend());
-
-                    const int32_t packetSize = reader.Read<int16_t>();
-                    if (receivedBuffer.GetSize() < packetSize)
+                    const int32_t packetSize = reader.Read<int32_t>();
+                    if (_receivedBuffer.GetSize() < packetSize)
                     {
-                        receiveBuffer.Add(buffer::Fragment::Create(packetSize + 2048));
+                        _receiveBuffer.Add(buffer::Fragment::Create(4096 + packetSize));
 
                         break;
                     }
@@ -314,9 +336,6 @@ namespace zerosugar::xr
                                     [[maybe_unused]]
                                     const bool removed = _visualObjectContainer->Remove(id);
                                     assert(removed);
-
-                                    ZEROSUGAR_LOG_INFO(this->GetServiceLocator(),
-                                        std::format("removed: {}", id));
                                 }
                             }
                             else if constexpr (std::is_same_v<T, game::sc::DespawnMonster>)
@@ -326,9 +345,6 @@ namespace zerosugar::xr
                                     [[maybe_unused]]
                                     const bool removed = _visualObjectContainer->Remove(id);
                                     assert(removed);
-
-                                    ZEROSUGAR_LOG_INFO(this->GetServiceLocator(),
-                                        std::format("despawn: {}", id));
                                 }
                             }
                             else if constexpr (std::is_same_v<T, game::sc::MoveMonster>)
@@ -364,14 +380,14 @@ namespace zerosugar::xr
                     }
 
                     Buffer temp;
-                    [[maybe_unused]] bool sliced = receivedBuffer.SliceFront(temp, packetSize);
+                    [[maybe_unused]] bool sliced = _receivedBuffer.SliceFront(temp, packetSize);
                     assert(sliced);
                 }
             }
             else
             {
                 ZEROSUGAR_LOG_INFO(_serviceLocator,
-                    std::format("[bot_controller] receive error. error: {}", receiveResult.error().message));
+                    fmt::format("[bot_controller] receive error. error: {}", receiveResult.error().message));
 
                 co_return;
             }
@@ -428,7 +444,7 @@ namespace zerosugar::xr
     void BotController::Shutdown(const std::string& reason)
     {
         ZEROSUGAR_LOG_INFO(_serviceLocator,
-            std::format("[bot_controller] shutdown. reason: {}", reason));
+            fmt::format("[bot_controller] shutdown. reason: {}", reason));
 
         if (_behaviorTree)
         {
@@ -449,7 +465,7 @@ namespace zerosugar::xr
 
     auto BotController::GetName() const -> std::string
     {
-        return std::format("bot_controller:{}", _id);
+        return fmt::format("bot_controller:{}", _id);
     }
 
     auto BotController::GetStrand() const -> Strand&

@@ -4,7 +4,6 @@ target_link_libraries(zerosugar_test_shared PRIVATE
     zerosugar_shared
 	GTest::gtest
 	GTest::gtest_main
-
 )
 
 target_precompile_headers(zerosugar_test_shared PRIVATE

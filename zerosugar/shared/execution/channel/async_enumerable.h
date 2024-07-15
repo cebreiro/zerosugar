@@ -58,7 +58,12 @@ namespace zerosugar
             auto final_suspend() noexcept -> std::suspend_never;
 
             template <std::ranges::range R> requires std::convertible_to<std::ranges::range_value_t<R>, T>
-            auto yield_value(R&& range) -> std::suspend_never;
+            auto yield_value(R&& range) -> std::suspend_never
+            {
+                _channel->Send(std::forward<R>(range), channel::ChannelSignal::NotifyOne);
+
+                return std::suspend_never{};
+            }
             auto yield_value(T value) -> std::suspend_never;
             auto yield_value(const std::exception_ptr& exception) -> std::suspend_never;
 
@@ -111,15 +116,6 @@ namespace zerosugar
     template <std::move_constructible T, typename TChannel>
     auto AsyncEnumerable<T, TChannel>::promise_type::final_suspend() noexcept -> std::suspend_never
     {
-        return std::suspend_never{};
-    }
-
-    template <std::move_constructible T, typename TChannel>
-    template <std::ranges::range R> requires std::convertible_to<std::ranges::range_value_t<R>, T>
-    auto AsyncEnumerable<T, TChannel>::promise_type::yield_value(R&& range) -> std::suspend_never
-    {
-        _channel->Send(std::forward<R>(range), channel::ChannelSignal::NotifyOne);
-
         return std::suspend_never{};
     }
 

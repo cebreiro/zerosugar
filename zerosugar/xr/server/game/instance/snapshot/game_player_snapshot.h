@@ -13,7 +13,7 @@ namespace zerosugar::xr
     class GamePlayerSnapshot
     {
     public:
-        GamePlayerSnapshot() = default;
+        GamePlayerSnapshot() = delete;
         explicit GamePlayerSnapshot(IGameController& controller);
 
         void Initialize(const GameEntity& entity);

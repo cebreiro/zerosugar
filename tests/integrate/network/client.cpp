@@ -67,7 +67,7 @@ void Client::OnConnect(const boost::system::error_code& ec)
 {
     if (ec)
     {
-        std::cout << std::format("fail to connect({}, {})... retry after 3s\n", ec.value(), ec.message());
+        std::cout << fmt::format("fail to connect({}, {})... retry after 3s\n", ec.value(), ec.message());
         zerosugar::Delay(std::chrono::seconds(3)).Then(
             *_executor, [self =shared_from_this()]()
             {

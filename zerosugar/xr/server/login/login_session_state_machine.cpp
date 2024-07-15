@@ -10,7 +10,7 @@ namespace zerosugar::xr
 {
     LoginSessionStateMachine::LoginSessionStateMachine(ServiceLocator& serviceLocator, Session& session)
         : _session(session.weak_from_this())
-        , _name(std::format("login_session_state_machine[{}]", session.GetId()))
+        , _name(fmt::format("login_session_state_machine[{}]", session.GetId()))
         , _serviceLocator(serviceLocator)
         , _channel(std::make_shared<Channel<Buffer>>())
     {
@@ -35,7 +35,7 @@ namespace zerosugar::xr
                 catch (const std::exception& e)
                 {
                     ZEROSUGAR_LOG_DEBUG(self->_serviceLocator,
-                        std::format("[{}] exit with exception. session_id: {}, exception: {}", self->GetName(), id, e.what()));
+                        fmt::format("[{}] exit with exception. session_id: {}, exception: {}", self->GetName(), id, e.what()));
                 }
 
                 if (const std::shared_ptr<Session>& session = weak.lock())
@@ -85,11 +85,11 @@ namespace zerosugar::xr
 
             receiveBuffer.MergeBack(std::move(buffer));
 
-            while (receiveBuffer.GetSize() >= 2)
+            while (receiveBuffer.GetSize() >= 4)
             {
                 PacketReader reader(receiveBuffer.cbegin(), receiveBuffer.cend());
 
-                const int64_t packetSize = reader.Read<int16_t>();
+                const int64_t packetSize = reader.Read<int32_t>();
                 if (receiveBuffer.GetSize() < packetSize)
                 {
                     break;
@@ -104,7 +104,7 @@ namespace zerosugar::xr
                 if (!packet)
                 {
                     ZEROSUGAR_LOG_WARN(_serviceLocator,
-                        std::format("[{}] unnkown packet. session: {}", GetName(), *session));
+                        fmt::format("[{}] unnkown packet. session: {}", GetName(), *session));
 
                     session->Close();
 
@@ -118,7 +118,7 @@ namespace zerosugar::xr
                 catch (const std::exception& e)
                 {
                     ZEROSUGAR_LOG_WARN(self->_serviceLocator,
-                        std::format("[{}] throws. session: {}, exsception: {}",
+                        fmt::format("[{}] throws. session: {}, exsception: {}",
                             self->GetName(), *session, e.what()));
 
                     session->Close();

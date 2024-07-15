@@ -79,7 +79,7 @@ namespace zerosugar
                                 const bool streaming = type->second;
                                 context.paramStream = streaming;
 
-                                return streaming ? std::format("AsyncEnumerable<{}>", type->first) : type->first;
+                                return streaming ? fmt::format("AsyncEnumerable<{}>", type->first) : type->first;
                             }(method.input);
                         const std::optional<std::string> returnType = [&](const Method::inout_type& type) -> std::optional<std::string>
                             {
@@ -93,14 +93,14 @@ namespace zerosugar
 
                                 if (streaming)
                                 {
-                                    return std::format("AsyncEnumerable<{}>", type->first);
+                                    return fmt::format("AsyncEnumerable<{}>", type->first);
                                 }
 
-                                return std::format("Future<{}>", type->first);
+                                return fmt::format("Future<{}>", type->first);
 
                             }(method.output);
 
-                        context.name = std::format("{}Async", method.name);
+                        context.name = fmt::format("{}Async", method.name);
 
                         std::ostringstream oss;
                         oss << "auto " << context.name;
@@ -130,7 +130,7 @@ namespace zerosugar
 
                         context.fullName = oss.str();
                         
-                        return std::format("virtual {} = 0;", context.fullName);
+                        return fmt::format("virtual {} = 0;", context.fullName);
                     }();
 
                 _headerPrinter.AddLine(fieldIndent, str);
@@ -202,7 +202,7 @@ namespace zerosugar
                 std::string line = context.fullName;
 
                 const size_t offset = line.find_first_of(' ') + 1;
-                line.insert(offset, std::format("{}Proxy::", service.name));
+                line.insert(offset, fmt::format("{}Proxy::", service.name));
 
                 _cxxPrinter.AddLine(methodIndent, "{}", line);
                 {
@@ -229,7 +229,7 @@ namespace zerosugar
                     _cxxPrinter.AddLine(methodIndent + 1,
                         "return _client->{}<{}, {}::value_type>(name, \"{}\", std::move(param));",
                         oss.str(),
-                        context.paramStream ? std::format("{}::value_type", context.paramTypeName) : context.paramTypeName,
+                        context.paramStream ? fmt::format("{}::value_type", context.paramTypeName) : context.paramTypeName,
                         context.returnTypeName,
                         context.name);
                 }

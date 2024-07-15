@@ -5,6 +5,20 @@
 
 namespace zerosugar::xr::network::game::cs
 {
+    void Ping::Deserialize(PacketReader& reader)
+    {
+        sequence = reader.Read<int64_t>();
+        clientTimePoint = reader.Read<int64_t>();
+        serverTimePoint = reader.Read<int64_t>();
+    }
+
+    void Ping::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int64_t>(sequence);
+        writer.Write<int64_t>(clientTimePoint);
+        writer.Write<int64_t>(serverTimePoint);
+    }
+
     void Authenticate::Deserialize(PacketReader& reader)
     {
         authenticationToken = reader.ReadString();
@@ -182,6 +196,13 @@ namespace zerosugar::xr::network::game::cs
         const int16_t opcode = reader.Read<int16_t>();
         switch(opcode)
         {
+            case Ping::opcode:
+            {
+                auto item = std::make_unique<Ping>();
+                item->Deserialize(reader);
+
+                return item;
+            }
             case Authenticate::opcode:
             {
                 auto item = std::make_unique<Authenticate>();
@@ -289,6 +310,13 @@ namespace zerosugar::xr::network::game::cs
         const int16_t opcode = reader.Read<int16_t>();
         switch(opcode)
         {
+            case Ping::opcode:
+            {
+                Ping item;
+                item.Deserialize(reader);
+
+                return item;
+            }
             case Authenticate::opcode:
             {
                 Authenticate item;
@@ -395,6 +423,10 @@ namespace zerosugar::xr::network::game::cs
     {
         switch(opcode)
         {
+            case Ping::opcode:
+            {
+                return typeid(Ping);
+            }
             case Authenticate::opcode:
             {
                 return typeid(Authenticate);

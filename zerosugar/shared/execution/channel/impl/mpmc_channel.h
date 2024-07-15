@@ -126,7 +126,7 @@ namespace zerosugar::channel
         {
             std::lock_guard lock(_mutex);
 
-            if (IsOpen() && (_items.empty() || !_signalHandlers.empty()))
+            if (IsOpen() && _items.empty())
             {
                 _signalHandlers.push_back(std::move(handler));
                 return;

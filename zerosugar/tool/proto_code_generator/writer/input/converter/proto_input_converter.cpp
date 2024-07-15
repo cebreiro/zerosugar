@@ -9,6 +9,7 @@
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <boost/algorithm/string.hpp>
 #include <ranges>
+#include <fmt/format.h>
 #include <Windows.h>
 
 #include "zerosugar/tool/proto_code_generator/writer/input/converter/proto_custom_option.h"
@@ -215,12 +216,12 @@ namespace
     {
         if (type.starts_with("int"))
         {
-            return std::format("{}_t", type);
+            return fmt::format("{}_t", type);
         }
 
         if (type == "string")
         {
-            return std::format("std::{}", type);
+            return fmt::format("std::{}", type);
         }
 
         if (type == "bytes")

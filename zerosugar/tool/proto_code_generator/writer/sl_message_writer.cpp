@@ -222,7 +222,7 @@ namespace zerosugar
         {
             if (field.option.length.has_value())
             {
-                return std::format("std::array<char, {}>", *field.option.length);
+                return fmt::format("std::array<char, {}>", *field.option.length);
             }
 
             return "std::vector<char>";
@@ -230,12 +230,12 @@ namespace zerosugar
 
         if (field.repeated)
         {
-            return std::format("std::vector<{}>", field.type);
+            return fmt::format("std::vector<{}>", field.type);
         }
 
         if (field.map.has_value())
         {
-            return std::format("std::map<{}, {}>", field.map->first, field.map->second);
+            return fmt::format("std::map<{}, {}>", field.map->first, field.map->second);
         }
 
         if (field.type.starts_with("int") && field.option.length.has_value())

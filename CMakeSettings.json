@@ -41,6 +41,32 @@
             "ctestCommandArgs": "",
             "inheritEnvironments": [ "msvc_x64_x64" ],
             "cmakeToolchain": "${env.VCPKG_ROOT}\\scripts\\buildsystems\\vcpkg.cmake"
+        },
+        {
+            "name": "x64-Clang-Debug",
+            "generator": "Ninja",
+            "configurationType": "Debug",
+            "buildRoot": "${projectDir}\\build\\${name}",
+            "installRoot": "${projectDir}\\install\\${name}",
+            "cmakeCommandArgs": "",
+            "buildCommandArgs": "",
+            "ctestCommandArgs": "",
+            "inheritEnvironments": [ "clang_cl_x64_x64" ],
+            "variables": [],
+            "cmakeToolchain": "${env.VCPKG_ROOT}\\scripts\\buildsystems\\vcpkg.cmake"
+        },
+        {
+            "name": "x64-Clang-Release",
+            "generator": "Ninja",
+            "configurationType": "RelWithDebInfo",
+            "buildRoot": "${projectDir}\\build\\${name}",
+            "installRoot": "${projectDir}\\install\\${name}",
+            "cmakeCommandArgs": "",
+            "buildCommandArgs": "",
+            "ctestCommandArgs": "",
+            "inheritEnvironments": [ "clang_cl_x64_x64" ],
+            "variables": [],
+            "cmakeToolchain": "${env.VCPKG_ROOT}\\scripts\\buildsystems\\vcpkg.cmake"
         }
     ]
 }

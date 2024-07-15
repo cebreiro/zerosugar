@@ -59,7 +59,7 @@ namespace zerosugar::xr
                     assert(false);
 
                     ZEROSUGAR_LOG_CRITICAL(_server.GetServiceLocator(),
-                        std::format("[{}] fail to find command handler. opcode: {}", GetName(), command.opcode));
+                        fmt::format("[{}] fail to find command handler. opcode: {}", GetName(), command.opcode));
 
                     continue;
                 }
@@ -73,7 +73,7 @@ namespace zerosugar::xr
             catch (const std::exception& e)
             {
                 ZEROSUGAR_LOG_ERROR(_server.GetServiceLocator(),
-                    std::format("[{}] handler throws. exception: {}", GetName(), e.what()));
+                    fmt::format("[{}] handler throws. exception: {}", GetName(), e.what()));
 
                 if (pendingResponse.has_value())
                 {

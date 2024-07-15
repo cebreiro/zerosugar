@@ -208,6 +208,16 @@ namespace zerosugar
         return _blackBoard;
     }
 
+    auto BehaviorTree::GetCurrentVisitNodeName() const -> std::optional<std::string>
+    {
+        if (_stack.empty())
+        {
+            return std::nullopt;
+        }
+
+        return GetCurrentNodeName();
+    }
+
     void BehaviorTree::SetLogger(IBehaviorTreeLogger* logger)
     {
         _logger = logger;

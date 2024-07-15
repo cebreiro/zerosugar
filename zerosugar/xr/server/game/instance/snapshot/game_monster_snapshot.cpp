@@ -9,8 +9,8 @@ namespace zerosugar::xr
 {
     GameMonsterSnapshot::GameMonsterSnapshot(IGameController& controller, game_entity_id_type id, const MonsterData& data)
         : _controller(controller)
-        , _id(id)
         , _data(data)
+        , _id(id)
     {
     }
 

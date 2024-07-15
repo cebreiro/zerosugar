@@ -129,14 +129,14 @@ namespace zerosugar::xr
         if (key.has_value())
         {
             ZEROSUGAR_LOG_INFO(_serviceLocator,
-                std::format("[{}] publish snowflake. id: {}, requester: {}", GetName(), *key, param.requester));
+                fmt::format("[{}] publish snowflake. id: {}, requester: {}", GetName(), *key, param.requester));
 
             result.snowflakeKey = *key;
         }
         else
         {
             ZEROSUGAR_LOG_CRITICAL(_serviceLocator,
-                std::format("[{}] fail to publish snowflake. reuqester: {}", GetName(), param.requester));
+                fmt::format("[{}] fail to publish snowflake. reuqester: {}", GetName(), param.requester));
 
             result.errorCode = service::CoordinationServiceErrorCode::RequestSnowflakeKeyErrorOutOfPool;
         }
@@ -189,7 +189,7 @@ namespace zerosugar::xr
         if (authResult.errorCode != service::LoginServiceErrorCode::LoginErrorNone)
         {
             ZEROSUGAR_LOG_ERROR(_serviceLocator,
-                std::format("[{}] fail to authenticate. error: {}", GetName(), GetEnumName(authResult.errorCode)));
+                fmt::format("[{}] fail to authenticate. error: {}", GetName(), GetEnumName(authResult.errorCode)));
 
             result.errorCode = service::CoordinationServiceErrorCode::CoordinationErrorFailAuthentication;
 
@@ -218,8 +218,8 @@ namespace zerosugar::xr
             catch (const std::exception& e)
             {
                 ZEROSUGAR_LOG_ERROR(_serviceLocator,
-                    std::format("[{}] fail to launch game instance. server: [{}, {}:{}], exception: {}",
-                        server->GetName(), server->GetIP(), server->GetPort(), e.what()));
+                    fmt::format("[{}] fail to launch game instance. server: [{}, {}:{}], exception: {}",
+                        GetName(), server->GetName(), server->GetIP(), server->GetPort(), e.what()));
 
                 result.errorCode = service::CoordinationServiceErrorCode::CoordinationErrorInternalError;
 
@@ -232,8 +232,8 @@ namespace zerosugar::xr
                 assert(false);
 
                 ZEROSUGAR_LOG_CRITICAL(_serviceLocator,
-                    std::format("[{}] launch game instance success. but not found instance. server: [{}, {}:{}], instanceId: {}",
-                        server->GetName(), server->GetIP(), server->GetPort(), instanceId));
+                    fmt::format("[{}] launch game instance success. but not found instance. server: [{}, {}:{}], instanceId: {}",
+                        GetName(), server->GetName(), server->GetIP(), server->GetPort(), instanceId));
 
                 result.errorCode = service::CoordinationServiceErrorCode::CoordinationErrorInternalError;
 

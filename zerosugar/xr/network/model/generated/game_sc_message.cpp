@@ -5,6 +5,20 @@
 
 namespace zerosugar::xr::network::game::sc
 {
+    void Pong::Deserialize(PacketReader& reader)
+    {
+        sequence = reader.Read<int64_t>();
+        clientTimePoint = reader.Read<int64_t>();
+        serverTimePoint = reader.Read<int64_t>();
+    }
+
+    void Pong::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int64_t>(sequence);
+        writer.Write<int64_t>(clientTimePoint);
+        writer.Write<int64_t>(serverTimePoint);
+    }
+
     void EnterGame::Deserialize(PacketReader& reader)
     {
         zoneId = reader.Read<int32_t>();
@@ -430,6 +444,13 @@ namespace zerosugar::xr::network::game::sc
         const int16_t opcode = reader.Read<int16_t>();
         switch(opcode)
         {
+            case Pong::opcode:
+            {
+                auto item = std::make_unique<Pong>();
+                item->Deserialize(reader);
+
+                return item;
+            }
             case EnterGame::opcode:
             {
                 auto item = std::make_unique<EnterGame>();
@@ -628,6 +649,13 @@ namespace zerosugar::xr::network::game::sc
         const int16_t opcode = reader.Read<int16_t>();
         switch(opcode)
         {
+            case Pong::opcode:
+            {
+                Pong item;
+                item.Deserialize(reader);
+
+                return item;
+            }
             case EnterGame::opcode:
             {
                 EnterGame item;
@@ -825,6 +853,10 @@ namespace zerosugar::xr::network::game::sc
     {
         switch(opcode)
         {
+            case Pong::opcode:
+            {
+                return typeid(Pong);
+            }
             case EnterGame::opcode:
             {
                 return typeid(EnterGame);
