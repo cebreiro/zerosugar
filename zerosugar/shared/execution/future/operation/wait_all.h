@@ -3,12 +3,15 @@
 #include <ranges>
 #include <type_traits>
 #include "zerosugar/shared/execution/future/future.h"
+#include "zerosugar/shared/execution/future/future_coroutine_traits.h"
 
 namespace zerosugar
 {
     template <typename... Futures>
     auto WaitAll(execution::IExecutor& executor, Futures&&... futures) -> Future<void>
     {
+        static_assert(sizeof...(Futures) > 0);
+        
         static constexpr size_t operationCount = sizeof...(Futures);
         const auto counter = std::make_shared<std::atomic<size_t>>(0);
 
@@ -36,6 +39,11 @@ namespace zerosugar
     auto WaitAll(execution::IExecutor& executor, R&& range) -> Future<void>
     {
         const size_t operationCount = std::ranges::distance(range);
+        if (operationCount == 0)
+        {
+            co_return;
+        }
+
         const auto counter = std::make_shared<std::atomic<size_t>>(0);
 
         auto context = (std::make_shared<future::SharedContext<void>>());
@@ -45,7 +53,7 @@ namespace zerosugar
         {
             fut.ContinuationWith(executor, [=]([[maybe_unused]] std::remove_cvref_t<decltype(fut)>& self) mutable
                 {
-                    size_t current = counter->fetch_add(1) + 1;
+                    const size_t current = counter->fetch_add(1) + 1;
                     if (current == operationCount)
                     {
                         context->OnSuccess();
@@ -53,6 +61,8 @@ namespace zerosugar
                 });
         }
 
-        return Future<void>(std::move(context));
+        co_await Future<void>(context);
+
+        co_return;
     }
 }

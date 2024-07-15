@@ -49,6 +49,8 @@ namespace zerosugar::xr
             if (i == bulk_size)
             {
                 _concurrentFlatMap.cvisit(buffer.begin(), buffer.end(), function);
+
+                i = 0;
             }
         }
 

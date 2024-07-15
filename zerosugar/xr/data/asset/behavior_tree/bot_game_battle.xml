@@ -7,7 +7,7 @@
                     <battle_target_within distance="300" />
                     <attack_target />
                 </sequence>
-                <move_to_battle_target path_update ="3.0" />
+                <move_to_battle_target path_update ="5.0" />
             </selector>
             <time_elapsed_after_movement time="3.0" rand="1.0" />
             <start_move_to_random_position radius ="1800" rand="700" />

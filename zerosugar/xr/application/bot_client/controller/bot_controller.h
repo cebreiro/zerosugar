@@ -53,6 +53,7 @@ namespace zerosugar::xr
         auto Transition(std::string behaviorTreeName) -> Future<void>;
         void InvokeOnBehaviorTree(const std::function<void(BehaviorTree&)>& func);
 
+        auto Ping(int64_t sequence) -> Future<std::optional<std::chrono::system_clock::duration>>;
         auto ConnectTo(std::string ip, uint16_t port, int32_t retryMilli) -> Future<void>;
         auto Close() -> Future<void>;
 
@@ -103,6 +104,7 @@ namespace zerosugar::xr
         Buffer _receivedBuffer;
         Buffer _receiveBuffer;
 
+        std::unordered_map<int64_t, Promise<std::chrono::system_clock::duration>> _pingPromises;
         std::mt19937 _randomEngine;
 
         UniquePtrNotNull<bt::BlackBoard> _blackBoard;

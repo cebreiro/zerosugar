@@ -218,6 +218,18 @@ namespace zerosugar
         return GetCurrentNodeName();
     }
 
+    auto BehaviorTree::GetCurrentAwaitEventName() const -> std::optional<std::string>
+    {
+        if (_currentState != bt::node::State::Running)
+        {
+            return std::nullopt;
+        }
+
+        assert(_runningNodeCoroutine);
+
+        return _runningNodeCoroutine.promise().GetAwaitEventNames();
+    }
+
     void BehaviorTree::SetLogger(IBehaviorTreeLogger* logger)
     {
         _logger = logger;

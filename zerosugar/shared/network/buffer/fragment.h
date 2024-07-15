@@ -1,29 +1,36 @@
 #pragma once
 #include <cstdint>
 #include <span>
-#include <memory>
 #include <optional>
 #include <span>
-#include "zerosugar/shared/type/not_null_pointer.h"
+#include <thread>
+
+namespace zerosugar::execution
+{
+    class GameExecutor;
+}
 
 namespace zerosugar::buffer
 {
     class Fragment
     {
     public:
-        Fragment(const Fragment& other) = delete;
+        Fragment(const Fragment& other) = delete;;
         Fragment& operator=(const Fragment& other) = delete;
 
+    public:
         Fragment() = default;
-        ~Fragment() = default;
-        Fragment(Fragment&& other) noexcept = default;
-        Fragment& operator=(Fragment&& other) noexcept = default;
+        Fragment(Fragment&& other) noexcept;
+        Fragment& operator=(Fragment&& other) noexcept;
 
-        Fragment(SharedPtrNotNull<char[]> ptr, int64_t startOffset, int64_t size);
+        ~Fragment();
 
+    public:
         bool IsValid() const;
 
         auto SliceFront(int64_t size) -> std::optional<Fragment>;
+
+        auto ShallowCopy() const -> Fragment;
 
         auto GetData() -> char*;
         auto GetData() const -> const char*;
@@ -35,7 +42,19 @@ namespace zerosugar::buffer
         static auto Create(int64_t size) -> Fragment;
 
     private:
-        SharedPtrNotNull<char[]> _ptr;
+        struct Header
+        {
+            std::atomic<int64_t> refCount = 0;
+            int64_t size = 0;
+        };
+
+        struct alignas(std::hardware_destructive_interference_size) Impl
+        {
+            Header header;
+        };
+
+    private:
+        Impl* _impl = nullptr;
         int64_t _startOffset = 0;
         int64_t _size = 0;
     };

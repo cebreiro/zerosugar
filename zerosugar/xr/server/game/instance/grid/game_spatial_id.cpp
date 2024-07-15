@@ -20,12 +20,12 @@ namespace zerosugar::xr::game::detail
 
     bool GameSpatialId::operator<(GameSpatialId other) const
     {
-        if (_x == other._x)
+        if (_y == other._y)
         {
-            return _y < other._y;
+            return _x < other._x;
         }
 
-        return _x < other._x;
+        return _y < other._y;
     }
 
     bool GameSpatialId::operator==(GameSpatialId other) const

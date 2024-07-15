@@ -41,6 +41,7 @@ namespace zerosugar::xr
             game_controller_id_type id, game_entity_id_type entityId, std::string btName);
         ~AIController();
 
+        bool IsRemoteController() const override;
         bool IsRunning() const;
 
         void Start();
@@ -54,6 +55,7 @@ namespace zerosugar::xr
         auto PublishEventCounter() -> int64_t;
 
         void Notify(const IPacket& packet) override;
+        void Notify(const Buffer& buffer) override;
 
         void InvokeOnBehaviorTree(const std::function<void(BehaviorTree&)>& function);
 

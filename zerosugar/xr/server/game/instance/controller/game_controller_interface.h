@@ -14,7 +14,10 @@ namespace zerosugar::xr
     public:
         virtual ~IGameController() = default;
 
+        virtual bool IsRemoteController() const = 0;
+
         virtual void Notify(const IPacket& packet) = 0;
+        virtual void Notify(const Buffer& buffer) = 0;
 
         virtual auto GetControllerId() const -> game_controller_id_type = 0;
         virtual void SetControllerId(game_controller_id_type id) = 0;

@@ -1,5 +1,6 @@
 #include "notify_dungeon_match_group_approved_handler.h"
 
+#include "zerosugar/shared/execution/executor/operation/schedule.h"
 #include "zerosugar/xr/server/game/game_server.h"
 #include "zerosugar/xr/server/game/client/game_client.h"
 #include "zerosugar/xr/server/game/client/game_client_container.h"

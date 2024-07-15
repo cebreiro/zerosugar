@@ -19,7 +19,7 @@ namespace zerosugar::xr
         const int64_t instanceId = command.gameInstanceId;
 
         auto instance = std::make_shared<GameInstance>(
-            server.GetExecutor().shared_from_this(),
+            server.GetGameExecutor().SharedFromThis(),
             server.GetServiceLocator(),
             game_instance_id_type(instanceId),
             zoneId);

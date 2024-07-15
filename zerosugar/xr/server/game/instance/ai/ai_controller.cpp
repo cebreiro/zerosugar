@@ -33,6 +33,11 @@ namespace zerosugar::xr
     {
     }
 
+    bool AIController::IsRemoteController() const
+    {
+        return false;
+    }
+
     bool AIController::IsRunning() const
     {
         return !_shutdown;
@@ -62,6 +67,7 @@ namespace zerosugar::xr
 
         _shutdown = true;
         _behaviorTree->RequestStop();
+        _movementController->StopMovement();
     }
 
     auto AIController::Join() -> Future<void>
@@ -186,6 +192,13 @@ namespace zerosugar::xr
 
             assert(_behaviorTree->CanResume());
         }
+    }
+
+    void AIController::Notify(const Buffer& buffer)
+    {
+        (void)buffer;
+
+        assert(false);
     }
 
     void AIController::InvokeOnBehaviorTree(const std::function<void(BehaviorTree&)>& function)

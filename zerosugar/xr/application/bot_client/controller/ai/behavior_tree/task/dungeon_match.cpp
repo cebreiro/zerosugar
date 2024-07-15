@@ -19,13 +19,13 @@ namespace zerosugar::xr::bot
 
         while (true)
         {
-            cs::StartDungeonMatch start;
-            start.deugeonId = _mapId;
+            const auto event = bt::Event<sc::NotifyDungeonMatchGroupCreation, sc::NotifyDungeonMatchFailure>([&]()
+                {
+                    cs::StartDungeonMatch start;
+                    start.deugeonId = _mapId;
 
-
-            controller.SendToServer(Packet::ToBuffer(start));
-
-            const auto event = bt::Event<sc::NotifyDungeonMatchGroupCreation, sc::NotifyDungeonMatchFailure>();
+                    controller.SendToServer(Packet::ToBuffer(start));
+                });
             if (const auto va = co_await event;
                 std::holds_alternative<sc::NotifyDungeonMatchFailure>(va))
             {
@@ -35,10 +35,10 @@ namespace zerosugar::xr::bot
                 continue;
             }
 
-
-            controller.SendToServer(Packet::ToBuffer(cs::ApproveDungeonMatch{}));
-
-            const auto va = co_await bt::Event<sc::NotifyDungeonMatchGroupApproved, sc::NotifyDungeonMatchFailure>();
+            const auto va = co_await bt::Event<sc::NotifyDungeonMatchGroupApproved, sc::NotifyDungeonMatchFailure>([&]()
+                {
+                    controller.SendToServer(Packet::ToBuffer(cs::ApproveDungeonMatch{}));
+                });
             if (std::holds_alternative<sc::NotifyDungeonMatchFailure>(va))
             {
                 ZEROSUGAR_LOG_INFO(controller.GetServiceLocator(),

@@ -15,15 +15,16 @@ namespace zerosugar::xr::bot
 
         using namespace network::lobby;
 
-        cs::CreateCharacter packet;
-        packet.character.slot = 0;
-        packet.character.name = fmt::format("bot{}", controller.GetId());
-        packet.character.faceId = 120;
-        packet.character.hairId = 110;
+        const auto va = co_await bt::Event<sc::ResultCreateCharacter>([&]()
+            {
+                cs::CreateCharacter packet;
+                packet.character.slot = 0;
+                packet.character.name = fmt::format("bot{}", controller.GetId());
+                packet.character.faceId = 120;
+                packet.character.hairId = 110;
 
-        controller.SendToServer(Packet::ToBuffer(packet));
-
-        std::variant<sc::ResultCreateCharacter> va = co_await bt::Event<sc::ResultCreateCharacter>();
+                controller.SendToServer(Packet::ToBuffer(packet));
+            });
         const sc::ResultCreateCharacter& result = std::get<sc::ResultCreateCharacter>(va);
 
         if (result.success)

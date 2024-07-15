@@ -41,7 +41,18 @@ namespace zerosugar::xr::game_task
 
     bool MainTargetSelector::SelectEntityId(const GameExecutionSerial& serial)
     {
-        return serial.GetSnapshotContainer().Has(_mainTargetId);
+        const GameSnapshotContainer& snapshotContainer = serial.GetSnapshotContainer();
+
+        if (_mainTargetId.GetType() == GameEntityType::Monster)
+        {
+            const GameMonsterSnapshot* monster = snapshotContainer.FindMonster(_mainTargetId);
+            if (!monster || monster->GetHp() <= 0.f)
+            {
+                return false;
+            }
+        }
+
+        return snapshotContainer.Has(_mainTargetId);
     }
 
     auto MainTargetSelector::GetTargetId() const -> std::span<const game_entity_id_type>

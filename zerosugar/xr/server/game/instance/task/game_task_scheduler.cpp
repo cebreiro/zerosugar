@@ -38,6 +38,13 @@ namespace zerosugar::xr
         ++_starvationCount;
     }
 
+    auto GameTaskScheduler::Process::ReleaseTask() -> UniquePtrNotNull<GameTask>
+    {
+        assert(HasTask());
+
+        return std::move(_task);
+    }
+
     auto GameTaskScheduler::Process::GetId() const -> int64_t
     {
         return _id;
@@ -104,6 +111,37 @@ namespace zerosugar::xr
     {
     }
 
+    void GameTaskScheduler::StartDebugOutputLog()
+    {
+        Post(_gameInstance.GetStrand(), [](WeakPtrNotNull<GameInstance> weak, GameTaskScheduler& self) -> Future<void>
+            {
+                while (true)
+                {
+                    constexpr int64_t seconds = 5;
+
+                    co_await Delay(std::chrono::seconds(seconds));
+
+                    auto instance = weak.lock();
+                    if (!instance)
+                    {
+                        co_return;
+                    }
+
+                    const int64_t totalTaskCount = self._totalTaskCount;
+                    const int64_t completeTaskCount = self.GetCompleteTaskCount();
+                    self.ResetCompletionTaskCount();
+
+                    const int64_t runningTaskCount = std::ssize(self.GetProcessesBy(Process::State::Running));
+                    const int64_t readyTaskCount = std::ssize(self.GetProcessesBy(Process::State::Ready));
+
+                    ZEROSUGAR_LOG_INFO(instance->GetServiceLocator(),
+                        fmt::format("[task_scheduler:{}] total_task: {}, complete_task: {:.1f}/s, running_task: {}, ready_task: {}",
+                            instance->GetId(), totalTaskCount, static_cast<double>(completeTaskCount) / static_cast<double>(seconds), runningTaskCount, readyTaskCount));
+                }
+
+            }, _gameInstance.weak_from_this(), std::ref(*this));
+    }
+
     void GameTaskScheduler::Shutdown()
     {
         _shutdown = true;
@@ -132,90 +170,77 @@ namespace zerosugar::xr
 
     void GameTaskScheduler::AddController(game_controller_id_type id)
     {
-        Dispatch(_gameInstance.GetStrand(), [this, id = id.Unwrap()]()
-            {
-                if (_processTaskQueues.try_emplace(id, std::queue<UniquePtrNotNull<GameTask>>()).second)
-                {
-                    Process& process = CreateProcess(id);
+        assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
 
-                    process.SetTaskQueueId(id);
-                }
-                else
-                {
-                    assert(false);
-                }
-            });
+        if (_processTaskQueues.try_emplace(id.Unwrap(), std::queue<UniquePtrNotNull<GameTask>>()).second)
+        {
+            Process& process = CreateProcess(id.Unwrap());
+
+            process.SetTaskQueueId(id.Unwrap());
+        }
+        else
+        {
+            assert(false);
+        }
     }
 
     void GameTaskScheduler::RemoveController(game_controller_id_type id)
     {
-        Dispatch(_gameInstance.GetStrand(), [this, id = id.Unwrap()]()
+        assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
+
+        if (const auto iter = _processes.find(id.Unwrap()); iter != _processes.end())
+        {
+            Process& process = iter->second;
+            if (process.GetState() == Process::State::Running)
             {
-                if (const auto iter = _processes.find(id); iter != _processes.end())
-                {
-                    Process& process = iter->second;
-                    if (process.GetState() == Process::State::Running)
-                    {
-                        process.SetTerminateReserved(true);
-                    }
-                    else
-                    {
-                        ExitProcess(process);
-                    }
-                }
-                else
-                {
-                    assert(false);
-                }
-            });
+                process.SetTerminateReserved(true);
+            }
+            else
+            {
+                ExitProcess(process);
+            }
+        }
+        else
+        {
+            assert(false);
+        }
     }
 
     void GameTaskScheduler::AddEntity(game_entity_id_type id)
     {
-        Dispatch(_gameInstance.GetStrand(), [this, id = id.Unwrap()]()
-            {
-                [[maybe_unused]]
-                const bool inserted = _resources.try_emplace(id, Resource{}).second;
-                assert(inserted);
-            });
+        assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
+
+        [[maybe_unused]]
+        const bool inserted = _resources.try_emplace(id.Unwrap(), Resource{}).second;
+        assert(inserted);
     }
 
     void GameTaskScheduler::RemoveEntity(game_entity_id_type id)
     {
-        Dispatch(_gameInstance.GetStrand(), [this, id = id.Unwrap()]()
-            {
-                [[maybe_unused]]
-                const size_t erased = _resources.erase(id);
-                assert(erased);
-            });
+        assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
+
+        [[maybe_unused]]
+        const size_t erased = _resources.erase(id.Unwrap());
+        assert(erased);
     }
 
     void GameTaskScheduler::Schedule(std::unique_ptr<GameTask> task, std::optional<game_controller_id_type> controllerId)
     {
-        Dispatch(_gameInstance.GetStrand(), [this, task = std::move(task), controllerId = controllerId]() mutable
-            {
-                ScheduleImpl(std::move(task), controllerId ? controllerId->Unwrap() : std::optional<int64_t>{});
-            });
-    }
-
-    auto GameTaskScheduler::GetCompleteTaskCount() const -> int64_t
-    {
-        return _completeTaskCount.load();
-    }
-
-    void GameTaskScheduler::ResetCompletionTaskCount()
-    {
-        _completeTaskCount.store(0);
-    }
-
-    void GameTaskScheduler::ScheduleImpl(std::unique_ptr<GameTask> task, std::optional<int64_t> processId)
-    {
         assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
+
+        const std::optional<int64_t> processId = controllerId.has_value() ? controllerId->Unwrap() : std::optional<int64_t>();
 
         if (_shutdown)
         {
             return;
         }
+
+        if (!Prepare(*task))
+        {
+            return;
+        }
+
+        ++_totalTaskCount;
 
         Process* process = nullptr;
 
@@ -262,9 +287,20 @@ namespace zerosugar::xr
             }
         }
         break;
+        case Process::State::Count:
         default:
             assert(false);
         }
+    }
+
+    auto GameTaskScheduler::GetCompleteTaskCount() const -> int64_t
+    {
+        return _completeTaskCount.load();
+    }
+
+    void GameTaskScheduler::ResetCompletionTaskCount()
+    {
+        _completeTaskCount.store(0);
     }
 
     auto GameTaskScheduler::FindProcess(int64_t id) const -> const Process*
@@ -283,6 +319,29 @@ namespace zerosugar::xr
         const auto iter = _resources.find(id);
 
         return iter != _resources.end() ? &iter->second : nullptr;
+    }
+
+    bool GameTaskScheduler::Prepare(GameTask& task) const
+    {
+        if (task.ShouldPrepareBeforeScheduled())
+        {
+            bool quickExit = false;
+            task.Prepare(_gameInstance.GetSerialContext(), quickExit);
+
+            if (quickExit)
+            {
+                return false;
+            }
+        }
+
+        if (!task.SelectTargetIds(_gameInstance.GetSerialContext()))
+        {
+            task.OnFailTargetSelect(_gameInstance.GetSerialContext());
+
+            return false;
+        }
+
+        return true;
     }
 
     bool GameTaskScheduler::CanStart(const Process& process) const
@@ -330,7 +389,7 @@ namespace zerosugar::xr
 
         auto& readyProcesses = GetProcessesBy(Process::State::Ready);
 
-        const int64_t maxConcurrency = std::min<int64_t>(1, _gameInstance.GetExecutor().GetConcurrency() * 2);
+        const int64_t maxConcurrency = std::max<int64_t>(1, _gameInstance.GetExecutor().GetConcurrency());
         int64_t concurrency = std::ssize(GetProcessesBy(Process::State::Running));
 
         auto iter = readyProcesses.begin();
@@ -354,7 +413,7 @@ namespace zerosugar::xr
 
                 Start(*process);
 
-                ++concurrency;
+                //++concurrency;
             }
             else if (process->AddStarvationCount(); process->GetStarvationCount() > 10)
             {
@@ -383,10 +442,10 @@ namespace zerosugar::xr
             {
                 process->GetTask().Start(_gameInstance.GetParallelContext());
 
-                Dispatch(_gameInstance.GetStrand(), [this, process]()
+                Post(_gameInstance.GetStrand(), [this, process]()
                     {
                         process->GetTask().Complete(_gameInstance.GetSerialContext());
-                        
+
                         OnComplete(*process);
                     });
             });
@@ -398,6 +457,7 @@ namespace zerosugar::xr
         assert(process.GetState() == Process::State::Running);
         assert(process.HasTask());
 
+        --_totalTaskCount;
         ++_completeTaskCount;
 
         DeallocateResource(process);
@@ -422,18 +482,14 @@ namespace zerosugar::xr
         {
             if (taskQueue->empty())
             {
-                constexpr auto newState = Process::State::Waiting;
-
-                ChangeState(process, newState, std::unique_ptr<GameTask>());
+                ChangeState(process, Process::State::Waiting, std::unique_ptr<GameTask>());
             }
             else
             {
                 auto newTask = std::move(taskQueue->front());
                 taskQueue->pop();
 
-                constexpr auto newState = Process::State::Ready;
-
-                ChangeState(process, newState, std::move(newTask));
+                ChangeState(process, Process::State::Ready, std::move(newTask));
             }
         }
         else
@@ -462,7 +518,10 @@ namespace zerosugar::xr
         const auto reserve = [this](int64_t id, const Process& process)
             {
                 const auto iter = _resources.find(id);
-                assert(iter != _resources.end());
+                if (iter == _resources.end())
+                {
+                    return;
+                }
 
                 Resource& resource = iter->second;
 

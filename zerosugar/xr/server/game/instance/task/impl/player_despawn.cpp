@@ -30,6 +30,11 @@ namespace zerosugar::xr::game_task
         serialContext.GetTaskScheduler().RemoveEntity(_entityId);
     }
 
+    void PlayerDepsawn::OnFailTargetSelect(GameExecutionSerial& serialContext)
+    {
+        GameTaskParamT<Promise<void>, MainTargetSelector>::OnFailTargetSelect(serialContext);
+    }
+
     void PlayerDepsawn::Execute(GameExecutionParallel& parallelContext, MainTargetSelector::target_type entity)
     {
         [[maybe_unused]]

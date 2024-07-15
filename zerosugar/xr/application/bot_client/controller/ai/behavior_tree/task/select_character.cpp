@@ -31,12 +31,13 @@ namespace zerosugar::xr::bot
             co_return false;
         }
 
-        cs::SelectCharacter packet;
-        packet.slot = iter->slot;
+        const std::variant<sc::SuccessSelectCharacter> va = co_await bt::Event<sc::SuccessSelectCharacter>([&]()
+            {
+                cs::SelectCharacter packet;
+                packet.slot = iter->slot;
 
-        controller.SendToServer(Packet::ToBuffer(packet));
-
-        const std::variant<sc::SuccessSelectCharacter> va = co_await bt::Event<sc::SuccessSelectCharacter>();
+                controller.SendToServer(Packet::ToBuffer(packet));
+            });
         const sc::SuccessSelectCharacter& result = std::get<sc::SuccessSelectCharacter>(va);
 
         [[maybe_unused]]

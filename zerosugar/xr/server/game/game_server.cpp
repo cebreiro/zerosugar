@@ -22,8 +22,9 @@
 
 namespace zerosugar::xr
 {
-    GameServer::GameServer(execution::AsioExecutor& executor)
-        : Server("game_server", executor)
+    GameServer::GameServer(execution::AsioExecutor& ioExecutor, execution::IExecutor& gameExecutor)
+        : Server("game_server", ioExecutor)
+        , _gameExecutor(gameExecutor)
         , _clientContainer(std::make_unique<GameClientContainer>())
         , _gameInstanceContainer(std::make_unique<GameInstanceContainer>())
         , _gamePacketHandlerFactory(std::make_unique<GamePacketHandlerFactory>())
@@ -54,21 +55,21 @@ namespace zerosugar::xr
         RegisterToCoordinationService();
         OpenCoordinationCommandChannel();
         //ScheduleServerStatusReport();
-        ScheduleSessionCountReport();
+        ScheduleServerStatusReport();
     }
 
     void GameServer::Shutdown()
     {
         Server::Shutdown();
 
+        if (_deviceStatusReportStopSource.stop_possible())
+        {
+            _deviceStatusReportStopSource.request_stop();
+        }
+
         if (_serverStatusReportStopSource.stop_possible())
         {
             _serverStatusReportStopSource.request_stop();
-        }
-
-        if (_serverSessionCountStopSource.stop_possible())
-        {
-            _serverSessionCountStopSource.request_stop();
         }
     }
 
@@ -95,8 +96,8 @@ namespace zerosugar::xr
             co_return;
         }
 
-        std::shared_ptr<GameInstance> gameInstance = client->GetGameInstance();
-        if (!gameInstance)
+        std::shared_ptr<GameInstance> instance = client->GetGameInstance();
+        if (!instance)
         {
             co_return;
         }
@@ -105,7 +106,7 @@ namespace zerosugar::xr
         Future<void> future = promise.GetFuture();
 
         auto task = std::make_unique<game_task::PlayerDepsawn>(std::move(promise), client->GetControllerId(), client->GetGameEntityId());
-        gameInstance->Summit(std::move(task), std::nullopt);
+        instance->Summit(std::move(task), std::nullopt);
 
         co_await future;
         co_await _gameRepository->FinalizeSaves(client->GetCharacterId());
@@ -128,6 +129,11 @@ namespace zerosugar::xr
     auto GameServer::GetServiceLocator() -> ServiceLocator&
     {
         return _serviceLocator;
+    }
+
+    auto GameServer::GetGameExecutor() -> execution::IExecutor&
+    {
+        return _gameExecutor;
     }
 
     auto GameServer::GetClientContainer() -> GameClientContainer&
@@ -192,7 +198,7 @@ namespace zerosugar::xr
             }
         }
 
-        Delay(std::chrono::seconds(60))
+        Delay(std::chrono::seconds(120))
             .Then(GetExecutor(), [self = SharedFromThis(), id = session.GetId(), weak = session.weak_from_this()]()
                 {
                     if (self->HasClient(id))
@@ -244,6 +250,7 @@ namespace zerosugar::xr
                 }
 
                 std::unique_ptr<IPacket> packet = network::game::cs::CreateFrom(reader);
+                _receivePacketCount.fetch_add(1);
 
                 Buffer temp;
                 [[maybe_unused]] bool sliced = receiveBuffer->SliceFront(temp, packetSize);
@@ -323,9 +330,9 @@ namespace zerosugar::xr
         _channelRunner->Start();
     }
 
-    void GameServer::ScheduleServerStatusReport()
+    void GameServer::ScheduleDeviceStatusReport()
     {
-        _serverStatusReportStopSource = std::stop_source();
+        _deviceStatusReportStopSource = std::stop_source();
 
         Post(GetExecutor(), [](SharedPtrNotNull<GameServer> self, std::stop_token token) -> Future<void>
             {
@@ -401,7 +408,7 @@ namespace zerosugar::xr
             }, SharedFromThis(), _serverStatusReportStopSource.get_token());
     }
 
-    void GameServer::ScheduleSessionCountReport()
+    void GameServer::ScheduleServerStatusReport()
     {
         _serverStatusReportStopSource = std::stop_source();
 
@@ -419,9 +426,12 @@ namespace zerosugar::xr
                         }
                     }
 
+                    int64_t value = 0;
+                    const int64_t packetCount = self->_receivePacketCount.exchange(value);
+
                     ZEROSUGAR_LOG_INFO(self->GetServiceLocator(),
-                        fmt::format("[{}] current session count: {}"
-                            , self->GetName(), self->GetClientContainer().GetCount()));
+                        fmt::format("[{}] session: {}, receive packet: {}"
+                            , self->GetName(), self->GetClientContainer().GetCount(), packetCount));
                 }
 
             }, SharedFromThis(), _serverStatusReportStopSource.get_token());;

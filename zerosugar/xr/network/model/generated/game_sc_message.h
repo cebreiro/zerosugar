@@ -11,7 +11,7 @@ namespace zerosugar::xr::network::game::sc
 {
     struct Pong final : IPacket
     {
-        static constexpr int32_t opcode = 100000;
+        static constexpr int32_t opcode = 999;
 
         void Deserialize(PacketReader& reader) final;
         void Serialize(PacketWriter& writer) const final;

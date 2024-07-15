@@ -21,9 +21,19 @@ namespace zerosugar::xr
     {
     }
 
+    bool GameClient::IsRemoteController() const
+    {
+        return true;
+    }
+
     void GameClient::Notify(const IPacket& packet)
     {
         Send(Packet::ToBuffer(packet));
+    }
+
+    void GameClient::Notify(const Buffer& buffer)
+    {
+        Send(buffer);
     }
 
     auto GameClient::GetControllerId() const -> game_controller_id_type
@@ -81,11 +91,19 @@ namespace zerosugar::xr
         return 1;
     }
 
-    void GameClient::Send(Buffer buffer)
+    void GameClient::Send(Buffer&& buffer)
     {
         if (const auto session = _session.lock(); session)
         {
             session->Send(std::move(buffer));
+        }
+    }
+
+    void GameClient::Send(const Buffer& buffer)
+    {
+        if (const auto session = _session.lock(); session)
+        {
+            session->Send(buffer.ShallowCopy());
         }
     }
 

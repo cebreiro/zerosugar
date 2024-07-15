@@ -4,6 +4,7 @@
 #include <fmt/format.h>
 #include <boost/asio.hpp>
 #include "zerosugar/shared/network/session/event.h"
+#include "zerosugar/shared/type/not_null_pointer.h"
 
 namespace zerosugar
 {
@@ -17,7 +18,7 @@ namespace zerosugar
     public:
         using id_type = session::id_type;
         static constexpr int64_t RECEIVE_BUFFER_MIN_SIZE = 1024;
-        static constexpr int64_t RECEIVE_BUFFER_EXPAND_SIZE = 4096;
+        static constexpr int64_t RECEIVE_BUFFER_EXPAND_SIZE = 2048;
 
     public:
         Session(const Session& other) = delete;

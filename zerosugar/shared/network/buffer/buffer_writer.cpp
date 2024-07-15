@@ -18,7 +18,9 @@ namespace zerosugar
         {
             if (_iter == _end)
             {
-                _buffer.Add(buffer::Fragment::Create(256));
+                const int64_t size = _buffer.GetSize();
+
+                _buffer.Add(buffer::Fragment::Create(size));
 
                 auto end = _buffer.GetFragmentContainer().end();
 

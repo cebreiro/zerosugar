@@ -437,13 +437,13 @@ int main()
         TestDataBench(*instance1, "asio executor");
 
         instance1->Shutdown();
-        instance1->Join();
+        instance1->Join().Get();
 
         auto instance2 = std::make_shared<GameInstance>(asioExecutor, locator, game_instance_id_type{}, 100);
         StartBench(*instance2, "asio executor");
 
         instance2->Shutdown();
-        instance2->Join();
+        instance2->Join().Get();
     }
 
     asioExecutor->Stop();
@@ -463,13 +463,13 @@ int main()
         TestDataBench(*instance1, "poll executor");
 
         instance1->Shutdown();
-        instance1->Join();
+        instance1->Join().Get();
 
         auto instance2 = std::make_shared<GameInstance>(pollExecutor, locator, game_instance_id_type{}, 100);
         StartBench(*instance2, "poll executor");
 
         instance2->Shutdown();
-        instance2->Join();
+        instance2->Join().Get();
     }
     pollExecutor->Stop();
 
@@ -488,13 +488,13 @@ int main()
         TestDataBench(*instance1, "game executor");
 
         instance1->Shutdown();
-        instance1->Join();
+        instance1->Join().Get();
 
         auto instance2 = std::make_shared<GameInstance>(gameExecutor, locator, game_instance_id_type{}, 100);
         StartBench(*instance2, "work stealing executor");
 
         instance2->Shutdown();
-        instance2->Join();
+        instance2->Join().Get();
     }
 
     gameExecutor->Stop();

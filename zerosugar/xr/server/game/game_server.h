@@ -25,7 +25,7 @@ namespace zerosugar::xr
     class GameServer final : public Server
     {
     public:
-        GameServer(execution::AsioExecutor& executor);
+        GameServer(execution::AsioExecutor& ioExecutor, execution::IExecutor& gameExecutor);
         ~GameServer();
 
         void Initialize(ServiceLocator& serviceLocator) override;
@@ -45,6 +45,7 @@ namespace zerosugar::xr
 
         auto GetServerId() const -> int64_t;
         auto GetServiceLocator() -> ServiceLocator&;
+        auto GetGameExecutor() -> execution::IExecutor&;
         auto GetClientContainer() -> GameClientContainer&;
         auto GetGameInstanceContainer() -> GameInstanceContainer&;
         auto GetCommandHandlerFactory() -> ICommandHandlerFactory&;
@@ -61,11 +62,12 @@ namespace zerosugar::xr
 
         void RegisterToCoordinationService();
         void OpenCoordinationCommandChannel();
+        void ScheduleDeviceStatusReport();
         void ScheduleServerStatusReport();
-        void ScheduleSessionCountReport();
 
     private:
         ServiceLocator _serviceLocator;
+        execution::IExecutor& _gameExecutor;
 
         std::string _ip;
         uint16_t _port = 0;
@@ -73,8 +75,10 @@ namespace zerosugar::xr
         int64_t _serverId = 0;
         SharedPtrNotNull<Channel<service::CoordinationCommandResponse>> _responseChannel;
         SharedPtrNotNull<CommandChannelRunner> _channelRunner;
+        std::stop_source _deviceStatusReportStopSource;
         std::stop_source _serverStatusReportStopSource;
-        std::stop_source _serverSessionCountStopSource;
+
+        std::atomic<int64_t> _receivePacketCount = 0;
 
         tbb::concurrent_hash_map<session::id_type, Buffer> _sessionReceiveBuffers;
         UniquePtrNotNull<GameClientContainer> _clientContainer;

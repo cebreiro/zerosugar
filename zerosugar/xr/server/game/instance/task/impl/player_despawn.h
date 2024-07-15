@@ -13,6 +13,7 @@ namespace zerosugar::xr::game_task
     private:
         bool ShouldPrepareBeforeScheduled() const override;;
         void Prepare(GameExecutionSerial& serialContext, bool& quickExit) override;
+        void OnFailTargetSelect(GameExecutionSerial& serialContext) override;
 
         void Execute(GameExecutionParallel& parallelContext, MainTargetSelector::target_type) override;
         void OnComplete(GameExecutionSerial& serialContext) override;

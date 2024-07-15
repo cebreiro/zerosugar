@@ -2,6 +2,7 @@
 
 #include "zerosugar/shared/database/connection/connection_pool.h"
 #include "zerosugar/shared/execution/executor/impl/asio_executor.h"
+#include "zerosugar/shared/execution/executor/impl/game_executor.h"
 #include "zerosugar/shared/log/spdlog/spdlog_logger.h"
 #include "zerosugar/shared/log/spdlog/spdlog_logger_builder.h"
 #include "zerosugar/xr/application/all_in_one_app/all_in_one_app_config.h"
@@ -21,23 +22,24 @@ namespace zerosugar::xr
 {
     AllInOneApp::AllInOneApp()
         : _config(std::make_unique<AllInOneAppConfig>())
-        , _executor(std::make_shared<execution::AsioExecutor>(_config->workerCount))
+        , _ioExecutor(std::make_shared<execution::AsioExecutor>(_config->workerCount))
+        , _gameExecutor(std::make_shared<execution::GameExecutor>(_config->workerCount))
         , _logService(std::make_shared<LogService>())
-        , _connectionPool(std::make_shared<db::ConnectionPool>(_executor))
+        , _connectionPool(std::make_shared<db::ConnectionPool>(_ioExecutor))
         , _gameDataProvider(std::make_shared<GameDataProvider>())
         , _navigationDataProvider(std::make_shared<NavigationDataProvider>())
-        , _rpcServer(std::make_shared<RPCServer>(_executor))
-        , _rpcClient(std::make_shared<RPCClient>(_executor))
-        , _loginServer(std::make_shared<LoginServer>(*_executor))
-        , _lobbyServer(std::make_shared<LobbyServer>(*_executor))
-        , _gameServer(std::make_shared<GameServer>(*_executor))
-        , _loginService(std::make_shared<LoginService>(_executor))
+        , _rpcServer(std::make_shared<RPCServer>(_ioExecutor))
+        , _rpcClient(std::make_shared<RPCClient>(_ioExecutor))
+        , _loginServer(std::make_shared<LoginServer>(*_ioExecutor))
+        , _lobbyServer(std::make_shared<LobbyServer>(*_ioExecutor))
+        , _gameServer(std::make_shared<GameServer>(*_ioExecutor, *_gameExecutor))
+        , _loginService(std::make_shared<LoginService>(_ioExecutor))
         , _loginServiceProxy(std::make_shared<service::LoginServiceProxy>(_rpcClient))
-        , _gatewayService(std::make_shared<GatewayService>(_executor))
+        , _gatewayService(std::make_shared<GatewayService>(_ioExecutor))
         , _gatewayServiceProxy(std::make_shared<service::GatewayServiceProxy>(_rpcClient))
-        , _coordinationService(std::make_shared<CoordinationService>(_executor))
+        , _coordinationService(std::make_shared<CoordinationService>(_ioExecutor))
         , _coordinationServiceProxy(std::make_shared<service::CoordinationServiceProxy>(_rpcClient))
-        , _databaseService(std::make_shared<DatabaseService>(_executor, _connectionPool))
+        , _databaseService(std::make_shared<DatabaseService>(_ioExecutor, _connectionPool))
         , _databaseServiceProxy(std::make_shared<service::DatabaseServiceProxy>(_rpcClient))
     {
         ServiceLocator& serviceLocator = GetServiceLocator();
@@ -135,8 +137,10 @@ namespace zerosugar::xr
     {
         ZEROSUGAR_LOG_INFO(GetServiceLocator(), fmt::format("[{}] initialize executor", GetName()));
 
-        ExecutionContext::PushExecutor(_executor.get());
-        _executor->Run();
+        ExecutionContext::PushExecutor(_ioExecutor.get());
+        _ioExecutor->Run();
+
+        _gameExecutor->Run();
 
         ZEROSUGAR_LOG_INFO(GetServiceLocator(), fmt::format("[{}] initialize executor --> Done", GetName()));
     }

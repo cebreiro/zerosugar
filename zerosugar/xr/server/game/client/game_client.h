@@ -19,7 +19,10 @@ namespace zerosugar::xr
             int64_t worldUserUniqueId, WeakPtrNotNull<GameInstance> gameInstance);
         ~GameClient() override;
 
+        bool IsRemoteController() const override;
+
         void Notify(const IPacket& packet) override;
+        void Notify(const Buffer& buffer) override;
 
         auto GetControllerId() const -> game_controller_id_type override;
         void SetControllerId(game_controller_id_type id) override;
@@ -39,7 +42,8 @@ namespace zerosugar::xr
         auto GetGameEntityId() const -> game_entity_id_type;
 
     private:
-        void Send(Buffer buffer);
+        void Send(Buffer&& buffer);
+        void Send(const Buffer& buffer);
 
     private:
         session::id_type _sessionId;

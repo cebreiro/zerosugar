@@ -32,11 +32,13 @@ namespace zerosugar::bt::node
             void SetEvent(const std::any& any);
 
             auto GetState() const -> State;
+            auto GetAwaitEventNames() const -> std::string;
 
         private:
             State _state = State::Success;
-            std::any _currentEvent;
+            std::any _event;
             std::function<bool(const std::type_info&)> _eventChecker;
+            std::vector<const std::type_info*> _awaitEvents;
         };
 
     public:
@@ -55,12 +57,20 @@ namespace zerosugar::bt::node
     };
 
     template <bt_event_concept ... E>
-    auto Result::promise_type::await_transform(Event<E...>)
+    auto Result::promise_type::await_transform(Event<E...> e)
     {
         _eventChecker = [](const std::type_info& type) -> bool
             {
                 return ((type == typeid(E)) || ...);
             };
+
+        _awaitEvents.clear();
+        std::ranges::copy(std::initializer_list<const std::type_info*>{ &typeid(E)... }, std::back_inserter(_awaitEvents));
+
+        if (e.postOperation)
+        {
+            e.postOperation();
+        }
 
         class Awaitable
         {
@@ -96,12 +106,12 @@ namespace zerosugar::bt::node
 
         _state = State::Running;
 
-        return Awaitable(&_currentEvent);
+        return Awaitable(&_event);
     }
 
     template <bt_event_concept E>
     void Result::promise_type::SetEvent(const E& e)
     {
-        _currentEvent = e;
+        _event = e;
     }
 }

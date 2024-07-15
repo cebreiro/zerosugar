@@ -64,8 +64,5 @@ namespace zerosugar::xr::game_task
                 controller->Notify(event);
             }
         }
-
-        ZEROSUGAR_LOG_INFO(serialContext.GetServiceLocator(),
-            fmt::format("monster despawn. id: {}", _entityId.Unwrap()));
     }
 }

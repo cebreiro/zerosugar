@@ -39,6 +39,8 @@ namespace zerosugar::xr
 
             void AddStarvationCount();
 
+            auto ReleaseTask() -> UniquePtrNotNull<GameTask>;
+
             auto GetId() const -> int64_t;
             auto GetTask() const -> GameTask&;
             auto GetTaskQueueId() const -> std::optional<int64_t>;
@@ -81,6 +83,7 @@ namespace zerosugar::xr
         explicit GameTaskScheduler(GameInstance& gameInstance);
         ~GameTaskScheduler();
 
+        void StartDebugOutputLog();
         void Shutdown();
         auto Join() -> Future<void>;
 
@@ -92,16 +95,14 @@ namespace zerosugar::xr
 
         void Schedule(std::unique_ptr<GameTask> task, std::optional<game_controller_id_type> controllerId = std::nullopt);
 
-
         auto GetCompleteTaskCount() const -> int64_t;
         void ResetCompletionTaskCount();
 
     private:
-        void ScheduleImpl(std::unique_ptr<GameTask> task, std::optional<int64_t> processId);
-
         auto FindProcess(int64_t id) const -> const Process*;
         auto FindResource(int64_t id) const -> const Resource*;
 
+        bool Prepare(GameTask& task) const;
         bool CanStart(const Process& process) const;
 
         void TryStartAll();
@@ -129,6 +130,7 @@ namespace zerosugar::xr
         bool _shutdown = false;
         std::optional<Promise<void>> _shutdownJoinPromise;
 
+        int64_t _totalTaskCount = 0;
         std::atomic<int64_t> _completeTaskCount = 0;
 
         int64_t _nextTaskQueueId = 0;
@@ -143,5 +145,7 @@ namespace zerosugar::xr
 
         std::array<set_type, static_cast<int32_t>(Process::State::Count)> _states;
         set_type _statesRecycleBuffer;
+
+        std::vector<decltype(_resources)::iterator> _tryAcquireBuffer;
     };
 }

@@ -4,6 +4,7 @@
 #include <ios>
 #include <numeric>
 #include <sstream>
+#include <algorithm>
 
 namespace zerosugar
 {
@@ -34,19 +35,6 @@ namespace zerosugar
         assert(GetSize() == CalculateSize());
     }
 
-    void Buffer::Splice(fragment_container_type& container,
-        fragment_container_type::iterator begin, fragment_container_type::iterator end)
-    {
-        for (const buffer::Fragment& fragment : std::ranges::subrange(begin, end))
-        {
-            _size += fragment.GetSize();
-        }
-
-        _fragments.splice(_fragments.end(), container, begin, end);
-
-        assert(GetSize() == CalculateSize());
-    }
-
     bool Buffer::SliceFront(Buffer& result, int64_t size)
     {
         if (GetSize() < size)
@@ -59,18 +47,21 @@ namespace zerosugar
 
         for (auto iter = _fragments.begin(); iter != _fragments.end(); ++iter)
         {
-            buffer::Fragment& fragment = *iter;
-            const int64_t newSum = sum + fragment.GetSize();
+            assert(iter->IsValid());
+
+            const int64_t newSum = sum + iter->GetSize();
 
             if (newSum > size)
             {
                 newBuffer._size = size;
-                newBuffer._fragments.splice(newBuffer._fragments.begin(),
-                    _fragments, _fragments.begin(), iter);
+
+                std::move(_fragments.begin(), iter, std::back_inserter(newBuffer._fragments));
+                iter = _fragments.erase(_fragments.begin(), iter);
+
+                assert(iter->IsValid());
 
                 std::optional<buffer::Fragment> newFragment = iter->SliceFront(size - sum);
                 assert(newFragment.has_value());
-                assert(fragment.IsValid());
 
                 newBuffer._fragments.emplace_back(std::move(newFragment.value()));
 
@@ -79,8 +70,9 @@ namespace zerosugar
             else if (newSum == size)
             {
                 newBuffer._size = size;
-                newBuffer._fragments.splice(newBuffer._fragments.begin(),
-                    _fragments, _fragments.begin(), ++iter);
+
+                std::move(_fragments.begin(), ++iter, std::back_inserter(newBuffer._fragments));
+                iter = _fragments.erase(_fragments.begin(), iter);
 
                 break;
             }
@@ -100,8 +92,11 @@ namespace zerosugar
 
     void Buffer::MergeBack(Buffer buffer)
     {
+        assert(buffer.GetSize() > 0);
+        assert(std::ranges::all_of(buffer.GetFragmentContainer(), [](const buffer::Fragment& fragment) { return fragment.IsValid();  }));
+
         _size += buffer.GetSize();
-        _fragments.splice(_fragments.end(), std::move(buffer._fragments));
+        std::move(buffer._fragments.begin(), buffer._fragments.end(), std::back_inserter(_fragments));
 
         buffer.Clear();
 
@@ -109,33 +104,18 @@ namespace zerosugar
         assert(buffer.GetSize() == buffer.CalculateSize());
     }
 
-    void Buffer::MergeBack(fragment_container_type fragments)
+    auto Buffer::ShallowCopy() const -> Buffer
     {
-        _size += CalculateSize(fragments);
-        _fragments.splice(_fragments.end(), std::move(fragments));
+        Buffer result;
+        result._size = _size;
+        result._fragments.reserve(_fragments.size());
 
-        assert(GetSize() == CalculateSize());
-    }
-
-    auto Buffer::Clone() -> Buffer
-    {
-        if (_size == 0)
+        for (const buffer::Fragment& fragment : _fragments)
         {
-            return {};
+            result._fragments.push_back(fragment.ShallowCopy());
+            
         }
 
-        Buffer result;
-        result.Add(buffer::Fragment([this]() -> std::shared_ptr<char[]>
-            {
-                auto buffer = std::make_shared<char[]>(_size);
-                auto range = _fragments | std::views::transform([](const buffer::Fragment& fragment) -> std::span<const char>
-                    {
-                        return fragment.GetSpan();
-                    }) | std::views::join;
-                std::ranges::copy(range, buffer.get());
-
-                return buffer;
-            }(), 0, _size));
         return result;
     }
 

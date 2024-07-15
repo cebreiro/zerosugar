@@ -9,6 +9,7 @@ namespace zerosugar::db
 namespace zerosugar::execution
 {
     class AsioExecutor;
+    class GameExecutor;
 }
 
 namespace zerosugar::xr
@@ -68,7 +69,8 @@ namespace zerosugar::xr
     private:
         std::unique_ptr<AllInOneAppConfig> _config;
 
-        SharedPtrNotNull<execution::AsioExecutor> _executor;
+        SharedPtrNotNull<execution::AsioExecutor> _ioExecutor;
+        SharedPtrNotNull<execution::GameExecutor> _gameExecutor;
         SharedPtrNotNull<LogService> _logService;
         SharedPtrNotNull<db::ConnectionPool> _connectionPool;
 

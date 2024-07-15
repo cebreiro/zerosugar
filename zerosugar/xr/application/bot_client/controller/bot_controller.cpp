@@ -13,7 +13,9 @@
 #include "zerosugar/xr/application/bot_client/controller/ai/vision/visual_object_container.h"
 #include "zerosugar/xr/application/bot_client/controller/ai/vision/monster.h"
 #include "zerosugar/xr/data/game_data_provider.h"
+#include "zerosugar/xr/network/model/generated/game_cs_message.h"
 #include "zerosugar/xr/navigation/navi_data_provider.h"
+#include "zerosugar/xr/network/packet.h"
 #include "zerosugar/xr/network/packet_reader.h"
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
 #include "zerosugar/xr/network/model/generated/lobby_sc_message.h"
@@ -64,12 +66,13 @@ namespace zerosugar::xr
                 }
 
                 ZEROSUGAR_LOG_INFO(self->GetServiceLocator(),
-                    fmt::format("[{}] socket: {}, state: {}, behavior_tree: {}, awaiting: {}, current_node: {}, receive_buffer: {}, received_buffer: {}",
+                    fmt::format("[{}] socket: {}, state: {}, behavior_tree: {}, awaiting: [{}, event: {}], current_node: {}, receive_buffer: {}, received_buffer: {}",
                         self->GetName(),
                         self->GetSocket().IsOpen() ? "open" : "closed",
                         ToString(self->GetSessionState()),
                         self->_behaviorTree ? self->_behaviorTree->GetName() : "null",
                         self->_behaviorTree ? (self->_behaviorTree->IsAwaiting() ? "true" : "false") : "null",
+                        self->_behaviorTree ? self->_behaviorTree->GetCurrentAwaitEventName().value_or("null") : "null",
                         self->_behaviorTree ? self->_behaviorTree->GetCurrentVisitNodeName().value_or("null") : "null",
                         self->_receiveBuffer.GetSize(),
                         self->_receivedBuffer.GetSize()));
@@ -122,6 +125,34 @@ namespace zerosugar::xr
         assert(func);
 
         func(*_behaviorTree);
+    }
+
+    auto BotController::Ping(int64_t sequence) -> Future<std::optional<std::chrono::system_clock::duration>>
+    {
+        auto self = shared_from_this();
+
+        co_await *_strand;
+
+        if (_sessionState != BotSessionStateType::Game)
+        {
+            co_return std::nullopt;
+        }
+
+        assert(!_pingFutures.contains(sequence));
+
+        Promise<std::chrono::system_clock::duration>& promise = _pingPromises[sequence];
+        auto future = promise.GetFuture();
+
+        network::game::cs::Ping ping;
+        ping.sequence = sequence;
+        ping.clientTimePoint = std::chrono::system_clock::now().time_since_epoch().count();
+
+        SendToServer(Packet::ToBuffer(ping));
+
+        const auto result = co_await future;
+        _pingPromises.erase(sequence);
+
+        co_return result;
     }
 
     auto BotController::ConnectTo(std::string ip, uint16_t port, int32_t retryMilli) -> Future<void>

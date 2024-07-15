@@ -1,17 +1,48 @@
 #include "fragment.h"
 
+#include <cassert>
+#include <tbb/scalable_allocator.h>
+
 namespace zerosugar::buffer
 {
-    Fragment::Fragment(SharedPtrNotNull<char[]> ptr, int64_t startOffset, int64_t size)
-        : _ptr(std::move(ptr))
-        , _startOffset(startOffset)
-        , _size(size)
+    Fragment::Fragment(Fragment&& other) noexcept
+        : _impl(std::exchange(other._impl, nullptr))
+        , _startOffset(std::exchange(other._startOffset, 0))
+        , _size(std::exchange(other._size, 0))
     {
+    }
+
+    Fragment& Fragment::operator=(Fragment&& other) noexcept
+    {
+        assert(this != &other);
+
+        if (_impl)
+        {
+            this->~Fragment();
+        }
+
+        _impl = std::exchange(other._impl, nullptr);
+        _startOffset = std::exchange(other._startOffset, 0);
+        _size = std::exchange(other._size, 0);
+
+        return *this;
+    }
+
+    Fragment::~Fragment()
+    {
+        if (_impl)
+        {
+            if (_impl->header.refCount.fetch_sub(1) == 1)
+            {
+                scalable_free(_impl);
+            }
+
+        }
     }
 
     bool Fragment::IsValid() const
     {
-        return _ptr != nullptr && _size > 0;
+        return _impl != nullptr && _size > 0;
     }
 
     auto Fragment::SliceFront(int64_t size) -> std::optional<Fragment>
@@ -21,32 +52,61 @@ namespace zerosugar::buffer
             return std::nullopt;
         }
 
-        Fragment temp(_ptr, _startOffset, size);
+        Fragment result;
+        result._impl = _impl;
+        result._startOffset = _startOffset;
+        result._size = size;
 
         _startOffset += size;
         _size -= size;
+        assert(GetSize() > 0);
 
-        return temp;
+        [[maybe_unused]]
+        const int64_t prev = _impl->header.refCount.fetch_add(1);
+        assert(prev > 0);
+
+        return result;
+    }
+
+    auto Fragment::ShallowCopy() const -> Fragment
+    {
+        if (!IsValid())
+        {
+            assert(false);
+
+            return {};
+        }
+
+        Fragment result;
+        result._impl = _impl;
+        result._startOffset = _startOffset;
+        result._size = _size;
+
+        [[maybe_unused]]
+        const int64_t prev = _impl->header.refCount.fetch_add(1);
+        assert(prev > 0);
+
+        return result;
     }
 
     auto Fragment::GetData() -> char*
     {
-        if (!_ptr)
+        if (!_impl)
         {
             return nullptr;
         }
 
-        return _ptr.get() + _startOffset;
+        return reinterpret_cast<char*>(_impl) + sizeof(Impl) + _startOffset;
     }
 
     auto Fragment::GetData() const -> const char*
     {
-        if (!_ptr)
+        if (!_impl)
         {
             return nullptr;
         }
 
-        return _ptr.get() + _startOffset;
+        return reinterpret_cast<const char*>(_impl) + sizeof(Impl) + _startOffset;
     }
 
     auto Fragment::GetSize() const -> int64_t
@@ -61,19 +121,26 @@ namespace zerosugar::buffer
 
     auto Fragment::CreateFrom(std::span<const char> span) -> Fragment
     {
-        const auto size = std::ssize(span);
-        auto buffer = std::make_shared<char[]>(size);
+        Fragment fragment = Create(std::ssize(span));
+        std::ranges::copy(span, fragment.GetData());
 
-        std::ranges::copy(span, buffer.get());
-
-        return { std::move(buffer), 0, size };
+        return fragment;
     }
 
     auto Fragment::Create(int64_t size) -> Fragment
     {
         assert(size > 0);
 
-        auto buffer = std::make_shared<char[]>(size);
-        return { std::move(buffer), 0, size };
+        void* ptr = scalable_malloc(sizeof(Impl) + (sizeof(char) * size));
+
+        Fragment fragment;
+        fragment._impl = new (ptr) Impl();
+        fragment._impl->header.refCount = 1;
+        fragment._impl->header.size = size;
+
+        fragment._startOffset = 0;
+        fragment._size = size;
+
+        return fragment;
     }
 }

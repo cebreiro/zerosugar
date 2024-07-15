@@ -18,6 +18,7 @@
 #include "zerosugar/xr/server/game/instance/task/game_task_scheduler.h"
 #include "zerosugar/xr/server/game/instance/task/impl/spawner_install.h"
 #include "zerosugar/xr/server/game/instance/gm/gm_command_factory.h"
+#include "zerosugar/xr/server/game/instance/gm/gm_command_interface.h"
 #include "zerosugar/xr/server/game/instance/grid/game_spatial_scanner.h"
 
 namespace zerosugar::xr
@@ -67,6 +68,18 @@ namespace zerosugar::xr
         {
             Summit(std::make_unique<game_task::SpawnerInstall>(&spawnData), std::nullopt);
         }
+
+        if (_data->GetType() != data::MapType::Village)
+        {
+            GetTaskScheduler().StartDebugOutputLog();
+
+            auto handler = GetGMCommandFactory().CreateHandler("vis");
+
+            GamePlayerSnapshot* a = reinterpret_cast<GamePlayerSnapshot*>(this);
+            std::vector<std::string> b;
+
+            handler->Handle(GetSerialContext(), *a, b);
+        }
     }
 
     void GameInstance::Shutdown()
@@ -95,24 +108,6 @@ namespace zerosugar::xr
 
         Post(*_strand, [self = shared_from_this(), task = std::move(task), controllerId]() mutable
             {
-                if (task->ShouldPrepareBeforeScheduled())
-                {
-                    bool quickExit = false;
-                    task->Prepare(self->GetSerialContext(), quickExit);
-
-                    if (quickExit)
-                    {
-                        return;
-                    }
-                }
-
-                if (!task->SelectTargetIds(self->GetSerialContext()))
-                {
-                    task->OnFailTargetSelect(self->GetSerialContext());
-
-                    return;
-                }
-
                 self->_taskScheduler->Schedule(std::move(task), controllerId);
             });
     }

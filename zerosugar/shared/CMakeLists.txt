@@ -7,6 +7,7 @@ find_package(Eigen3 CONFIG REQUIRED)
 target_link_libraries(zerosugar_shared PUBLIC
 	Boost::boost
 	TBB::tbb
+    TBB::tbbmalloc
 	spdlog::spdlog
     pugixml::shared pugixml::pugixml
     OpenSSL::Crypto

@@ -1,5 +1,5 @@
 #pragma once
-#include <list>
+#include <boost/container/small_vector.hpp>
 #include "zerosugar/shared/network/buffer/fragment.h"
 
 namespace zerosugar
@@ -7,7 +7,7 @@ namespace zerosugar
     class Buffer
     {
     public:
-        using fragment_container_type = std::list<buffer::Fragment>;
+        using fragment_container_type = boost::container::small_vector<buffer::Fragment, 8>;
 
     public:
         class iterator;
@@ -22,14 +22,11 @@ namespace zerosugar
         Buffer& operator=(Buffer&& other) noexcept;
 
         void Add(buffer::Fragment fragment);
-        void Splice(fragment_container_type& container,
-            fragment_container_type::iterator begin, fragment_container_type::iterator end);
 
         bool SliceFront(Buffer& result, int64_t size);
         void MergeBack(Buffer buffer);
-        void MergeBack(fragment_container_type fragments);
 
-        auto Clone() -> Buffer;
+        auto ShallowCopy() const -> Buffer;
 
         void Clear();
 

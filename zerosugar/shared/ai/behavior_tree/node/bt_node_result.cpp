@@ -1,6 +1,7 @@
 #include "bt_node_result.h"
 
 #include <cassert>
+#include <sstream>
 
 namespace zerosugar::bt::node
 {
@@ -40,17 +41,35 @@ namespace zerosugar::bt::node
 
     bool Result::promise_type::HasEvent() const
     {
-        return _currentEvent.has_value();
+        return _event.has_value();
     }
 
     void Result::promise_type::SetEvent(const std::any& any)
     {
-        _currentEvent = any;
+        _event = any;
     }
 
     auto Result::promise_type::GetState() const -> State
     {
         return _state;
+    }
+
+    auto Result::promise_type::GetAwaitEventNames() const -> std::string
+    {
+        std::ostringstream oss;
+
+        for (const std::type_info* typeInfo : _awaitEvents)
+        {
+            oss << typeInfo->name() << ' ';
+        }
+
+        std::string result = oss.str();
+        if (!result.empty())
+        {
+            result.pop_back();
+        }
+
+        return result;
     }
 
     Result::Result(bool success)

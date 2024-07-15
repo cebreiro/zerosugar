@@ -39,7 +39,7 @@ namespace zerosugar
 
     void Session::Send(Buffer buffer)
     {
-        dispatch(_strand->GetImpl(), [self = shared_from_this(), buffer = std::move(buffer)]() mutable
+        post(_strand->GetImpl(), [self = shared_from_this(), buffer = std::move(buffer)]() mutable
             {
                 self->SendAsync(std::move(buffer));
             });
@@ -47,7 +47,7 @@ namespace zerosugar
 
     void Session::Close()
     {
-        dispatch(_strand->GetImpl(), [self = shared_from_this()]()
+        post(_strand->GetImpl(), [self = shared_from_this()]()
             {
                 boost::system::error_code ec;
                 self->_socket.close(ec);
@@ -133,8 +133,9 @@ namespace zerosugar
             return;
         }
 
-        ExpandReceiveBuffer();
         SendReceiveEvent(std::move(buffer));
+
+        ExpandReceiveBuffer();
         ReceiveAsync();
     }
 
@@ -155,7 +156,8 @@ namespace zerosugar
         Buffer& sendBuffer = _sendBuffer.emplace();
         sendBuffer.MergeBack(std::move(buffer));
 
-        constexpr int64_t maxSize = std::numeric_limits<uint16_t>::max();
+        constexpr int64_t mtuSize = 1460;
+        constexpr int64_t maxSize = mtuSize;
 
         if (sendBuffer.GetSize() > maxSize)
         {
@@ -237,9 +239,7 @@ namespace zerosugar
             return;
         }
 
-        auto ptr = std::make_shared<char[]>(RECEIVE_BUFFER_EXPAND_SIZE);
-
-        _receiveBuffers.Add(buffer::Fragment(std::move(ptr), 0, RECEIVE_BUFFER_EXPAND_SIZE));
+        _receiveBuffers.Add(buffer::Fragment::Create(RECEIVE_BUFFER_EXPAND_SIZE));
     }
 
     auto Session::FlushSendWaitQueue() -> Buffer

@@ -2,6 +2,6 @@
     <sequence>
         <spawn_monster />
         <suspend_until_spawn_monster_dead />
-        <suspend_for_seconds time="3.0" />
+        <suspend_for_seconds time="1.0" />
     </sequence>
 </root>

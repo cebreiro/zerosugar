@@ -24,7 +24,9 @@ namespace zerosugar::execution
 
 namespace zerosugar::xr
 {
-    class BotControlService : public IService
+    class BotControlService final
+        : public IService
+        , public std::enable_shared_from_this<BotControlService>
     {
     public:
         BotControlService(const ServiceLocator& locator,
@@ -35,6 +37,16 @@ namespace zerosugar::xr
         void Start();
 
         auto GetName() const -> std::string_view override;
+
+    private:
+        struct RTTStatistics
+        {
+            int64_t min = std::numeric_limits<int64_t>::max();
+            int64_t max = std::numeric_limits<int64_t>::min();
+            int64_t average = -1;
+        };
+
+        auto EvaluateRTTStatistics() -> Future<RTTStatistics>;
 
     private:
         ServiceLocator _serviceLocator;
@@ -48,5 +60,8 @@ namespace zerosugar::xr
 
         UniquePtrNotNull<IBehaviorTreeLogger> _behaviorTreeLogger;
         UniquePtrNotNull<bt::NodeSerializer> _nodeSerializer;
+
+        int64_t _pingSequence = 0;
+        std::vector<Future<std::optional<std::chrono::system_clock::duration>>> _pingOperations;
     };
 }

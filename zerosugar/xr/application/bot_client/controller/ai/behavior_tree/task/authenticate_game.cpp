@@ -26,21 +26,23 @@ namespace zerosugar::xr::bot
 
         using namespace network::game;
 
-        cs::Authenticate authenticate;
-        authenticate.authenticationToken = *authToken;
+        const auto va = co_await bt::Event<sc::EnterGame>([&]()
+            {
+                cs::Authenticate authenticate;
+                authenticate.authenticationToken = *authToken;
 
-        controller.SendToServer(Packet::ToBuffer(authenticate));
-
-        const auto va = co_await bt::Event<sc::EnterGame>();
+                controller.SendToServer(Packet::ToBuffer(authenticate));
+            });
         const sc::EnterGame& enterGame = std::get<sc::EnterGame>(va);
 
         if (enterGame.zoneId != 100)
         {
-            cs::LoadLevelComplete loadLevelComplete;
-            controller.SendToServer(Packet::ToBuffer(loadLevelComplete));
+            (void)co_await bt::Event<sc::NotifyPlayerActivated>([&]()
+                {
+                    cs::LoadLevelComplete loadLevelComplete;
+                    controller.SendToServer(Packet::ToBuffer(loadLevelComplete));
+                });
         }
-
-        (void)co_await bt::Event<sc::NotifyPlayerActivated>();
 
         co_return true;
     }

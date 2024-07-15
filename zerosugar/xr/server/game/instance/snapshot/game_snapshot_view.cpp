@@ -1,5 +1,6 @@
 #include "game_snapshot_view.h"
 
+#include "zerosugar/xr/network/packet.h"
 #include "zerosugar/xr/network/packet_interface.h"
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
 #include "zerosugar/xr/server/game/instance/controller/game_controller_interface.h"
@@ -37,7 +38,16 @@ namespace zerosugar::xr
         packet.type = static_cast<int32_t>(ChattingType::Local);
         packet.message = message;
 
-        controller->Notify(packet);
+        if (controller->IsRemoteController())
+        {
+            const Buffer buffer = Packet::ToBuffer(packet);
+
+            controller->Notify(buffer);
+        }
+        else
+        {
+            controller->Notify(packet);
+        }
     }
 
     void GameSnapshotView::Broadcast(GameEntityType type, const IPacket& packet, const GameSpatialSet& set)
@@ -51,13 +61,21 @@ namespace zerosugar::xr
         }
 
         GameSnapshotContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
+        const Buffer buffer = Packet::ToBuffer(packet);
 
         for (const game_entity_id_type id : set.GetEntities(type))
         {
             IGameController* controller = snapshotContainer.FindController(id);
             assert(controller);
 
-            controller->Notify(packet);
+            if (controller->IsRemoteController())
+            {
+                controller->Notify(buffer);
+            }
+            else
+            {
+                controller->Notify(packet);
+            }
         }
     }
 
@@ -71,6 +89,8 @@ namespace zerosugar::xr
             }
         }
 
+        const Buffer buffer = Packet::ToBuffer(packet);
+
         for (const UniquePtrNotNull<GamePlayerSnapshot>& snapshot : _gameInstance.GetSnapshotContainer().GetPlayerRange())
         {
             if (excluded.has_value() && *excluded == snapshot->GetId())
@@ -78,7 +98,16 @@ namespace zerosugar::xr
                 continue;
             }
 
-            snapshot->GetController().Notify(packet);
+            IGameController& controller = snapshot->GetController();
+
+            if (controller.IsRemoteController())
+            {
+                controller.Notify(buffer);
+            }
+            else
+            {
+                controller.Notify(packet);
+            }
         }
     }
 
@@ -100,6 +129,7 @@ namespace zerosugar::xr
         }
 
         GameSnapshotContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
+        const Buffer buffer = Packet::ToBuffer(packet);
 
         for (const game_entity_id_type id : set.GetEntities())
         {
@@ -111,7 +141,14 @@ namespace zerosugar::xr
             IGameController* controller = snapshotContainer.FindController(id);
             assert(controller);
 
-            controller->Notify(packet);
+            if (controller->IsRemoteController())
+            {
+                controller->Notify(buffer);
+            }
+            else
+            {
+                controller->Notify(packet);
+            }
         }
     }
 
@@ -125,6 +162,15 @@ namespace zerosugar::xr
             }
         }
 
-        controller.Notify(packet);
+        if (controller.IsRemoteController())
+        {
+            Buffer buffer = Packet::ToBuffer(packet);
+
+            controller.Notify(buffer);
+        }
+        else
+        {
+            controller.Notify(packet);
+        }
     }
 }

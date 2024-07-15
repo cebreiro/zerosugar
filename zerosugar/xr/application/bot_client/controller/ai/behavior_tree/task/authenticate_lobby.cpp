@@ -21,12 +21,13 @@ namespace zerosugar::xr::bot
 
         using namespace network::lobby;
 
-        cs::Authenticate packet;
-        packet.authenticationToken = *authToken;
+        const auto va = co_await bt::Event<sc::NotifyCharacterList, sc::FailAuthenticate>([&]()
+            {
+                cs::Authenticate packet;
+                packet.authenticationToken = *authToken;
 
-        controller.SendToServer(Packet::ToBuffer(packet));
-
-        const auto va = co_await bt::Event<sc::NotifyCharacterList, sc::FailAuthenticate>();
+                controller.SendToServer(Packet::ToBuffer(packet));
+            });
 
         const bool result = std::visit([&]<typename T>(const T& va) -> bool
             {

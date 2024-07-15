@@ -17,13 +17,14 @@ namespace zerosugar::xr::bot
 
         using namespace network::login;
 
-        cs::CreateAccount packet;
-        packet.account = id;
-        packet.password = id;
+        const auto va = co_await bt::Event<sc::CreateAccountResult>([&]()
+            {
+                cs::CreateAccount packet;
+                packet.account = id;
+                packet.password = id;
 
-        controller.SendToServer(Packet::ToBuffer(packet));
-
-        std::variant<sc::CreateAccountResult> va = co_await bt::Event<sc::CreateAccountResult>();
+                controller.SendToServer(Packet::ToBuffer(packet));
+            });
         const sc::CreateAccountResult& result = std::get<sc::CreateAccountResult>(va);
 
         co_return result.success;

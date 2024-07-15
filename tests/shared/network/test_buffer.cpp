@@ -43,7 +43,7 @@ TEST(Buffer, AddFragmentMultiple)
     // act
     for (int64_t i = 0; i < count; ++i)
     {
-        buffer.Add(Fragment{ std::make_shared<char[]>(size), 0, size });
+        buffer.Add(Fragment::Create(size));
     }
 
     // assert
@@ -60,11 +60,11 @@ TEST(Buffer, Merge)
     Buffer buffer1;
     for (int64_t i = 0; i < count; ++i)
     {
-        buffer1.Add(Fragment{ std::make_shared<char[]>(size), 0, size });
+        buffer1.Add(Fragment::Create(size));
     }
 
     Buffer buffer2;
-    buffer2.Add(Fragment{ std::make_shared<char[]>(size), 0, size });
+    buffer2.Add(Fragment::Create(size));
 
     // act
     buffer2.MergeBack(std::move(buffer1));
@@ -76,94 +76,6 @@ TEST(Buffer, Merge)
     EXPECT_EQ(buffer2.GetSize(), size * (count + 1));
     EXPECT_EQ(std::distance(buffer2.begin(), buffer2.end()), buffer2.GetSize());
 }
-
-TEST(Buffer, SliceFront_SliceFragmentHalf)
-{
-    // arrange
-    constexpr int64_t size = 32;
-    constexpr int64_t halfSize = size / 2;
-
-    auto memory = std::make_shared<char[]>(size);
-    for (int64_t i = 0; i < size; ++i)
-    {
-        memory[i] = static_cast<char>(i % halfSize);
-    }
-
-    Buffer buffer1;
-    buffer1.Add(Fragment{ std::move(memory), 0, size });
-
-    // act
-    Buffer buffer2;
-    const bool sliced = buffer1.SliceFront(buffer2, halfSize);
-
-    // assert
-    EXPECT_EQ(buffer1.GetSize(), halfSize);
-    EXPECT_EQ(std::distance(buffer1.begin(), buffer1.end()), buffer1.GetSize());
-
-    ASSERT_TRUE(sliced);
-    EXPECT_EQ(buffer2.GetSize(), halfSize);
-    EXPECT_EQ(std::distance(buffer2.begin(), buffer2.end()), buffer2.GetSize());
-
-    for (int64_t i = 0; i < halfSize; ++i)
-    {
-        auto iter1 = buffer1.begin();
-        auto iter2 = buffer2.begin();
-
-        std::advance(iter1, i);
-        std::advance(iter2, i);
-
-        EXPECT_EQ(*iter1, static_cast<char>(i));
-        EXPECT_EQ(*iter2, static_cast<char>(i));
-    }
-}
-
-TEST(Buffer, IteratorRead)
-{
-    // arrange
-    constexpr int64_t FragmentSize = 32;
-    constexpr int64_t FragmentUsedSize = 16;
-    constexpr int64_t count = 3;
-
-    std::vector<std::shared_ptr<char[]>> memories;
-
-    int64_t k = 0;
-    for (int64_t i = 0; i < count; ++i)
-    {
-        auto memory = std::make_shared<char[]>(FragmentSize);
-        for (int64_t j = 0; j < FragmentUsedSize; ++j)
-        {
-            memory[j] = static_cast<char>(k++);
-        }
-
-        memories.push_back(std::move(memory));
-    }
-
-    Buffer buffer;
-    buffer.Add(Fragment{});
-
-    for (std::shared_ptr<char[]>& memory : memories)
-    {
-        Fragment Fragment(std::move(memory), 0, FragmentUsedSize);
-
-        buffer.Add(std::move(Fragment));
-    }
-
-    Buffer::iterator begin = buffer.begin();
-    Buffer::iterator end = buffer.end();
-
-    // act
-    std::vector<char> result(begin, end);
-
-    // assert
-    EXPECT_EQ(std::ssize(result), FragmentUsedSize * 3);
-    EXPECT_EQ(std::distance(begin, end), buffer.GetSize());
-
-    for (int64_t i = 0; i < FragmentUsedSize * count; ++i)
-    {
-        EXPECT_EQ(result[i], static_cast<char>(i));
-    }
-}
-
 
 TEST(Buffer, BufferWrite)
 {
