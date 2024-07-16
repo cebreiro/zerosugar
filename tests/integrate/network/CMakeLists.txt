@@ -4,7 +4,7 @@ target_link_libraries(zerosugar_test_integrate_network PRIVATE
     zerosugar_shared
 	GTest::gtest
 	GTest::gtest_main
-
+    fmt::fmt
 )
 
 target_precompile_headers(zerosugar_test_integrate_network PRIVATE

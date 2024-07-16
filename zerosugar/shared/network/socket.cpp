@@ -1,8 +1,10 @@
 #include "socket.h"
 
+#include <boost/scope/scope_exit.hpp>
 #include "zerosugar/shared/network/io_error.h"
 #include "zerosugar/shared/execution/executor/executor_coroutine_traits.h"
 #include "zerosugar/shared/execution/executor/impl/asio_strand.h"
+#include "zerosugar/shared/execution/executor/operation/dispatch.h"
 
 namespace zerosugar
 {
@@ -14,7 +16,7 @@ namespace zerosugar
 
     bool Socket::IsOpen() const
     {
-        return _open.load();
+        return _socket.is_open();
     }
 
     auto Socket::ConnectAsync(std::string address, uint16_t port,
@@ -22,7 +24,7 @@ namespace zerosugar
         -> Future<void>
     {
         [[maybe_unused]]
-        const auto guard = shared_from_this();
+        const auto self = shared_from_this();
 
         const boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::make_address(address), port);
 
@@ -31,25 +33,27 @@ namespace zerosugar
             co_await *_strand;
         }
 
-        assert(ExecutionContext::GetExecutor() == _strand.get());
+        assert(ExecutionContext::IsEqualTo(*_strand));
+
+        auto context = std::make_shared<future::SharedContext<boost::system::error_code>>();
 
         while (true)
         {
-            Promise<bool> promise;
-            Future<bool> future = promise.GetFuture();
+            context->Reset();
 
             _socket.async_connect(endpoint,
-                [p = std::move(promise)](const boost::system::error_code& ec) mutable
+                [context](const boost::system::error_code& ec) mutable
                 {
-                    p.Set(ec ? true : false);
+                    context->OnSuccess(ec);
                 });
 
-            const bool error = co_await future;
-            if (!error)
+            const boost::system::error_code& errorCode = co_await Future(context);
+            if (!errorCode)
             {
                 assert(ExecutionContext::IsEqualTo(*_strand));
+                assert(_socket.is_open());
 
-                _open.store(true);
+                self->_shutdown = false;
 
                 co_return;
             }
@@ -66,57 +70,58 @@ namespace zerosugar
 
     void Socket::CloseAsync()
     {
-        bool expected = true;
+        Post(*_strand, [self = shared_from_this()]()
+            {
+                self->_shutdown = true;
 
-        if (_open.compare_exchange_strong(expected, false))
-        {
-            Post(*_strand, [self = shared_from_this()]()
-                {
-                    self->_socket.close();
-                });
-        }
+                boost::system::error_code ec;
+                self->_socket.close(ec);
+            });
     }
 
     auto Socket::SendAsync(Buffer buffer) -> Future<std::expected<int64_t, IOError>>
     {
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
         if (!ExecutionContext::IsEqualTo(*_strand))
         {
             co_await *_strand;
         }
 
-        assert(ExecutionContext::IsEqualTo(*_strand));
-
-        Promise<std::expected<int64_t, IOError>> promise;
-        Future<std::expected<int64_t, IOError>> future = promise.GetFuture();
-
+        if (_shutdown)
         {
-            boost::container::small_vector<boost::asio::const_buffer, 4> constBuffers;
-
-            for (const buffer::Fragment& fragment : buffer.GetFragmentContainer())
-            {
-                constBuffers.emplace_back(fragment.GetData(), fragment.GetSize());
-            }
-
-            async_write(_socket, constBuffers,
-                bind_executor(_strand->GetImpl(),
-                    [p = std::move(promise), buffer = std::move(buffer)](const boost::system::error_code& ec, size_t bytes) mutable
-                    {
-                        if (ec)
-                        {
-                            p.Set(std::unexpected<IOError>(ec));
-                        }
-                        else
-                        {
-                            p.Set(static_cast<int64_t>(bytes));
-                        }
-                    }));
+            co_return std::unexpected(IOError(boost::system::error_code(boost::asio::error::operation_aborted)));
         }
 
-        co_return co_await future;
+        assert(ExecutionContext::IsEqualTo(*_strand));
+
+        SharedPtrNotNull<future::SharedContext<std::expected<int64_t, IOError>>> completionToken = AllocCompletionToken();
+        boost::scope::scope_exit free([this, completionToken]() mutable
+            {
+                FreeCompletionToken(std::move(completionToken));
+            });
+
+
+        if (_sendPending)
+        {
+            _sendWaits.emplace(std::move(buffer), completionToken);
+
+            co_return co_await Future(completionToken);
+        }
+
+        _sendPending = true;
+
+        Send(std::move(buffer), completionToken);
+
+        co_return co_await Future(completionToken);
     }
 
     auto Socket::ReceiveAsync(Buffer& buffer) -> Future<std::expected<int64_t, IOError>>
     {
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
         if (!ExecutionContext::IsEqualTo(*_strand))
         {
             co_await *_strand;
@@ -124,32 +129,117 @@ namespace zerosugar
 
         assert(ExecutionContext::IsEqualTo(*_strand));
 
-        Promise<std::expected<int64_t, IOError>> promise;
-        Future<std::expected<int64_t, IOError>> future = promise.GetFuture();
-
-        {
-            boost::container::small_vector<boost::asio::mutable_buffer, 4> mutableBuffers;
-
-            for (buffer::Fragment& fragment : buffer.GetFragmentContainer())
+        SharedPtrNotNull<future::SharedContext<std::expected<int64_t, IOError>>> completionToken = AllocCompletionToken();
+        boost::scope::scope_exit free([this, completionToken]() mutable
             {
-                mutableBuffers.emplace_back(fragment.GetData(), fragment.GetSize());
-            }
+                FreeCompletionToken(std::move(completionToken));
+            });
 
-            _socket.async_receive(mutableBuffers,
-                bind_executor(_strand->GetImpl(),
-                    [p = std::move(promise)](const boost::system::error_code& ec, size_t bytes) mutable
-                    {
-                        if (ec)
-                        {
-                            p.Set(std::unexpected<IOError>(ec));
-                        }
-                        else
-                        {
-                            p.Set(bytes);
-                        }
-                    }));
+        boost::container::small_vector<boost::asio::mutable_buffer, 4> mutableBuffers;
+
+        for (buffer::Fragment& fragment : buffer.GetFragmentContainer())
+        {
+            mutableBuffers.emplace_back(fragment.GetData(), fragment.GetSize());
         }
 
-        co_return co_await future;
+        _socket.async_receive(mutableBuffers,
+            bind_executor(_strand->GetImpl(),
+                [token = completionToken](const boost::system::error_code& ec, size_t bytes) mutable
+                {
+                    if (ec)
+                    {
+                        token->OnSuccess(std::unexpected<IOError>(ec));
+                    }
+                    else
+                    {
+                        token->OnSuccess(bytes);
+                    }
+                }));
+
+        co_return co_await Future(completionToken);
+    }
+
+    void Socket::OnSend()
+    {
+        assert(ExecutionContext::IsEqualTo(*_strand));
+
+        if (_sendWaits.empty())
+        {
+            _sendPending = false;
+
+            return;
+        }
+
+        if (_shutdown)
+        {
+            while (!_sendWaits.empty())
+            {
+                completion_token_type& token = _sendWaits.front().second;
+
+                token->OnSuccess(std::unexpected(IOError(boost::system::error_code(boost::asio::error::operation_aborted))));
+
+                _sendWaits.pop();
+            }
+
+            return;
+        }
+
+        auto [buffer, promise] = std::move(_sendWaits.front());
+        _sendWaits.pop();
+
+        Send(std::move(buffer), std::move(promise));
+    }
+
+    void Socket::Send(Buffer buffer, completion_token_type token)
+    {
+        boost::container::small_vector<boost::asio::const_buffer, 4> constBuffers;
+
+        for (const buffer::Fragment& fragment : buffer.GetFragmentContainer())
+        {
+            constBuffers.emplace_back(fragment.GetData(), fragment.GetSize());
+        }
+
+        async_write(_socket, constBuffers,
+            bind_executor(_strand->GetImpl(),
+                [t = std::move(token), hold = std::move(buffer), self = shared_from_this()](const boost::system::error_code& ec, size_t bytes) mutable
+                {
+                    if (ec)
+                    {
+                        t->OnSuccess(std::unexpected<IOError>(ec));
+                    }
+                    else
+                    {
+                        t->OnSuccess(static_cast<int64_t>(bytes));
+                    }
+
+                    Dispatch(*self->_strand, [self]()
+                        {
+                            self->OnSend();
+                        });
+                }));
+    }
+
+    auto Socket::AllocCompletionToken() -> SharedPtrNotNull<future::SharedContext<std::expected<int64_t, IOError>>>
+    {
+        SharedPtrNotNull<future::SharedContext<std::expected<int64_t, IOError>>> result;
+
+        if (_recycleCompletionTokens.empty())
+        {
+            result = std::make_shared<future::SharedContext<std::expected<int64_t, IOError>>>();
+        }
+        else
+        {
+            result = std::move(_recycleCompletionTokens.back());
+            _recycleCompletionTokens.pop_back();
+        }
+
+        return result;
+    }
+
+    void Socket::FreeCompletionToken(SharedPtrNotNull<future::SharedContext<std::expected<int64_t, IOError>>> token)
+    {
+        token->Reset();
+
+        _recycleCompletionTokens.emplace_back(std::move(token));
     }
 }

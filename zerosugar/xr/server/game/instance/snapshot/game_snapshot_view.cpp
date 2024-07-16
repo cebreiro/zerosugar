@@ -164,7 +164,7 @@ namespace zerosugar::xr
 
         if (controller.IsRemoteController())
         {
-            Buffer buffer = Packet::ToBuffer(packet);
+            const Buffer buffer = Packet::ToBuffer(packet);
 
             controller.Notify(buffer);
         }

@@ -2,7 +2,7 @@
 #include <boost/callable_traits.hpp>
 #include <boost/scope_exit.hpp>
 #include <boost/scope/scope_exit.hpp>
-
+#include <boost/unordered/unordered_flat_map.hpp>
 #include "zerosugar/shared/service/service_interface.h"
 #include "zerosugar/shared/execution/executor/impl/asio_strand.h"
 #include "zerosugar/xr/network/model/generated/rpc_message.h"
@@ -34,6 +34,7 @@ namespace zerosugar::xr
         explicit RPCClient(SharedPtrNotNull<execution::AsioExecutor> executor);
 
         void Initialize(ServiceLocator& serviceLocator) override;
+        auto ScheduleCompletionLog(std::chrono::milliseconds duration) -> Future<void>;
 
         auto ConnectAsync(std::string address, uint16_t port) -> Future<void>;
 
@@ -76,6 +77,7 @@ namespace zerosugar::xr
 
     private:
         static auto MakeProcedureKey(const std::string& service, const std::string& rpc) -> std::string;
+        static auto GetRPCFullName(const std::string& service, const std::string& rpc) -> std::string;
 
     private:
         SharedPtrNotNull<execution::AsioExecutor> _executor;
@@ -83,6 +85,7 @@ namespace zerosugar::xr
         ServiceLocatorT<ILogService> _serviceLocator;
 
         SharedPtrNotNull<Socket> _socket;
+        bool _logLogScheduled = false;
 
         // server-side
         std::unordered_map<std::string, Promise<void>> _registers;
@@ -95,11 +98,13 @@ namespace zerosugar::xr
             >
         > _procedures;
         std::unordered_map<int32_t, SharedPtrNotNull<Channel<std::string>>> _runningClientStreamingProcedures;
+        boost::unordered::unordered_flat_map<std::string, int32_t> _completeRPCCounts;
 
         // client-side
         std::unordered_map<std::string, int32_t> _nextRemoteProcedureIds;
         std::unordered_map<std::string,
             std::unordered_map<int32_t, std::pair<server_streaming_callback, completion_callback_type>>> _remoteProcedures;
+        boost::unordered::unordered_flat_map<std::string, int32_t> _receiveCompleteRPCCounts;
     };
 
     template <bool ParamStreaming, bool ReturnStreaming, typename Func>

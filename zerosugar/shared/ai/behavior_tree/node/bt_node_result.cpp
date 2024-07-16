@@ -34,7 +34,10 @@ namespace zerosugar::bt::node
 
     bool Result::promise_type::IsWaitingFor(const std::type_info& typeInfo) const
     {
-        assert(_eventChecker);
+        if (!_eventChecker)
+        {
+            return false;
+        }
 
         return _eventChecker(typeInfo);
     }

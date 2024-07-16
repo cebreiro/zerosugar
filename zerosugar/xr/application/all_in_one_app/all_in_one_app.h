@@ -61,6 +61,7 @@ namespace zerosugar::xr
         void InitializeDatabaseConnection();
         void InitializeGameData(ServiceLocator& serviceLocator);
         void InitializeService(ServiceLocator& serviceLocator);
+        void InitializeRPCProtocol(ServiceLocator& serviceLocator);
         void InitializeServer(ServiceLocator& serviceLocator);
 
     public:

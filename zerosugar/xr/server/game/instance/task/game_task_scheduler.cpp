@@ -413,7 +413,7 @@ namespace zerosugar::xr
 
                 Start(*process);
 
-                //++concurrency;
+                ++concurrency;
             }
             else if (process->AddStarvationCount(); process->GetStarvationCount() > 10)
             {

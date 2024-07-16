@@ -37,7 +37,7 @@ namespace zerosugar::xr
             game_instance_id_type id, int32_t zoneId);
         ~GameInstance();
 
-        void Start();
+        auto Start() -> Future<void>;
         void Shutdown();
         auto Join() -> Future<void>;
 

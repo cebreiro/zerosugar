@@ -34,9 +34,12 @@ namespace zerosugar::buffer
         {
             if (_impl->header.refCount.fetch_sub(1) == 1)
             {
+                _impl->~Impl();
+
                 scalable_free(_impl);
             }
 
+            _impl = nullptr;
         }
     }
 
@@ -47,7 +50,7 @@ namespace zerosugar::buffer
 
     auto Fragment::SliceFront(int64_t size) -> std::optional<Fragment>
     {
-        if (GetSize() < size)
+        if (size >= GetSize())
         {
             return std::nullopt;
         }
@@ -59,7 +62,6 @@ namespace zerosugar::buffer
 
         _startOffset += size;
         _size -= size;
-        assert(GetSize() > 0);
 
         [[maybe_unused]]
         const int64_t prev = _impl->header.refCount.fetch_add(1);
@@ -117,6 +119,16 @@ namespace zerosugar::buffer
     auto Fragment::GetSpan() const -> std::span<const char>
     {
         return std::span{ GetData(), static_cast<size_t>(GetSize()) };
+    }
+
+    auto Fragment::GetRefCount() const -> int64_t
+    {
+        if (_impl)
+        {
+            return _impl->header.refCount.load();
+        }
+
+        return 0;
     }
 
     auto Fragment::CreateFrom(std::span<const char> span) -> Fragment

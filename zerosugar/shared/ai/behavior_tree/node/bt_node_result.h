@@ -75,8 +75,8 @@ namespace zerosugar::bt::node
         class Awaitable
         {
         public:
-            explicit Awaitable(PtrNotNull<std::any> event)
-                : _event(event)
+            explicit Awaitable(PtrNotNull<promise_type> promise)
+                : _promise(promise)
             {
             }
 
@@ -91,22 +91,25 @@ namespace zerosugar::bt::node
             {
                 std::variant<E...> event;
 
-                (void)((_event->type() == typeid(E) ?
-                            (event = std::move(*std::any_cast<E>(_event)), true) : false
+                std::any* any = &_promise->_event;
+
+                (void)((any->type() == typeid(E) ?
+                            (event = std::move(*std::any_cast<E>(any)), true) : false
                 ) || ...);
 
-                _event->reset();
+                any->reset();
+                _promise->_eventChecker = {};
 
                 return event;
             }
 
         private:
-            PtrNotNull<std::any> _event;
+            PtrNotNull<promise_type> _promise;
         };
 
         _state = State::Running;
 
-        return Awaitable(&_event);
+        return Awaitable(this);
     }
 
     template <bt_event_concept E>

@@ -32,6 +32,7 @@ namespace zerosugar
         void Dispatch(std::move_only_function<void()> function) override;
 
         auto GetConcurrency() const -> int64_t override;
+        auto GetTaskCount() const -> int64_t;
 
         auto SharedFromThis() -> SharedPtrNotNull<IExecutor> override;
         auto SharedFromThis() const -> SharedPtrNotNull<const IExecutor> override;
@@ -46,7 +47,7 @@ namespace zerosugar
     private:
         SharedPtrNotNull<IExecutor> _executor;
 
-        tbb::spin_mutex _spinMutex;
+        mutable tbb::spin_mutex _spinMutex;
         bool _posted = false;
         std::vector<std::thread::id> _owner;
         int32_t _taskCount = 0;

@@ -41,7 +41,7 @@ namespace zerosugar
         bool IsWaitFor() const;
         bool IsWaitFor(const std::type_info& typeInfo) const;
 
-        void SetSignalHandler(const std::function<void()>& function);
+        void SetOrExecuteSignalHandler(const std::function<void()>& function);
 
         template <bt::bt_event_concept E>
         void Notify(const E& e);

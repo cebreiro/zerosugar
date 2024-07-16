@@ -28,6 +28,8 @@ namespace zerosugar
 
         auto ShallowCopy() const -> Buffer;
 
+        bool Empty() const;
+
         void Clear();
 
         auto GetSize() const -> int64_t;

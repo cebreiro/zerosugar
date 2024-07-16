@@ -37,7 +37,7 @@ namespace zerosugar
 
     bool Buffer::SliceFront(Buffer& result, int64_t size)
     {
-        if (GetSize() < size)
+        if (size <= 0 || GetSize() < size)
         {
             return false;
         }
@@ -96,7 +96,7 @@ namespace zerosugar
         assert(std::ranges::all_of(buffer.GetFragmentContainer(), [](const buffer::Fragment& fragment) { return fragment.IsValid();  }));
 
         _size += buffer.GetSize();
-        std::move(buffer._fragments.begin(), buffer._fragments.end(), std::back_inserter(_fragments));
+        std::ranges::move(buffer._fragments, std::back_inserter(_fragments));
 
         buffer.Clear();
 
@@ -117,6 +117,11 @@ namespace zerosugar
         }
 
         return result;
+    }
+
+    bool Buffer::Empty() const
+    {
+        return _size == 0 && _fragments.empty();
     }
 
     void Buffer::Clear()

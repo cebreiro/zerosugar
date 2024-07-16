@@ -22,6 +22,90 @@ namespace zerosugar::xr
         _serviceLocator = serviceLocator;
     }
 
+    auto RPCClient::ScheduleCompletionLog(std::chrono::milliseconds duration) -> Future<void>
+    {
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
+        if (!ExecutionContext::IsEqualTo(*_strand))
+        {
+            co_await *_strand;
+        }
+
+        _logLogScheduled = true;
+
+        co_await Delay(duration);
+        assert(ExecutionContext::IsEqualTo(*_strand));
+
+        const auto makeCompletionTaskCountsString = [this]() -> std::string
+            {
+                std::ostringstream oss;
+                if (_completeRPCCounts.empty())
+                {
+                    oss << " \"rpc_completion\" : null, ";
+
+                    return oss.str();
+                }
+
+                oss << "\n\"rpc_completion\" : [\n";
+
+                for (const auto& [index, pair] : _completeRPCCounts | std::views::enumerate)
+                {
+                    oss << fmt::format("    \"{}\" : {}", pair.first, pair.second);
+
+                    if (index != std::ssize(_completeRPCCounts) - 1)
+                    {
+                        oss << ',';
+                    }
+
+                    oss << "\n";
+                }
+
+                oss << "]";
+
+                return oss.str();
+            };
+
+        const auto makeReceiveCompletionTaskCountsString = [this]() -> std::string
+            {
+                std::ostringstream oss;
+                if (_receiveCompleteRPCCounts.empty())
+                {
+                    oss << " \"rpc_receive_completion\" : null";
+
+                    return oss.str();
+                }
+
+                oss << "\n\"rpc_receive_completion\" : [\n";
+
+                for (const auto& [index, pair] : _receiveCompleteRPCCounts | std::views::enumerate)
+                {
+                    oss << fmt::format("    \"{}\" : {}", pair.first, pair.second);
+
+                    if (index != std::ssize(_receiveCompleteRPCCounts) - 1)
+                    {
+                        oss << ',';
+                    }
+
+                    oss << "\n";
+                }
+
+                oss << "]";
+
+                return oss.str();
+            };
+
+        ZEROSUGAR_LOG_INFO(_serviceLocator,
+            fmt::format("[{}] completion log.{}{}",
+                GetName(), makeCompletionTaskCountsString(), makeReceiveCompletionTaskCountsString()));
+
+        _logLogScheduled = false;
+        _completeRPCCounts.clear();
+        _receiveCompleteRPCCounts.clear();
+
+        co_return;
+    }
+
     auto RPCClient::ConnectAsync(std::string address, uint16_t port) -> Future<void>
     {
         return _socket->ConnectAsync(std::move(address), port).Then(*_strand, [self = shared_from_this()]()
@@ -453,6 +537,11 @@ namespace zerosugar::xr
                 assert(false);
             }
         }
+
+        if (_logLogScheduled)
+        {
+            ++_completeRPCCounts[GetRPCFullName(request.serviceName, request.rpcName)];
+        }
     }
 
     void RPCClient::HandleResultRemoteProcedureCall(const network::ResultRemoteProcedureCall& result)
@@ -483,12 +572,17 @@ namespace zerosugar::xr
         auto callback = std::exchange(iter->second.second, {});
         remoteProcedures->erase(iter);
 
+        if (_logLogScheduled)
+        {
+            ++_receiveCompleteRPCCounts[GetRPCFullName(result.serviceName, result.rpcName)];
+        }
+
         assert(callback);
         callback(result.errorCode, result.rpcResult);
 
-        ZEROSUGAR_LOG_DEBUG(_serviceLocator,
-            fmt::format("[rpc_client] rpc is removed. rpc_id: {}, rpc: {}::{}, error: {}",
-                result.rpcId, result.serviceName, result.rpcName, GetEnumName(result.errorCode)));
+        //ZEROSUGAR_LOG_DEBUG(_serviceLocator,
+        //    fmt::format("[rpc_client] rpc is removed. rpc_id: {}, rpc: {}::{}, error: {}",
+        //        result.rpcId, result.serviceName, result.rpcName, GetEnumName(result.errorCode)));
     }
 
     void RPCClient::HandleServerStreaming(const network::SendServerStreaming& serverStreaming)
@@ -518,9 +612,9 @@ namespace zerosugar::xr
 
         iter->second.first(serverStreaming.rpcResult);
 
-        ZEROSUGAR_LOG_DEBUG(_serviceLocator,
-            fmt::format("[rpc_client] receive server streaming. rpc_id: {}, service: {}",
-                serverStreaming.rpcId, serverStreaming.serviceName));
+        //ZEROSUGAR_LOG_DEBUG(_serviceLocator,
+        //    fmt::format("[rpc_client] receive server streaming. rpc_id: {}, service: {}",
+        //        serverStreaming.rpcId, serverStreaming.serviceName));
     }
 
     void RPCClient::HandleClientStreaming(const network::SendClientSteaming& clientStreaming)
@@ -550,5 +644,12 @@ namespace zerosugar::xr
         assert(!service.empty() && !rpc.empty());
 
         return service + rpc;
+    }
+
+    auto RPCClient::GetRPCFullName(const std::string& service, const std::string& rpc) -> std::string
+    {
+        assert(!service.empty() && !rpc.empty());
+
+        return fmt::format("{}::{}", service, rpc);
     }
 }

@@ -307,7 +307,7 @@ namespace zerosugar::xr
             {
                 completionToken->Reset();
 
-                bt->SetSignalHandler([completionToken]()
+                bt->SetOrExecuteSignalHandler([completionToken]()
                     {
                         completionToken->OnSuccess();
                     });

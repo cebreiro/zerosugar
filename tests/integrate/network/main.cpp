@@ -13,6 +13,8 @@ TEST(IntegarteNetwork, EchoCompareBytes)
 {
     // arrange
     TestApp app;
+    zerosugar::ExecutionContext::PushExecutor(&app.GetExecutor());
+
     std::jthread thread([&app]()
         {
             const std::span<char*> args;

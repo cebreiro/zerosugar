@@ -5,10 +5,9 @@
 
 namespace zerosugar::xr
 {
-    GameClient::GameClient(WeakPtrNotNull<Session> session, std::string authenticationToken, int64_t accountId, int64_t characterId,
+    GameClient::GameClient(SharedPtrNotNull<Session> session, std::string authenticationToken, int64_t accountId, int64_t characterId,
         int64_t worldUserUniqueId, WeakPtrNotNull<GameInstance> gameInstance)
-        : _sessionId(session.lock()->GetId())
-        , _session(std::move(session))
+        : _session(std::move(session))
         , _authenticationToken(std::move(authenticationToken))
         , _accountId(accountId)
         , _characterId(characterId)
@@ -28,12 +27,12 @@ namespace zerosugar::xr
 
     void GameClient::Notify(const IPacket& packet)
     {
-        Send(Packet::ToBuffer(packet));
+        _session->Send(Packet::ToBuffer(packet));
     }
 
     void GameClient::Notify(const Buffer& buffer)
     {
-        Send(buffer);
+        _session->Send(buffer.ShallowCopy());
     }
 
     auto GameClient::GetControllerId() const -> game_controller_id_type
@@ -46,12 +45,8 @@ namespace zerosugar::xr
         _controllerId = id;
     }
 
-    void GameClient::SetSession(WeakPtrNotNull<Session> session)
+    void GameClient::SetSession(SharedPtrNotNull<Session> session)
     {
-        const auto shared = session.lock();
-        assert(shared);
-
-        _sessionId = shared->GetId();
         _session = std::move(session);
     }
 
@@ -67,7 +62,9 @@ namespace zerosugar::xr
 
     auto GameClient::GetSessionId() const -> session::id_type
     {
-        return _sessionId;
+        assert(_session);
+
+        return _session->GetId();
     }
 
     auto GameClient::GetAuthenticationToken() const -> const std::string&
@@ -89,22 +86,6 @@ namespace zerosugar::xr
     {
         // temp
         return 1;
-    }
-
-    void GameClient::Send(Buffer&& buffer)
-    {
-        if (const auto session = _session.lock(); session)
-        {
-            session->Send(std::move(buffer));
-        }
-    }
-
-    void GameClient::Send(const Buffer& buffer)
-    {
-        if (const auto session = _session.lock(); session)
-        {
-            session->Send(buffer.ShallowCopy());
-        }
     }
 
     auto GameClient::GetGameInstance() -> std::shared_ptr<GameInstance>

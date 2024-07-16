@@ -1,5 +1,4 @@
 #include "game_server.h"
-#include "zerosugar/xr/server/game/game_server.h"
 
 #include "zerosugar/shared/execution/executor/impl/asio_executor.h"
 #include "zerosugar/shared/execution/executor/impl/asio_strand.h"
@@ -13,7 +12,6 @@
 #include "zerosugar/xr/server/game/client/game_client_container.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/game_instance_container.h"
-#include "zerosugar/xr/server/game/instance/entity/game_entity_serializer.h"
 #include "zerosugar/xr/server/game/packet/packet_handler_factory.h"
 #include "zerosugar/xr/server/game/packet/packet_handler_interface.h"
 #include "zerosugar/xr/server/game/repository/game_repository.h"
@@ -80,7 +78,7 @@ namespace zerosugar::xr
 
     bool GameServer::AddClient(session::id_type id, SharedPtrNotNull<GameClient> client)
     {
-        return _clientContainer->Add(id, client);
+        return _clientContainer->Add(id, std::move(client));
     }
 
     auto GameServer::FindClient(session::id_type id) const -> SharedPtrNotNull<GameClient>
@@ -197,20 +195,6 @@ namespace zerosugar::xr
                 return;
             }
         }
-
-        Delay(std::chrono::seconds(120))
-            .Then(GetExecutor(), [self = SharedFromThis(), id = session.GetId(), weak = session.weak_from_this()]()
-                {
-                    if (self->HasClient(id))
-                    {
-                        return;
-                    }
-
-                    if (const auto session = weak.lock(); session)
-                    {
-                        session->Close();
-                    }
-                });
     }
 
     void GameServer::OnReceive(Session& session, Buffer buffer)

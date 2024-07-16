@@ -80,7 +80,8 @@ namespace zerosugar
         Buffer _receiveBuffers;
         std::vector<boost::asio::mutable_buffer> _mutableBuffers;
 
-        std::optional<Buffer> _sendBuffer;
+        bool _sendPending = false;
+        Buffer _sendBuffer;
         std::vector<Buffer> _sendWaitQueue;
         std::vector<boost::asio::const_buffer> _constBuffers;
     };

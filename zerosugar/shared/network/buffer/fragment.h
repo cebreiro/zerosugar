@@ -36,7 +36,9 @@ namespace zerosugar::buffer
         auto GetData() const -> const char*;
         auto GetSize() const -> int64_t;
 
-        auto GetSpan() const->std::span<const char>;
+        auto GetSpan() const -> std::span<const char>;
+
+        auto GetRefCount() const -> int64_t;
 
         static auto CreateFrom(std::span<const char> span) -> Fragment;
         static auto Create(int64_t size) -> Fragment;

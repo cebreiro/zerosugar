@@ -101,7 +101,7 @@ namespace zerosugar::xr
         BotSessionStateType _sessionState = BotSessionStateType::Login;
         SharedPtrNotNull<Socket> _socket;
         Future<void> _runIOFuture;
-        Buffer _receivedBuffer;
+        Buffer _packetBuffer;
         Buffer _receiveBuffer;
 
         std::unordered_map<int64_t, Promise<std::chrono::system_clock::duration>> _pingPromises;

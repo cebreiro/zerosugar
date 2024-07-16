@@ -143,45 +143,45 @@ namespace zerosugar
     {
         assert(buffer.GetSize() > 0);
 
-        if (_sendBuffer.has_value())
+        if (_sendPending)
         {
-            assert(!_constBuffers.empty());
+            _sendWaitQueue.emplace_back(std::move(buffer));
 
-            _sendWaitQueue.push_back(std::move(buffer));
             return;
         }
 
         assert(_sendWaitQueue.empty());
+        assert(_sendBuffer.Empty());
 
-        Buffer& sendBuffer = _sendBuffer.emplace();
-        sendBuffer.MergeBack(std::move(buffer));
+        _sendPending = true;
+        _sendBuffer.MergeBack(std::move(buffer));
 
         constexpr int64_t mtuSize = 1460;
         constexpr int64_t maxSize = mtuSize;
 
-        if (sendBuffer.GetSize() > maxSize)
+        if (_sendBuffer.GetSize() > maxSize)
         {
             Buffer temp;
 
             [[maybe_unused]]
-            const bool sliced = sendBuffer.SliceFront(temp, maxSize);
+            const bool sliced = _sendBuffer.SliceFront(temp, maxSize);
             assert(sliced);
 
-            std::swap(temp, sendBuffer);
+            std::swap(temp, _sendBuffer);
 
             _sendWaitQueue.insert(_sendWaitQueue.begin(), std::move(temp));
         }
 
-        WriteAsync(ConfigureConstBuffer(sendBuffer));
+        WriteAsync(ConfigureConstBuffer(_sendBuffer));
     }
 
     void Session::OnWriteAsync(int64_t bytes)
     {
-        assert(_sendBuffer.has_value());
+        assert(!_sendBuffer.Empty());
         assert(!_constBuffers.empty());
 
         _constBuffers.clear();
-        if (!_sendBuffer.has_value())
+        if (!_sendPending)
         {
             assert(false);
             Close();
@@ -190,7 +190,7 @@ namespace zerosugar
         }
 
         Buffer buffer;
-        if (!_sendBuffer->SliceFront(buffer, bytes))
+        if (!_sendBuffer.SliceFront(buffer, bytes))
         {
             assert(false);
             Close();
@@ -198,13 +198,17 @@ namespace zerosugar
             return;
         }
 
-        if (_sendBuffer->GetSize() > 0)
+        if (_sendBuffer.GetSize() > 0)
         {
-            WriteAsync(ConfigureConstBuffer(_sendBuffer.value()));
+            assert(false);
+
+            WriteAsync(ConfigureConstBuffer(_sendBuffer));
+
             return;
         }
 
-        _sendBuffer.reset();
+        _sendPending = false;
+        _sendBuffer.Clear();
 
         if (!_sendWaitQueue.empty())
         {

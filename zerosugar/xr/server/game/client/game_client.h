@@ -15,7 +15,7 @@ namespace zerosugar::xr
     class GameClient final : public IGameController
     {
     public:
-        GameClient(WeakPtrNotNull<Session> session, std::string authenticationToken, int64_t accountId, int64_t characterId,
+        GameClient(SharedPtrNotNull<Session> session, std::string authenticationToken, int64_t accountId, int64_t characterId,
             int64_t worldUserUniqueId, WeakPtrNotNull<GameInstance> gameInstance);
         ~GameClient() override;
 
@@ -27,7 +27,7 @@ namespace zerosugar::xr
         auto GetControllerId() const -> game_controller_id_type override;
         void SetControllerId(game_controller_id_type id) override;
 
-        void SetSession(WeakPtrNotNull<Session> session);
+        void SetSession(SharedPtrNotNull<Session> session);
         void SetGameInstance(WeakPtrNotNull<GameInstance> gameInstance);
         void SetGameEntityId(game_entity_id_type id);
 
@@ -42,12 +42,10 @@ namespace zerosugar::xr
         auto GetGameEntityId() const -> game_entity_id_type;
 
     private:
-        void Send(Buffer&& buffer);
         void Send(const Buffer& buffer);
 
     private:
-        session::id_type _sessionId;
-        WeakPtrNotNull<Session> _session;
+        SharedPtrNotNull<Session> _session;
 
         std::string _authenticationToken;
         int64_t _accountId = 0;

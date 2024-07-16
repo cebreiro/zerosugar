@@ -76,6 +76,13 @@ namespace zerosugar
         return 1;
     }
 
+    auto Strand::GetTaskCount() const -> int64_t
+    {
+        std::unique_lock lock(_spinMutex);
+
+        return _taskCount;
+    }
+
     auto Strand::SharedFromThis() -> SharedPtrNotNull<IExecutor>
     {
         return shared_from_this();

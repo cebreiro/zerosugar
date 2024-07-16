@@ -66,7 +66,7 @@ namespace zerosugar::xr
                 }
 
                 ZEROSUGAR_LOG_INFO(self->GetServiceLocator(),
-                    fmt::format("[{}] socket: {}, state: {}, behavior_tree: {}, awaiting: [{}, event: {}], current_node: {}, receive_buffer: {}, received_buffer: {}",
+                    fmt::format("[{}] socket: {}, state: {}, behavior_tree: {}, awaiting: [{}, event: {}], current_node: {}, receive_buffer: {}, received_buffer: {}, strand task: {}",
                         self->GetName(),
                         self->GetSocket().IsOpen() ? "open" : "closed",
                         ToString(self->GetSessionState()),
@@ -75,7 +75,8 @@ namespace zerosugar::xr
                         self->_behaviorTree ? self->_behaviorTree->GetCurrentAwaitEventName().value_or("null") : "null",
                         self->_behaviorTree ? self->_behaviorTree->GetCurrentVisitNodeName().value_or("null") : "null",
                         self->_receiveBuffer.GetSize(),
-                        self->_receivedBuffer.GetSize()));
+                        self->_packetBuffer.GetSize(),
+                        self->_strand->GetTaskCount()));
 
             }, delay, delay);
     }
@@ -129,11 +130,12 @@ namespace zerosugar::xr
 
     auto BotController::Ping(int64_t sequence) -> Future<std::optional<std::chrono::system_clock::duration>>
     {
+        [[maybe_unused]]
         auto self = shared_from_this();
 
         co_await *_strand;
 
-        if (_sessionState != BotSessionStateType::Game)
+        if (_sessionState != BotSessionStateType::Game || !_localPlayer)
         {
             co_return std::nullopt;
         }
@@ -177,6 +179,7 @@ namespace zerosugar::xr
         [[maybe_unused]]
         auto self = shared_from_this();
 
+        // post
         _socket->CloseAsync();
 
         if (_localPlayer)
@@ -184,6 +187,7 @@ namespace zerosugar::xr
             TryRemoveNavigation(_localPlayer->GetZoneId());
         }
 
+        // end
         co_await _runIOFuture;
 
         co_return;
@@ -193,7 +197,24 @@ namespace zerosugar::xr
     {
         assert(ExecutionContext::IsEqualTo(*_strand));
 
-        _socket->SendAsync(std::move(buffer));
+        _socket->SendAsync(std::move(buffer)).Then(*_strand,
+            [weak = weak_from_this()](const std::expected<int64_t, IOError>& expected)
+            {
+                if (expected.has_value())
+                {
+                    return;
+                }
+
+                const std::shared_ptr<BotController>& self = weak.lock();
+                if (!self)
+                {
+                    return;
+                }
+
+                ZEROSUGAR_LOG_ERROR(self->GetServiceLocator(),
+                    fmt::format("[{}] send error. error: {}",
+                        self->GetName(), expected.error().message));
+            });
     }
 
     auto BotController::GetSocket() -> Socket&
@@ -259,7 +280,7 @@ namespace zerosugar::xr
         auto self = shared_from_this();
 
         _receiveBuffer.Clear();
-        _receivedBuffer.Clear();
+        _packetBuffer.Clear();
 
         while (_socket->IsOpen())
         {
@@ -271,156 +292,170 @@ namespace zerosugar::xr
             const std::expected<int64_t, IOError> receiveResult = co_await _socket->ReceiveAsync(_receiveBuffer);
             assert(ExecutionContext::IsEqualTo(*_strand));
 
-            if (receiveResult.has_value())
-            {
-                const int64_t receiveSize = receiveResult.value();
-                assert(receiveSize <= _receiveBuffer.GetSize());
-
-                _receivedBuffer.MergeBack([&]() -> Buffer
-                    {
-                        Buffer temp;
-
-                        [[maybe_unused]] bool result = _receiveBuffer.SliceFront(temp, receiveSize);
-                        assert(result);
-
-                        return temp;
-                    }());
-
-                while (_receivedBuffer.GetSize() >= 4)
-                {
-                    PacketReader reader(_receivedBuffer.cbegin(), _receivedBuffer.cend());
-
-                    const int32_t packetSize = reader.Read<int32_t>();
-                    if (_receivedBuffer.GetSize() < packetSize)
-                    {
-                        _receiveBuffer.Add(buffer::Fragment::Create(4096 + packetSize));
-
-                        break;
-                    }
-
-                    switch (_sessionState)
-                    {
-                    case BotSessionStateType::Login:
-                    {
-                        using namespace network::login;
-
-                        std::unique_ptr<IPacket> packet = sc::CreateFrom(reader);
-                        assert(reader.GetReadSize() == packetSize);
-                        assert(packet);
-
-                        sc::Visit(*packet, [this]<typename T>(const T & packet)
-                        {
-                            if (_behaviorTree->IsWaitFor<T>())
-                            {
-                                _behaviorTree->Notify(packet);
-                            }
-                        });
-                    }
-                    break;
-                    case BotSessionStateType::Lobby:
-                    {
-                        using namespace network::lobby;
-
-                        std::unique_ptr<IPacket> packet = sc::CreateFrom(reader);
-                        assert(reader.GetReadSize() == packetSize);
-                        assert(packet);
-
-                        sc::Visit(*packet, [this]<typename T>(const T & packet)
-                        {
-                            if (_behaviorTree->IsWaitFor<T>())
-                            {
-                                _behaviorTree->Notify(packet);
-                            }
-                        });
-                    }
-                    break;
-                    case BotSessionStateType::Game:
-                    {
-                        using namespace network;
-
-                        std::unique_ptr<IPacket> packet = game::sc::CreateFrom(reader);
-                        assert(reader.GetReadSize() == packetSize);
-                        assert(packet);
-
-                        game::sc::Visit(*packet, [this]<typename T>(const T& packet)
-                        {
-                            if constexpr (std::is_same_v<T, game::sc::EnterGame>)
-                            {
-                                _localPlayer = std::make_unique<bot::LocalPlayer>(packet.localPlayer, packet.zoneId);
-                                _visualObjectContainer->Clear();
-
-                                this->TryCreateNavigation(packet.zoneId);
-                            }
-                            else if constexpr (std::is_same_v<T, game::sc::SpawnMonster> || std::is_same_v<T, game::sc::AddMonster>)
-                            {
-                                for (const game::Monster& monster : packet.monsters)
-                                {
-                                    [[maybe_unused]]
-                                    const bool added = _visualObjectContainer->Add(monster.id, std::make_shared<bot::Monster>(monster));
-                                    assert(added);
-                                }
-                            }
-                            else if constexpr (std::is_same_v<T, game::sc::RemoveMonster>)
-                            {
-                                for (const int64_t id : packet.monsters)
-                                {
-                                    [[maybe_unused]]
-                                    const bool removed = _visualObjectContainer->Remove(id);
-                                    assert(removed);
-                                }
-                            }
-                            else if constexpr (std::is_same_v<T, game::sc::DespawnMonster>)
-                            {
-                                for (const int64_t id : packet.monsters)
-                                {
-                                    [[maybe_unused]]
-                                    const bool removed = _visualObjectContainer->Remove(id);
-                                    assert(removed);
-                                }
-                            }
-                            else if constexpr (std::is_same_v<T, game::sc::MoveMonster>)
-                            {
-                                bot::Monster* monster = _visualObjectContainer->FindMonster(packet.id);
-                                assert(monster);
-
-                                const Eigen::Vector3d pos(packet.position.x, packet.position.y, packet.position.z);
-                                const Eigen::Vector3d rot(packet.rotation.pitch, packet.rotation.yaw, packet.rotation.roll);
-
-                                monster->SetPosition(pos);
-                                monster->SetRotation(rot);
-                            }
-                            else if constexpr (std::is_same_v<T, game::sc::AttackMonster>)
-                            {
-                                bot::Monster* monster = _visualObjectContainer->FindMonster(packet.id);
-                                assert(monster);
-
-                                const Eigen::Vector3d pos(packet.position.x, packet.position.y, packet.position.z);
-                                const Eigen::Vector3d rot(packet.rotation.pitch, packet.rotation.yaw, packet.rotation.roll);
-
-                                monster->SetPosition(pos);
-                                monster->SetRotation(rot);
-                            }
-
-                            if (_behaviorTree && _behaviorTree->IsWaitFor<T>())
-                            {
-                                _behaviorTree->Notify(packet);
-                            }
-                        });
-                    }
-                    break;
-                    }
-
-                    Buffer temp;
-                    [[maybe_unused]] bool sliced = _receivedBuffer.SliceFront(temp, packetSize);
-                    assert(sliced);
-                }
-            }
-            else
+            if (!receiveResult.has_value())
             {
                 ZEROSUGAR_LOG_INFO(_serviceLocator,
                     fmt::format("[bot_controller] receive error. error: {}", receiveResult.error().message));
 
                 co_return;
+            }
+            const int64_t receiveSize = receiveResult.value();
+            assert(receiveSize <= _receiveBuffer.GetSize());
+
+            _packetBuffer.MergeBack([&]() -> Buffer
+                {
+                    Buffer temp;
+
+                    [[maybe_unused]]
+                    const bool result = _receiveBuffer.SliceFront(temp, receiveSize);
+                    assert(result);
+
+                    return temp;
+                }());
+
+            while (_packetBuffer.GetSize() >= 4)
+            {
+                PacketReader reader(_packetBuffer.cbegin(), _packetBuffer.cend());
+                const int32_t packetSize = reader.Read<int32_t>();
+
+                if (_packetBuffer.GetSize() < packetSize)
+                {
+                    if (_receiveBuffer.GetSize() < packetSize)
+                    {
+                        _receiveBuffer.Add(buffer::Fragment::Create(4096 + packetSize));
+                    }
+
+                    break;
+                }
+
+                switch (_sessionState)
+                {
+                case BotSessionStateType::Login:
+                {
+                    using namespace network::login;
+
+                    std::unique_ptr<IPacket> packet = sc::CreateFrom(reader);
+                    assert(reader.GetReadSize() == packetSize);
+                    assert(packet);
+
+                    sc::Visit(*packet, [this]<typename T>(const T & packet)
+                    {
+                        if (_behaviorTree->IsWaitFor<T>())
+                        {
+                            _behaviorTree->Notify(packet);
+                        }
+                    });
+                }
+                break;
+                case BotSessionStateType::Lobby:
+                {
+                    using namespace network::lobby;
+
+                    std::unique_ptr<IPacket> packet = sc::CreateFrom(reader);
+                    assert(reader.GetReadSize() == packetSize);
+                    assert(packet);
+
+                    sc::Visit(*packet, [this]<typename T>(const T & packet)
+                    {
+                        if (_behaviorTree->IsWaitFor<T>())
+                        {
+                            _behaviorTree->Notify(packet);
+                        }
+                    });
+                }
+                break;
+                case BotSessionStateType::Game:
+                {
+                    using namespace network;
+
+                    std::unique_ptr<IPacket> packet = game::sc::CreateFrom(reader);
+                    assert(reader.GetReadSize() == packetSize);
+                    assert(packet);
+
+                    game::sc::Visit(*packet, [this]<typename T>(const T & packet)
+                    {
+                        if constexpr (std::is_same_v<T, game::sc::Pong>)
+                        {
+                            const auto iter = _pingPromises.find(packet.sequence);
+                            assert(iter != _pingPromises.end());
+
+                            const auto now = std::chrono::system_clock::now();
+                            const auto prev = std::chrono::system_clock::time_point(std::chrono::system_clock::duration(packet.clientTimePoint));
+
+                            iter->second.Set(now - prev);
+
+                            _pingPromises.erase(iter);
+                        }
+
+                        if constexpr (std::is_same_v<T, game::sc::EnterGame>)
+                        {
+                            _localPlayer = std::make_unique<bot::LocalPlayer>(packet.localPlayer, packet.zoneId);
+                            _visualObjectContainer->Clear();
+
+                            this->TryCreateNavigation(packet.zoneId);
+                        }
+                        else if constexpr (std::is_same_v<T, game::sc::SpawnMonster> || std::is_same_v<T, game::sc::AddMonster>)
+                        {
+                            for (const game::Monster& monster : packet.monsters)
+                            {
+                                [[maybe_unused]]
+                                const bool added = _visualObjectContainer->Add(monster.id, std::make_shared<bot::Monster>(monster));
+                                assert(added);
+                            }
+                        }
+                        else if constexpr (std::is_same_v<T, game::sc::RemoveMonster>)
+                        {
+                            for (const int64_t id : packet.monsters)
+                            {
+                                [[maybe_unused]]
+                                const bool removed = _visualObjectContainer->Remove(id);
+                                assert(removed);
+                            }
+                        }
+                        else if constexpr (std::is_same_v<T, game::sc::DespawnMonster>)
+                        {
+                            for (const int64_t id : packet.monsters)
+                            {
+                                [[maybe_unused]]
+                                const bool removed = _visualObjectContainer->Remove(id);
+                                assert(removed);
+                            }
+                        }
+                        else if constexpr (std::is_same_v<T, game::sc::MoveMonster>)
+                        {
+                            bot::Monster* monster = _visualObjectContainer->FindMonster(packet.id);
+                            assert(monster);
+
+                            const Eigen::Vector3d pos(packet.position.x, packet.position.y, packet.position.z);
+                            const Eigen::Vector3d rot(packet.rotation.pitch, packet.rotation.yaw, packet.rotation.roll);
+
+                            monster->SetPosition(pos);
+                            monster->SetRotation(rot);
+                        }
+                        else if constexpr (std::is_same_v<T, game::sc::AttackMonster>)
+                        {
+                            bot::Monster* monster = _visualObjectContainer->FindMonster(packet.id);
+                            assert(monster);
+
+                            const Eigen::Vector3d pos(packet.position.x, packet.position.y, packet.position.z);
+                            const Eigen::Vector3d rot(packet.rotation.pitch, packet.rotation.yaw, packet.rotation.roll);
+
+                            monster->SetPosition(pos);
+                            monster->SetRotation(rot);
+                        }
+
+                        if (_behaviorTree && _behaviorTree->IsWaitFor<T>())
+                        {
+                            _behaviorTree->Notify(packet);
+                        }
+                    });
+                }
+                break;
+                }
+
+                Buffer temp;
+                [[maybe_unused]] bool sliced = _packetBuffer.SliceFront(temp, packetSize);
+                assert(sliced);
             }
         }
     }
@@ -446,7 +481,7 @@ namespace zerosugar::xr
             {
                 completionToken->Reset();
 
-                bt->SetSignalHandler([completionToken]()
+                bt->SetOrExecuteSignalHandler([completionToken]()
                     {
                         completionToken->OnSuccess();
                     });
@@ -496,7 +531,7 @@ namespace zerosugar::xr
 
     auto BotController::GetName() const -> std::string
     {
-        return fmt::format("bot_controller:{}", _id);
+        return fmt::format("bot_controller_{}", _id);
     }
 
     auto BotController::GetStrand() const -> Strand&

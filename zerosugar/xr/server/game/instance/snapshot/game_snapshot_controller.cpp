@@ -50,9 +50,6 @@ namespace zerosugar::xr
         GamePlayerSnapshot* player = snapshotContainer.FindPlayer(playerId);
         assert(player);
 
-        sc::NotifyPlayerActivated activated;
-        view.Sync(player->GetController(), activated);
-
         GameSpatialSector& sector = spatialContainer.GetSector(player->GetPosition());
         if (!sector.Empty() && sector.HasEntitiesAtLeast(0))
         {
@@ -98,6 +95,9 @@ namespace zerosugar::xr
                 view.Sync(player->GetController(), newMonsters);
             }
         }
+
+        sc::NotifyPlayerActivated activated;
+        view.Sync(player->GetController(), activated);
 
         sector.AddEntity(player->GetId());
     }

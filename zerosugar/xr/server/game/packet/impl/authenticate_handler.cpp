@@ -84,7 +84,7 @@ namespace zerosugar::xr
             co_return;
         }
 
-        auto client = std::make_shared<GameClient>(session.weak_from_this(),
+        auto client = std::make_shared<GameClient>(session.shared_from_this(),
             authParam.authenticationToken, authResult.accountId, authResult.characterId, authResult.userUniqueId, gameInstance);
 
         [[maybe_unused]]

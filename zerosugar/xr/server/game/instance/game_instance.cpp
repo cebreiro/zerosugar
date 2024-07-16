@@ -62,8 +62,16 @@ namespace zerosugar::xr
     {
     }
 
-    void GameInstance::Start()
+    auto GameInstance::Start() -> Future<void>
     {
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
+        if (!ExecutionContext::IsEqualTo(*_strand))
+        {
+            co_await *_strand;
+        }
+
         for (const data::MonsterSpawner& spawnData : _data->GetMonsterSpawners())
         {
             Summit(std::make_unique<game_task::SpawnerInstall>(&spawnData), std::nullopt);
@@ -80,6 +88,8 @@ namespace zerosugar::xr
 
             handler->Handle(GetSerialContext(), *a, b);
         }
+
+        co_return;
     }
 
     void GameInstance::Shutdown()

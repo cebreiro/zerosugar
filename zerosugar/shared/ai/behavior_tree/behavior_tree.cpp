@@ -109,7 +109,7 @@ namespace zerosugar
         return promise.IsWaitingFor(typeInfo);
     }
 
-    void BehaviorTree::SetSignalHandler(const std::function<void()>& function)
+    void BehaviorTree::SetOrExecuteSignalHandler(const std::function<void()>& function)
     {
         assert(!_signalHandler);
 

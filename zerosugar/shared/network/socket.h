@@ -17,6 +17,8 @@ namespace zerosugar
 
     class Socket : public std::enable_shared_from_this<Socket>
     {
+        using completion_token_type = SharedPtrNotNull<future::SharedContext<std::expected<int64_t, IOError>>>;
+
     public:
         Socket() = delete;
 
@@ -34,9 +36,19 @@ namespace zerosugar
         auto ReceiveAsync(Buffer& buffer) -> Future<std::expected<int64_t, IOError>>;
 
     private:
-        std::atomic<bool> _open = false;
+        void Send(Buffer buffer, completion_token_type promise);
+        void OnSend();
 
+        auto AllocCompletionToken() -> completion_token_type;
+        void FreeCompletionToken(completion_token_type token);
+
+    private:
         SharedPtrNotNull<execution::AsioStrand> _strand;
         boost::asio::ip::tcp::socket _socket;
+
+        bool _shutdown = false;
+        bool _sendPending = false;
+        std::queue<std::pair<Buffer, completion_token_type>> _sendWaits;
+        std::vector<completion_token_type> _recycleCompletionTokens;
     };
 }

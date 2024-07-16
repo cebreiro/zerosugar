@@ -41,7 +41,7 @@ namespace zerosugar::xr
                 btName);
 
             _botControllers[i]->SetLogger(_behaviorTreeLogger.get());
-            //_botControllers[i]->StartDebugOutputString();
+            // _botControllers[i]->StartDebugOutputString();
         }
     }
 
@@ -56,7 +56,7 @@ namespace zerosugar::xr
             botController->Start();
         }
 
-        constexpr std::chrono::seconds pingDelay = std::chrono::seconds(30);
+        constexpr std::chrono::seconds pingDelay = std::chrono::seconds(15);
 
         Post(*_gameExecutor, [](WeakPtrNotNull<BotControlService> weak, std::chrono::seconds delay) -> Future<void>
             {
@@ -118,6 +118,8 @@ namespace zerosugar::xr
                 statistics.average += count;
             }
         }
+
+        _pingOperations.clear();
 
         if (i == 0)
         {

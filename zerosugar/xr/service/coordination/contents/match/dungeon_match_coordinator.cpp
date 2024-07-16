@@ -206,7 +206,7 @@ namespace zerosugar::xr
             RemoveCompleteTask();
 
             bool processed = false;
-            processed |= RemoveExpiredGroup();
+            // processed |= RemoveExpiredGroup();
             processed |= CreateMatchingGroup();
 
             if (processed)
@@ -266,6 +266,52 @@ namespace zerosugar::xr
         bool updateLastMatchLogTimePoint = false;
 
         int64_t makingCount = 0;
+
+        for (auto iter = _matchQueues.begin(); iter != _matchQueues.end(); )
+        {
+            auto& [dungeonId, matchQueue] = *iter;
+
+            constexpr int64_t matchOrganizeSize = 500;
+
+            while (std::ssize(matchQueue) >= matchOrganizeSize)
+            {
+                const int64_t groupId = ++_nextGroupId;
+                DungeonMatchGroup group(groupId, dungeonId, std::chrono::system_clock::now());
+
+                for (int64_t i = 0; i < matchOrganizeSize; ++i)
+                {
+                    PtrNotNull<DungeonMatchUser> user = matchQueue.front();
+                    matchQueue.pop_front();
+
+                    assert(user->GetState() == DungeonMatchUserState::Waiting);
+                    assert(user->GetGroupId() == std::nullopt);
+
+                    user->SetState(DungeonMatchUserState::Grouped);
+                    user->SetGroupId(group.GetId());
+
+                    [[maybe_unused]]
+                    const bool added = group.AddUser(user->GetId());
+                    assert(added);
+                }
+
+                [[maybe_unused]]
+                const auto& [iterGroup, inserted] = _matchGroups.try_emplace(groupId, std::move(group));
+                assert(inserted);
+
+                ++makingCount;
+
+                HandleMatchGroupCreation(iterGroup->second);
+            }
+
+            if (matchQueue.empty())
+            {
+                iter = _matchQueues.erase(iter);
+            }
+            else
+            {
+                ++iter;
+            }
+        }
 
         for (auto& [dungeonId, matchQueue] : _matchQueues)
         {

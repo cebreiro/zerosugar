@@ -1,5 +1,6 @@
 #include "approve_dungeon_match.h"
 
+#include "zerosugar/shared/execution/executor/operation/schedule.h"
 #include "zerosugar/shared/network/session/session.h"
 #include "zerosugar/xr/network/packet.h"
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
@@ -18,6 +19,10 @@ namespace zerosugar::xr
         SharedPtrNotNull<GameClient> client = server.FindClient(session.GetId());
         if (!client)
         {
+            ZEROSUGAR_LOG_WARN(server.GetServiceLocator(),
+                fmt::format("[approve_dungeon_match_handler] fail to find client. session: {}",
+                    session.GetId()));
+
             session.Close();
 
             co_return;
@@ -26,6 +31,10 @@ namespace zerosugar::xr
         const std::shared_ptr<GameInstance> instance = client->GetGameInstance();
         if (!instance)
         {
+            ZEROSUGAR_LOG_WARN(server.GetServiceLocator(),
+                fmt::format("[approve_dungeon_match_handler] fail to find game instance. client_cid: {}",
+                    client->GetCharacterId()));
+
             session.Close();
 
             co_return;

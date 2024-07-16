@@ -80,6 +80,7 @@ namespace zerosugar::xr
 
         InitializeGameData(serviceLocator);
         InitializeService(serviceLocator);
+        InitializeRPCProtocol(serviceLocator);
         InitializeServer(serviceLocator);
     }
 
@@ -183,29 +184,32 @@ namespace zerosugar::xr
         ZEROSUGAR_LOG_INFO(GetServiceLocator(), fmt::format("[{}] initialize service --> Done", GetName()));
     }
 
-    void AllInOneApp::InitializeServer(ServiceLocator& serviceLocator)
+    void AllInOneApp::InitializeRPCProtocol(ServiceLocator& serviceLocator)
     {
-        ZEROSUGAR_LOG_INFO(GetServiceLocator(), fmt::format("[{}] initialize network", GetName()));
+        ZEROSUGAR_LOG_INFO(GetServiceLocator(), fmt::format("[{}] initialize rpc protocol", GetName()));
 
         _rpcServer->Initialize(serviceLocator);
         _rpcClient->Initialize(serviceLocator);
 
-        _loginServer->Initialize(serviceLocator);
-
-        _lobbyServer->Initialize(serviceLocator);
-        _lobbyServer->SetPublicIP(_config->lobbyIP);
-
-        _gameServer->Initialize(serviceLocator);
-        _gameServer->SetPublicIP(_config->gameIP);
-
         _rpcServer->StartUp(_config->rpcServerPort);
         assert(_rpcServer->IsOpen());
+
+        Post(*_ioExecutor, [](SharedPtrNotNull<RPCClient> rpcClient) -> Future<void>
+            {
+                while (true)
+                {
+                    constexpr auto rpcStatusReportInterval = std::chrono::seconds(60);
+                    co_await rpcClient->ScheduleCompletionLog(rpcStatusReportInterval);
+                }
+
+            }, _rpcClient);
+
         {
             Future<void> future = _rpcClient->ConnectAsync(_config->rpcServerIP, _config->rpcServerPort);
 
             while (future.IsPending())
             {
-                std::this_thread::sleep_for(std::chrono::seconds(3));
+                std::this_thread::sleep_for(std::chrono::seconds(1));
 
                 ZEROSUGAR_LOG_INFO(serviceLocator, fmt::format("[rpc_client] pending connection to rpc server..."));
             }
@@ -226,11 +230,26 @@ namespace zerosugar::xr
             }
         }
 
+        ZEROSUGAR_LOG_INFO(GetServiceLocator(), fmt::format("[{}] initialize rpc protocol --> Done", GetName()));
+    }
+
+    void AllInOneApp::InitializeServer(ServiceLocator& serviceLocator)
+    {
+        ZEROSUGAR_LOG_INFO(GetServiceLocator(), fmt::format("[{}] initialize server", GetName()));
+
+        _loginServer->Initialize(serviceLocator);
+
+        _lobbyServer->Initialize(serviceLocator);
+        _lobbyServer->SetPublicIP(_config->lobbyIP);
+
+        _gameServer->Initialize(serviceLocator);
+        _gameServer->SetPublicIP(_config->gameIP);
+
         _loginServer->StartUp(8181);
         _lobbyServer->StartUp(_config->lobbyPort);
 
         _gameServer->StartUp(_config->gamePort);
 
-        ZEROSUGAR_LOG_INFO(GetServiceLocator(), fmt::format("[{}] initialize network --> Done", GetName()));
+        ZEROSUGAR_LOG_INFO(GetServiceLocator(), fmt::format("[{}] initialize server --> Done", GetName()));
     }
 }

@@ -1,5 +1,6 @@
 #include "client.h"
 
+#include <fmt/format.h>
 #include "zerosugar/shared/execution/executor/impl/asio_executor.h"
 #include "zerosugar/shared/execution/future/operation/delay.h"
 
@@ -42,7 +43,7 @@ void Client::Complete(boost::system::error_code ec)
     bool expected = false;
     if (_complete.compare_exchange_strong(expected, true))
     {
-        dispatch(_strand, [self = shared_from_this(), this, ec]() mutable
+        dispatch(_strand, [self = shared_from_this(), ec]() mutable
             {
                 self->_socket->close();
                 self->_socket.reset();
