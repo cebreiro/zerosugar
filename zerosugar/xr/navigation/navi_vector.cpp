@@ -159,6 +159,11 @@ namespace zerosugar::xr::navi
     {
     }
 
+    Scalar::Scalar(double value)
+        : Scalar(static_cast<float>(value))
+    {
+    }
+
     auto Scalar::Get() const -> float
     {
         return _value;

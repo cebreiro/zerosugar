@@ -1,5 +1,7 @@
 #include "movement_controller.h"
 
+#include "zerosugar/xr/navigation/navigation_service.h"
+#include "zerosugar/xr/navigation/navi_visualizer_interface.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/ai/ai_controller.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_view.h"
@@ -65,6 +67,23 @@ namespace zerosugar::xr::ai
             _running = true;
 
             _runFuture = Run();
+        }
+
+        if (NavigationService* navi = _aiController.GetGameInstance().GetNavigationService(); navi)
+        {
+            if (std::shared_ptr<navi::IVisualizer> visualizer = navi->GetVisualizer(); visualizer)
+            {
+                navi::vis::Lines lines;
+                lines.positions.reserve(_paths.size());
+
+                std::ranges::copy(_paths | std::views::elements<0>, std::back_inserter(lines.positions));
+
+                navi::vis::Object object;
+                object.shape = std::move(lines);
+                object.drawColor = navi::vis::DrawColor::Yellow;
+
+                visualizer->Draw(std::move(object), std::chrono::seconds(1));
+            }
         }
     }
 

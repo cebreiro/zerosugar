@@ -101,7 +101,7 @@ namespace zerosugar
     void Session::ReceiveAsync()
     {
         assert(_mutableBuffers.empty());
-        assert(_receiveBuffers.GetSize() >= RECEIVE_BUFFER_MIN_SIZE);
+        assert(_receiveBuffer.GetSize() >= RECEIVE_BUFFER_MIN_SIZE);
 
         for (buffer::Fragment& fragment : _receiveBuffer.GetFragmentContainer())
         {

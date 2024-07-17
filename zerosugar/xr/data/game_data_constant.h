@@ -1,11 +1,16 @@
 #pragma once
+#include "zerosugar/shared/collision/shape/circle.h"
+#include "zerosugar/shared/collision/shape/obb.h"
 
 namespace zerosugar::xr
 {
     struct PlayerAttack
     {
+        using attack_range_type = std::variant<Eigen::AlignedBox3d, /*circle radius*/double>;
+
         double duration = 0.0;
         std::vector<double> attackEffectDelay;
+        attack_range_type attackRange;
     };
 
     class DataConstant

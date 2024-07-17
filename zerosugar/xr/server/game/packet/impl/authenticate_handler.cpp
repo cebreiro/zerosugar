@@ -2,6 +2,7 @@
 
 #include "zerosugar/shared/network/session/session.h"
 #include "zerosugar/xr/navigation/navigation_service.h"
+#include "zerosugar/xr/navigation/navi_vector.h"
 #include "zerosugar/xr/server/game/game_server.h"
 #include "zerosugar/xr/server/game/client/game_client.h"
 #include "zerosugar/xr/server/game/instance/game_constants.h"

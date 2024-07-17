@@ -1,7 +1,10 @@
 #include "gm_visualize_field.h"
 
 #include "zerosugar/xr/navigation/navigation_service.h"
+#include "zerosugar/xr/navigation/navi_visualize_param.h"
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
+#include "zerosugar/xr/data/game_data_constant.h"
+#include "zerosugar/xr/navigation/navi_visualizer.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_monster_snapshot.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_player_snapshot.h"
@@ -15,153 +18,208 @@ namespace zerosugar::xr::gm
         (void)player;
 
         NavigationService* navigationService = serialContext.GetNavigationService();
-        if (!navigationService || navigationService->IsRunningVisualizer())
+        if (!navigationService)
         {
             return false;
-        }
-
-        const GameSnapshotContainer& snapshotContainer = serialContext.GetSnapshotContainer();
-        auto playerRange = snapshotContainer.GetPlayerRange();
-        auto monsterRange = snapshotContainer.GetMonsterRange();
-
-        std::vector<navi::AddVisualizeTargetParam> params;
-        params.reserve(std::ranges::distance(playerRange) + std::ranges::distance(monsterRange));
-
-        for (const std::unique_ptr<GamePlayerSnapshot>& snapshot : snapshotContainer.GetPlayerRange())
-        {
-            navi::AddVisualizeTargetParam& param = params.emplace_back();
-
-            param.id = snapshot->GetId().Unwrap();
-            param.position = snapshot->GetPosition();
-            param.radius = game_constant::player_radius;
-            param.color = navi::DrawColor::Green;
-        }
-
-        for (const std::unique_ptr<GameMonsterSnapshot>& snapshot : snapshotContainer.GetMonsterRange())
-        {
-            navi::AddVisualizeTargetParam& param = params.emplace_back();
-
-            param.id = snapshot->GetId().Unwrap();
-            param.position = snapshot->GetPosition();
-            param.radius = 45.f;
-            param.color = navi::DrawColor::Red;
         }
 
         using namespace network::game;
 
         const std::string& observerKey = name;
 
-        navigationService->StartVisualize([holder = serialContext.Hold(), context = &serialContext, observerKey]()
+        Future<bool> future = navigationService->StartVisualize(
+            [serial = serialContext.Hold(), context = &serialContext, observerKey]()
             {
-                GameSnapshotView& view = context->GetSnapshotView();
+                Post(serial->GetStrand(), [serial, context, observerKey]()
+                {
+                    GameSnapshotView& view = context->GetSnapshotView();
 
-                view.RemoveObserver<sc::EnterGame>(observerKey);
-                // TODO: leave game
-                view.RemoveObserver<sc::MoveRemotePlayer>(observerKey);
-                view.RemoveObserver<sc::StopRemotePlayer>(observerKey);
+                    view.RemoveObserver<sc::EnterGame>(observerKey);
+                    // TODO: leave game
+                    view.RemoveObserver<sc::MoveRemotePlayer>(observerKey);
+                    view.RemoveObserver<sc::StopRemotePlayer>(observerKey);
 
-                view.RemoveObserver<sc::SpawnMonster>(observerKey);
-                view.RemoveObserver<sc::AttackMonster>(observerKey);
-                view.RemoveObserver<sc::MoveMonster>(observerKey);
-                view.RemoveObserver<sc::BeAttackedMonster>(observerKey);
+                    view.RemoveObserver<sc::SpawnMonster>(observerKey);
+                    view.RemoveObserver<sc::AttackMonster>(observerKey);
+                    view.RemoveObserver<sc::MoveMonster>(observerKey);
+                    view.RemoveObserver<sc::DespawnMonster>(observerKey);
+                });
             });
-        navigationService->AddDrawTargets(std::move(params));
+
+        // temp...
+        const bool startVisualizer = future.Get();
+        if (!startVisualizer)
+        {
+            return false;
+        }
+
+        const std::shared_ptr<navi::IVisualizer> visualizer = navigationService->GetVisualizer();
+        assert(visualizer);
+
+        const GameSnapshotContainer& snapshotContainer = serialContext.GetSnapshotContainer();
+        
+        for (const std::unique_ptr<GamePlayerSnapshot>& snapshot : snapshotContainer.GetPlayerRange())
+        {
+            navi::vis::Agent agent{
+                .position = snapshot->GetPosition(),
+                .radius = game_constant::player_radius,
+                .drawColor = navi::vis::DrawColor::Green,
+            };
+
+            (void)visualizer->AddAgent(snapshot->GetId().Unwrap(), std::move(agent));
+        }
+
+        for (const std::unique_ptr<GameMonsterSnapshot>& snapshot : snapshotContainer.GetMonsterRange())
+        {
+            navi::vis::Agent agent{
+                .position = snapshot->GetPosition(),
+                .radius = game_constant::player_radius,
+                .drawColor = navi::vis::DrawColor::Red,
+            };
+
+            (void)visualizer->AddAgent(snapshot->GetId().Unwrap(), std::move(agent));
+        }
 
         GameSnapshotView& view = serialContext.GetSnapshotView();
         auto navi = navigationService->shared_from_this();
 
-        view.AddObserver<sc::EnterGame>(observerKey, [navi](const sc::EnterGame& packet)
+        view.AddObserver<sc::EnterGame>(observerKey, [visualizer](const sc::EnterGame& packet)
             {
                 const auto& pos = packet.localPlayer.transform.position;
 
-                navi::AddVisualizeTargetParam param;
-                param.id = packet.localPlayer.id;
-                param.position = Eigen::Vector3d(pos.x, pos.y, pos.z);
-                param.radius = game_constant::player_radius;
-                param.color = navi::DrawColor::Green;
+                navi::vis::Agent agent{
+                    .position = Eigen::Vector3d(pos.x, pos.y, pos.z),
+                    .radius = game_constant::player_radius,
+                    .drawColor = navi::vis::DrawColor::Green,
+                };
 
-                navi->AddDrawTarget(std::move(param));
+                (void)visualizer->AddAgent(packet.localPlayer.id, std::move(agent));
             });
 
-        view.AddObserver<sc::MoveRemotePlayer>(observerKey, [navi](const sc::MoveRemotePlayer& packet)
+        view.AddObserver<sc::MoveRemotePlayer>(observerKey, [visualizer](const sc::MoveRemotePlayer& packet)
             {
-                const auto& pos = packet.position;
-
-                navi::UpdateVisualizeTargetParam param;
-                param.id = packet.id;
-                param.position = Eigen::Vector3d(pos.x, pos.y, pos.z);
-
-                navi->UpdateDrawTarget(std::move(param));
+                (void)visualizer->UpdateAgentPositionAndYaw(packet.id,
+                    Eigen::Vector3d(packet.position.x, packet.position.y, packet.position.z), packet.rotation.yaw);
             });
 
-        view.AddObserver<sc::StopRemotePlayer>(observerKey, [navi](const sc::StopRemotePlayer& packet)
+        view.AddObserver<sc::StopRemotePlayer>(observerKey, [visualizer](const sc::StopRemotePlayer& packet)
             {
-                const auto& pos = packet.position;
-
-                navi::UpdateVisualizeTargetParam param;
-                param.id = packet.id;
-                param.position = Eigen::Vector3d(pos.x, pos.y, pos.z);
-
-                navi->UpdateDrawTarget(std::move(param));
+                (void)visualizer->UpdateAgentPosition(packet.id,
+                    Eigen::Vector3d(packet.position.x, packet.position.y, packet.position.z));
             });
 
-        view.AddObserver<sc::SpawnMonster>(observerKey, [navi](const sc::SpawnMonster& packet)
+        view.AddObserver<sc::RemotePlayerAttack>(observerKey, [visualizer, navi](const sc::RemotePlayerAttack& packet)
+            {
+                const Eigen::Vector3d pos(packet.position.x, packet.position.y, packet.position.z);
+
+                (void)visualizer->UpdateAgentPositionAndYaw(packet.id, pos, packet.rotation.yaw);
+
+                const std::array<PlayerAttack, 4>& attack = DataConstant::GetInstance().GetPlayerAttacks();
+
+                const int64_t index = packet.motionId - 1;
+
+                if (index < 0 || index >= std::ssize(attack))
+                {
+                    return;
+                }
+
+                const PlayerAttack& attackData = attack[index];
+                const navi::vis::Object object{
+                    .shape =
+                        std::visit([&pos, &packet]<typename T>(const T & range) -> navi::vis::Object::shape_type
+                        {
+                            if constexpr (std::is_same_v<T, Eigen::AlignedBox3d>)
+                            {
+                                const Eigen::AlignedBox3d& box = range;
+
+                                const Eigen::AngleAxisd axis(packet.rotation.yaw * std::numbers::pi / 180.0, Eigen::Vector3d::UnitZ());
+                                const auto rotation = axis.toRotationMatrix();
+
+                                return navi::vis::OBB{
+                                    .center = pos + rotation * box.center(),
+                                    .halfSize = box.sizes() * 0.5,
+                                    .rotation = rotation,
+                                };
+                            }
+                            else if constexpr (std::is_same_v<T, double>)
+                            {
+                                return navi::vis::Circle{
+                                    .center = pos,
+                                    .radius = range,
+                                };
+                            }
+                            else
+                            {
+                                static_assert(!sizeof(T), "not implemented");
+
+                                return {};
+                            }
+                        }, attackData.attackRange),
+                    .drawColor = navi::vis::DrawColor::White,
+                };
+
+                for (const double delay : attackData.attackEffectDelay)
+                {
+                    const auto displayDelay = GetMilliFromGameSeconds(delay);
+                    const auto displayDuration = GetMilliFromGameSeconds(attackData.duration) - displayDelay;
+
+                    Delay(displayDelay)
+                        .Then(navi->GetStrand(), [visualizer, object, displayDuration]()
+                            {
+                                (void)visualizer->Draw(object, displayDuration);
+                            });
+                }
+            });
+
+        view.AddObserver<sc::SpawnMonster>(observerKey, [visualizer](const sc::SpawnMonster& packet)
             {
                 for (const Monster& monster : packet.monsters)
                 {
                     const auto& pos = monster.transform.position;
 
-                    navi::AddVisualizeTargetParam param;
-                    param.id = monster.id;
-                    param.position = Eigen::Vector3d(pos.x, pos.y, pos.z);
-                    param.radius = game_constant::player_radius;
-                    param.color = navi::DrawColor::Red;
+                    navi::vis::Agent agent{
+                        .position = Eigen::Vector3d(pos.x, pos.y, pos.z),
+                        .radius = game_constant::player_radius,
+                        .drawColor = navi::vis::DrawColor::Red,
+                    };
 
-                    navi->AddDrawTarget(std::move(param));
+                    (void)visualizer->AddAgent(monster.id, std::move(agent));
                 }
             });
 
-        view.AddObserver<sc::AttackMonster>(observerKey, [navi](const sc::AttackMonster& packet)
+        view.AddObserver<sc::AttackMonster>(observerKey, [visualizer](const sc::AttackMonster& packet)
             {
-                const auto& pos = packet.position;
-                const auto& destPos = packet.destPosition;
+                const Eigen::Vector3d position(packet.position.x, packet.position.y, packet.position.z);
 
-                navi::UpdateVisualizeTargetParam param;
-                param.id = packet.id;
-                param.position = Eigen::Vector3d(pos.x, pos.y, pos.z);
+                (void)visualizer->UpdateAgentPositionAndYaw(packet.id, position, packet.rotation.yaw);
 
-                if (packet.destMovementDuration > 0.0)
+                if (packet.destMovementDuration <= 0.0)
                 {
-                    param.destPosition = Eigen::Vector3d(destPos.x, destPos.y, destPos.z);
-                    param.destMovementDuration = packet.destMovementDuration;
-                    param.destPositionDrawColor = navi::DrawColor::Yellow;
+                    return;
                 }
 
-                navi->UpdateDrawTarget(std::move(param));
+                navi::vis::Agent::Movement movement{
+                    .destPosition = Eigen::Vector3d(packet.destPosition.x, packet.destPosition.y, packet.destPosition.z),
+                    .startTimePoint = std::chrono::system_clock::now(),
+                    .duration = packet.destMovementDuration,
+                    .drawColor = navi::vis::DrawColor::Yellow,
+                };
+
+                (void)visualizer->UpdateAgentMovement(packet.id, position, std::move(movement));
             });
 
-        view.AddObserver<sc::MoveMonster>(observerKey, [navi](const sc::MoveMonster& packet)
+        view.AddObserver<sc::MoveMonster>(observerKey, [visualizer](const sc::MoveMonster& packet)
             {
-                const auto& pos = packet.position;
-
-                // TODO: print yaw
-                (void)packet.rotation;
-
-                navi::UpdateVisualizeTargetParam param;
-                param.id = packet.id;
-                param.position = Eigen::Vector3d(pos.x, pos.y, pos.z);
-
-                navi->UpdateDrawTarget(std::move(param));
+                (void)visualizer->UpdateAgentPositionAndYaw(packet.id,
+                    Eigen::Vector3d(packet.position.x, packet.position.y, packet.position.z),
+                    packet.rotation.yaw);
             });
 
-        view.AddObserver<sc::BeAttackedMonster>(observerKey, [navi](const sc::BeAttackedMonster& packet)
+        view.AddObserver<sc::DespawnMonster>(observerKey, [visualizer](const sc::DespawnMonster& packet)
             {
-                if (packet.attackedHp <= 0.f)
+                for (int64_t monsterId : packet.monsters)
                 {
-                    navi::RemoveVisualizeTargetParam param;
-                    param.id = packet.attackedId;
-
-                    navi->RemoveDrawTarget(std::move(param));
+                    (void)visualizer->RemoveAgent(monsterId);
                 }
             });
 

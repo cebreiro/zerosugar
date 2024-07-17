@@ -13,9 +13,5 @@ namespace zerosugar::xr::game_task
     private:
         void Execute(GameExecutionParallel& parallel, MainTargetSelector::target_type target) override;
         void OnComplete(GameExecutionSerial& serial) override;
-
-    private:
-        game_entity_id_type _id;
-        Eigen::Vector3d _newPosition;
     };
 }

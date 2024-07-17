@@ -1,7 +1,6 @@
 #pragma once
-#include "zerosugar/xr/navigation/navi_vector.h"
 
-namespace zerosugar::xr::navi
+namespace zerosugar::xr::navi::vis
 {
     enum class DrawColor
     {
@@ -12,30 +11,64 @@ namespace zerosugar::xr::navi
         Cyan,
         Yellow,
         LightBlue,
+        White,
     };
 
     auto ToInt(DrawColor color) -> uint32_t;
+    auto ToArray(DrawColor color) -> std::array<uint8_t, 4>;
 
-    struct AddVisualizeTargetParam
+    struct Agent
     {
-        int64_t id = 0;
-        Eigen::Vector3d position = {};
-        float radius = 0.f;
-        DrawColor color = DrawColor::Green;
+        Eigen::Vector3d position;
+        float yaw = 0.f;
+        double radius = 0.0;
+        DrawColor drawColor = DrawColor::Green;
+
+        struct Movement
+        {
+            Eigen::Vector3d destPosition;
+            std::chrono::system_clock::time_point startTimePoint;
+            double duration = 0.0;
+            DrawColor drawColor = DrawColor::Yellow;
+        };
+        std::optional<Movement> movement = std::nullopt;
     };
 
-    struct RemoveVisualizeTargetParam
+    struct Cylinder
     {
-        int64_t id = 0;
+        Eigen::Vector3d min;
+        Eigen::Vector3d max;
     };
 
-    struct UpdateVisualizeTargetParam
+    struct OBB
     {
-        int64_t id = 0;
-        Eigen::Vector3d position = {};
+        Eigen::Vector3d center;
+        Eigen::Vector3d halfSize;
+        Eigen::Matrix3d rotation;
+    };
 
-        std::optional<Eigen::Vector3d> destPosition = std::nullopt;
-        std::optional<double> destMovementDuration = std::nullopt;
-        std::optional<DrawColor> destPositionDrawColor = std::nullopt;
+    struct Circle
+    {
+        Eigen::Vector3d center;
+        double radius = 0.0;
+    };
+
+    struct Arrow
+    {
+        Eigen::Vector3d startPos;
+        Eigen::Vector3d endPos;
+    };
+
+    struct Lines
+    {
+        std::vector<Eigen::Vector3d> positions;
+    };
+
+    struct Object
+    {
+        using shape_type = std::variant<Cylinder, OBB, Circle, Arrow, Lines>;
+
+        shape_type shape;
+        DrawColor drawColor = DrawColor::Green;
     };
 }

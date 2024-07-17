@@ -1,7 +1,6 @@
 #pragma once
 #include "zerosugar/xr/navigation/navi_data.h"
 #include "zerosugar/xr/navigation/navi_query.h"
-#include "zerosugar/xr/navigation/navi_visualize_param.h"
 
 namespace zerosugar::collision
 {
@@ -12,6 +11,7 @@ namespace zerosugar::xr::navi
 {
     class FVector;
     class Visualizer;
+    class IVisualizer;
 }
 
 namespace zerosugar::xr
@@ -22,20 +22,15 @@ namespace zerosugar::xr
         NavigationService(const ServiceLocator& serviceLocator, SharedPtrNotNull<Strand> strand, navi::Data naviData);
         ~NavigationService();
 
+        auto ShutdownAndJoin() -> Future<void>;
+
         bool IsRunningVisualizer() const;
 
         auto StartVisualize(std::function<void()> shutdownCallback) -> Future<bool>;
         void StopVisualize();
 
-        auto Join() -> Future<void>;
-
-        void AddDrawTargets(std::vector<navi::AddVisualizeTargetParam> params);
-        void AddDrawTarget(navi::AddVisualizeTargetParam param);
-        void RemoveDrawTarget(navi::RemoveVisualizeTargetParam param);
-
-        void UpdateDrawTarget(navi::UpdateVisualizeTargetParam param);
-
-        void DrawOBB(const collision::OBB3d& obb, std::chrono::milliseconds milli);
+        auto GetStrand() -> Strand&;
+        auto GetVisualizer() -> std::shared_ptr<navi::IVisualizer>;
 
     public:
         auto GetRandomPointAroundCircle(const navi::FVector& position, float radius)

@@ -83,178 +83,326 @@ namespace zerosugar::xr::navi
         _shutdown.store(true);
     }
 
-    void Visualizer::AddAgent(const AddVisualizeTargetParam& param)
+    auto Visualizer::AddAgent(int64_t id, vis::Agent agent) -> Future<bool>
     {
-        assert(ExecutionContext::IsEqualTo(_strand));
-
-        const DrawTarget target{
-            .id = param.id,
-            .position = navi::Vector(param.position),
-            .drawColor = param.color,
-            .radius = Scalar(param.radius),
-        };
-
-        (void)_agents.try_emplace(param.id, target);
-    }
-
-    void Visualizer::RemoveAgent(const RemoveVisualizeTargetParam& param)
-    {
-        assert(ExecutionContext::IsEqualTo(_strand));
-
-        _agents.erase(param.id);
-    }
-
-    void Visualizer::UpdateAgent(const UpdateVisualizeTargetParam& param)
-    {
-        assert(ExecutionContext::IsEqualTo(_strand));
-
-        const auto iter = _agents.find(param.id);
-        if (iter != _agents.end())
+        if (!ExecutionContext::IsEqualTo(_strand))
         {
-            iter->second.position = Vector(param.position);
-            iter->second.movementDuration = 0.0;
-
-            if (param.destPosition.has_value() && param.destMovementDuration.value_or(0.0) > 0.0)
-            {
-                iter->second.startPosition = param.position;
-                iter->second.destMovementDuration = *param.destMovementDuration;
-                iter->second.destPosition = param.destPosition;
-                iter->second.destPositionDrawColor = param.destPositionDrawColor;
-            }
+            co_await _strand;
         }
-    }
 
-    void Visualizer::AddOBB(const collision::OBB3d& obb, const std::chrono::milliseconds milli)
-    {
         assert(ExecutionContext::IsEqualTo(_strand));
 
-        OBB temp;
-        temp.center = obb.GetCenter();
-        temp.halfSize = obb.GetHalfSize();
-        temp.rotation = obb.GetRotation();
+        co_return _agents.try_emplace(id, std::move(agent)).second;
+    }
+
+    auto Visualizer::RemoveAgent(int64_t id) -> Future<bool>
+    {
+        if (!ExecutionContext::IsEqualTo(_strand))
+        {
+            co_await _strand;
+        }
+
+        assert(ExecutionContext::IsEqualTo(_strand));
+
+        co_return _agents.erase(id);
+    }
+
+    auto Visualizer::UpdateAgentPosition(int64_t id, Eigen::Vector3d position) -> Future<bool>
+    {
+        if (!ExecutionContext::IsEqualTo(_strand))
+        {
+            co_await _strand;
+        }
+
+        assert(ExecutionContext::IsEqualTo(_strand));
+
+        const auto iter = _agents.find(id);
+        if (iter == _agents.end())
+        {
+            co_return false;
+        }
+
+        iter->second.position = position;
+
+        co_return true;
+    }
+
+    auto Visualizer::UpdateAgentPositionAndYaw(int64_t id, Eigen::Vector3d position, float yaw) -> Future<bool>
+    {
+        if (!ExecutionContext::IsEqualTo(_strand))
+        {
+            co_await _strand;
+        }
+
+        assert(ExecutionContext::IsEqualTo(_strand));
+
+        const auto iter = _agents.find(id);
+        if (iter == _agents.end())
+        {
+            co_return false;
+        }
+
+        iter->second.position = position;
+        iter->second.yaw = yaw;
+
+        co_return true;
+    }
+
+    auto Visualizer::UpdateAgentMovement(int64_t id, Eigen::Vector3d startPos, vis::Agent::Movement movement) -> Future<bool>
+    {
+        if (!ExecutionContext::IsEqualTo(_strand))
+        {
+            co_await _strand;
+        }
+
+        assert(ExecutionContext::IsEqualTo(_strand));
+
+        const auto iter = _agents.find(id);
+        if (iter == _agents.end())
+        {
+            co_return false;
+        }
+
+        iter->second.position = startPos;
+        iter->second.movement = movement;
+
+        co_return true;
+    }
+
+    auto Visualizer::Draw(vis::Object object, std::chrono::milliseconds milli) -> Future<void>
+    {
+        if (!ExecutionContext::IsEqualTo(_strand))
+        {
+            co_await _strand;
+        }
+
+        assert(ExecutionContext::IsEqualTo(_strand));
+
+        (void)_objects.emplace(std::chrono::system_clock::now() + milli, std::move(object));
+
+        co_return;
+    }
+
+    void Visualizer::Tick()
+    {
+        if (_agents.empty() && _objects.empty())
+        {
+            return;
+        }
 
         auto now = std::chrono::system_clock::now();
 
-        _drawOBBs.emplace(now + milli, temp);
-    }
-
-    auto ComputeOBBVertices(const Visualizer::OBB& obb) -> std::array<Vector, 8>
-    {
-        std::array<Vector, 8> result;
-
-        const std::array extents{
-            obb.halfSize,
-            Eigen::Vector3d(-obb.halfSize.x(),  obb.halfSize.y(),  obb.halfSize.z()),
-            Eigen::Vector3d(obb.halfSize.x(), -obb.halfSize.y(),  obb.halfSize.z()),
-            Eigen::Vector3d(obb.halfSize.x(),  obb.halfSize.y(), -obb.halfSize.z()),
-            Eigen::Vector3d(-obb.halfSize.x(), -obb.halfSize.y(),  obb.halfSize.z()),
-            Eigen::Vector3d(-obb.halfSize.x(),  obb.halfSize.y(), -obb.halfSize.z()),
-            Eigen::Vector3d(obb.halfSize.x(), -obb.halfSize.y(), -obb.halfSize.z()),
-            Eigen::Vector3d(-obb.halfSize.x(), -obb.halfSize.y(), -obb.halfSize.z())
-        };
-
-        for (int64_t i = 0; i < std::ssize(extents); ++i)
+        for (vis::Agent& agent : _agents | std::views::values)
         {
-            const Eigen::Vector3d value = obb.center + obb.rotation * extents[i];
+            DrawAgentYawArrow(agent.position, agent.radius, agent.yaw, agent.drawColor);
+            DrawAgentCylinder(agent.position, agent.radius, agent.drawColor);
 
-            result[i] = Vector(value);
-        }
-
-        return result;
-    }
-
-
-    void Visualizer::Tick(double delta)
-    {
-        const auto drawCylinder = [this](const Vector& pos, float radius, DrawColor color)
+            if (agent.movement)
             {
-                duDebugDrawCylinder(_dd.get(),
-                    pos.GetX() - radius, pos.GetY(), pos.GetZ() - radius,
-                    pos.GetX() + radius, pos.GetY() + 3.f, pos.GetZ() + radius,
-                    ToInt(color));
-            };
+                vis::Agent::Movement& movement = *agent.movement;
 
-        for (DrawTarget& drawTarget : _agents | std::views::values)
-        {
-            if (drawTarget.destPosition)
-            {
-                assert(drawTarget.destMovementDuration > 0.0);
+                const double duration = std::chrono::duration_cast<std::chrono::duration<double>>(now - movement.startTimePoint).count();
+                const double t = std::clamp(duration / movement.duration, 0.0, 1.0);
 
-                drawTarget.movementDuration += delta;
-                const double t = std::min(drawTarget.movementDuration, drawTarget.destMovementDuration) / drawTarget.destMovementDuration;
+                const Eigen::Vector3d currentPos = (1.0 - t) * agent.position + t * movement.destPosition;
 
-                const Eigen::Vector3d position = (1 - t) * (*drawTarget.startPosition) + t * (*drawTarget.destPosition);
-
-                Vector startPos(*drawTarget.startPosition);
-                Vector destPosition(*drawTarget.destPosition);
-                Vector currentPosition(position);
-
-                const DrawColor color = drawTarget.destPositionDrawColor.value_or(DrawColor::Brown);
-                drawCylinder(currentPosition, drawTarget.radius.Get(), color);
-
-                duDebugDrawArrow(_dd.get(),
-                    startPos.GetX(), startPos.GetY(), startPos.GetZ(),
-                    destPosition.GetX(), destPosition.GetY(), destPosition.GetZ(),
-                    0, 2, ToInt(DrawColor::Green), 1);
+                DrawAgentCylinder(currentPos, agent.radius, movement.drawColor);
 
                 if (t >= 1.0)
                 {
-                    drawTarget.position = destPosition;
+                    agent.position = movement.destPosition;
 
-                    drawTarget.movementDuration = 0.0;
-                    drawTarget.destMovementDuration = 0.0;
-                    drawTarget.startPosition.reset();
-                    drawTarget.destPosition.reset();
-                    drawTarget.destPositionDrawColor.reset();
+                    agent.movement.reset();
                 }
             }
-
-            drawCylinder(drawTarget.position, drawTarget.radius.Get(), drawTarget.drawColor);
         }
 
-        const auto now = std::chrono::system_clock::now();
-        std::array<uint32_t, 8> boxColor = {};
-        boxColor.fill(ToInt(DrawColor::Brown));
+        auto outDateIter = _objects.end();
+
+        for (auto iter = _objects.begin(); iter != _objects.end(); ++iter)
         {
-            auto removeIter = _drawOBBs.end();
-
-            for (auto iter = _drawOBBs.begin(); iter != _drawOBBs.end(); ++iter)
+            if (const auto removeTimePoint = iter->first; removeTimePoint < now)
             {
-                std::chrono::system_clock::time_point removeTimePoint = iter->first;
-                if (removeTimePoint < now)
+                outDateIter = iter;
+            }
+
+            std::visit([this, drawColor = iter->second.drawColor]<typename T>(const T& shape)
+            {
+                if constexpr (std::is_same_v<T, vis::Cylinder>)
                 {
-                    removeIter = iter;
+                    this->DrawCylinder(Vector(shape.min), Vector(shape.max), drawColor);
                 }
-
-                const OBB& obb = iter->second;
-                const auto& vertices = ComputeOBBVertices(obb);
-
-                glBegin(GL_LINES);
-
-                glVertex3fv(vertices[0].GetData()); glVertex3fv(vertices[1].GetData());
-                glVertex3fv(vertices[1].GetData()); glVertex3fv(vertices[4].GetData());
-                glVertex3fv(vertices[4].GetData()); glVertex3fv(vertices[2].GetData());
-                glVertex3fv(vertices[2].GetData()); glVertex3fv(vertices[0].GetData());
-                                                               
-                glVertex3fv(vertices[3].GetData()); glVertex3fv(vertices[5].GetData());
-                glVertex3fv(vertices[5].GetData()); glVertex3fv(vertices[7].GetData());
-                glVertex3fv(vertices[7].GetData()); glVertex3fv(vertices[6].GetData());
-                glVertex3fv(vertices[6].GetData()); glVertex3fv(vertices[3].GetData());
-                                                               
-                glVertex3fv(vertices[0].GetData()); glVertex3fv(vertices[3].GetData());
-                glVertex3fv(vertices[1].GetData()); glVertex3fv(vertices[5].GetData());
-                glVertex3fv(vertices[4].GetData()); glVertex3fv(vertices[7].GetData());
-                glVertex3fv(vertices[2].GetData()); glVertex3fv(vertices[6].GetData());
-
-                glEnd();
-            }
-
-            if (removeIter != _drawOBBs.end())
-            {
-                _drawOBBs.erase(_drawOBBs.begin(), std::next(removeIter));
-            }
+                else if constexpr (std::is_same_v<T, vis::OBB>)
+                {
+                    this->DrawOBB(shape, drawColor);
+                }
+                else if constexpr (std::is_same_v<T, vis::Circle>)
+                {
+                    this->DrawCircle(shape, drawColor);
+                }
+                else if constexpr (std::is_same_v<T, vis::Arrow>)
+                {
+                    this->DrawArrow(shape, drawColor);
+                }
+                else if constexpr (std::is_same_v<T, vis::Lines>)
+                {
+                    this->DrawLines(shape, drawColor);
+                }
+                else
+                {
+                    static_assert(!sizeof(T), "not implemented");
+                }
+                
+            }, iter->second.shape);
         }
-        
+
+        if (outDateIter != _objects.end())
+        {
+            _objects.erase(_objects.begin(), outDateIter);
+        }
+    }
+
+    void Visualizer::DrawAgentCylinder(const Eigen::Vector3d& pos, double radius, vis::DrawColor drawColor)
+    {
+        constexpr float height = 2.5f;
+
+        const Vector naviPos(pos);
+        const float naviRadius = Scalar(radius).Get();
+
+        const Vector min(naviPos.GetX() - naviRadius, naviPos.GetY(), naviPos.GetZ() - naviRadius);
+        const Vector max(naviPos.GetX() + naviRadius, naviPos.GetY() + height, naviPos.GetZ() + naviRadius);
+
+        DrawCylinder(min, max, drawColor);
+    }
+
+    void Visualizer::DrawAgentYawArrow(const Eigen::Vector3d& pos, double radius, double yaw, vis::DrawColor drawColor)
+    {
+        constexpr double length = 150.0;
+
+        const Eigen::AngleAxisd axis(yaw * std::numbers::pi / 180.0, Eigen::Vector3d::UnitZ());
+        const auto rotation = axis.toRotationMatrix();
+
+        const vis::Arrow arrow{
+            .startPos = pos + rotation * Eigen::Vector3d(radius, 0.0, 0.0),
+            .endPos = pos + rotation * Eigen::Vector3d(radius + length, 0.0, 0.0),
+        };
+
+        DrawArrow(arrow, drawColor, 0.f, 0.2f, 3.f);
+    }
+
+    void Visualizer::DrawCylinder(const Vector& min, const Vector& max, vis::DrawColor drawColor)
+    {
+        duDebugDrawCylinder(_dd.get(),
+            min.GetX(), min.GetY(), min.GetZ(),
+            max.GetX(), max.GetY(), max.GetZ(),
+            ToInt(drawColor));
+    }
+
+    void Visualizer::DrawOBB(const vis::OBB& obb, vis::DrawColor drawColor)
+    {
+        const auto computeVertices = [](const vis::OBB& obb)->std::array<Vector, 8>
+        {
+            std::array<Vector, 8> result;
+
+            const std::array extents{
+                obb.halfSize,
+                Eigen::Vector3d(-obb.halfSize.x(),  obb.halfSize.y(),  obb.halfSize.z()),
+                Eigen::Vector3d(obb.halfSize.x(), -obb.halfSize.y(),  obb.halfSize.z()),
+                Eigen::Vector3d(obb.halfSize.x(),  obb.halfSize.y(), -obb.halfSize.z()),
+                Eigen::Vector3d(-obb.halfSize.x(), -obb.halfSize.y(),  obb.halfSize.z()),
+                Eigen::Vector3d(-obb.halfSize.x(),  obb.halfSize.y(), -obb.halfSize.z()),
+                Eigen::Vector3d(obb.halfSize.x(), -obb.halfSize.y(), -obb.halfSize.z()),
+                Eigen::Vector3d(-obb.halfSize.x(), -obb.halfSize.y(), -obb.halfSize.z())
+            };
+
+            for (int64_t i = 0; i < std::ssize(extents); ++i)
+            {
+                const Eigen::Vector3d value = obb.center + obb.rotation * extents[i];
+
+                result[i] = Vector(value);
+            }
+
+            return result;
+        };
+
+        const auto& vertices = computeVertices(obb);
+
+        GLfloat currentColor[4];
+        glGetFloatv(GL_CURRENT_COLOR, currentColor);
+
+        const std::array<uint8_t, 4> color = ToArray(drawColor);
+        glColor4ub(color[0], color[1], color[2], color[3]);
+
+        glBegin(GL_LINES);
+
+        glVertex3fv(vertices[0].GetData()); glVertex3fv(vertices[1].GetData());
+        glVertex3fv(vertices[1].GetData()); glVertex3fv(vertices[4].GetData());
+        glVertex3fv(vertices[4].GetData()); glVertex3fv(vertices[2].GetData());
+        glVertex3fv(vertices[2].GetData()); glVertex3fv(vertices[0].GetData());
+
+        glVertex3fv(vertices[3].GetData()); glVertex3fv(vertices[5].GetData());
+        glVertex3fv(vertices[5].GetData()); glVertex3fv(vertices[7].GetData());
+        glVertex3fv(vertices[7].GetData()); glVertex3fv(vertices[6].GetData());
+        glVertex3fv(vertices[6].GetData()); glVertex3fv(vertices[3].GetData());
+
+        glVertex3fv(vertices[0].GetData()); glVertex3fv(vertices[3].GetData());
+        glVertex3fv(vertices[1].GetData()); glVertex3fv(vertices[5].GetData());
+        glVertex3fv(vertices[4].GetData()); glVertex3fv(vertices[7].GetData());
+        glVertex3fv(vertices[2].GetData()); glVertex3fv(vertices[6].GetData());
+
+        glEnd();
+
+        glColor4fv(currentColor);
+    }
+
+    void Visualizer::DrawCircle(const vis::Circle& circle, vis::DrawColor drawColor, float lineWidth)
+    {
+        const auto& center = Vector(circle.center);
+
+        duDebugDrawCircle(_dd.get(),
+            center.GetX(), center.GetY(), center.GetZ(),
+            Scalar(circle.radius).Get(),
+            ToInt(drawColor),
+            lineWidth);
+    }
+
+    void Visualizer::DrawArrow(const vis::Arrow& arrow, vis::DrawColor drawColor, float as0, float as1, float lineWidth)
+    {
+        const auto& startPos = Vector(arrow.startPos);
+        const auto& endPos = Vector(arrow.endPos);
+
+        duDebugDrawArrow(_dd.get(),
+            startPos.GetX(), startPos.GetY(), startPos.GetZ(),
+            endPos.GetX(), endPos.GetY(), endPos.GetZ(),
+            as0, as1,
+            ToInt(drawColor),
+            lineWidth);
+    }
+
+    void Visualizer::DrawLines(const vis::Lines& lines, vis::DrawColor drawColor)
+    {
+        if (std::ssize(lines.positions) < 2)
+        {
+            return;
+        }
+
+        GLfloat currentColor[4];
+        glGetFloatv(GL_CURRENT_COLOR, currentColor);
+
+        const std::array<uint8_t, 4> color = ToArray(drawColor);
+        glColor4ub(color[0], color[1], color[2], color[3]);
+
+        glBegin(GL_LINE_STRIP);
+
+        for (const Eigen::Vector3d& point : lines.positions)
+        {
+            Vector current(point);
+            glVertex3fv(current.GetData());
+        }
+
+        glEnd();
+
+        glColor4fv(currentColor);
     }
 
     void Visualizer::handleTools()
@@ -474,6 +622,22 @@ namespace zerosugar::xr::navi
         float cameraPos[] = { 0, 0, 0 };
         float camr = 1000;
         float origCameraEulers[] = { 0, 0 }; // Used to compute rotational changes across frames.
+        {
+            const float* bmin = _geom->getNavMeshBoundsMin();
+            const float* bmax = _geom->getNavMeshBoundsMax();
+
+            // Reset camera and fog to match the mesh bounds.
+            camr = sqrtf(rcSqr(bmax[0] - bmin[0]) +
+                rcSqr(bmax[1] - bmin[1]) +
+                rcSqr(bmax[2] - bmin[2])) / 2;
+            cameraPos[0] = (bmax[0] + bmin[0]) / 2 + camr;
+            cameraPos[1] = (bmax[1] + bmin[1]) / 2 + camr;
+            cameraPos[2] = (bmax[2] + bmin[2]) / 2 + camr;
+            camr *= 3;
+
+            glFogf(GL_FOG_START, camr * 0.1f);
+            glFogf(GL_FOG_END, camr * 1.25f);
+        }
 
         float moveFront = 0.0f, moveBack = 0.0f, moveLeft = 0.0f, moveRight = 0.0f, moveUp = 0.0f, moveDown = 0.0f;
 
@@ -518,8 +682,6 @@ namespace zerosugar::xr::navi
 
         glEnable(GL_CULL_FACE);
         glDepthFunc(GL_LEQUAL);
-
-        _lastTickTimePoint = std::chrono::system_clock::now();
 
         while (!_shutdown.load())
         {
@@ -673,11 +835,6 @@ namespace zerosugar::xr::navi
             {
                 std::this_thread::yield();
             }
-
-            auto now = std::chrono::system_clock::now();
-            auto delta = std::chrono::duration_cast<std::chrono::duration<double, std::chrono::seconds::period>>(now - _lastTickTimePoint).count();
-
-            _lastTickTimePoint = now;
 
             boost::scope::scope_exit exit([this, tid]()
                 {
@@ -837,7 +994,7 @@ namespace zerosugar::xr::navi
             if (test)
                 test->handleRender();
 
-            Tick(delta);
+            Tick();
 
             glDisable(GL_FOG);
 

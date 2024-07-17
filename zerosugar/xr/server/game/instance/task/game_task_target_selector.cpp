@@ -43,15 +43,6 @@ namespace zerosugar::xr::game_task
     {
         const GameSnapshotContainer& snapshotContainer = serial.GetSnapshotContainer();
 
-        if (_mainTargetId.GetType() == GameEntityType::Monster)
-        {
-            const GameMonsterSnapshot* monster = snapshotContainer.FindMonster(_mainTargetId);
-            if (!monster || monster->GetHp() <= 0.f)
-            {
-                return false;
-            }
-        }
-
         return snapshotContainer.Has(_mainTargetId);
     }
 

@@ -60,7 +60,12 @@ namespace zerosugar::xr
             });
     }
 
-    auto NavigationService::Join() -> Future<void>
+    auto NavigationService::GetStrand() -> Strand&
+    {
+        return *_strand;
+    }
+
+    auto NavigationService::ShutdownAndJoin() -> Future<void>
     {
         co_await *_strand;
 
@@ -77,72 +82,9 @@ namespace zerosugar::xr
         co_return;
     }
 
-    void NavigationService::AddDrawTargets(std::vector<navi::AddVisualizeTargetParam> params)
+    auto NavigationService::GetVisualizer() -> std::shared_ptr<navi::IVisualizer>
     {
-        Dispatch(*_strand, [self = shared_from_this(), params = std::move(params)]()
-            {
-                if (!self->_visualizer)
-                {
-                    return;
-                }
-
-                for (const navi::AddVisualizeTargetParam& param : params)
-                {
-                    self->_visualizer->AddAgent(param);
-                }
-            });
-    }
-
-    void NavigationService::AddDrawTarget(navi::AddVisualizeTargetParam param)
-    {
-        Dispatch(*_strand, [self = shared_from_this(), param = std::move(param)]()
-            {
-                if (!self->_visualizer)
-                {
-                    return;
-                }
-
-                self->_visualizer->AddAgent(param);
-            });
-    }
-
-    void NavigationService::RemoveDrawTarget(navi::RemoveVisualizeTargetParam param)
-    {
-        Dispatch(*_strand, [self = shared_from_this(), param = std::move(param)]()
-            {
-                if (!self->_visualizer)
-                {
-                    return;
-                }
-
-                self->_visualizer->RemoveAgent(param);
-            });
-    }
-
-    void NavigationService::UpdateDrawTarget(navi::UpdateVisualizeTargetParam param)
-    {
-        Dispatch(*_strand, [self = shared_from_this(), param = std::move(param)]()
-            {
-                if (!self->_visualizer)
-                {
-                    return;
-                }
-
-                self->_visualizer->UpdateAgent(param);
-            });
-    }
-
-    void NavigationService::DrawOBB(const collision::OBB3d& obb, std::chrono::milliseconds milli)
-    {
-        Dispatch(*_strand, [self = shared_from_this(), obb = obb, milli]()
-            {
-                if (!self->_visualizer)
-                {
-                    return;
-                }
-
-                self->_visualizer->AddOBB(obb, milli);
-            });
+        return std::shared_ptr<navi::IVisualizer>(shared_from_this(), _visualizer.get());
     }
 
     auto NavigationService::GetRandomPointAroundCircle(const navi::FVector& position, float radius)

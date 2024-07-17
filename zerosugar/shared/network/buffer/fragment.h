@@ -50,10 +50,12 @@ namespace zerosugar::buffer
             int64_t size = 0;
         };
 
+#pragma warning(disable:4324)
         struct alignas(std::hardware_destructive_interference_size) Impl
         {
             Header header;
         };
+#pragma warning(default:4324)
 
     private:
         Impl* _impl = nullptr;

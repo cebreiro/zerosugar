@@ -124,7 +124,7 @@ namespace zerosugar::xr
         assert(removed);
     }
 
-    void GameSnapshotController::ProcessMovement(game_entity_id_type playerId, const Eigen::Vector3d& position)
+    void GameSnapshotController::ProcessMovement(game_entity_id_type playerId, const Eigen::Vector3d& position, float yaw)
     {
         GameSnapshotContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
         GamePlayerSnapshot* snapshot = snapshotContainer.FindPlayer(playerId);
@@ -136,6 +136,7 @@ namespace zerosugar::xr
         constexpr bool syncMovement = true;
         const Eigen::Vector3d oldPosition = snapshot->GetPosition();
 
+        snapshot->SetYaw(yaw);
         HandlePlayerPositionChange(*snapshot, oldPosition, position, syncMovement);
     }
 

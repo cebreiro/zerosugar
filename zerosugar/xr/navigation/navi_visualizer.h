@@ -21,7 +21,7 @@ namespace zerosugar::xr::navi
 
 namespace zerosugar::xr::navi
 {
-    class Visualizer final : public RecastDemoVisualizerInterface
+    class Visualizer final : public RecastDemoVisualizerInterface, public IVisualizer
     {
     public:
         Visualizer(Strand& strand, Data& data);
@@ -31,12 +31,15 @@ namespace zerosugar::xr::navi
 
         void Shutdown();
 
-        void AddAgent(const AddVisualizeTargetParam& param);
-        void RemoveAgent(const RemoveVisualizeTargetParam& param);
-        void UpdateAgent(const UpdateVisualizeTargetParam& param);
+        auto AddAgent(int64_t id, vis::Agent agent) -> Future<bool> override;
+        auto RemoveAgent(int64_t id) -> Future<bool> override;
 
-		void AddOBB(const collision::OBB3d& obb, const std::chrono::milliseconds milli);
+        auto UpdateAgentPosition(int64_t id, Eigen::Vector3d position) -> Future<bool> override;
+        auto UpdateAgentPositionAndYaw(int64_t id, Eigen::Vector3d position, float yaw) -> Future<bool> override;
+        auto UpdateAgentMovement(int64_t id, Eigen::Vector3d startPos, vis::Agent::Movement movement) -> Future<bool> override;
 
+        auto Draw(vis::Object object, std::chrono::milliseconds milli) -> Future<void> override;
+		
     public:
         void handleTools() override;
         void handleDebugMode() override;
@@ -59,43 +62,29 @@ namespace zerosugar::xr::navi
     private:
         void RenderThreadMain();
 
-		void Tick(double delta);
+		void Tick();
+
+        void DrawAgentCylinder(const Eigen::Vector3d& pos, double radius, vis::DrawColor drawColor);
+        void DrawAgentYawArrow(const Eigen::Vector3d& pos, double radius, double yaw, vis::DrawColor drawColor);
+
+        void DrawCylinder(const Vector& min, const Vector& max, vis::DrawColor drawColor);
+        void DrawOBB(const vis::OBB& obb, vis::DrawColor drawColor);
+        void DrawCircle(const vis::Circle& circle, vis::DrawColor drawColor, float lineWidth = 1.f);
+        void DrawArrow(const vis::Arrow& arrow, vis::DrawColor drawColor, float as0 = 0.f, float as1 = 0.4f, float lineWidth = 3.f);
+        void DrawLines(const vis::Lines& lines, vis::DrawColor drawColor);
 
     private:
         Strand& _strand;
         Data& _data;
         std::atomic<bool> _shutdown = false;
 
+        int32_t _drawMode = 0;
         std::thread _renderThread;
         std::unique_ptr<InputGeom> _geom;
         std::unique_ptr<SampleDebugDraw> _dd;
         std::unique_ptr<NavMeshTesterTool> _testTool;
 
-        int32_t _drawMode = 0;
-        std::chrono::system_clock::time_point _lastTickTimePoint;
-
-        struct DrawTarget
-        {
-            int64_t id = 0;
-            Vector position;
-            DrawColor drawColor = DrawColor::LightBlue;
-            Scalar radius;
-
-            double movementDuration = 0;
-            double destMovementDuration = 0;
-            std::optional<Eigen::Vector3d> startPosition = std::nullopt;
-            std::optional<Eigen::Vector3d> destPosition = std::nullopt;
-            std::optional<DrawColor> destPositionDrawColor = std::nullopt;
-        };
-        boost::unordered::unordered_flat_map<int64_t, DrawTarget> _agents;
-
-    public:
-		struct OBB
-		{
-			Eigen::Vector3d center;
-			Eigen::Vector3d halfSize;
-			Eigen::Matrix3d rotation;
-		};
-        boost::container::flat_multimap<std::chrono::system_clock::time_point, OBB> _drawOBBs;
+        boost::unordered::unordered_flat_map<int64_t, vis::Agent> _agents;
+        boost::container::flat_multimap<std::chrono::system_clock::time_point, vis::Object> _objects;
     };
 }

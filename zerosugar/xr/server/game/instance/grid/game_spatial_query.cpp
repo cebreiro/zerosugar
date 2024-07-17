@@ -5,6 +5,7 @@
 #include "zerosugar/shared/collision/shape/circle.h"
 #include "zerosugar/shared/collision/intersect.h"
 #include "zerosugar/xr/navigation/navigation_service.h"
+#include "zerosugar/xr/navigation/navi_visualizer_interface.h"
 #include "zerosugar/xr/server/game/instance/game_constants.h"
 #include "zerosugar/xr/server/game/instance/grid/game_spatial_container.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_container.h"
@@ -61,9 +62,21 @@ namespace zerosugar::xr
             }
         }
 
-        if (_navigationService && _navigationService->IsRunningVisualizer())
+        if (_navigationService)
         {
-            _navigationService->DrawOBB(obb3d, std::chrono::milliseconds(2000));
+            if (std::shared_ptr<navi::IVisualizer> visualizer = _navigationService->GetVisualizer())
+            {
+                navi::vis::Object object{
+                    .shape = navi::vis::OBB{
+                    .center = obbCenter,
+                    .halfSize = halfSize,
+                    .rotation = rotation
+                    },
+                    .drawColor = navi::vis::DrawColor::Yellow,
+                };
+
+                visualizer->Draw(std::move(object), std::chrono::milliseconds(2000));
+            }
         }
 
         return true;

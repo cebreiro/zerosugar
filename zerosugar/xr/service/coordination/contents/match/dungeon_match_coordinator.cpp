@@ -271,7 +271,7 @@ namespace zerosugar::xr
         {
             auto& [dungeonId, matchQueue] = *iter;
 
-            constexpr int64_t matchOrganizeSize = 500;
+            constexpr int64_t matchOrganizeSize = 1;
 
             while (std::ssize(matchQueue) >= matchOrganizeSize)
             {

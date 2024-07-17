@@ -77,7 +77,7 @@ namespace zerosugar::xr
 
                 const Eigen::Vector3d diff = (_position - prevPos);
 
-                _yaw = std::atan2(diff.y(), diff.x());
+                _yaw = std::atan2(diff.y(), diff.x()) / std::numbers::pi * 180.0;
                 movement.lastUpdateTimePoint = current;
 
                 return current >= movement.endTimePoint;

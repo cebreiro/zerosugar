@@ -16,18 +16,20 @@ namespace zerosugar::xr::game_task
     {
         (void)parallel;
 
-        _id = target->GetId();
+        const auto& pos = GetParam().position;
 
-        const network::game::cs::MovePlayer& param = GetParam();
-        _newPosition.x() = param.position.x;
-        _newPosition.y() = param.position.y;
-        _newPosition.z() = param.position.z;
-
-        target->GetComponent<MovementComponent>().SetPosition(_newPosition);
+        MovementComponent& movementComponent = target->GetComponent<MovementComponent>();
+        movementComponent.SetPosition(Eigen::Vector3d(pos.x, pos.y, pos.z));
+        movementComponent.SetYaw(GetParam().rotation.yaw);
     }
 
     void PlayerMove::OnComplete(GameExecutionSerial& serial)
     {
-        serial.GetSnapshotController().ProcessMovement(_id, _newPosition);
+        const auto& pos = GetParam().position;
+        const auto id = GetSelector<MainTargetSelector>().GetTargetId()[0];
+
+        serial.GetSnapshotController().ProcessMovement(id,
+            Eigen::Vector3d(pos.x, pos.y, pos.z),
+            GetParam().rotation.yaw);
     }
 }

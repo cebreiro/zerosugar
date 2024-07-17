@@ -20,7 +20,7 @@ namespace zerosugar::xr::game_task
         const network::game::cs::StartPlayerAttack& attack = GetParam();
 
         MovementComponent& movementComponent = player->GetComponent<MovementComponent>();
-        movementComponent.SetPosition(Eigen::Vector3d(attack.position.x, attack.position.y, attack.position.y));
+        movementComponent.SetPosition(Eigen::Vector3d(attack.position.x, attack.position.y, attack.position.z));
         movementComponent.SetYaw(attack.rotation.yaw);
 
         _resultPosition = movementComponent.GetPosition();

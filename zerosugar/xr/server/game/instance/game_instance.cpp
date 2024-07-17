@@ -80,13 +80,6 @@ namespace zerosugar::xr
         if (_data->GetType() != data::MapType::Village)
         {
             GetTaskScheduler().StartDebugOutputLog();
-
-            auto handler = GetGMCommandFactory().CreateHandler("vis");
-
-            GamePlayerSnapshot* a = reinterpret_cast<GamePlayerSnapshot*>(this);
-            std::vector<std::string> b;
-
-            handler->Handle(GetSerialContext(), *a, b);
         }
 
         co_return;

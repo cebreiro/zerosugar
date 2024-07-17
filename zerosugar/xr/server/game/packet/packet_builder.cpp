@@ -32,6 +32,8 @@ namespace zerosugar::xr
     {
         result.id = player.GetId().Unwrap();
         Build(result.position, player);
+
+        result.rotation.yaw = player.GetYaw();
     }
 
     void GamePacketBuilder::Build(network::game::PlayerInventoryItem& result, const InventoryItem& item)
@@ -85,6 +87,8 @@ namespace zerosugar::xr
         Build(result.base, player);
         Build(result.equipment, player);
         Build(result.transform.position, player);
+
+        result.transform.rotation.yaw = player.GetYaw();
     }
 
     void GamePacketBuilder::Build(network::game::PlayerBase& result, const GameEntity& entity)

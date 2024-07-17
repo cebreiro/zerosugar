@@ -37,6 +37,7 @@ namespace zerosugar::xr
         auto PublishEntityId(GameEntityType type) -> game_entity_id_type;
 
         auto GetServiceLocator() const -> ServiceLocator&;
+        auto GetStrand() -> Strand&;
         auto GetMapData() const -> const MapData&;
 
         auto GetTaskScheduler() -> GameTaskScheduler&;

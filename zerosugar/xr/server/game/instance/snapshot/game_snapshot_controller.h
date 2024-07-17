@@ -37,7 +37,7 @@ namespace zerosugar::xr
         void ProcessPlayerActivate(game_entity_id_type playerId);
 
         void ProcessPlayerDespawn(game_entity_id_type entityId);
-        void ProcessMovement(game_entity_id_type playerId, const Eigen::Vector3d& position);
+        void ProcessMovement(game_entity_id_type playerId, const Eigen::Vector3d& position, float yaw);
         void ProcessStop(game_entity_id_type playerId, const Eigen::Vector3d& position);
         void ProcessSprint(game_entity_id_type id);
         void ProcessRollDodge(game_entity_id_type id, const Eigen::Vector3d& rotation);

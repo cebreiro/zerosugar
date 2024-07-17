@@ -78,6 +78,7 @@ namespace zerosugar::xr::navi
     public:
         Scalar() = default;
         explicit Scalar(float value);
+        explicit Scalar(double value);
 
         auto Get() const -> float;
 

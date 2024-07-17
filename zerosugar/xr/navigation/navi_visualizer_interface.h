@@ -1,4 +1,5 @@
 #pragma once
+#include "zerosugar/xr/navigation/navi_visualize_param.h"
 
 class dtNavMeshQuery;
 class dtNavMesh;
@@ -30,5 +31,20 @@ namespace zerosugar::xr::navi
         virtual auto GetAgentRadius() const -> float = 0;
         virtual auto GetAgentHeight() const -> float = 0;
         virtual auto GetAgentClimb() const -> float = 0;
+    };
+
+    class IVisualizer
+    {
+    public:
+        virtual ~IVisualizer() = default;
+
+        virtual auto AddAgent(int64_t id, vis::Agent agent) -> Future<bool> = 0;
+        virtual auto RemoveAgent(int64_t id) -> Future<bool> = 0;
+
+        virtual auto UpdateAgentPosition(int64_t id, Eigen::Vector3d position) -> Future<bool> = 0;
+        virtual auto UpdateAgentPositionAndYaw(int64_t id, Eigen::Vector3d position, float yaw) -> Future<bool> = 0;
+        virtual auto UpdateAgentMovement(int64_t id, Eigen::Vector3d startPos, vis::Agent::Movement movement) -> Future<bool> = 0;
+
+        virtual auto Draw(vis::Object object, std::chrono::milliseconds milli) -> Future<void> = 0;
     };
 }
