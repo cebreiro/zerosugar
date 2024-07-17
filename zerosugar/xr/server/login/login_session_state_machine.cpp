@@ -80,6 +80,10 @@ namespace zerosugar::xr
 
             if (_shutdown.load() || !session)
             {
+                ZEROSUGAR_LOG_WARN(self->_serviceLocator,
+                    fmt::format("[{}] fail to find session. io runner exit",
+                        self->GetName()));
+
                 co_return;
             }
 

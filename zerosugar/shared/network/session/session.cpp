@@ -1,15 +1,18 @@
 #include "session.h"
 
 #include "zerosugar/shared/execution/executor/impl/asio_strand.h"
+#include "zerosugar/shared/log/log_service_interface.h"
 
 namespace zerosugar
 {
     Session::Session(id_type id, SharedPtrNotNull<session::event_channel_type> channel,
-        boost::asio::ip::tcp::socket socket, SharedPtrNotNull<execution::AsioStrand> strand)
+        boost::asio::ip::tcp::socket socket, SharedPtrNotNull<execution::AsioStrand> strand,
+        std::shared_ptr<ILogService> logService)
         : _id(id)
         , _channel(std::move(channel))
         , _socket(std::move(socket))
         , _strand(std::move(strand))
+        , _logService(std::move(_logService))
         , _localAddress(_socket.local_endpoint().address().to_string())
         , _localPort(_socket.local_endpoint().port())
         , _remoteAddress(_socket.remote_endpoint().address().to_string())
@@ -100,7 +103,7 @@ namespace zerosugar
         assert(_mutableBuffers.empty());
         assert(_receiveBuffers.GetSize() >= RECEIVE_BUFFER_MIN_SIZE);
 
-        for (buffer::Fragment& fragment : _receiveBuffers.GetFragmentContainer())
+        for (buffer::Fragment& fragment : _receiveBuffer.GetFragmentContainer())
         {
             assert(fragment.IsValid());
 
@@ -125,9 +128,18 @@ namespace zerosugar
         _mutableBuffers.clear();
 
         Buffer buffer;
-        if (!_receiveBuffers.SliceFront(buffer, bytes))
+        if (!_receiveBuffer.SliceFront(buffer, bytes))
         {
+            if (_logService)
+            {
+                _logService->Log(LogLevel::Critical,
+                    fmt::format("[session_{}] session receive completion. receive buffer error. receive_buffer: {}, receive: {}",
+                        GetId(), _receiveBuffer.GetSize(), bytes),
+                    std::source_location::current());
+            }
+
             assert(false);
+            
             Close();
 
             return;
@@ -183,7 +195,15 @@ namespace zerosugar
         _constBuffers.clear();
         if (!_sendPending)
         {
+            if (_logService)
+            {
+                _logService->Log(LogLevel::Critical,
+                    fmt::format("[session_{}] session send completion. send pending state error", GetId()),
+                    std::source_location::current());
+            }
+
             assert(false);
+
             Close();
 
             return;
@@ -192,7 +212,15 @@ namespace zerosugar
         Buffer buffer;
         if (!_sendBuffer.SliceFront(buffer, bytes))
         {
+            if (_logService)
+            {
+                _logService->Log(LogLevel::Critical,
+                    fmt::format("[session_{}] session send completion. send buffer error", GetId()),
+                    std::source_location::current());
+            }
+
             assert(false);
+
             Close();
 
             return;
@@ -200,6 +228,14 @@ namespace zerosugar
 
         if (_sendBuffer.GetSize() > 0)
         {
+            if (_logService)
+            {
+                _logService->Log(LogLevel::Critical,
+                    fmt::format("[session_{}] session send completion. partial transmit occurred. request: {}, send: {}",
+                        GetId(), _sendBuffer.GetSize() + bytes, bytes),
+                    std::source_location::current());
+            }
+
             assert(false);
 
             WriteAsync(ConfigureConstBuffer(_sendBuffer));
@@ -238,12 +274,12 @@ namespace zerosugar
 
     void Session::ExpandReceiveBuffer()
     {
-        if (_receiveBuffers.GetSize() >= RECEIVE_BUFFER_MIN_SIZE)
+        if (_receiveBuffer.GetSize() >= RECEIVE_BUFFER_MIN_SIZE)
         {
             return;
         }
 
-        _receiveBuffers.Add(buffer::Fragment::Create(RECEIVE_BUFFER_EXPAND_SIZE));
+        _receiveBuffer.Add(buffer::Fragment::Create(RECEIVE_BUFFER_EXPAND_SIZE));
     }
 
     auto Session::FlushSendWaitQueue() -> Buffer
@@ -285,6 +321,7 @@ namespace zerosugar
                 if (ec)
                 {
                     self->HandleError(ec);
+
                     return;
                 }
 

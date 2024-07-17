@@ -250,6 +250,42 @@ TEST(Buffer, MergeFragment)
     }
 }
 
+TEST(Buffer, WriteRawBytesOnFragment)
+{
+    constexpr int64_t size = 16;
+    constexpr int64_t count = 5;
+
+    // arrange
+    Fragment writeData = GenerateFragment(16 * 5);
+
+    Buffer buffer;
+    for (int64_t i = 0; i < count; ++i)
+    {
+        buffer.Add(Fragment::Create(size));
+    }
+
+    const char* data = writeData.GetData();
+
+    // act
+    for (Fragment& fragment : buffer.GetFragmentContainer())
+    {
+        for (int64_t i = 0; i < fragment.GetSize(); ++i)
+        {
+            fragment.GetData()[i] = *data;
+
+            ++data;
+        }
+    }
+
+    // assert
+    auto iter = buffer.begin();
+
+    for (int64_t i = 0; i < size * count; ++i, ++iter)
+    {
+        EXPECT_EQ(*iter, writeData.GetData()[i]);
+    }
+}
+
 TEST(Buffer, MergeBuffer)
 {
     // arrange

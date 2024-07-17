@@ -1,10 +1,13 @@
 #include "socket.h"
 
 #include <boost/scope/scope_exit.hpp>
+
+#include "zerosugar/shared/app/app_log.h"
 #include "zerosugar/shared/network/io_error.h"
 #include "zerosugar/shared/execution/executor/executor_coroutine_traits.h"
 #include "zerosugar/shared/execution/executor/impl/asio_strand.h"
 #include "zerosugar/shared/execution/executor/operation/dispatch.h"
+#include "zerosugar/shared/execution/executor/operation/schedule.h"
 
 namespace zerosugar
 {
@@ -17,6 +20,16 @@ namespace zerosugar
     bool Socket::IsOpen() const
     {
         return _socket.is_open();
+    }
+
+    bool Socket::IsSendPending() const
+    {
+        return _sendPending;
+    }
+
+    bool Socket::IsReceivePending() const
+    {
+        return _receivePending;
     }
 
     auto Socket::ConnectAsync(std::string address, uint16_t port,
@@ -102,7 +115,6 @@ namespace zerosugar
                 FreeCompletionToken(std::move(completionToken));
             });
 
-
         if (_sendPending)
         {
             _sendWaits.emplace(std::move(buffer), completionToken);
@@ -129,14 +141,17 @@ namespace zerosugar
 
         assert(ExecutionContext::IsEqualTo(*_strand));
 
-        SharedPtrNotNull<future::SharedContext<std::expected<int64_t, IOError>>> completionToken = AllocCompletionToken();
+        _receivePending = true;
+
+        completion_token_type completionToken = AllocCompletionToken();
         boost::scope::scope_exit free([this, completionToken]() mutable
             {
                 FreeCompletionToken(std::move(completionToken));
+
+                _receivePending = false;
             });
 
         boost::container::small_vector<boost::asio::mutable_buffer, 4> mutableBuffers;
-
         for (buffer::Fragment& fragment : buffer.GetFragmentContainer())
         {
             mutableBuffers.emplace_back(fragment.GetData(), fragment.GetSize());
@@ -219,9 +234,9 @@ namespace zerosugar
                 }));
     }
 
-    auto Socket::AllocCompletionToken() -> SharedPtrNotNull<future::SharedContext<std::expected<int64_t, IOError>>>
+    auto Socket::AllocCompletionToken() -> completion_token_type
     {
-        SharedPtrNotNull<future::SharedContext<std::expected<int64_t, IOError>>> result;
+        completion_token_type result;
 
         if (_recycleCompletionTokens.empty())
         {
@@ -236,7 +251,7 @@ namespace zerosugar
         return result;
     }
 
-    void Socket::FreeCompletionToken(SharedPtrNotNull<future::SharedContext<std::expected<int64_t, IOError>>> token)
+    void Socket::FreeCompletionToken(completion_token_type token)
     {
         token->Reset();
 

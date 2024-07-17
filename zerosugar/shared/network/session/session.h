@@ -8,6 +8,11 @@
 
 namespace zerosugar
 {
+    class ILogService;
+}
+
+namespace zerosugar
+{
     namespace execution
     {
         class AsioStrand;
@@ -29,7 +34,8 @@ namespace zerosugar
         Session(id_type id,
             SharedPtrNotNull<session::event_channel_type> channel,
             boost::asio::ip::tcp::socket socket,
-            SharedPtrNotNull<execution::AsioStrand> strand);
+            SharedPtrNotNull<execution::AsioStrand> strand,
+            std::shared_ptr<ILogService> logService);
         ~Session();
 
         void StartReceive();
@@ -70,14 +76,14 @@ namespace zerosugar
         SharedPtrNotNull<session::event_channel_type> _channel;
         boost::asio::ip::tcp::socket _socket;
         SharedPtrNotNull<execution::AsioStrand> _strand;
-        std::function<void()> _disconnectionCallback;
+        std::shared_ptr<ILogService> _logService;
 
         std::string _localAddress;
         uint16_t _localPort = 0;
         std::string _remoteAddress;
         uint16_t _remotePort = 0;
 
-        Buffer _receiveBuffers;
+        Buffer _receiveBuffer;
         std::vector<boost::asio::mutable_buffer> _mutableBuffers;
 
         bool _sendPending = false;

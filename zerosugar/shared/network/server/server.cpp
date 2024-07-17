@@ -170,7 +170,7 @@ namespace zerosugar
         session::id_type id = PublishSessionId();
         auto channel = std::make_shared<session::event_channel_type>();
         auto strand = std::make_shared<execution::AsioStrand>(make_strand(_executor.GetIoContext()));
-        auto session = std::make_shared<Session>(id, channel, std::move(socket), strand);
+        auto session = std::make_shared<Session>(id, channel, std::move(socket), strand, _locator.FindShared<ILogService>());
 
         decltype(_sessions)::accessor accessor;
         if (_sessions.insert(accessor, id))

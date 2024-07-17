@@ -32,7 +32,6 @@ auto Client::GetSendBuffer() const -> const std::array<char, byteSize>&
     return _bytes;
 }
 
-
 auto Client::GetReceiveBuffer() const -> const std::array<char, byteSize>&
 {
     return _result;

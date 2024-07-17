@@ -26,15 +26,16 @@ namespace zerosugar::future
 
     bool SharedContextBase::Cancel()
     {
-        FutureStatus expected = FutureStatus::Pending;
-        if (!_status.compare_exchange_strong(expected, FutureStatus::Canceled))
-        {
-            return false;
-        }
-
         std::move_only_function<void()> continuation;
         {
             std::lock_guard lock(_mutex);
+
+            FutureStatus expected = FutureStatus::Pending;
+            if (!_status.compare_exchange_strong(expected, FutureStatus::Canceled))
+            {
+                return false;
+            }
+
             _continuation.swap(continuation);
         }
 
@@ -50,15 +51,15 @@ namespace zerosugar::future
 
     void SharedContextBase::OnFailure(const std::exception_ptr& exception)
     {
-        FutureStatus expected = FutureStatus::Pending;
-        if (!_status.compare_exchange_strong(expected, FutureStatus::Complete))
-        {
-            return;
-        }
-
         std::move_only_function<void()> continuation;
         {
             std::lock_guard lock(_mutex);
+
+            FutureStatus expected = FutureStatus::Pending;
+            if (!_status.compare_exchange_strong(expected, FutureStatus::Complete))
+            {
+                return;
+            }
 
             assert(!_exception);
 
@@ -76,12 +77,14 @@ namespace zerosugar::future
 
     void SharedContextBase::SetContinuation(std::move_only_function<void()> function)
     {
-        if (_status.load() == FutureStatus::Pending)
         {
             std::lock_guard lock(_mutex);
 
-            assert(!_continuation);
-            _continuation = std::move(function);
+            if (_status.load() == FutureStatus::Pending)
+            {
+                assert(!_continuation);
+                _continuation = std::move(function);
+            }
         }
 
         if (function)
@@ -106,15 +109,15 @@ namespace zerosugar::future
 
     void SharedContext<void>::OnSuccess()
     {
-        FutureStatus expected = FutureStatus::Pending;
-        if (!_status.compare_exchange_strong(expected, FutureStatus::Complete))
-        {
-            return;
-        }
-
         std::move_only_function<void()> continuation;
         {
             std::lock_guard lock(_mutex);
+
+            FutureStatus expected = FutureStatus::Pending;
+            if (!_status.compare_exchange_strong(expected, FutureStatus::Complete))
+            {
+                return;
+            }
 
             _continuation.swap(continuation);
         }

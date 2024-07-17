@@ -124,7 +124,7 @@ namespace zerosugar::xr
         const std::filesystem::path& logFilePath = std::filesystem::current_path() / _config->logFilePath;
 
         SpdLogLoggerBuilder builder;
-        builder.ConfigureConsole().SetLogLevel(LogLevel::Debug).SetAsync(false);
+        builder.ConfigureConsole().SetLogLevel(LogLevel::Info).SetAsync(false);
         builder.ConfigureDailyFile().SetLogLevel(LogLevel::Info).SetPath(logFilePath);
 
         _logService->Add(-1, builder.CreateLogger());
@@ -198,7 +198,7 @@ namespace zerosugar::xr
             {
                 while (true)
                 {
-                    constexpr auto rpcStatusReportInterval = std::chrono::seconds(60);
+                    constexpr auto rpcStatusReportInterval = std::chrono::seconds(30);
                     co_await rpcClient->ScheduleCompletionLog(rpcStatusReportInterval);
                 }
 

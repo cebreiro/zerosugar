@@ -78,15 +78,15 @@ namespace zerosugar::future
     template <std::move_constructible T>
     void SharedContext<T>::OnSuccess(T&& value)
     {
-        FutureStatus expected = FutureStatus::Pending;
-        if (!_status.compare_exchange_strong(expected, FutureStatus::Complete))
-        {
-            return;
-        }
-
         std::move_only_function<void()> continuation;
         {
             std::lock_guard lock(_mutex);
+
+            FutureStatus expected = FutureStatus::Pending;
+            if (!_status.compare_exchange_strong(expected, FutureStatus::Complete))
+            {
+                return;
+            }
 
             _value = std::move(value);
             _continuation.swap(continuation);

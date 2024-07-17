@@ -83,6 +83,10 @@ namespace zerosugar::xr
         auto RunIO() -> Future<void>;
         auto RunAI() -> Future<void>;
 
+        void HandleLoginPacket(const IPacket& packet);
+        void HandleLobbyPacket(const IPacket& packet);
+        void HandleGamePacket(const IPacket& packet);
+
         void TryCreateNavigation(int32_t mapId);
         void TryRemoveNavigation(int32_t mapId);
 

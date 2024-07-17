@@ -66,7 +66,7 @@ namespace zerosugar::xr
                 }
 
                 ZEROSUGAR_LOG_INFO(self->GetServiceLocator(),
-                    fmt::format("[{}] socket: {}, state: {}, behavior_tree: {}, awaiting: [{}, event: {}], current_node: {}, receive_buffer: {}, received_buffer: {}, strand task: {}",
+                    fmt::format("[{}] socket: {}, state: {}, behavior_tree: {}, awaiting: [{}, event: {}], current_node: {}, receive_buffer: {}, packet_buffer: {}, strand task: {}, running_io: {}, receive_pending: {}",
                         self->GetName(),
                         self->GetSocket().IsOpen() ? "open" : "closed",
                         ToString(self->GetSessionState()),
@@ -76,7 +76,10 @@ namespace zerosugar::xr
                         self->_behaviorTree ? self->_behaviorTree->GetCurrentVisitNodeName().value_or("null") : "null",
                         self->_receiveBuffer.GetSize(),
                         self->_packetBuffer.GetSize(),
-                        self->_strand->GetTaskCount()));
+                        self->_strand->GetTaskCount(),
+                        self->_runIOFuture.IsValid() ? (self->_runIOFuture.IsPending() ? "true" : "false") : "false",
+                        self->_socket->IsReceivePending()
+                    ));
 
             }, delay, delay);
     }
@@ -166,7 +169,19 @@ namespace zerosugar::xr
         auto self = shared_from_this();
 
         co_await _socket->ConnectAsync(ip, port, std::chrono::milliseconds(retryMilli));
-        _runIOFuture = RunIO();
+        _runIOFuture = RunIO().ContinuationWith(*_strand, [self = shared_from_this()](Future<void>& future) -> void
+            {
+                try
+                {
+                    future.Get();
+                }
+                catch (const std::exception& e)
+                {
+                    ZEROSUGAR_LOG_CRITICAL(self->GetServiceLocator(),
+                        fmt::format("[{}] io operation is abroted by exception. exception: {}",
+                            self->GetName(), e.what()));
+                }
+            });
 
         co_return;
     }
@@ -179,7 +194,6 @@ namespace zerosugar::xr
         [[maybe_unused]]
         auto self = shared_from_this();
 
-        // post
         _socket->CloseAsync();
 
         if (_localPlayer)
@@ -187,8 +201,9 @@ namespace zerosugar::xr
             TryRemoveNavigation(_localPlayer->GetZoneId());
         }
 
-        // end
         co_await _runIOFuture;
+
+        _runIOFuture = Future<void>();
 
         co_return;
     }
@@ -295,10 +310,12 @@ namespace zerosugar::xr
             if (!receiveResult.has_value())
             {
                 ZEROSUGAR_LOG_INFO(_serviceLocator,
-                    fmt::format("[bot_controller] receive error. error: {}", receiveResult.error().message));
+                    fmt::format("[{}] receive error. error: {}",
+                        GetName(), receiveResult.error().message));
 
                 co_return;
             }
+
             const int64_t receiveSize = receiveResult.value();
             assert(receiveSize <= _receiveBuffer.GetSize());
 
@@ -332,123 +349,29 @@ namespace zerosugar::xr
                 {
                 case BotSessionStateType::Login:
                 {
-                    using namespace network::login;
-
-                    std::unique_ptr<IPacket> packet = sc::CreateFrom(reader);
+                    std::unique_ptr<IPacket> packet = network::login::sc::CreateFrom(reader);
                     assert(reader.GetReadSize() == packetSize);
                     assert(packet);
 
-                    sc::Visit(*packet, [this]<typename T>(const T & packet)
-                    {
-                        if (_behaviorTree->IsWaitFor<T>())
-                        {
-                            _behaviorTree->Notify(packet);
-                        }
-                    });
+                    HandleLoginPacket(*packet);
                 }
                 break;
                 case BotSessionStateType::Lobby:
                 {
-                    using namespace network::lobby;
-
-                    std::unique_ptr<IPacket> packet = sc::CreateFrom(reader);
+                    std::unique_ptr<IPacket> packet = network::lobby::sc::CreateFrom(reader);
                     assert(reader.GetReadSize() == packetSize);
                     assert(packet);
 
-                    sc::Visit(*packet, [this]<typename T>(const T & packet)
-                    {
-                        if (_behaviorTree->IsWaitFor<T>())
-                        {
-                            _behaviorTree->Notify(packet);
-                        }
-                    });
+                    HandleLobbyPacket(*packet);
                 }
                 break;
                 case BotSessionStateType::Game:
                 {
-                    using namespace network;
-
-                    std::unique_ptr<IPacket> packet = game::sc::CreateFrom(reader);
+                    std::unique_ptr<IPacket> packet = network::game::sc::CreateFrom(reader);
                     assert(reader.GetReadSize() == packetSize);
                     assert(packet);
 
-                    game::sc::Visit(*packet, [this]<typename T>(const T & packet)
-                    {
-                        if constexpr (std::is_same_v<T, game::sc::Pong>)
-                        {
-                            const auto iter = _pingPromises.find(packet.sequence);
-                            assert(iter != _pingPromises.end());
-
-                            const auto now = std::chrono::system_clock::now();
-                            const auto prev = std::chrono::system_clock::time_point(std::chrono::system_clock::duration(packet.clientTimePoint));
-
-                            iter->second.Set(now - prev);
-
-                            _pingPromises.erase(iter);
-                        }
-
-                        if constexpr (std::is_same_v<T, game::sc::EnterGame>)
-                        {
-                            _localPlayer = std::make_unique<bot::LocalPlayer>(packet.localPlayer, packet.zoneId);
-                            _visualObjectContainer->Clear();
-
-                            this->TryCreateNavigation(packet.zoneId);
-                        }
-                        else if constexpr (std::is_same_v<T, game::sc::SpawnMonster> || std::is_same_v<T, game::sc::AddMonster>)
-                        {
-                            for (const game::Monster& monster : packet.monsters)
-                            {
-                                [[maybe_unused]]
-                                const bool added = _visualObjectContainer->Add(monster.id, std::make_shared<bot::Monster>(monster));
-                                assert(added);
-                            }
-                        }
-                        else if constexpr (std::is_same_v<T, game::sc::RemoveMonster>)
-                        {
-                            for (const int64_t id : packet.monsters)
-                            {
-                                [[maybe_unused]]
-                                const bool removed = _visualObjectContainer->Remove(id);
-                                assert(removed);
-                            }
-                        }
-                        else if constexpr (std::is_same_v<T, game::sc::DespawnMonster>)
-                        {
-                            for (const int64_t id : packet.monsters)
-                            {
-                                [[maybe_unused]]
-                                const bool removed = _visualObjectContainer->Remove(id);
-                                assert(removed);
-                            }
-                        }
-                        else if constexpr (std::is_same_v<T, game::sc::MoveMonster>)
-                        {
-                            bot::Monster* monster = _visualObjectContainer->FindMonster(packet.id);
-                            assert(monster);
-
-                            const Eigen::Vector3d pos(packet.position.x, packet.position.y, packet.position.z);
-                            const Eigen::Vector3d rot(packet.rotation.pitch, packet.rotation.yaw, packet.rotation.roll);
-
-                            monster->SetPosition(pos);
-                            monster->SetRotation(rot);
-                        }
-                        else if constexpr (std::is_same_v<T, game::sc::AttackMonster>)
-                        {
-                            bot::Monster* monster = _visualObjectContainer->FindMonster(packet.id);
-                            assert(monster);
-
-                            const Eigen::Vector3d pos(packet.position.x, packet.position.y, packet.position.z);
-                            const Eigen::Vector3d rot(packet.rotation.pitch, packet.rotation.yaw, packet.rotation.roll);
-
-                            monster->SetPosition(pos);
-                            monster->SetRotation(rot);
-                        }
-
-                        if (_behaviorTree && _behaviorTree->IsWaitFor<T>())
-                        {
-                            _behaviorTree->Notify(packet);
-                        }
-                    });
+                    HandleGamePacket(*packet);
                 }
                 break;
                 }
@@ -458,6 +381,9 @@ namespace zerosugar::xr
                 assert(sliced);
             }
         }
+
+        ZEROSUGAR_LOG_INFO(_serviceLocator,
+            fmt::format("[{}] exit io.", GetName()));
     }
 
     auto BotController::RunAI() -> Future<void>
@@ -470,8 +396,8 @@ namespace zerosugar::xr
 
         while (true)
         {
-            constexpr auto tickInterval = std::chrono::milliseconds(200);
-            co_await Delay(tickInterval);
+            constexpr auto interval = std::chrono::milliseconds(200);
+            co_await Delay(interval);
 
             assert(ExecutionContext::IsEqualTo(*_strand));
 
@@ -486,7 +412,7 @@ namespace zerosugar::xr
                         completionToken->OnSuccess();
                     });
 
-                co_await Future<void>(completionToken);
+                co_await Future(completionToken);
 
                 if (bt->StopRequested())
                 {
@@ -505,6 +431,111 @@ namespace zerosugar::xr
         bt->Finalize();
 
         co_return;
+    }
+
+    void BotController::HandleLoginPacket(const IPacket& packet)
+    {
+        network::login::sc::Visit(packet, [this]<typename T>(const T& packet)
+        {
+            if (_behaviorTree->IsWaitFor<T>())
+            {
+                _behaviorTree->Notify(packet);
+            }
+        });
+    }
+
+    void BotController::HandleLobbyPacket(const IPacket& packet)
+    {
+        network::lobby::sc::Visit(packet, [this]<typename T>(const T & packet)
+        {
+            if (_behaviorTree->IsWaitFor<T>())
+            {
+                _behaviorTree->Notify(packet);
+            }
+        });
+    }
+
+    void BotController::HandleGamePacket(const IPacket& packet)
+    {
+        using namespace network::game;
+
+        sc::Visit(packet, [this]<typename T>(const T & packet)
+        {
+            if constexpr (std::is_same_v<T, sc::Pong>)
+            {
+                const auto iter = _pingPromises.find(packet.sequence);
+                assert(iter != _pingPromises.end());
+
+                const auto now = std::chrono::system_clock::now();
+                const auto prev = std::chrono::system_clock::time_point(std::chrono::system_clock::duration(packet.clientTimePoint));
+
+                iter->second.Set(now - prev);
+
+                _pingPromises.erase(iter);
+            }
+
+            if constexpr (std::is_same_v<T, sc::EnterGame>)
+            {
+                _localPlayer = std::make_unique<bot::LocalPlayer>(packet.localPlayer, packet.zoneId);
+                _visualObjectContainer->Clear();
+
+                this->TryCreateNavigation(packet.zoneId);
+            }
+            else if constexpr (std::is_same_v<T, sc::SpawnMonster> || std::is_same_v<T, sc::AddMonster>)
+            {
+                for (const network::game::Monster& monster : packet.monsters)
+                {
+                    [[maybe_unused]]
+                    const bool added = _visualObjectContainer->Add(monster.id, std::make_shared<bot::Monster>(monster));
+                    assert(added);
+                }
+            }
+            else if constexpr (std::is_same_v<T, sc::RemoveMonster>)
+            {
+                for (const int64_t id : packet.monsters)
+                {
+                    [[maybe_unused]]
+                    const bool removed = _visualObjectContainer->Remove(id);
+                    assert(removed);
+                }
+            }
+            else if constexpr (std::is_same_v<T, sc::DespawnMonster>)
+            {
+                for (const int64_t id : packet.monsters)
+                {
+                    [[maybe_unused]]
+                    const bool removed = _visualObjectContainer->Remove(id);
+                    assert(removed);
+                }
+            }
+            else if constexpr (std::is_same_v<T, sc::MoveMonster>)
+            {
+                bot::Monster* monster = _visualObjectContainer->FindMonster(packet.id);
+                assert(monster);
+
+                const Eigen::Vector3d pos(packet.position.x, packet.position.y, packet.position.z);
+                const Eigen::Vector3d rot(packet.rotation.pitch, packet.rotation.yaw, packet.rotation.roll);
+
+                monster->SetPosition(pos);
+                monster->SetRotation(rot);
+            }
+            else if constexpr (std::is_same_v<T, sc::AttackMonster>)
+            {
+                bot::Monster* monster = _visualObjectContainer->FindMonster(packet.id);
+                assert(monster);
+
+                const Eigen::Vector3d pos(packet.position.x, packet.position.y, packet.position.z);
+                const Eigen::Vector3d rot(packet.rotation.pitch, packet.rotation.yaw, packet.rotation.roll);
+
+                monster->SetPosition(pos);
+                monster->SetRotation(rot);
+            }
+
+            if (_behaviorTree && _behaviorTree->IsWaitFor<T>())
+            {
+                _behaviorTree->Notify(packet);
+            }
+        });
     }
 
     void BotController::Shutdown(const std::string& reason)

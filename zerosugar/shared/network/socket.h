@@ -25,6 +25,8 @@ namespace zerosugar
         explicit Socket(SharedPtrNotNull<execution::AsioStrand> strand);
 
         bool IsOpen() const;
+        bool IsSendPending() const;
+        bool IsReceivePending() const;
 
         auto ConnectAsync(std::string address, uint16_t port,
             std::chrono::milliseconds retryInterval = std::chrono::milliseconds(5000),
@@ -48,6 +50,7 @@ namespace zerosugar
 
         bool _shutdown = false;
         bool _sendPending = false;
+        bool _receivePending = false;
         std::queue<std::pair<Buffer, completion_token_type>> _sendWaits;
         std::vector<completion_token_type> _recycleCompletionTokens;
     };
