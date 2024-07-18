@@ -107,15 +107,11 @@ namespace zerosugar::xr
         if (auto naviation = gameInstance->GetNavigationService(); naviation)
         {
             MovementComponent& movementComponent = entity->GetComponent<MovementComponent>();
-            const Eigen::Vector3d& pos = entity->GetComponent<MovementComponent>().GetPosition();
 
-            const navi::FVector naviPos(pos);
-            constexpr float radius = 600.0;
-
-            std::optional<navi::FVector> randPos = co_await naviation->GetRandomPointAroundCircle(naviPos, radius);
-            if (randPos.has_value())
+            std::vector<navi::FVector> randPos = co_await naviation->GetRandomPoints(1);
+            if (!randPos.empty())
             {
-                movementComponent.SetPosition(Eigen::Vector3d(randPos->GetX(), randPos->GetY(), randPos->GetZ()));
+                movementComponent.SetPosition(Eigen::Vector3d(randPos[0].GetX(), randPos[0].GetY(), randPos[0].GetZ()));
             }
         }
 

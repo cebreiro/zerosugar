@@ -51,7 +51,7 @@ namespace zerosugar::xr::navi
         _renderThread.join();
     }
 
-    auto Visualizer::Run() -> Future<void>
+    auto Visualizer::Run(Promise<std::pair<bool, std::string>>& initPromise) -> Future<void>
     {
         _geom = std::make_unique<InputGeom>();
         if (const bool success = _geom->load(nullptr, GetObjectFilePath()); !success)
@@ -66,9 +66,9 @@ namespace zerosugar::xr::navi
         Promise<void> promise;
         Future<void> future = promise.GetFuture();
 
-        _renderThread = std::thread([this, p = std::move(promise)]() mutable
+        _renderThread = std::thread([this, &initPromise, p = std::move(promise)]() mutable
             {
-                this->RenderThreadMain();
+                this->RenderThreadMain(initPromise);
 
                 p.Set();
             });
@@ -547,12 +547,13 @@ namespace zerosugar::xr::navi
         _testTool->handleUpdate(dt);
     }
 
-    void Visualizer::RenderThreadMain()
+    void Visualizer::RenderThreadMain(Promise<std::pair<bool, std::string>>& initPromise)
     {
         // Init SDL
         if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
         {
-            printf("Could not initialise SDL.\nError: %s\n", SDL_GetError());
+            initPromise.Set(std::make_pair(false, fmt::format("Could not initialise SDL. SDL_Init Error: {}", SDL_GetError())));
+
             return;
         }
 
@@ -600,7 +601,8 @@ namespace zerosugar::xr::navi
 
         if (errorCode != 0 || !window || !renderer)
         {
-            printf("Could not initialise SDL opengl\nError: %s\n", SDL_GetError());
+            initPromise.Set(std::make_pair(false, fmt::format("Could not initialise SDL. CreateWindowAndRenderer Error: {}", SDL_GetError())));
+
             return;
         }
 
@@ -608,10 +610,12 @@ namespace zerosugar::xr::navi
 
         if (!imguiRenderGLInit("C:/Windows/Fonts/arial.ttf"))
         {
-            printf("Could not init GUI renderer.\n");
-            SDL_Quit();
+            initPromise.Set(std::make_pair(false, fmt::format("Could not init GUI renderer. imguiRenderGLInit")));
+
             return;
         }
+
+        initPromise.Set(std::make_pair(true, ""));
 
         float timeAcc = 0.0f;
         Uint32 prevFrameTime = SDL_GetTicks();

@@ -2,6 +2,7 @@
 
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
 #include "zerosugar/xr/server/game/instance/entity/component/movement_component.h"
+#include "zerosugar/xr/server/game/instance/entity/component/stat_component.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_container.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_controller.h"
 #include "zerosugar/xr/server/game/instance/task/execution/game_execution_serial.h"
@@ -17,6 +18,12 @@ namespace zerosugar::xr::game_task
     {
         (void)parallelContext;
 
+        const auto& statComponent = entity->GetComponent<StatComponent>();
+        if (statComponent.GetHP().Get() <= 0.0)
+        {
+            return;
+        }
+
         MovementComponent& movementComponent = entity->GetComponent<MovementComponent>();
 
         const MonsterMoveContext& context = GetParam();
@@ -31,9 +38,14 @@ namespace zerosugar::xr::game_task
 
     void MonsterMove::OnComplete(GameExecutionSerial& serialContext)
     {
+        if (!_position.has_value())
+        {
+            return;
+        }
+
         GameMonsterSnapshot* monster = serialContext.GetSnapshotContainer().FindMonster(GetParam().monsterId);
         assert(monster);
 
-        serialContext.GetSnapshotController().ProcessMonsterMove(*monster, _position, _yaw);
+        serialContext.GetSnapshotController().ProcessMonsterMove(*monster, *_position, _yaw);
     }
 }

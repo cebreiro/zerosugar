@@ -13,6 +13,8 @@
 
 namespace zerosugar::xr::gm
 {
+    using namespace network::game;
+
     bool VisualizeField::HandleCommand(GameExecutionSerial& serialContext, GamePlayerSnapshot& player)
     {
         (void)player;
@@ -23,41 +25,50 @@ namespace zerosugar::xr::gm
             return false;
         }
 
-        using namespace network::game;
-
         const std::string& observerKey = name;
 
-        Future<bool> future = navigationService->StartVisualize(
+        navigationService->StartVisualize(
             [serial = serialContext.Hold(), context = &serialContext, observerKey]()
             {
                 Post(serial->GetStrand(), [serial, context, observerKey]()
+                    {
+                        GameSnapshotView& view = context->GetSnapshotView();
+
+                        view.RemoveObserver<sc::EnterGame>(observerKey);
+                        // TODO: leave game
+                        view.RemoveObserver<sc::MoveRemotePlayer>(observerKey);
+                        view.RemoveObserver<sc::StopRemotePlayer>(observerKey);
+
+                        view.RemoveObserver<sc::SpawnMonster>(observerKey);
+                        view.RemoveObserver<sc::AttackMonster>(observerKey);
+                        view.RemoveObserver<sc::MoveMonster>(observerKey);
+                        view.RemoveObserver<sc::DespawnMonster>(observerKey);
+                    });
+            })
+            .Then(serialContext.GetStrand(),
+                [serial = serialContext.Hold(), navi = navigationService->shared_from_this(), key = observerKey](bool started)
                 {
-                    GameSnapshotView& view = context->GetSnapshotView();
+                    if (!started)
+                    {
+                        return;
+                    }
 
-                    view.RemoveObserver<sc::EnterGame>(observerKey);
-                    // TODO: leave game
-                    view.RemoveObserver<sc::MoveRemotePlayer>(observerKey);
-                    view.RemoveObserver<sc::StopRemotePlayer>(observerKey);
-
-                    view.RemoveObserver<sc::SpawnMonster>(observerKey);
-                    view.RemoveObserver<sc::AttackMonster>(observerKey);
-                    view.RemoveObserver<sc::MoveMonster>(observerKey);
-                    view.RemoveObserver<sc::DespawnMonster>(observerKey);
+                    RegisterObserver(*serial, navi, key);
                 });
-            });
 
-        // temp...
-        const bool startVisualizer = future.Get();
-        if (!startVisualizer)
+        return true;
+    }
+
+    void VisualizeField::RegisterObserver(GameExecutionSerial& serialContext, const SharedPtrNotNull<NavigationService>& navi, const std::string& key)
+    {
+        const GameSnapshotContainer& snapshotContainer = serialContext.GetSnapshotContainer();
+        auto visualizer = navi->GetVisualizer();
+
+        if (!visualizer)
         {
-            return false;
+            return;
         }
 
-        const std::shared_ptr<navi::IVisualizer> visualizer = navigationService->GetVisualizer();
-        assert(visualizer);
-
-        const GameSnapshotContainer& snapshotContainer = serialContext.GetSnapshotContainer();
-        
         for (const std::unique_ptr<GamePlayerSnapshot>& snapshot : snapshotContainer.GetPlayerRange())
         {
             navi::vis::Agent agent{
@@ -81,9 +92,8 @@ namespace zerosugar::xr::gm
         }
 
         GameSnapshotView& view = serialContext.GetSnapshotView();
-        auto navi = navigationService->shared_from_this();
-
-        view.AddObserver<sc::EnterGame>(observerKey, [visualizer](const sc::EnterGame& packet)
+        
+        view.AddObserver<sc::EnterGame>(key, [visualizer](const sc::EnterGame& packet)
             {
                 const auto& pos = packet.localPlayer.transform.position;
 
@@ -96,19 +106,19 @@ namespace zerosugar::xr::gm
                 (void)visualizer->AddAgent(packet.localPlayer.id, std::move(agent));
             });
 
-        view.AddObserver<sc::MoveRemotePlayer>(observerKey, [visualizer](const sc::MoveRemotePlayer& packet)
+        view.AddObserver<sc::MoveRemotePlayer>(key, [visualizer](const sc::MoveRemotePlayer& packet)
             {
                 (void)visualizer->UpdateAgentPositionAndYaw(packet.id,
                     Eigen::Vector3d(packet.position.x, packet.position.y, packet.position.z), packet.rotation.yaw);
             });
 
-        view.AddObserver<sc::StopRemotePlayer>(observerKey, [visualizer](const sc::StopRemotePlayer& packet)
+        view.AddObserver<sc::StopRemotePlayer>(key, [visualizer](const sc::StopRemotePlayer& packet)
             {
                 (void)visualizer->UpdateAgentPosition(packet.id,
                     Eigen::Vector3d(packet.position.x, packet.position.y, packet.position.z));
             });
 
-        view.AddObserver<sc::RemotePlayerAttack>(observerKey, [visualizer, navi](const sc::RemotePlayerAttack& packet)
+        view.AddObserver<sc::RemotePlayerAttack>(key, [visualizer, navi](const sc::RemotePlayerAttack& packet)
             {
                 const Eigen::Vector3d pos(packet.position.x, packet.position.y, packet.position.z);
 
@@ -171,7 +181,7 @@ namespace zerosugar::xr::gm
                 }
             });
 
-        view.AddObserver<sc::SpawnMonster>(observerKey, [visualizer](const sc::SpawnMonster& packet)
+        view.AddObserver<sc::SpawnMonster>(key, [visualizer](const sc::SpawnMonster& packet)
             {
                 for (const Monster& monster : packet.monsters)
                 {
@@ -187,7 +197,7 @@ namespace zerosugar::xr::gm
                 }
             });
 
-        view.AddObserver<sc::AttackMonster>(observerKey, [visualizer](const sc::AttackMonster& packet)
+        view.AddObserver<sc::AttackMonster>(key, [visualizer](const sc::AttackMonster& packet)
             {
                 const Eigen::Vector3d position(packet.position.x, packet.position.y, packet.position.z);
 
@@ -208,21 +218,19 @@ namespace zerosugar::xr::gm
                 (void)visualizer->UpdateAgentMovement(packet.id, position, std::move(movement));
             });
 
-        view.AddObserver<sc::MoveMonster>(observerKey, [visualizer](const sc::MoveMonster& packet)
+        view.AddObserver<sc::MoveMonster>(key, [visualizer](const sc::MoveMonster& packet)
             {
                 (void)visualizer->UpdateAgentPositionAndYaw(packet.id,
                     Eigen::Vector3d(packet.position.x, packet.position.y, packet.position.z),
                     packet.rotation.yaw);
             });
 
-        view.AddObserver<sc::DespawnMonster>(observerKey, [visualizer](const sc::DespawnMonster& packet)
+        view.AddObserver<sc::DespawnMonster>(key, [visualizer](const sc::DespawnMonster& packet)
             {
                 for (int64_t monsterId : packet.monsters)
                 {
                     (void)visualizer->RemoveAgent(monsterId);
                 }
             });
-
-        return true;
     }
 }

@@ -37,6 +37,7 @@ namespace zerosugar::xr
         void Broadcast(const IPacket& packet, std::optional<game_entity_id_type> excluded);
         void Broadcast(const IPacket& packet, const GamePlayerSnapshot& center, std::optional<game_entity_id_type> excluded = std::nullopt);
         void Broadcast(const IPacket& packet, const GameSpatialSet& set, std::optional<game_entity_id_type> excluded = std::nullopt);
+        void Broadcast(const IPacket& packet, const GameSpatialSet& set, std::chrono::milliseconds delay, std::optional<game_entity_id_type> excluded = std::nullopt);
 
         void Sync(IGameController& controller, const IPacket& packet);
 

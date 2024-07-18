@@ -1,6 +1,5 @@
 #pragma once
 #include <memory>
-#include <tbb/concurrent_hash_map.h>
 #include "zerosugar/shared/execution/future/future.h"
 #include "zerosugar/shared/network/server/server.h"
 #include "zerosugar/shared/network/session/session.h"
@@ -37,5 +36,4 @@ private:
 
 private:
     TestApp& _app;
-    tbb::concurrent_hash_map<id_type, std::shared_ptr<Context>> _table;
 };

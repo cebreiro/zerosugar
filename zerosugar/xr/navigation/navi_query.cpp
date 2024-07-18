@@ -6,12 +6,29 @@
 
 namespace zerosugar::xr::navi
 {
+    auto Rand() -> float
+    {
+        thread_local std::mt19937 mt(std::random_device{}());
+        thread_local std::uniform_real_distribution<float> dist(0.f, 1.f);
+
+        return dist(mt);
+    }
+
     auto FindNearestPoly(const dtNavMeshQuery& query, const Vector& center, const Extents& extents, const dtQueryFilter& filter)
         -> std::pair<dtPolyRef, Vector>
     {
         std::pair<dtPolyRef, Vector> result;
 
         query.findNearestPoly(center.GetData(), extents.GetData(), &filter, &result.first, result.second.GetData());
+
+        return result;
+    }
+
+    auto GetRandomPoint(const dtNavMeshQuery& query, const dtQueryFilter& filter) -> std::pair<dtPolyRef, Vector>
+    {
+        std::pair<dtPolyRef, Vector> result;
+
+        query.findRandomPoint(&filter, Rand, &result.first, result.second.GetData());
 
         return result;
     }
@@ -28,14 +45,8 @@ namespace zerosugar::xr::navi
             return result;
         }
 
-        query.findRandomPointAroundCircle(startPoly, center.GetData(), radius.Get(), &filter, []() -> float
-            {
-                thread_local std::mt19937 mt(std::random_device{}());
-                thread_local std::uniform_real_distribution<float> dist(0.f, 1.f);
-
-                return dist(mt);
-
-            }, &result.first, result.second.GetData());
+        query.findRandomPointAroundCircle(startPoly, center.GetData(), radius.Get(), &filter, Rand,
+            &result.first, result.second.GetData());
 
         return result;
     }

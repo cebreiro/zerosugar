@@ -29,10 +29,13 @@ namespace zerosugar::xr
         auto StartVisualize(std::function<void()> shutdownCallback) -> Future<bool>;
         void StopVisualize();
 
+        auto GetName() const -> std::string_view;
         auto GetStrand() -> Strand&;
         auto GetVisualizer() -> std::shared_ptr<navi::IVisualizer>;
 
     public:
+        auto GetRandomPoints(int64_t count) -> Future<std::vector<navi::FVector>>;
+        
         auto GetRandomPointAroundCircle(const navi::FVector& position, float radius)
             -> Future<std::optional<navi::FVector>>;
 

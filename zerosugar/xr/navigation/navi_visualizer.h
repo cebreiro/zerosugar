@@ -27,7 +27,7 @@ namespace zerosugar::xr::navi
         Visualizer(Strand& strand, Data& data);
         ~Visualizer();
 
-        auto Run() -> Future<void>;
+        auto Run(Promise<std::pair<bool, std::string>>& initPromise) -> Future<void>;
 
         void Shutdown();
 
@@ -60,7 +60,7 @@ namespace zerosugar::xr::navi
         auto GetAgentClimb() const -> float override;
 
     private:
-        void RenderThreadMain();
+        void RenderThreadMain(Promise<std::pair<bool, std::string>>& initPromise);
 
 		void Tick();
 

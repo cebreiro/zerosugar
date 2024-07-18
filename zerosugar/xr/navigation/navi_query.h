@@ -25,6 +25,8 @@ namespace zerosugar::xr::navi
     auto FindNearestPoly(const dtNavMeshQuery& query, const Vector& center, const Extents& extents, const dtQueryFilter& filter)
         -> std::pair<dtPolyRef, Vector>;
 
+    auto GetRandomPoint(const dtNavMeshQuery& query, const dtQueryFilter& filter) -> std::pair<dtPolyRef, Vector>;
+
     auto GetRandomPointAroundCircle(const dtNavMeshQuery& query, const Vector& center, const Extents& extents, const Scalar& radius, const dtQueryFilter& filter)
         -> std::pair<dtPolyRef, Vector>;
 

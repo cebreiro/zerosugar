@@ -48,6 +48,7 @@ namespace zerosugar::xr
 
         void ProcessMonsterSpawn(const GameMonsterSnapshot& snapshot);
         void ProcessMonsterDespawn(game_entity_id_type entityId);
+        void ProcessMonsterDespawn(game_entity_id_type entityId, double deadAnimationDuration, std::optional<game_entity_id_type> spawnerId);
         void ProcessMonsterMove(GameMonsterSnapshot& snapshot, const Eigen::Vector3d& position, float yaw);
         void ProcessMonsterAttack(GameMonsterSnapshot& snapshot, int32_t attackIndex,
             const std::optional<Eigen::Vector3d>& destPos, const Eigen::Vector3d& rotation, double movementDuration);

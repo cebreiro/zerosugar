@@ -3,7 +3,7 @@
         <sequence>
             <connect_to target="game" />
             <authenticate_game />
-            <dungeon_match map_id="111" />
+            <dungeon_match map_id="113" />
             <close_socket />
             <connect_to target="game_dungeon" />
             <authenticate_game />

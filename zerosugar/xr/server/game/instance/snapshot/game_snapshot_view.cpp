@@ -152,6 +152,49 @@ namespace zerosugar::xr
         }
     }
 
+    void GameSnapshotView::Broadcast(const IPacket& packet, const GameSpatialSet& set, std::chrono::milliseconds delay,
+        std::optional<game_entity_id_type> excluded)
+    {
+        if (const auto iter = _observers.find(packet.GetOpcode()); iter != _observers.end())
+        {
+            for (const auto& function : iter->second | std::views::values)
+            {
+                function(packet);
+            }
+        }
+
+        GameSnapshotContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
+        const Buffer buffer = Packet::ToBuffer(packet);
+
+        for (const game_entity_id_type id : set.GetEntities())
+        {
+            if (excluded.has_value() && *excluded == id)
+            {
+                continue;
+            }
+
+            IGameController* controller = snapshotContainer.FindController(id);
+            assert(controller);
+
+            if (controller->IsRemoteController())
+            {
+                Delay(delay).Then(_gameInstance.GetExecutor(),
+                    [instance = _gameInstance.shared_from_this(), id = id, controllerId = controller->GetControllerId(), buffer = buffer.ShallowCopy()]() mutable
+                    {
+                        if (IGameController* controller = instance->GetSnapshotContainer().FindController(id);
+                            controller)
+                        {
+                            controller->Notify(buffer);
+                        }
+                    });
+            }
+            else
+            {
+                controller->Notify(packet);
+            }
+        }
+    }
+
     void GameSnapshotView::Sync(IGameController& controller, const IPacket& packet)
     {
         if (const auto iter = _observers.find(packet.GetOpcode()); iter != _observers.end())

@@ -46,9 +46,11 @@ namespace zerosugar::xr
             auto GetTaskQueueId() const -> std::optional<int64_t>;
             auto GetState() const -> State;
             auto GetStarvationCount() const -> int64_t;
+            auto GetPriority() const -> int64_t;
 
             void SetId(int64_t id);
             void SetTask(std::unique_ptr<GameTask> task);
+            void SetPriority(int64_t value);
             void SetTaskQueueId(std::optional<int64_t> id);
             void SetState(State state);
             void SetStarvationCount(int64_t value);
@@ -58,6 +60,7 @@ namespace zerosugar::xr
             int64_t _id = 0;
             std::unique_ptr<GameTask> _task;
             std::optional<int64_t> _taskQueueId = std::nullopt;
+            int64_t _priority = 0;
 
             State _state = State::Waiting;
             int64_t _starvationCount = 0;
@@ -98,6 +101,8 @@ namespace zerosugar::xr
         auto GetCompleteTaskCount() const -> int64_t;
         void ResetCompletionTaskCount();
 
+        auto GetName() const -> std::string;
+
     private:
         auto FindProcess(int64_t id) const -> const Process*;
         auto FindResource(int64_t id) const -> const Resource*;
@@ -112,9 +117,9 @@ namespace zerosugar::xr
 
         void ReserveResource(const Process& process);
         void AllocateResource(const Process& process);
-        void DeallocateResource(const Process& process);
+        void DeallocateResource(const Process& process, const GameTask& task);
 
-        void ChangeState(Process& process, Process::State newState, std::optional<std::unique_ptr<GameTask>> newTask = std::nullopt);
+        void ChangeState(Process& process, Process::State newState, bool setTask, std::unique_ptr<GameTask> task);
 
         auto CreateProcess(int64_t id) -> Process&;
         void ExitProcess(Process& process);
@@ -133,7 +138,6 @@ namespace zerosugar::xr
         int64_t _totalTaskCount = 0;
         std::atomic<int64_t> _completeTaskCount = 0;
 
-        int64_t _nextTaskQueueId = 0;
         int64_t _nextTempProcessId = -1;
         int64_t _nextRecycleProcessId = 0;
 

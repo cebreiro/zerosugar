@@ -18,6 +18,14 @@ namespace zerosugar::xr::game_task
         void OnComplete(GameExecutionSerial& serialContext) override;
 
     private:
-        boost::container::small_vector<std::pair<game_entity_id_type, float>, 8> _results;
+        boost::container::small_vector<std::pair<game_entity_id_type, float>, 8> _aliveMonsters;
+
+        struct DeadContext
+        {
+            game_entity_id_type entityId;
+            double animationDuration = 0.0;
+            std::optional<game_entity_id_type> spawnerId = std::nullopt;
+        };
+        boost::container::small_vector<DeadContext, 8> _deadMonsters;
     };
 }

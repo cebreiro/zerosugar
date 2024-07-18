@@ -24,7 +24,7 @@ namespace zerosugar::xr::game_task
         void OnComplete(GameExecutionSerial& serialContext) override;
 
     private:
-        Eigen::Vector3d _position;
+        std::optional<Eigen::Vector3d> _position = std::nullopt;
         float _yaw = 0.f;
     };
 }

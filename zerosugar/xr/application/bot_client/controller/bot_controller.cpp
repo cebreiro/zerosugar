@@ -143,7 +143,7 @@ namespace zerosugar::xr
             co_return std::nullopt;
         }
 
-        assert(!_pingFutures.contains(sequence));
+        assert(!_pingPromises.contains(sequence));
 
         Promise<std::chrono::system_clock::duration>& promise = _pingPromises[sequence];
         auto future = promise.GetFuture();
@@ -353,6 +353,13 @@ namespace zerosugar::xr
                     assert(reader.GetReadSize() == packetSize);
                     assert(packet);
 
+                    if (!packet)
+                    {
+                        ZEROSUGAR_LOG_CRITICAL(GetServiceLocator(),
+                            fmt::format("[{}] fail to create packet from buffer. buffer: {}",
+                                GetName(), _packetBuffer.ToString()));
+                    }
+
                     HandleLoginPacket(*packet);
                 }
                 break;
@@ -362,6 +369,13 @@ namespace zerosugar::xr
                     assert(reader.GetReadSize() == packetSize);
                     assert(packet);
 
+                    if (!packet)
+                    {
+                        ZEROSUGAR_LOG_CRITICAL(GetServiceLocator(),
+                            fmt::format("[{}] fail to create packet from buffer. buffer: {}",
+                                GetName(), _packetBuffer.ToString()));
+                    }
+
                     HandleLobbyPacket(*packet);
                 }
                 break;
@@ -370,6 +384,13 @@ namespace zerosugar::xr
                     std::unique_ptr<IPacket> packet = network::game::sc::CreateFrom(reader);
                     assert(reader.GetReadSize() == packetSize);
                     assert(packet);
+
+                    if (!packet)
+                    {
+                        ZEROSUGAR_LOG_CRITICAL(GetServiceLocator(),
+                            fmt::format("[{}] fail to create packet from buffer. buffer: {}",
+                                GetName(), _packetBuffer.ToString()));
+                    }
 
                     HandleGamePacket(*packet);
                 }

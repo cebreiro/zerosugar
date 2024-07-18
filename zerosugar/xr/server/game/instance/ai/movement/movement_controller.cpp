@@ -112,6 +112,8 @@ namespace zerosugar::xr::ai
 
     auto MovementController::Run() -> Future<void>
     {
+        auto aiController = _aiController.shared_from_this();
+
         constexpr auto pointMovementSyncInterval = std::chrono::milliseconds(250);
 
         while (true)
@@ -153,7 +155,7 @@ namespace zerosugar::xr::ai
             co_await Delay(pointMovementSyncInterval);
             assert(ExecutionContext::IsEqualTo(_aiController.GetGameInstance().GetStrand()));
 
-            if (_shutdown || _paths.empty())
+            if (!aiController->IsRunning() || _shutdown || _paths.empty())
             {
                 break;
             }

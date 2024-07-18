@@ -38,8 +38,10 @@ namespace zerosugar::xr::game_task
             assert(controller->GetId() == _controllerId);
         }
 
-        serialContext.GetTaskScheduler().RemoveController(_controllerId);
-        serialContext.GetTaskScheduler().RemoveEntity(_entityId);
+        GameTaskScheduler& taskScheduler = serialContext.GetTaskScheduler();
+
+        taskScheduler.RemoveController(_controllerId);
+        taskScheduler.RemoveEntity(_entityId);
     }
 
     void MonsterDespawn::Execute(GameExecutionParallel& parallelContext, MainTargetSelector::target_type entity)

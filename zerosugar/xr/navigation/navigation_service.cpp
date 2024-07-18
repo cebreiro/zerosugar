@@ -36,9 +36,12 @@ namespace zerosugar::xr
             co_return false;
         }
 
+        Promise<std::pair<bool, std::string>> initPromise;
+        Future<std::pair<bool, std::string>> future = initPromise.GetFuture();
+
         _shutdownCallback = shutdownCallback;
         _visualizer = std::make_unique<navi::Visualizer>(*_strand, _naviData);
-        _visualizerRunFuture = _visualizer->Run().Then(*_strand, [self = shared_from_this()]()
+        _visualizerRunFuture = _visualizer->Run(initPromise).Then(*_strand, [self = shared_from_this()]()
             {
                 self->_visualizer.reset();
                 self->_runningVisualizer.store(false);
@@ -49,7 +52,15 @@ namespace zerosugar::xr
                 }
             });
 
-        co_return true;
+        const auto [initResult, message] = co_await future;
+        if (!initResult)
+        {
+            ZEROSUGAR_LOG_ERROR(_serviceLocator,
+                fmt::format("[{}] fail to start visuializer. error: {}",
+                    GetName(), message));
+        }
+
+        co_return initResult;
     }
 
     void NavigationService::StopVisualize()
@@ -58,6 +69,11 @@ namespace zerosugar::xr
             {
                 self->_visualizer->Shutdown();
             });
+    }
+
+    auto NavigationService::GetName() const -> std::string_view
+    {
+        return "navigation_service";
     }
 
     auto NavigationService::GetStrand() -> Strand&
@@ -85,6 +101,34 @@ namespace zerosugar::xr
     auto NavigationService::GetVisualizer() -> std::shared_ptr<navi::IVisualizer>
     {
         return std::shared_ptr<navi::IVisualizer>(shared_from_this(), _visualizer.get());
+    }
+
+    auto NavigationService::GetRandomPoints(int64_t count) -> Future<std::vector<navi::FVector>>
+    {
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
+        co_await *_strand;
+
+        const int64_t length = std::max<int64_t>(1, count);
+
+        std::vector<navi::FVector> result;
+        result.reserve(length);
+
+        for (int64_t i = 0; i < length; ++i)
+        {
+            const dtQueryFilter queryFilter;
+            const auto [polyRef, pos] = navi::GetRandomPoint(_naviData.GetQuery(), queryFilter);
+
+            if (!polyRef)
+            {
+                continue;
+            }
+
+            result.emplace_back(pos);
+        }
+
+        co_return result;
     }
 
     auto NavigationService::GetRandomPointAroundCircle(const navi::FVector& position, float radius)

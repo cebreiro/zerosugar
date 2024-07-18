@@ -1,5 +1,6 @@
 #include "session.h"
 
+#include <boost/container/small_vector.hpp>
 #include "zerosugar/shared/execution/executor/impl/asio_strand.h"
 #include "zerosugar/shared/log/log_service_interface.h"
 
@@ -12,7 +13,7 @@ namespace zerosugar
         , _channel(std::move(channel))
         , _socket(std::move(socket))
         , _strand(std::move(strand))
-        , _logService(std::move(_logService))
+        , _logService(std::move(logService))
         , _localAddress(_socket.local_endpoint().address().to_string())
         , _localPort(_socket.local_endpoint().port())
         , _remoteAddress(_socket.remote_endpoint().address().to_string())
@@ -55,12 +56,45 @@ namespace zerosugar
                 boost::system::error_code ec;
                 self->_socket.close(ec);
                 self->_channel->Close();
+
+                if (ec)
+                {
+                    if (self->_logService)
+                    {
+                        self->_logService->Log(LogLevel::Error,
+                            fmt::format("[{}] error on socket close. error: {}",
+                                *self, ec.message()),
+                            std::source_location::current());
+                    }
+                }
             });
     }
 
     bool Session::IsOpen() const
     {
         return _socket.is_open();
+    }
+
+    void Session::SetNoDelay(bool value)
+    {
+        post(_strand->GetImpl(), [self = shared_from_this(), value]()
+            {
+                boost::asio::ip::tcp::no_delay option(value);
+                boost::system::error_code ec;
+
+                self->_socket.set_option(option, ec);
+
+                if (ec)
+                {
+                    if (self->_logService)
+                    {
+                        self->_logService->Log(LogLevel::Error,
+                            fmt::format("[{}] error on set tcp no delay. value: {}, error: {}",
+                                *self, value, ec.message()),
+                            std::source_location::current());
+                    }
+                }
+            });
     }
 
     auto Session::GetId() const -> id_type
@@ -151,6 +185,230 @@ namespace zerosugar
         ReceiveAsync();
     }
 
+    void Session::HandleError(const boost::system::error_code& ec)
+    {
+        session::IoErrorEvent event{
+            .id = _id,
+            .errorCode = ec,
+        };
+
+        _channel->Send(event, channel::ChannelSignal::NotifyOne);
+    }
+
+    void Session::SendReceiveEvent(Buffer buffer)
+    {
+        session::ReceiveEvent event{
+            .id = _id,
+            .buffer = std::move(buffer),
+        };
+
+        _channel->Send(std::move(event), channel::ChannelSignal::NotifyOne);
+    }
+
+    void Session::ExpandReceiveBuffer()
+    {
+        if (_receiveBuffer.GetSize() >= RECEIVE_BUFFER_MIN_SIZE)
+        {
+            return;
+        }
+
+        _receiveBuffer.Add(buffer::Fragment::Create(RECEIVE_BUFFER_EXPAND_SIZE));
+    }
+
+#ifdef ZEROSUGAR_ISB_SEND
+
+    void Session::SendAsync(Buffer buffer)
+    {
+        if (!_sendWaitQueue.empty())
+        {
+            _sendWaitQueue.emplace(std::move(buffer));
+
+            return;
+        }
+
+        const int64_t isbSize = QueryIdealSendBacklogSize().value_or(default_isb_size);
+
+        if (buffer.GetSize() > isbSize)
+        {
+            Buffer waitBuffer;
+
+            [[maybe_unused]]
+            const bool sliced = buffer.SliceFront(waitBuffer, isbSize);
+            assert(sliced);
+
+            std::swap(buffer, waitBuffer);
+
+            _sendWaitQueue.emplace(std::move(waitBuffer));
+        }
+
+        SendImpl(std::move(buffer));
+    }
+
+    void Session::OnSendComplete(int64_t sendCompleteBufferId, int64_t bytes)
+    {
+        const auto iter = _sendPendingBuffers.find(sendCompleteBufferId);
+        if (iter == _sendPendingBuffers.end())
+        {
+            if (_logService)
+            {
+                _logService->Log(LogLevel::Critical,
+                    fmt::format("[{}] fail to find send buffer. send_buffer_id: {}, bytes: {}",
+                        *this, sendCompleteBufferId, bytes),
+                    std::source_location::current());
+            }
+
+            assert(false);
+
+            Close();
+
+            return;
+        }
+
+        const int64_t sendCompleteBufferSize = iter->second.GetSize();
+
+        if (sendCompleteBufferSize != bytes)
+        {
+            if (_logService)
+            {
+                _logService->Log(LogLevel::Critical,
+                    fmt::format("[{}] partial send occurred. send_buffer_id: {}, buffer_size: {}, bytes: {}",
+                        *this, sendCompleteBufferId, sendCompleteBufferSize, bytes),
+                    std::source_location::current());
+            }
+
+            assert(false);
+
+            Close();
+
+            return;
+        }
+
+        _sendPendingBytes -= sendCompleteBufferSize;
+        assert(_sendPendingBytes >= 0);
+
+        _sendPendingBuffers.erase(iter);
+
+        if (_sendWaitQueue.empty())
+        {
+            return;
+        }
+
+        const int64_t isbSize = QueryIdealSendBacklogSize().value_or(default_isb_size);
+        const int64_t sendContinuationSize = isbSize - _sendPendingBytes;
+
+        if (sendContinuationSize <= 0)
+        {
+            return;
+        }
+
+        Buffer sendBuffer;
+        int64_t remain = sendContinuationSize;
+
+        while (!_sendWaitQueue.empty() && remain > 0)
+        {
+            Buffer& waitBuffer = _sendWaitQueue.front();
+
+            if (const int64_t waitBufferSize = waitBuffer.GetSize();
+                waitBufferSize > remain)
+            {
+                Buffer temp;
+
+                [[maybe_unused]]
+                const bool sliced = waitBuffer.SliceFront(temp, remain);
+                assert(sliced);
+
+                sendBuffer.MergeBack(std::move(temp));
+
+                remain = 0;
+            }
+            else
+            {
+                sendBuffer.MergeBack(std::move(waitBuffer));
+                _sendWaitQueue.pop();
+
+                remain -= waitBufferSize;
+            }
+        }
+
+        assert(sendBuffer.GetSize() > 0);
+
+        SendImpl(std::move(sendBuffer));
+    }
+
+    void Session::SendImpl(Buffer buffer)
+    {
+        assert(!buffer.Empty());
+        assert(buffer.GetSize() > 0);
+
+        _sendPendingBytes += buffer.GetSize();
+
+        boost::container::small_vector<boost::asio::const_buffer, 8> sendBuffer;
+
+        for (const buffer::Fragment& fragment : buffer.GetFragmentContainer())
+        {
+            sendBuffer.emplace_back(fragment.GetData(), fragment.GetSize());
+        }
+
+        const int64_t sendBufferId = ++_nextSendBufferId;
+        assert(!_sendPendingBuffers.contains(sendBufferId));
+
+        _sendPendingBuffers[sendBufferId] = std::move(buffer);
+
+        async_write(_socket, sendBuffer, bind_executor(_strand->GetImpl(),
+            [self = shared_from_this(), sendBufferId](const boost::system::error_code& ec, size_t bytes)
+            {
+                if (ec)
+                {
+                    self->HandleError(ec);
+
+                    return;
+                }
+
+                self->OnSendComplete(sendBufferId, static_cast<int64_t>(bytes));
+            }));
+    }
+
+    auto Session::QueryIdealSendBacklogSize() -> std::optional<int64_t>
+    {
+        DWORD idealSendBacklog = 0;
+        DWORD bytes = 0;
+        SOCKET nativeSocket = _socket.native_handle();
+
+        // https://learn.microsoft.com/en-us/windows/win32/winsock/sio-ideal-send-backlog-query
+        // The SIO_IDEAL_SEND_BACKLOG_QUERY IOCTL is not likely to block
+        // so it is normally called synchronously
+        // with the lpOverlapped and lpCompletionRoutine parameters set to NULL.
+        int32_t result = WSAIoctl(
+            nativeSocket,
+            SIO_IDEAL_SEND_BACKLOG_QUERY,
+            nullptr,
+            0,
+            &idealSendBacklog,
+            sizeof(idealSendBacklog),
+            &bytes,
+            nullptr,
+            nullptr
+        );
+
+        if (result == SOCKET_ERROR)
+        {
+            const boost::system::error_code ec(WSAGetLastError(), boost::asio::error::get_system_category());
+
+            if (_logService)
+            {
+                _logService->Log(LogLevel::Error,
+                    fmt::format("[{}] fail to query ideal socket backlog size. error: {}",
+                        *this, ec.message()),
+                    std::source_location::current());
+            }
+
+            return std::nullopt;
+        }
+
+        return idealSendBacklog;
+    }
+
+#else
     void Session::SendAsync(Buffer buffer)
     {
         assert(buffer.GetSize() > 0);
@@ -252,36 +510,6 @@ namespace zerosugar
         }
     }
 
-    void Session::HandleError(const boost::system::error_code& ec)
-    {
-        session::IoErrorEvent event{
-            .id = _id,
-            .errorCode = ec,
-        };
-
-        _channel->Send(event, channel::ChannelSignal::NotifyOne);
-    }
-
-    void Session::SendReceiveEvent(Buffer buffer)
-    {
-        session::ReceiveEvent event{
-            .id = _id,
-            .buffer = std::move(buffer),
-        };
-
-        _channel->Send(std::move(event), channel::ChannelSignal::NotifyOne);
-    }
-
-    void Session::ExpandReceiveBuffer()
-    {
-        if (_receiveBuffer.GetSize() >= RECEIVE_BUFFER_MIN_SIZE)
-        {
-            return;
-        }
-
-        _receiveBuffer.Add(buffer::Fragment::Create(RECEIVE_BUFFER_EXPAND_SIZE));
-    }
-
     auto Session::FlushSendWaitQueue() -> Buffer
     {
         assert(!_sendWaitQueue.empty());
@@ -328,4 +556,5 @@ namespace zerosugar
                 self->OnWriteAsync(static_cast<int64_t>(bytes));
             }));
     }
+#endif
 }

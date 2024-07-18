@@ -7,15 +7,15 @@ namespace zerosugar::xr
     bool GameTaskScheduler::Process::Compare::operator()(
         PtrNotNull<const Process> lhs, PtrNotNull<const Process> rhs) const
     {
-        const auto lvalue = lhs->HasTask() ? lhs->GetTask().GetCreationTimePoint().time_since_epoch().count() : std::numeric_limits<int64_t>::max();
-        const auto rvalue = rhs->HasTask() ? rhs->GetTask().GetCreationTimePoint().time_since_epoch().count() : std::numeric_limits<int64_t>::max();
+        const int64_t lPriority = lhs->GetPriority();
+        const int64_t rPriority = rhs->GetPriority();
 
-        if (lvalue == rvalue)
+        if (lPriority == rPriority)
         {
-            return reinterpret_cast<size_t>(lhs) < reinterpret_cast<size_t>(rhs);
+            return lhs < rhs;
         }
 
-        return lvalue < rvalue;
+        return lPriority < rPriority;
     }
 
     GameTaskScheduler::Process::Process(int64_t id)
@@ -72,6 +72,11 @@ namespace zerosugar::xr
         return _starvationCount;
     }
 
+    auto GameTaskScheduler::Process::GetPriority() const -> int64_t
+    {
+        return _priority;
+    }
+
     void GameTaskScheduler::Process::SetId(int64_t id)
     {
         _id = id;
@@ -80,6 +85,11 @@ namespace zerosugar::xr
     void GameTaskScheduler::Process::SetTask(std::unique_ptr<GameTask> task)
     {
         _task = std::move(task);
+    }
+
+    void GameTaskScheduler::Process::SetPriority(int64_t value)
+    {
+        _priority = value;
     }
 
     void GameTaskScheduler::Process::SetTaskQueueId(std::optional<int64_t> id)
@@ -135,8 +145,8 @@ namespace zerosugar::xr
                     const int64_t readyTaskCount = std::ssize(self.GetProcessesBy(Process::State::Ready));
 
                     ZEROSUGAR_LOG_INFO(instance->GetServiceLocator(),
-                        fmt::format("[task_scheduler:{}] total_task: {}, complete_task: {:.1f}/s, running_task: {}, ready_task: {}",
-                            instance->GetId(), totalTaskCount, static_cast<double>(completeTaskCount) / static_cast<double>(seconds), runningTaskCount, readyTaskCount));
+                        fmt::format("[{}] total_task: {}, complete_task: {:.1f}/s, running_task: {}, ready_task: {}",
+                            self.GetName(), totalTaskCount, static_cast<double>(completeTaskCount) / static_cast<double>(seconds), runningTaskCount, readyTaskCount));
                 }
 
             }, _gameInstance.weak_from_this(), std::ref(*this));
@@ -240,8 +250,6 @@ namespace zerosugar::xr
             return;
         }
 
-        ++_totalTaskCount;
-
         Process* process = nullptr;
 
         if (processId.has_value())
@@ -253,7 +261,11 @@ namespace zerosugar::xr
             }
             else
             {
-                assert(false);
+                ZEROSUGAR_LOG_WARN(_gameInstance.GetServiceLocator(),
+                    fmt::format("[{}] fail to find controller. task is dropped. controller_id: {}",
+                        GetName(), *controllerId));
+
+                return;
             }
         }
 
@@ -261,6 +273,8 @@ namespace zerosugar::xr
         {
             process = &CreateProcess(--_nextTempProcessId);
         }
+
+        ++_totalTaskCount;
 
         switch (process->GetState())
         {
@@ -277,11 +291,11 @@ namespace zerosugar::xr
         {
             assert(!process->HasTask());
 
-            ChangeState(*process, Process::State::Ready, std::move(task));
+            ChangeState(*process, Process::State::Ready, true, std::move(task));
 
             if (CanStart(*process))
             {
-                ChangeState(*process, Process::State::Running);
+                ChangeState(*process, Process::State::Running, false, {});
 
                 Start(*process);
             }
@@ -301,6 +315,11 @@ namespace zerosugar::xr
     void GameTaskScheduler::ResetCompletionTaskCount()
     {
         _completeTaskCount.store(0);
+    }
+
+    auto GameTaskScheduler::GetName() const -> std::string
+    {
+        return fmt::format("task_scheduler:{}", _gameInstance.GetId());
     }
 
     auto GameTaskScheduler::FindProcess(int64_t id) const -> const Process*
@@ -409,7 +428,7 @@ namespace zerosugar::xr
 
             if (CanStart(*process))
             {
-                ChangeState(*process, Process::State::Running);
+                ChangeState(*process, Process::State::Running, false, {});
 
                 Start(*process);
 
@@ -444,7 +463,10 @@ namespace zerosugar::xr
 
                 Post(_gameInstance.GetStrand(), [this, process]()
                     {
-                        process->GetTask().Complete(_gameInstance.GetSerialContext());
+                        UniquePtrNotNull<GameTask> task = process->ReleaseTask();
+                        DeallocateResource(*process, *task);
+
+                        task->Complete(_gameInstance.GetSerialContext());
 
                         OnComplete(*process);
                     });
@@ -455,12 +477,10 @@ namespace zerosugar::xr
     {
         assert(ExecutionContext::IsEqualTo(_gameInstance.GetStrand()));
         assert(process.GetState() == Process::State::Running);
-        assert(process.HasTask());
+        assert(!process.HasTask());
 
         --_totalTaskCount;
         ++_completeTaskCount;
-
-        DeallocateResource(process);
 
         std::queue<UniquePtrNotNull<GameTask>>* taskQueue = [this, &process]() -> std::queue<UniquePtrNotNull<GameTask>>*
             {
@@ -482,14 +502,14 @@ namespace zerosugar::xr
         {
             if (taskQueue->empty())
             {
-                ChangeState(process, Process::State::Waiting, std::unique_ptr<GameTask>());
+                ChangeState(process, Process::State::Waiting, true, std::unique_ptr<GameTask>());
             }
             else
             {
                 auto newTask = std::move(taskQueue->front());
                 taskQueue->pop();
 
-                ChangeState(process, Process::State::Ready, std::move(newTask));
+                ChangeState(process, Process::State::Ready, true, std::move(newTask));
             }
         }
         else
@@ -565,10 +585,8 @@ namespace zerosugar::xr
         }
     }
 
-    void GameTaskScheduler::DeallocateResource(const Process& process)
+    void GameTaskScheduler::DeallocateResource(const Process& process, const GameTask& task)
     {
-        assert(process.HasTask());
-
         const auto deallocate = [this, &process](int64_t id)
             {
                 const auto iter = _resources.find(id);
@@ -586,13 +604,13 @@ namespace zerosugar::xr
                 resource.acquired = nullptr;
             };
 
-        for (int64_t id : process.GetTask().GetTargetIds())
+        for (int64_t id : task.GetTargetIds())
         {
             deallocate(id);
         }
     }
 
-    void GameTaskScheduler::ChangeState(Process& process, Process::State newState, std::optional<std::unique_ptr<GameTask>> newTask)
+    void GameTaskScheduler::ChangeState(Process& process, Process::State newState, bool setTask, std::unique_ptr<GameTask> task)
     {
         assert(process.GetState() != newState);
 
@@ -604,10 +622,15 @@ namespace zerosugar::xr
         auto handle = olds.extract(&process);
         assert(handle);
 
-        // To maintain compare order and ensure it can be found, 'process.SetTask' must be called in place after extract()
-        if (newTask)
+        if (setTask)
         {
-            process.SetTask(std::move(*newTask));
+            if (task)
+            {
+                // To maintain compare order so ensure it can be found, 'process.SetPriority' must be called in place after olds.extract()
+                process.SetPriority(task->GetCreationTimePoint().time_since_epoch().count());
+            }
+
+            process.SetTask(std::move(task));
         }
 
         [[maybe_unused]]

@@ -8,6 +8,7 @@ namespace zerosugar::xr
     {
         Register<gm::LogBT>();
         Register<gm::MonsterAttack>();
+        Register<gm::PrintRandomPoint>();
         Register<gm::SpawnMonster>();
         Register<gm::VisualizeField>();
     }

@@ -12,6 +12,7 @@
 #include "zerosugar/xr/server/game/instance/snapshot/game_spawner_snapshot.h"
 #include "zerosugar/xr/server/game/instance/grid/game_spatial_container.h"
 #include "zerosugar/xr/server/game/instance/grid/game_spatial_sector.h"
+#include "zerosugar/xr/server/game/instance/task/game_task_scheduler.h"
 #include "zerosugar/xr/server/game/packet/packet_builder.h"
 
 namespace zerosugar::xr
@@ -224,7 +225,6 @@ namespace zerosugar::xr
     {
         GameSnapshotContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
         GameSpatialContainer& spatialContainer = _gameInstance.GetSpatialContainer();
-        AIControlService& aiControlService = _gameInstance.GetAIControlService();
         GameSnapshotView& view = _gameInstance.GetSnapshotView();
 
         for (auto [monsterId, resultHP] : results)
@@ -240,14 +240,6 @@ namespace zerosugar::xr
             packet.attackedHp = resultHP;
 
             view.Broadcast(packet, spatialContainer.GetSector(monster->GetPosition()));
-
-            if (resultHP <= 0.f)
-            {
-                if (const AIController* aiController = aiControlService.FindAIController(monsterId))
-                {
-                    _gameInstance.GetAIControlService().DeleteAIController(aiController->GetId());
-                }
-            }
         }
     }
 
@@ -305,6 +297,49 @@ namespace zerosugar::xr
         packet.monsters.push_back(entityId.Unwrap());
 
         view.Broadcast(packet, sector);
+
+        [[maybe_unused]]
+        const bool removed = snapshotContainer.Remove(entityId);
+        assert(removed);
+    }
+
+    void GameSnapshotController::ProcessMonsterDespawn(game_entity_id_type entityId, double deadAnimationDuration, std::optional<game_entity_id_type> spawnerId)
+    {
+        GameSnapshotContainer& snapshotContainer = _gameInstance.GetSnapshotContainer();
+        GameSpatialContainer& spatialContainer = _gameInstance.GetSpatialContainer();
+        GameSnapshotView& view = _gameInstance.GetSnapshotView();
+
+        GameMonsterSnapshot* monster = snapshotContainer.FindMonster(entityId);
+        assert(monster);
+
+        GameSpatialSector& sector = spatialContainer.GetSector(monster->GetPosition());
+        sector.RemoveEntity(entityId);
+
+        sc::DespawnMonster packet;
+        packet.monstersCount = 1;
+        packet.monsters.push_back(entityId.Unwrap());
+
+        view.Broadcast(packet, sector, GetMilliFromGameSeconds(deadAnimationDuration));
+
+        AIControlService& aiControlService = _gameInstance.GetAIControlService();
+        if (const AIController* aiController = aiControlService.FindAIController(entityId))
+        {
+            aiControlService.DeleteAIController(aiController->GetId());
+        }
+
+        GameTaskScheduler& taskScheduler = _gameInstance.GetTaskScheduler();
+        taskScheduler.RemoveController(monster->GetController().GetControllerId());
+        taskScheduler.RemoveEntity(monster->GetId());
+
+        if (spawnerId.has_value())
+        {
+            if (IGameController* spawner = snapshotContainer.FindController(*spawnerId); spawner)
+            {
+                sc::SpawnerMonsterDead dead;
+
+                spawner->Notify(dead);
+            }
+        }
 
         [[maybe_unused]]
         const bool removed = snapshotContainer.Remove(entityId);

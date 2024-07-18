@@ -12,7 +12,11 @@ target_link_libraries(zerosugar_xr_application_all_in_one_app PRIVATE
     zerosugar_xr_service_gateway
     zerosugar_xr_service_coordination
     zerosugar_xr_service_database
+
+    TBB::tbbmalloc_proxy
 )
+
+target_link_options(zerosugar_xr_application_all_in_one_app PRIVATE /INCLUDE:__TBB_malloc_proxy)
 
 target_precompile_headers(zerosugar_xr_application_all_in_one_app REUSE_FROM zerosugar_xr_pch)
 

@@ -8,7 +8,7 @@
 
 using zerosugar::Promise;
 
-constexpr int64_t clientCount = 50;
+constexpr int64_t clientCount = 1000;
 constexpr int64_t byteSize = 2000000;
 
 namespace zerosugar::execution
@@ -34,7 +34,7 @@ private:
     void OnConnect(const boost::system::error_code& ec);
 
     void ReceiveAsync();
-    void SendAsync();
+    void SendAsync(int64_t startOffset, int64_t sendSize);
 
 private:
     std::atomic<bool> _complete = false;
@@ -44,7 +44,8 @@ private:
     uint16_t _port = 0;
     std::optional<boost::asio::ip::tcp::socket> _socket = std::nullopt;
     std::array<char, byteSize> _bytes = {};
-    int64_t _sendSize = 0;
     std::array<char, byteSize> _result = {};
     int64_t _receiveSize = 0;
+
+    std::mt19937 _mt;
 };

@@ -3,7 +3,9 @@
 #include "zerosugar/xr/data/table/monster.h"
 #include "zerosugar/xr/server/game/instance/controller/game_controller_interface.h"
 #include "zerosugar/xr/server/game/instance/entity/game_entity.h"
+#include "zerosugar/xr/server/game/instance/entity/game_entity_container.h"
 #include "zerosugar/xr/server/game/instance/entity/component/monster_component.h"
+#include "zerosugar/xr/server/game/instance/entity/component/monster_motion_component.h"
 #include "zerosugar/xr/server/game/instance/entity/component/stat_component.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_controller.h"
 #include "zerosugar/xr/server/game/instance/task/execution/game_execution_serial.h"
@@ -20,53 +22,60 @@ namespace zerosugar::xr::game_task
     void PlayerAttackEffectApply::Execute(GameExecutionParallel& parallelContext,
         MainTargetSelector::target_type player, PlayerAttackEffectTargetSelector::target_type targets)
     {
-        (void)parallelContext;
-
         constexpr double damage = 60.0;
         (void)player;
 
         for (const PtrNotNull<GameEntity>& target : targets)
         {
-            const MonsterComponent& monsterComponent = target->GetComponent<MonsterComponent>();
-
             StatComponent& targetStatComponent = target->GetComponent<StatComponent>();
-            double hp = targetStatComponent.GetHP().Get();
+            double currentHP = targetStatComponent.GetHP().Get();
 
-            if (hp <= 0.0)
+            if (currentHP <= 0.0)
             {
+                assert(false);
+
                 continue;
             }
 
-            const double resultHP = std::max(0.0, hp - damage);
-            targetStatComponent.SetHP(StatValue(resultHP));
+            const double newHP = std::max(0.0, currentHP - damage);
+            targetStatComponent.SetHP(StatValue(newHP));
 
-            if (resultHP <= 0.0)
+            if (newHP > 0.0)
             {
-                targetStatComponent.SetHPRegen(false);
+                _aliveMonsters.emplace_back(target->GetId(), static_cast<float>(newHP));
+            }
+            else
+            {
+                MonsterMotionComponent& motionComponent = target->GetComponent<MonsterMotionComponent>();
+                motionComponent.CancelAttackEffects();
 
+                MonsterComponent& monsterComponent = target->GetComponent<MonsterComponent>();
                 const MonsterData& data = monsterComponent.GetData();
                 const data::MonsterAnimation::Value& animation = data.GetDeadAnimation();
-                const auto delay = GetMilliFromGameSeconds(animation.duration);
 
-                Delay(delay).Then(parallelContext.GetExecutor(),
-                    [context = parallelContext.Hold(), controllerId = target->GetController().GetControllerId(), id = target->GetId()]()
-                    {
-                        auto task = std::make_unique<game_task::MonsterDespawn>(MonsterDespawnContext{}, controllerId, id);
-
-                        context->SummitTask(std::move(task), std::nullopt);
+                _deadMonsters.emplace_back(DeadContext{
+                    .entityId = target->GetId(),
+                    .animationDuration = animation.duration,
+                    .spawnerId = monsterComponent.GetSpawnerId(),
                     });
 
-                // change animation... item drop
+                [[maybe_unused]]
+                const bool removed = parallelContext.GetEntityContainer().Remove(target->GetId());
+                assert(removed);
             }
-
-            _results.emplace_back(target->GetId(), static_cast<float>(resultHP));
         }
     }
 
     void PlayerAttackEffectApply::OnComplete(GameExecutionSerial& serialContext)
     {
         auto selfId = GetSelector<MainTargetSelector>().GetTargetId()[0];
+        GameSnapshotController& controller = serialContext.GetSnapshotController();
 
-        serialContext.GetSnapshotController().ProcessPlayerAttackEffect(selfId, _results);
+        for (const auto& [id, duration, spawnerId] : _deadMonsters)
+        {
+            controller.ProcessMonsterDespawn(id, duration, spawnerId);
+        }
+
+        controller.ProcessPlayerAttackEffect(selfId, _aliveMonsters);
     }
 }
