@@ -32,6 +32,7 @@ private:
 
 private:
     SharedPtrNotNull<AsioExecutor> _executor;
+    SharedPtrNotNull<zerosugar::ILogService> _logService;
     SharedPtrNotNull<class TestServer> _server;
     std::vector<SharedPtrNotNull<Strand>> _strands;
 };

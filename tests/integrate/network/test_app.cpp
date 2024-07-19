@@ -2,11 +2,21 @@
 
 #include "tests/integrate/network/test_server.h"
 #include "zerosugar/shared/execution/executor/impl/asio_executor.h"
+#include "zerosugar/shared/log/log_service.h"
+#include "zerosugar/shared/log/spdlog/spdlog_logger_builder.h"
+#include "zerosugar/shared/log/spdlog/spdlog_logger.h"
 
 TestApp::TestApp()
     : _executor(std::make_shared<AsioExecutor>(static_cast<int64_t>(std::thread::hardware_concurrency())))
+    , _logService(std::make_shared<zerosugar::LogService>())
     , _server(std::make_shared<TestServer>(*_executor, *this))
 {
+    zerosugar::SpdLogLoggerBuilder builder;
+    builder.ConfigureConsole().SetLogLevel(zerosugar::LogLevel::Info);
+
+    _logService->Add(-1, builder.CreateLogger());
+
+    GetServiceLocator().Add<zerosugar::ILogService>(_logService);
 }
 
 auto TestApp::GetServer() -> TestServer&
