@@ -1,4 +1,5 @@
 #pragma once
+#include "zerosugar/shared/snowflake/snowflake.h"
 #include "zerosugar/xr/server/game/repository/game_repository_interface.h"
 #include "zerosugar/xr/service/model/generated/database_service.h"
 
@@ -34,7 +35,12 @@ namespace zerosugar::xr
     public:
         GameRepository() = delete;
 
-        GameRepository(execution::IExecutor& executor, service_locator_type locator, int64_t concurrency = 16);
+        GameRepository(execution::IExecutor& executor, service_locator_type locator,
+            const std::function<void(int64_t/*characterId*/)>& saveErrorHandler,
+            int64_t concurrency = 16);
+        ~GameRepository();
+
+        auto PublishItemUniqueId() -> int64_t override;
 
         auto Find(int64_t characterId) -> Future<std::optional<service::DTOCharacter>> override;
 
@@ -42,6 +48,8 @@ namespace zerosugar::xr
         void SaveChanges(InventoryChangeTransaction change) override;
 
         auto GetName() const -> std::string_view override;
+
+        void SetSnowFlake(std::unique_ptr<SharedSnowflake<>> snowflake);
 
     private:
         void SaveChanges(int64_t characterId, transaction_variant_type change);
@@ -55,6 +63,9 @@ namespace zerosugar::xr
 
     private:
         service_locator_type _serviceLocator;
+        std::function<void(int64_t)> _saveErrorHandler;
+
+        std::unique_ptr<SharedSnowflake<>> _snowflake;
         std::vector<LocalContext> _contexts = {};
     };
 }

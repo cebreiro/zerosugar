@@ -12,7 +12,6 @@
 #include "zerosugar/xr/server/game/instance/snapshot/game_spawner_snapshot.h"
 #include "zerosugar/xr/server/game/instance/grid/game_spatial_container.h"
 #include "zerosugar/xr/server/game/instance/grid/game_spatial_sector.h"
-#include "zerosugar/xr/server/game/instance/task/game_task_scheduler.h"
 #include "zerosugar/xr/server/game/packet/packet_builder.h"
 
 namespace zerosugar::xr
@@ -326,10 +325,6 @@ namespace zerosugar::xr
         {
             aiControlService.DeleteAIController(aiController->GetId());
         }
-
-        GameTaskScheduler& taskScheduler = _gameInstance.GetTaskScheduler();
-        taskScheduler.RemoveController(monster->GetController().GetControllerId());
-        taskScheduler.RemoveEntity(monster->GetId());
 
         if (spawnerId.has_value())
         {

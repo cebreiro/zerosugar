@@ -5,14 +5,27 @@
 
 namespace zerosugar::xr
 {
-    GameRepository::GameRepository(execution::IExecutor& executor, service_locator_type locator, int64_t concurrency)
+    GameRepository::GameRepository(execution::IExecutor& executor, service_locator_type locator,
+        const std::function<void(int64_t)>& saveErrorHandler, int64_t concurrency)
         : _serviceLocator(std::move(locator))
+        , _saveErrorHandler(saveErrorHandler)
         , _contexts(std::max<int64_t>(1, concurrency))
     {
         for (int64_t i = 0; i < std::ssize(_contexts); ++i)
         {
             _contexts[i].strand = std::make_shared<Strand>(executor.SharedFromThis());
         }
+    }
+
+    GameRepository::~GameRepository()
+    {
+    }
+
+    auto GameRepository::PublishItemUniqueId() -> int64_t
+    {
+        assert(_snowflake);
+
+        return _snowflake->Generate();
     }
 
     auto GameRepository::Find(int64_t characterId) -> Future<std::optional<service::DTOCharacter>>
@@ -65,6 +78,8 @@ namespace zerosugar::xr
             co_await future;
         }
 
+        context.saves.erase(iter);
+
         co_return;
     }
 
@@ -83,6 +98,11 @@ namespace zerosugar::xr
     auto GameRepository::GetName() const -> std::string_view
     {
         return "game_repository";
+    }
+
+    void GameRepository::SetSnowFlake(std::unique_ptr<SharedSnowflake<>> snowflake)
+    {
+        _snowflake = std::move(snowflake);
     }
 
     void GameRepository::SaveChanges(int64_t characterId, transaction_variant_type change)
@@ -177,6 +197,10 @@ namespace zerosugar::xr
                 ZEROSUGAR_LOG_CRITICAL(_serviceLocator,
                     fmt::format("fail to save item change. error: {}, character_id: {}, param: {}",
                         GetEnumName(result.errorCode), transaction->GetCharacterId(), jsonArray.dump()));
+
+                assert(_saveErrorHandler);
+
+                _saveErrorHandler(transaction->GetCharacterId());
             }
         }
 

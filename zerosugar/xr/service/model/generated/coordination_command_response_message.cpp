@@ -96,4 +96,25 @@ namespace zerosugar::xr::coordination::command::response
         }
         return {};
     }
+
+    auto GetPacketTypeInfo(int32_t opcode) -> const std::type_info&
+    {
+        switch(opcode)
+        {
+            case Exception::opcode:
+            {
+                return typeid(Exception);
+            }
+            case Authenticate::opcode:
+            {
+                return typeid(Authenticate);
+            }
+            case LaunchGameInstance::opcode:
+            {
+                return typeid(LaunchGameInstance);
+            }
+        }
+        assert(false);
+        return typeid(nullptr);
+    }
 }

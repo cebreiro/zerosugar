@@ -8,6 +8,7 @@
 #include "zerosugar/xr/server/game/instance/entity/component/monster_motion_component.h"
 #include "zerosugar/xr/server/game/instance/entity/component/stat_component.h"
 #include "zerosugar/xr/server/game/instance/snapshot/game_snapshot_controller.h"
+#include "zerosugar/xr/server/game/instance/task/game_task_scheduler.h"
 #include "zerosugar/xr/server/game/instance/task/execution/game_execution_serial.h"
 #include "zerosugar/xr/server/game/instance/task/impl/monster_despawn.h"
 
@@ -55,6 +56,7 @@ namespace zerosugar::xr::game_task
 
                 _deadMonsters.emplace_back(DeadContext{
                     .entityId = target->GetId(),
+                    .controllerId = target->GetController().GetControllerId(),
                     .animationDuration = animation.duration,
                     .spawnerId = monsterComponent.GetSpawnerId(),
                     });
@@ -69,13 +71,20 @@ namespace zerosugar::xr::game_task
     void PlayerAttackEffectApply::OnComplete(GameExecutionSerial& serialContext)
     {
         auto selfId = GetSelector<MainTargetSelector>().GetTargetId()[0];
-        GameSnapshotController& controller = serialContext.GetSnapshotController();
 
-        for (const auto& [id, duration, spawnerId] : _deadMonsters)
+        GameSnapshotController& snapshotController = serialContext.GetSnapshotController();
+        GameTaskScheduler& taskScheduler = serialContext.GetTaskScheduler();
+
+        for (const auto& [id, controllerId, duration, spawnerId] : _deadMonsters)
         {
-            controller.ProcessMonsterDespawn(id, duration, spawnerId);
+            taskScheduler.RemoveController(controllerId);
+            taskScheduler.RemoveEntity(id);
+
+            snapshotController.ProcessMonsterDespawn(id, duration, spawnerId);
         }
 
-        controller.ProcessPlayerAttackEffect(selfId, _aliveMonsters);
+        snapshotController.ProcessPlayerAttackEffect(selfId, _aliveMonsters);
+
+
     }
 }

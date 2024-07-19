@@ -7,7 +7,7 @@ namespace zerosugar::xr::game_task
     class PlayerMove final : public GameTaskBaseParamT<IPacket, network::game::cs::MovePlayer, MainTargetSelector>
     {
     public:
-        PlayerMove(UniquePtrNotNull<IPacket> param, game_entity_id_type targetId,
+        PlayerMove(UniquePtrNotNull<network::game::cs::MovePlayer> param, game_entity_id_type targetId,
             game_time_point_type creationTimePoint = game_clock_type::now());
 
     private:

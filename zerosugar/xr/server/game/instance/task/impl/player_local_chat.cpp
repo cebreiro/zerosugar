@@ -9,7 +9,7 @@
 
 namespace zerosugar::xr::game_task
 {
-    PlayerLocalChat::PlayerLocalChat(UniquePtrNotNull<IPacket> param, game_entity_id_type targetId, game_time_point_type creationTimePoint)
+    PlayerLocalChat::PlayerLocalChat(UniquePtrNotNull<network::game::cs::Chat> param, game_entity_id_type targetId, game_time_point_type creationTimePoint)
         : GameTaskBaseParamT(creationTimePoint, std::move(param), NullSelector{})
         , _id(targetId)
     {

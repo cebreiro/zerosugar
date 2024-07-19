@@ -148,4 +148,33 @@ namespace zerosugar::xr::coordination::command
         }
         return {};
     }
+
+    auto GetPacketTypeInfo(int32_t opcode) -> const std::type_info&
+    {
+        switch(opcode)
+        {
+            case LaunchGameInstance::opcode:
+            {
+                return typeid(LaunchGameInstance);
+            }
+            case BroadcastChatting::opcode:
+            {
+                return typeid(BroadcastChatting);
+            }
+            case NotifyDungeonMatchGroupCreation::opcode:
+            {
+                return typeid(NotifyDungeonMatchGroupCreation);
+            }
+            case NotifyDungeonMatchGroupApproved::opcode:
+            {
+                return typeid(NotifyDungeonMatchGroupApproved);
+            }
+            case NotifyDungeonMatchGroupRejected::opcode:
+            {
+                return typeid(NotifyDungeonMatchGroupRejected);
+            }
+        }
+        assert(false);
+        return typeid(nullptr);
+    }
 }

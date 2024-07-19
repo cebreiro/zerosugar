@@ -60,6 +60,29 @@ namespace zerosugar::xr::game_task
         std::shared_ptr<GameEntity> _entity;
     };
 
+    class MultiTargetSelector
+    {
+    public:
+        using target_type = const std::vector<PtrNotNull<GameEntity>>&;
+
+    public:
+        template <typename R> requires std::is_same_v<std::ranges::range_value_t<R>, game_entity_id_type>
+        explicit MultiTargetSelector(R&& range)
+            : _targetIds(std::ranges::to<std::vector<game_entity_id_type>>(std::forward<R>(range)))
+        {
+        }
+
+        bool SelectEntityId(const GameExecutionSerial& serial);
+        auto GetTargetId() const -> std::span<const game_entity_id_type>;
+
+        bool SelectEntity(const GameExecutionParallel& parallel);
+        auto GetTarget() const -> target_type;
+
+    private:
+        std::vector<game_entity_id_type> _targetIds;
+        std::vector<PtrNotNull<GameEntity>> _targets;
+    };
+
     class PlayerAttackEffectTargetSelector
     {
     public:

@@ -13,4 +13,6 @@ namespace zerosugar::xr::game_constant
     constexpr float player_height = 90.f;
     constexpr float player_radius = 45.f;
     constexpr double player_roll_dodge_seconds = 1.0;
+
+    constexpr int32_t stackable_item_max_quantity = 30;
 }

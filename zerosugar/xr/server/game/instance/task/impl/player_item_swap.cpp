@@ -1,4 +1,4 @@
-#include "player_swap_item.h"
+#include "player_item_swap.h"
 
 #include "zerosugar/xr/network/model/generated/game_cs_message_json.h"
 #include "zerosugar/xr/network/model/generated/game_sc_message.h"
@@ -15,13 +15,13 @@
 
 namespace zerosugar::xr::game_task
 {
-    PlayerSwapItem::PlayerSwapItem(UniquePtrNotNull<IPacket> param, game_entity_id_type targetId, game_time_point_type creationTimePoint)
+    PlayerItemSwap::PlayerItemSwap(UniquePtrNotNull<network::game::cs::SwapItem> param, game_entity_id_type targetId, game_time_point_type creationTimePoint)
         : GameTaskBaseParamT(creationTimePoint, std::move(param), MainTargetSelector(targetId))
         , _id(targetId)
     {
     }
 
-    void PlayerSwapItem::Execute(GameExecutionParallel& parallelContext, MainTargetSelector::target_type target)
+    void PlayerItemSwap::Execute(GameExecutionParallel& parallelContext, MainTargetSelector::target_type target)
     {
         auto& inventoryComponent = target->GetComponent<InventoryComponent>();
         const network::game::cs::SwapItem& param = GetParam();
@@ -121,7 +121,7 @@ namespace zerosugar::xr::game_task
                 playerComponent.GetCharacterId(), playerComponent.GetName(), j.dump()));
     }
 
-    void PlayerSwapItem::OnComplete(GameExecutionSerial& serialContext)
+    void PlayerItemSwap::OnComplete(GameExecutionSerial& serialContext)
     {
         (void)serialContext;
 

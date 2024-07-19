@@ -57,6 +57,12 @@ namespace zerosugar::xr::service
     void from_json(const nlohmann::json& j, AuthenticatePlayerResult& item);
     void to_json(nlohmann::json& j, const AuthenticatePlayerResult& item);
 
+    void from_json(const nlohmann::json& j, RemoveGameInstanceParam& item);
+    void to_json(nlohmann::json& j, const RemoveGameInstanceParam& item);
+
+    void from_json(const nlohmann::json& j, RemoveGameInstanceResult& item);
+    void to_json(nlohmann::json& j, const RemoveGameInstanceResult& item);
+
     void from_json(const nlohmann::json& j, BroadcastChattingParam& item);
     void to_json(nlohmann::json& j, const BroadcastChattingParam& item);
 

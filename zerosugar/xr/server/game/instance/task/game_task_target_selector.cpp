@@ -63,6 +63,36 @@ namespace zerosugar::xr::game_task
         return _entity.get();
     }
 
+    bool MultiTargetSelector::SelectEntityId(const GameExecutionSerial& serial)
+    {
+        const GameSnapshotContainer& snapshotContainer = serial.GetSnapshotContainer();
+
+        return std::ranges::all_of(_targetIds, [&snapshotContainer](game_entity_id_type id) -> bool
+            {
+                return snapshotContainer.FindPlayer(id) != nullptr;
+            });
+    }
+
+    auto MultiTargetSelector::GetTargetId() const -> std::span<const game_entity_id_type>
+    {
+        return _targetIds;
+    }
+
+    bool MultiTargetSelector::SelectEntity(const GameExecutionParallel& parallel)
+    {
+        parallel.GetEntityContainer().FindRange(_targetIds, [this](const SharedPtrNotNull<GameEntity>& entity)
+            {
+                this->_targets.push_back(entity.get());
+            });
+
+        return !_targets.empty();
+    }
+
+    auto MultiTargetSelector::GetTarget() const -> target_type
+    {
+        return _targets;
+    }
+
     PlayerAttackEffectTargetSelector::PlayerAttackEffectTargetSelector(game_entity_id_type playerId, std::span<const game_entity_id_type> targetIds)
         : _playerId(playerId)
         , _targetIds(targetIds.begin(), targetIds.end())

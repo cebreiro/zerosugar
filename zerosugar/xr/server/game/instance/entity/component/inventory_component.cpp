@@ -67,6 +67,148 @@ namespace zerosugar::xr
         _itemLogs.clear();
     }
 
+    bool InventoryComponent::CanStackItem(int32_t itemId, int32_t quantity, int32_t& resultQuantity) const
+    {
+        constexpr auto stackableItems = { 2000001 , 2000002, 2000003 };
+
+        int32_t stackableSize = 0;
+
+        const auto filter = [itemId](const InventoryItem* item)
+            {
+                return item && item->itemDataId == itemId;
+            };
+
+        for (const InventoryItem& inventoryItem : _inventory | std::views::filter(filter) | notnull::reference)
+        {
+            const int32_t diff = game_constant::stackable_item_max_quantity - inventoryItem.quantity;
+            if (diff > 0)
+            {
+                stackableSize += diff;
+            }
+
+            if (stackableSize >= quantity)
+            {
+                break;
+            }
+        }
+
+        resultQuantity = std::min(stackableSize, quantity);
+
+        return stackableSize > 0;
+    }
+
+    bool InventoryComponent::HasEmptySlot() const
+    {
+        const auto iter = std::ranges::find_if(_inventory, [](const InventoryItem* item)
+            {
+                return !item;
+            });
+
+        return iter != _inventory.end();
+    }
+
+    bool InventoryComponent::StackItem(int32_t itemId, int32_t quantity)
+    {
+        std::vector<std::pair<PtrNotNull<InventoryItem>, int32_t>> changes;
+
+        int32_t remain = quantity;
+
+        const auto filter = [itemId](const InventoryItem* item)
+            {
+                return item && item->itemDataId == itemId;
+            };
+
+        for (InventoryItem& inventoryItem : _inventory | std::views::filter(filter) | notnull::reference)
+        {
+            if (remain <= 0)
+            {
+                break;
+            }
+
+            const int32_t diff = game_constant::stackable_item_max_quantity - inventoryItem.quantity;
+            if (diff <= 0)
+            {
+                continue;
+            }
+
+            const int32_t addQuantity = std::min(diff, remain);
+            remain -= addQuantity;
+
+            changes.emplace_back(&inventoryItem, inventoryItem.quantity + addQuantity);
+        }
+
+        if (changes.empty() || remain > 0)
+        {
+            return false;
+        }
+
+        for (const auto& [inventoryItem, newQuantity] : changes)
+        {
+            inventoryItem->quantity = newQuantity;
+
+            LogChangeItemQuantity(inventoryItem->itemId, newQuantity);
+        }
+
+        return true;
+    }
+
+    bool InventoryComponent::AddItem(int64_t itemUid, int32_t itemId, int32_t quantity)
+    {
+        const game_item_id_type id(itemUid);
+
+        assert(!_items.contains(id));
+        assert(quantity > 0);
+
+        for (int32_t i = 0; i < std::ssize(_inventory); ++i)
+        {
+            InventoryItem*& inventoryItem = _inventory[i];
+            if (inventoryItem)
+            {
+                continue;
+            }
+
+            InventoryItem& item = _items[id];
+            item.itemDataId = itemId;
+            item.itemId = id;
+            item.slot = i;
+            item.quantity = quantity;
+
+            inventoryItem = &item;
+
+            LogAddItem(id, itemId, quantity, i);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    bool InventoryComponent::RemoveItem(int32_t slot)
+    {
+        if (!IsValidSlot(slot))
+        {
+            return false;
+        }
+
+        InventoryItem*& item = _inventory[slot];
+        if (!item)
+        {
+            return false;
+        }
+
+        const game_item_id_type id = item->itemId;
+
+        [[maybe_unused]]
+        const bool erased = _items.erase(id);
+        assert(erased);
+
+        item = nullptr;
+
+        LogRemoveItem(id);
+
+        return true;
+    }
+
     bool InventoryComponent::Equip(data::EquipPosition destPosition, int32_t srcPosition)
     {
         if (!IsValid(destPosition) || !IsValidSlot(srcPosition))
@@ -83,14 +225,14 @@ namespace zerosugar::xr
         InventoryItem* destPosItem = _equipments[static_cast<int32_t>(destPosition)];
         if (destPosItem)
         {
-            AddEquipLog(item->itemId, destPosition);
-            AddUnequipLog(destPosItem->itemId, srcPosition);
+            LogEquip(item->itemId, destPosition);
+            LogUnequip(destPosItem->itemId, srcPosition);
 
             std::swap(std::tie(item->slot, item->slotType), std::tie(destPosItem->slot, destPosItem->slotType));
         }
         else
         {
-            AddEquipLog(item->itemId, destPosition);
+            LogEquip(item->itemId, destPosition);
 
             item->slot = static_cast<int32_t>(destPosition);
             item->slotType = InventoryItemSlotType::Equipment;
@@ -120,14 +262,14 @@ namespace zerosugar::xr
         InventoryItem* destPosItem = _inventory[destPosition];
         if (destPosItem)
         {
-            AddUnequipLog(item->itemId, destPosition);
-            AddEquipLog(destPosItem->itemId, srcPosition);
+            LogUnequip(item->itemId, destPosition);
+            LogEquip(destPosItem->itemId, srcPosition);
 
             std::swap(std::tie(destPosItem->slot, destPosItem->slotType), std::tie(item->slot, item->slotType));
         }
         else
         {
-            AddUnequipLog(item->itemId, destPosition);
+            LogUnequip(item->itemId, destPosition);
 
             item->slot = destPosition;
             item->slotType = InventoryItemSlotType::Inventory;
@@ -157,14 +299,14 @@ namespace zerosugar::xr
         InventoryItem* destPosItem = _inventory[destPosition];
         if (destPosItem)
         {
-            AddShiftItemLog(item->itemId, destPosition);
-            AddShiftItemLog(destPosItem->itemId, srcPosition);
+            LogShiftItem(item->itemId, destPosition);
+            LogShiftItem(destPosItem->itemId, srcPosition);
 
             std::swap(std::tie(destPosItem->slot, destPosItem->slotType), std::tie(item->slot, item->slotType));
         }
         else
         {
-            AddShiftItemLog(item->itemId, destPosition);
+            LogShiftItem(item->itemId, destPosition);
 
             item->slot = destPosition;
         }
@@ -279,7 +421,7 @@ namespace zerosugar::xr
         return iter != _items.end() ? &iter->second : nullptr;
     }
 
-    void InventoryComponent::AddEquipLog(game_item_id_type itemId, data::EquipPosition position)
+    void InventoryComponent::LogEquip(game_item_id_type itemId, data::EquipPosition position)
     {
         service::EquipItemLog log;
         log.characterId = _characterId;
@@ -289,7 +431,7 @@ namespace zerosugar::xr
         _itemLogs.emplace_back(log);
     }
 
-    void InventoryComponent::AddUnequipLog(game_item_id_type itemId, int32_t slot)
+    void InventoryComponent::LogUnequip(game_item_id_type itemId, int32_t slot)
     {
         service::UnequipItemLog log;
         log.itemId = itemId.Unwrap();
@@ -298,7 +440,7 @@ namespace zerosugar::xr
         _itemLogs.emplace_back(log);
     }
 
-    void InventoryComponent::AddShiftItemLog(game_item_id_type itemId, int32_t slot)
+    void InventoryComponent::LogShiftItem(game_item_id_type itemId, int32_t slot)
     {
         service::ShiftItemLog log;
         log.itemId = itemId.Unwrap();
@@ -307,15 +449,27 @@ namespace zerosugar::xr
         _itemLogs.emplace_back(log);
     }
 
-    void InventoryComponent::AddDiscardItemLog(game_item_id_type itemId)
+    void InventoryComponent::LogAddItem(game_item_id_type itemId, int32_t dataId, int32_t quantity, int32_t slot)
     {
-        service::DiscardItemLog log;
+        service::AddItemLog log;
+        log.itemId = itemId.Unwrap();
+        log.characterId = _characterId;
+        log.itemDataId = dataId;
+        log.quantity = quantity;
+        log.slot = slot;
+
+        _itemLogs.emplace_back(log);
+    }
+
+    void InventoryComponent::LogRemoveItem(game_item_id_type itemId)
+    {
+        service::RemoveItemLog log;
         log.itemId = itemId.Unwrap();
 
         _itemLogs.emplace_back(log);
     }
 
-    void InventoryComponent::AddUseItemLog(game_item_id_type itemId, int32_t quantity)
+    void InventoryComponent::LogChangeItemQuantity(game_item_id_type itemId, int32_t quantity)
     {
         service::ChangeItemQuantityLog log;
         log.itemId = itemId.Unwrap();

@@ -7,7 +7,7 @@
 
 namespace zerosugar::xr::game_task
 {
-    PlayerMove::PlayerMove(UniquePtrNotNull<IPacket> param, game_entity_id_type targetId, game_time_point_type creationTimePoint)
+    PlayerMove::PlayerMove(UniquePtrNotNull<network::game::cs::MovePlayer> param, game_entity_id_type targetId, game_time_point_type creationTimePoint)
         : GameTaskBaseParamT(creationTimePoint, std::move(param), MainTargetSelector(targetId))
     {
     }

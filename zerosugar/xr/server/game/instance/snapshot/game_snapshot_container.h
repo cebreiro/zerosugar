@@ -49,6 +49,9 @@ namespace zerosugar::xr
         auto GetPlayerRange() const -> std::ranges::values_view<std::ranges::ref_view<const player_container_type>>;
         auto GetMonsterRange() const ->std::ranges::values_view<std::ranges::ref_view<const monster_container_type>>;
 
+        auto GetPlayerCount() const -> int64_t;
+        auto GetMonsterCount() const -> int64_t;
+
     private:
         player_container_type _players;
         monster_container_type _monsters;

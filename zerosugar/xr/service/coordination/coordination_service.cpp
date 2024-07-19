@@ -314,9 +314,83 @@ namespace zerosugar::xr
 
     auto CoordinationService::RemovePlayerAsync(service::RemovePlayerParam param) -> Future<service::RemovePlayerResult>
     {
-        (void)param;
+        [[maybe_unused]]
+        auto self = shared_from_this();
 
-        co_return{};
+        co_await *_strand;
+        assert(ExecutionContext::IsEqualTo(*_strand));
+
+        service::RemovePlayerResult result;
+
+        do
+        {
+            const coordination::GameUser* user = _nodeContainer->FindGameUser(param.authenticationToken);
+            if (!user)
+            {
+                result.errorCode = service::CoordinationServiceErrorCode::AuthenticatePlayerErrorUserNotFound;
+
+                break;
+            }
+
+            coordination::GameInstance* gameInstance = user->GetParent();
+            coordination::GameServer* server = gameInstance ? gameInstance->GetParent() : nullptr;
+
+            if (!server || server->GetId() != coordination::game_server_id_type(param.serverId))
+            {
+                result.errorCode = service::CoordinationServiceErrorCode::RemovePlayerErrorInvalidServer;
+
+                break;
+            }
+
+            gameInstance->RemoveChild(user->GetId());
+            _nodeContainer->Remove(user->GetId());
+
+        } while (false);
+
+        _nodeContainer->Find(coordination::game_server_id_type(param.serverId));
+
+        co_return result;
+    }
+
+    auto CoordinationService::RemoveGameInstanceAsync(service::RemoveGameInstanceParam param) -> Future<service::RemoveGameInstanceResult>
+    {
+        [[maybe_unused]]
+        auto self = shared_from_this();
+
+        co_await *_strand;
+        assert(ExecutionContext::IsEqualTo(*_strand));
+
+        service::RemoveGameInstanceResult result;
+
+        do
+        {
+            const auto instanceId = coordination::game_instance_id_type(param.gameInstanceId);
+
+            coordination::GameInstance* instance = _nodeContainer->Find(instanceId);
+            if (!instance)
+            {
+                result.errorCode = service::CoordinationServiceErrorCode::RemoveGameInstanceErrorInstanceNotFound;
+
+                break;
+            }
+
+            if (instance->GetChildCount() > 0)
+            {
+                result.errorCode = service::CoordinationServiceErrorCode::RemoveGameInstanceErrorInstanceNotEmpty;
+
+                break;
+            }
+
+            coordination::GameServer* server = instance->GetParent();
+            server->RemoveChild(instanceId);
+
+            [[maybe_unused]]
+            const bool removed = _nodeContainer->Remove(instanceId);
+            assert(removed);
+
+        } while (false);
+
+        co_return result;
     }
 
     auto CoordinationService::BroadcastChattingAsync(service::BroadcastChattingParam param) -> Future<service::BroadcastChattingResult>

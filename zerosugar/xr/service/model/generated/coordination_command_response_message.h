@@ -3,6 +3,7 @@
 #include <any>
 #include <string>
 #include <vector>
+#include <typeinfo>
 #include "zerosugar/xr/network/packet_interface.h"
 
 namespace zerosugar::xr::coordination::command::response
@@ -43,4 +44,31 @@ namespace zerosugar::xr::coordination::command::response
 
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>;
     auto CreateAnyFrom(PacketReader& reader) -> std::any;
+    auto GetPacketTypeInfo(int32_t opcode) -> const std::type_info&;
+
+    template <typename TVisitor>
+    auto Visit(const IPacket& packet, const TVisitor& visitor)
+    {
+        switch(packet.GetOpcode())
+        {
+            case Exception::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const Exception&>);
+                visitor.template operator()<Exception>(*packet.Cast<Exception>());
+            }
+            break;
+            case Authenticate::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const Authenticate&>);
+                visitor.template operator()<Authenticate>(*packet.Cast<Authenticate>());
+            }
+            break;
+            case LaunchGameInstance::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const LaunchGameInstance&>);
+                visitor.template operator()<LaunchGameInstance>(*packet.Cast<LaunchGameInstance>());
+            }
+            break;
+        }
+    }
 }

@@ -17,24 +17,6 @@ namespace zerosugar::xr::game_task
     {
     }
 
-    bool PlayerDepsawn::ShouldPrepareBeforeScheduled() const
-    {
-        return true;
-    }
-
-    void PlayerDepsawn::Prepare(GameExecutionSerial& serialContext, bool& quickExit)
-    {
-        quickExit = false;
-
-        serialContext.GetTaskScheduler().RemoveController(_controllerId);
-        serialContext.GetTaskScheduler().RemoveEntity(_entityId);
-    }
-
-    void PlayerDepsawn::OnFailTargetSelect(GameExecutionSerial& serialContext)
-    {
-        GameTaskParamT<Promise<void>, MainTargetSelector>::OnFailTargetSelect(serialContext);
-    }
-
     void PlayerDepsawn::Execute(GameExecutionParallel& parallelContext, MainTargetSelector::target_type entity)
     {
         [[maybe_unused]]
@@ -44,9 +26,14 @@ namespace zerosugar::xr::game_task
 
     void PlayerDepsawn::OnComplete(GameExecutionSerial& serialContext)
     {
-        Promise<void>& completionToken = MutableParam();
-        completionToken.Set();
+        GameTaskScheduler& taskScheduler = serialContext.GetTaskScheduler();
+
+        taskScheduler.RemoveController(_controllerId);
+        taskScheduler.RemoveEntity(_entityId);
 
         serialContext.GetSnapshotController().ProcessPlayerDespawn(_entityId);
+
+        Promise<void>& completionToken = MutableParam();
+        completionToken.Set();
     }
 }

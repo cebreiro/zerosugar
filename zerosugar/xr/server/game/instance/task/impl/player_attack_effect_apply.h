@@ -2,6 +2,7 @@
 #include <boost/container/small_vector.hpp>
 #include "zerosugar/xr/network/packet_interface.h"
 #include "zerosugar/xr/network/model/generated/game_cs_message.h"
+#include "zerosugar/xr/server/game/instance/controller/game_controller_id.h"
 #include "zerosugar/xr/server/game/instance/task/game_task.h"
 
 namespace zerosugar::xr::game_task
@@ -23,6 +24,7 @@ namespace zerosugar::xr::game_task
         struct DeadContext
         {
             game_entity_id_type entityId;
+            game_controller_id_type controllerId;
             double animationDuration = 0.0;
             std::optional<game_entity_id_type> spawnerId = std::nullopt;
         };

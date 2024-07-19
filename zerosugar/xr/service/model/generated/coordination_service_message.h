@@ -21,6 +21,8 @@ namespace zerosugar::xr::service
         AuthenticatePlayerErrorUserNotFound = 60001,
         AuthenticatePlayerErrorUserIsNotMigrating = 60002,
         AuthenticatePlayerErrorRequestToInvalidServer = 60003,
+        RemoveGameInstanceErrorInstanceNotFound = 70001,
+        RemoveGameInstanceErrorInstanceNotEmpty = 70002,
 
     };
     auto GetEnumName(CoordinationServiceErrorCode e) -> std::string_view;
@@ -125,6 +127,16 @@ namespace zerosugar::xr::service
         int64_t characterId = {};
         int64_t gameInstanceId = {};
         int64_t userUniqueId = {};
+    };
+
+    struct RemoveGameInstanceParam
+    {
+        int64_t gameInstanceId = {};
+    };
+
+    struct RemoveGameInstanceResult
+    {
+        CoordinationServiceErrorCode errorCode = {};
     };
 
     struct BroadcastChattingParam

@@ -39,7 +39,11 @@ namespace zerosugar::xr
         Server::Initialize(serviceLocator);
 
         _serviceLocator = serviceLocator;
-        _gameRepository = std::make_shared<GameRepository>(GetExecutor(), _serviceLocator);
+        _gameRepository = std::make_shared<GameRepository>(GetExecutor(), _serviceLocator,
+            [self = SharedFromThis()](int64_t characterId)
+            {
+                self->OnCharacterSaveError(characterId);
+            });
 
         _serviceLocator.Add<IGameRepository>(_gameRepository);
     }
@@ -50,6 +54,7 @@ namespace zerosugar::xr
 
         _port = listenPort;
 
+        ConfigureSnowflake();
         RegisterToCoordinationService();
         OpenCoordinationCommandChannel();
         //ScheduleServerStatusReport();
@@ -276,11 +281,101 @@ namespace zerosugar::xr
     void GameServer::OnError(Session& session, const boost::system::error_code& error)
     {
         ZEROSUGAR_LOG_DEBUG(_serviceLocator,
-            fmt::format("[{}] session io error. session: {}, error: {}", GetName(), session, error.message()));
+            fmt::format("[{}] session io error. session: {}, error: {}",
+                GetName(), session, error.message()));
 
         _sessionReceiveBuffers.erase(session.GetId());
 
-        _clientContainer->Remove(session.GetId());
+        std::shared_ptr<GameClient> client = _clientContainer->Find(session.GetId());
+        if (!client)
+        {
+            return;
+        }
+
+        ProcessClientRemove(std::move(client));
+    }
+
+    void GameServer::OnCharacterSaveError(int64_t characterId)
+    {
+        ZEROSUGAR_LOG_ERROR(GetServiceLocator(),
+            fmt::format("[{}] character save error occur. character_id: {}",
+                GetName(), characterId));
+
+        std::shared_ptr<GameClient> client = _clientContainer->FindByCharacterId(characterId);
+        if (!client)
+        {
+            ZEROSUGAR_LOG_CRITICAL(GetServiceLocator(),
+                fmt::format("[{}] fail to find client. character_id: {}",
+                    GetName(), characterId));
+
+            return;
+        }
+
+        ProcessClientRemove(std::move(client));
+    }
+
+    auto GameServer::ProcessClientRemove(SharedPtrNotNull<GameClient> client) -> Future<void>
+    {
+        const session::id_type sessionId = client->GetSessionId();
+
+        client->ResetSession();
+
+        [[maybe_unused]]
+        const bool removed = _clientContainer->Remove(sessionId);
+        assert(removed);
+
+        std::shared_ptr<GameInstance> gameInstance = client->GetGameInstance();
+        assert(gameInstance);
+
+        service::RemovePlayerParam param;
+        param.serverId = GetServerId();
+        param.authenticationToken = client->GetAuthenticationToken();
+
+        auto removeFuture = _serviceLocator.Get<service::ICoordinationService>().RemovePlayerAsync(std::move(param));
+        auto finalizeSaveFuture = _gameRepository->FinalizeSaves(client->GetCharacterId());
+
+        Promise<void> promise;
+        Future<void> despawnFuture = promise.GetFuture();
+
+        auto task = std::make_unique<game_task::PlayerDepsawn>(std::move(promise), client->GetControllerId(), client->GetGameEntityId());
+        gameInstance->Summit(std::move(task), std::nullopt);
+
+        co_await WaitAll(GetGameExecutor(), removeFuture, finalizeSaveFuture, despawnFuture);
+
+        service::RemovePlayerResult removeResult = removeFuture.Get();
+        if (removeResult.errorCode != service::CoordinationServiceErrorCode::CoordinationErrorNone)
+        {
+            ZEROSUGAR_LOG_ERROR(GetServiceLocator(),
+                fmt::format("[{}] fail to remove client auth. chracter_id: {}, auth: {}, error: {}",
+                    GetName(), client->GetCharacterId(), client->GetAuthenticationToken(), GetEnumName(removeResult.errorCode)));
+        }
+
+        ZEROSUGAR_LOG_INFO(GetServiceLocator(),
+            fmt::format("[{}] client is removed from game. character_id: {}, auth: {}",
+                GetName(), client->GetCharacterId(), client->GetAuthenticationToken()));
+
+        co_return;
+    }
+
+    void GameServer::ConfigureSnowflake()
+    {
+        auto& coordinationService = _serviceLocator.Get<service::ICoordinationService>();
+
+        service::RequestSnowflakeKeyParam requestSnowflakeKeyParam;
+        requestSnowflakeKeyParam.requester = GetName();
+
+        const service::RequestSnowflakeKeyResult res = coordinationService.RequestSnowflakeKeyAsync(std::move(requestSnowflakeKeyParam)).Get();
+        if (res.errorCode != service::CoordinationServiceErrorCode::CoordinationErrorNone)
+        {
+            ZEROSUGAR_LOG_CRITICAL(_serviceLocator,
+                fmt::format("[{}] fail to get snowflake key: {}", GetName(), GetEnumName(res.errorCode)));
+
+            return;
+        }
+
+        assert(_gameRepository);
+
+        _gameRepository->SetSnowFlake(std::make_unique<SharedSnowflake<>>(res.snowflakeKey));
     }
 
     void GameServer::RegisterToCoordinationService()

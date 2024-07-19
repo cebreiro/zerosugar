@@ -19,6 +19,8 @@ namespace zerosugar::xr
             int64_t worldUserUniqueId, WeakPtrNotNull<GameInstance> gameInstance);
         ~GameClient() override;
 
+        void ResetSession();
+
         bool IsRemoteController() const override;
 
         void Notify(const IPacket& packet) override;

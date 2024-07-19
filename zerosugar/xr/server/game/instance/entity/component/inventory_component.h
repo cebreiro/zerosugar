@@ -22,6 +22,14 @@ namespace zerosugar::xr
 
         void ClearChangeLogs();
 
+        bool CanStackItem(int32_t itemId, int32_t quantity, int32_t& resultQuantity) const;
+        bool HasEmptySlot() const;
+
+        bool StackItem(int32_t itemId, int32_t quantity);
+        bool AddItem(int64_t itemUid, int32_t itemId, int32_t quantity);
+
+        bool RemoveItem(int32_t slot);
+
         bool Equip(data::EquipPosition destPosition, int32_t srcPosition);
         bool Unequip(data::EquipPosition srcPosition, int32_t destPosition);
         bool ShiftItem(int32_t srcPosition, int32_t destPosition);
@@ -42,11 +50,12 @@ namespace zerosugar::xr
 
         auto FindMutableItem(game_item_id_type itemId) -> InventoryItem*;
 
-        void AddEquipLog(game_item_id_type itemId, data::EquipPosition position);
-        void AddUnequipLog(game_item_id_type itemId, int32_t slot);
-        void AddShiftItemLog(game_item_id_type itemId, int32_t slot);
-        void AddDiscardItemLog(game_item_id_type itemId);
-        void AddUseItemLog(game_item_id_type itemId, int32_t quantity);
+        void LogEquip(game_item_id_type itemId, data::EquipPosition position);
+        void LogUnequip(game_item_id_type itemId, int32_t slot);
+        void LogShiftItem(game_item_id_type itemId, int32_t slot);
+        void LogAddItem(game_item_id_type itemId, int32_t dataId, int32_t quantity, int32_t slot);
+        void LogRemoveItem(game_item_id_type itemId);
+        void LogChangeItemQuantity(game_item_id_type itemId, int32_t quantity);
 
         static bool IsValidSlot(int32_t slot);
 

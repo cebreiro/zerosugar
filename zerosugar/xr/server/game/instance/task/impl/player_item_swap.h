@@ -9,10 +9,10 @@
 
 namespace zerosugar::xr::game_task
 {
-    class PlayerSwapItem final : public GameTaskBaseParamT<IPacket, network::game::cs::SwapItem, MainTargetSelector>
+    class PlayerItemSwap final : public GameTaskBaseParamT<IPacket, network::game::cs::SwapItem, MainTargetSelector>
     {
     public:
-        PlayerSwapItem(UniquePtrNotNull<IPacket> param, game_entity_id_type targetId,
+        PlayerItemSwap(UniquePtrNotNull<network::game::cs::SwapItem> param, game_entity_id_type targetId,
             game_time_point_type creationTimePoint = game_clock_type::now());
 
     private:

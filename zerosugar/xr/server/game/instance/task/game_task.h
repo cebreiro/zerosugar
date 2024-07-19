@@ -152,8 +152,18 @@ namespace zerosugar::xr
             , _param(std::move(param))
         {
         }
+        
+        explicit GameTaskParamT(game_time_point_type creationTimePoint, TSelector&&... selector)
+            : GameTaskT<TSelector...>(creationTimePoint, std::forward<TSelector>(selector)...)
+        {
+        }
 
     protected:
+        void SetParam(TParam param)
+        {
+            _param = std::move(param);
+        }
+
         auto GetParam() const -> const TParam&
         {
             return _param;

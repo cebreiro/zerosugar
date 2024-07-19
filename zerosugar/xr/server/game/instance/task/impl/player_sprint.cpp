@@ -6,7 +6,7 @@
 
 namespace zerosugar::xr::game_task
 {
-    PlayerSprint::PlayerSprint(UniquePtrNotNull<IPacket> param, game_entity_id_type targetId, game_time_point_type creationTimePoint)
+    PlayerSprint::PlayerSprint(UniquePtrNotNull<network::game::cs::SprintPlayer> param, game_entity_id_type targetId, game_time_point_type creationTimePoint)
         : GameTaskBaseParamT(creationTimePoint, std::move(param), MainTargetSelector(targetId))
         , _id(targetId)
     {

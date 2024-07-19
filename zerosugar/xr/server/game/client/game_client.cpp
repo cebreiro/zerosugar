@@ -20,6 +20,12 @@ namespace zerosugar::xr
     {
     }
 
+    void GameClient::ResetSession()
+    {
+        _session->Close();
+        _session.reset();
+    }
+
     bool GameClient::IsRemoteController() const
     {
         return true;

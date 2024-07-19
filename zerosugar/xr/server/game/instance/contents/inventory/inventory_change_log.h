@@ -7,7 +7,8 @@ namespace zerosugar::xr
         service::EquipItemLog,
         service::UnequipItemLog,
         service::ShiftItemLog,
-        service::DiscardItemLog,
+        service::AddItemLog,
+        service::RemoveItemLog,
         service::ChangeItemQuantityLog
     >;
 }

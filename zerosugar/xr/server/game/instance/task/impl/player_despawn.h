@@ -11,10 +11,6 @@ namespace zerosugar::xr::game_task
             game_time_point_type creationTimePoint = game_clock_type::now());
 
     private:
-        bool ShouldPrepareBeforeScheduled() const override;;
-        void Prepare(GameExecutionSerial& serialContext, bool& quickExit) override;
-        void OnFailTargetSelect(GameExecutionSerial& serialContext) override;
-
         void Execute(GameExecutionParallel& parallelContext, MainTargetSelector::target_type) override;
         void OnComplete(GameExecutionSerial& serialContext) override;
 

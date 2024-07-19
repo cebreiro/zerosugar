@@ -43,12 +43,30 @@ namespace zerosugar::xr::service
         writer.Write<int32_t>(inventorySlot);
     }
 
-    void DiscardItemLog::Deserialize(PacketReader& reader)
+    void AddItemLog::Deserialize(PacketReader& reader)
+    {
+        itemId = reader.Read<int64_t>();
+        characterId = reader.Read<int64_t>();
+        itemDataId = reader.Read<int32_t>();
+        quantity = reader.Read<int32_t>();
+        slot = reader.Read<int32_t>();
+    }
+
+    void AddItemLog::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int64_t>(itemId);
+        writer.Write<int64_t>(characterId);
+        writer.Write<int32_t>(itemDataId);
+        writer.Write<int32_t>(quantity);
+        writer.Write<int32_t>(slot);
+    }
+
+    void RemoveItemLog::Deserialize(PacketReader& reader)
     {
         itemId = reader.Read<int64_t>();
     }
 
-    void DiscardItemLog::Serialize(PacketWriter& writer) const
+    void RemoveItemLog::Serialize(PacketWriter& writer) const
     {
         writer.Write<int64_t>(itemId);
     }
@@ -91,9 +109,16 @@ namespace zerosugar::xr::service
 
                 return item;
             }
-            case DiscardItemLog::opcode:
+            case AddItemLog::opcode:
             {
-                auto item = std::make_unique<DiscardItemLog>();
+                auto item = std::make_unique<AddItemLog>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case RemoveItemLog::opcode:
+            {
+                auto item = std::make_unique<RemoveItemLog>();
                 item->Deserialize(reader);
 
                 return item;
@@ -135,9 +160,16 @@ namespace zerosugar::xr::service
 
                 return item;
             }
-            case DiscardItemLog::opcode:
+            case AddItemLog::opcode:
             {
-                DiscardItemLog item;
+                AddItemLog item;
+                item.Deserialize(reader);
+
+                return item;
+            }
+            case RemoveItemLog::opcode:
+            {
+                RemoveItemLog item;
                 item.Deserialize(reader);
 
                 return item;
@@ -151,5 +183,38 @@ namespace zerosugar::xr::service
             }
         }
         return {};
+    }
+
+    auto GetPacketTypeInfo(int32_t opcode) -> const std::type_info&
+    {
+        switch(opcode)
+        {
+            case EquipItemLog::opcode:
+            {
+                return typeid(EquipItemLog);
+            }
+            case UnequipItemLog::opcode:
+            {
+                return typeid(UnequipItemLog);
+            }
+            case ShiftItemLog::opcode:
+            {
+                return typeid(ShiftItemLog);
+            }
+            case AddItemLog::opcode:
+            {
+                return typeid(AddItemLog);
+            }
+            case RemoveItemLog::opcode:
+            {
+                return typeid(RemoveItemLog);
+            }
+            case ChangeItemQuantityLog::opcode:
+            {
+                return typeid(ChangeItemQuantityLog);
+            }
+        }
+        assert(false);
+        return typeid(nullptr);
     }
 }

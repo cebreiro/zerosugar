@@ -7,7 +7,7 @@ namespace zerosugar::xr::game_task
     class PlayerSprint final : public GameTaskBaseParamT<IPacket, network::game::cs::SprintPlayer, MainTargetSelector>
     {
     public:
-        PlayerSprint(UniquePtrNotNull<IPacket> param, game_entity_id_type targetId,
+        PlayerSprint(UniquePtrNotNull<network::game::cs::SprintPlayer> param, game_entity_id_type targetId,
             game_time_point_type creationTimePoint = game_clock_type::now());
 
     private:

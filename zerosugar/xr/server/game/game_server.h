@@ -17,7 +17,7 @@ namespace zerosugar::xr
     class GameInstanceContainer;
     class IGamePacketHandlerFactory;
     class ICommandHandlerFactory;
-    class IGameRepository;
+    class GameRepository;
 }
 
 namespace zerosugar::xr
@@ -60,6 +60,11 @@ namespace zerosugar::xr
         void OnReceive(Session& session, Buffer buffer) override;
         void OnError(Session& session, const boost::system::error_code& error) override;
 
+        void OnCharacterSaveError(int64_t characterId);
+
+        auto ProcessClientRemove(SharedPtrNotNull<GameClient> client) -> Future<void>;
+
+        void ConfigureSnowflake();
         void RegisterToCoordinationService();
         void OpenCoordinationCommandChannel();
         void ScheduleDeviceStatusReport();
@@ -83,7 +88,7 @@ namespace zerosugar::xr
         tbb::concurrent_hash_map<session::id_type, Buffer> _sessionReceiveBuffers;
         UniquePtrNotNull<GameClientContainer> _clientContainer;
 
-        SharedPtrNotNull<IGameRepository> _gameRepository;
+        SharedPtrNotNull<GameRepository> _gameRepository;
 
         UniquePtrNotNull<GameInstanceContainer> _gameInstanceContainer;
         UniquePtrNotNull<IGamePacketHandlerFactory> _gamePacketHandlerFactory;

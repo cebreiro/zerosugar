@@ -261,6 +261,32 @@ namespace zerosugar::xr::service
             };
     }
 
+    void from_json(const nlohmann::json& j, RemoveGameInstanceParam& item)
+    {
+        j.at("gameInstanceId").get_to(item.gameInstanceId);
+    }
+
+    void to_json(nlohmann::json& j, const RemoveGameInstanceParam& item)
+    {
+        j = nlohmann::json
+            {
+                { "gameInstanceId", item.gameInstanceId },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, RemoveGameInstanceResult& item)
+    {
+        j.at("errorCode").get_to(item.errorCode);
+    }
+
+    void to_json(nlohmann::json& j, const RemoveGameInstanceResult& item)
+    {
+        j = nlohmann::json
+            {
+                { "errorCode", item.errorCode },
+            };
+    }
+
     void from_json(const nlohmann::json& j, BroadcastChattingParam& item)
     {
         j.at("serverId").get_to(item.serverId);

@@ -4,7 +4,7 @@
 #include "zerosugar/xr/server/game/game_server.h"
 #include "zerosugar/xr/server/game/client/game_client.h"
 #include "zerosugar/xr/server/game/instance/game_instance.h"
-#include "zerosugar/xr/server/game/instance/task/impl/player_swap_item.h"
+#include "zerosugar/xr/server/game/instance/task/impl/player_item_swap.h"
 
 namespace zerosugar::xr
 {
@@ -29,7 +29,7 @@ namespace zerosugar::xr
             co_return;
         }
 
-        auto task = std::make_unique<game_task::PlayerSwapItem>(std::move(packet), client->GetGameEntityId());
+        auto task = std::make_unique<game_task::PlayerItemSwap>(std::move(packet), client->GetGameEntityId());
 
         instance->Summit(std::move(task), client->GetControllerId());
     }

@@ -192,4 +192,14 @@ namespace zerosugar::xr
     {
         return _monsters | std::views::values;
     }
+
+    auto GameSnapshotContainer::GetPlayerCount() const -> int64_t
+    {
+        return std::ssize(_players);
+    }
+
+    auto GameSnapshotContainer::GetMonsterCount() const -> int64_t
+    {
+        return std::ssize(_monsters);
+    }
 }

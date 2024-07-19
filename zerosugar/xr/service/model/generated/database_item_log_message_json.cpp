@@ -49,12 +49,33 @@ namespace zerosugar::xr::service
             };
     }
 
-    void from_json(const nlohmann::json& j, DiscardItemLog& item)
+    void from_json(const nlohmann::json& j, AddItemLog& item)
+    {
+        j.at("itemId").get_to(item.itemId);
+        j.at("characterId").get_to(item.characterId);
+        j.at("itemDataId").get_to(item.itemDataId);
+        j.at("quantity").get_to(item.quantity);
+        j.at("slot").get_to(item.slot);
+    }
+
+    void to_json(nlohmann::json& j, const AddItemLog& item)
+    {
+        j = nlohmann::json
+            {
+                { "itemId", item.itemId },
+                { "characterId", item.characterId },
+                { "itemDataId", item.itemDataId },
+                { "quantity", item.quantity },
+                { "slot", item.slot },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, RemoveItemLog& item)
     {
         j.at("itemId").get_to(item.itemId);
     }
 
-    void to_json(nlohmann::json& j, const DiscardItemLog& item)
+    void to_json(nlohmann::json& j, const RemoveItemLog& item)
     {
         j = nlohmann::json
             {

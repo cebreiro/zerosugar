@@ -43,6 +43,8 @@ namespace zerosugar::xr
         auto AuthenticatePlayerAsync(service::AuthenticatePlayerParam param) -> Future<service::AuthenticatePlayerResult> override;
         auto RemovePlayerAsync(service::RemovePlayerParam param) -> Future<service::RemovePlayerResult> override;
 
+        auto RemoveGameInstanceAsync(service::RemoveGameInstanceParam param) -> Future<service::RemoveGameInstanceResult> override;
+
         auto BroadcastChattingAsync(service::BroadcastChattingParam param) -> Future<service::BroadcastChattingResult> override;
 
         auto RequestDungeonMatchAsync(service::RequestDungeonMatchParam param) -> Future<service::RequestDungeonMatchResult> override;

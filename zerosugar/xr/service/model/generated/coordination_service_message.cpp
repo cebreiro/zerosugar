@@ -17,6 +17,8 @@ namespace zerosugar::xr::service
             case CoordinationServiceErrorCode::AuthenticatePlayerErrorUserNotFound: return "AuthenticatePlayerErrorUserNotFound";
             case CoordinationServiceErrorCode::AuthenticatePlayerErrorUserIsNotMigrating: return "AuthenticatePlayerErrorUserIsNotMigrating";
             case CoordinationServiceErrorCode::AuthenticatePlayerErrorRequestToInvalidServer: return "AuthenticatePlayerErrorRequestToInvalidServer";
+            case CoordinationServiceErrorCode::RemoveGameInstanceErrorInstanceNotFound: return "RemoveGameInstanceErrorInstanceNotFound";
+            case CoordinationServiceErrorCode::RemoveGameInstanceErrorInstanceNotEmpty: return "RemoveGameInstanceErrorInstanceNotEmpty";
         }
         assert(false);
         return "unk";

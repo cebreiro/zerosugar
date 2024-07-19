@@ -7,7 +7,7 @@
 
 namespace zerosugar::xr::game_task
 {
-    PlayerStop::PlayerStop(UniquePtrNotNull<IPacket> param, game_entity_id_type targetId, game_time_point_type creationTimePoint)
+    PlayerStop::PlayerStop(UniquePtrNotNull<network::game::cs::StopPlayer> param, game_entity_id_type targetId, game_time_point_type creationTimePoint)
         : GameTaskBaseParamT(creationTimePoint, std::move(param), MainTargetSelector(targetId))
     {
     }

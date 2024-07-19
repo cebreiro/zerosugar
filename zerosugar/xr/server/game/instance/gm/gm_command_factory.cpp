@@ -6,6 +6,8 @@ namespace zerosugar::xr
 {
     GMCommandFactory::GMCommandFactory()
     {
+        Register<gm::ItemAdd>();
+        Register<gm::ItemRemove>();
         Register<gm::LogBT>();
         Register<gm::MonsterAttack>();
         Register<gm::PrintRandomPoint>();

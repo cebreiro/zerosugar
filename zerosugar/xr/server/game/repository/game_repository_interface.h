@@ -9,6 +9,8 @@ namespace zerosugar::xr
     public:
         virtual ~IGameRepository() = default;
 
+        virtual auto PublishItemUniqueId() -> int64_t = 0;
+
         virtual auto Find(int64_t characterId) -> Future<std::optional<service::DTOCharacter>> = 0;
 
         virtual auto FinalizeSaves(int64_t characterId) -> Future<void> = 0;

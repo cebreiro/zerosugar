@@ -25,6 +25,7 @@ namespace zerosugar::xr::service
         virtual auto AddPlayerAsync(AddPlayerParam param) -> Future<AddPlayerResult> = 0;
         virtual auto RemovePlayerAsync(RemovePlayerParam param) -> Future<RemovePlayerResult> = 0;
         virtual auto AuthenticatePlayerAsync(AuthenticatePlayerParam param) -> Future<AuthenticatePlayerResult> = 0;
+        virtual auto RemoveGameInstanceAsync(RemoveGameInstanceParam param) -> Future<RemoveGameInstanceResult> = 0;
         virtual auto BroadcastChattingAsync(BroadcastChattingParam param) -> Future<BroadcastChattingResult> = 0;
         virtual auto RequestDungeonMatchAsync(RequestDungeonMatchParam param) -> Future<RequestDungeonMatchResult> = 0;
         virtual auto CancelDungeonMatchAsync(CancelDungeonMatchParam param) -> Future<CancelDungeonMatchResult> = 0;
@@ -48,6 +49,7 @@ namespace zerosugar::xr::service
         auto AddPlayerAsync(AddPlayerParam param) -> Future<AddPlayerResult> override;
         auto RemovePlayerAsync(RemovePlayerParam param) -> Future<RemovePlayerResult> override;
         auto AuthenticatePlayerAsync(AuthenticatePlayerParam param) -> Future<AuthenticatePlayerResult> override;
+        auto RemoveGameInstanceAsync(RemoveGameInstanceParam param) -> Future<RemoveGameInstanceResult> override;
         auto BroadcastChattingAsync(BroadcastChattingParam param) -> Future<BroadcastChattingResult> override;
         auto RequestDungeonMatchAsync(RequestDungeonMatchParam param) -> Future<RequestDungeonMatchResult> override;
         auto CancelDungeonMatchAsync(CancelDungeonMatchParam param) -> Future<CancelDungeonMatchResult> override;

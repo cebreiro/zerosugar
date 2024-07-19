@@ -7,7 +7,7 @@ namespace zerosugar::xr::game_task
     class PlayerLocalChat final : public GameTaskBaseParamT<IPacket, network::game::cs::Chat, NullSelector>
     {
     public:
-        PlayerLocalChat(UniquePtrNotNull<IPacket> param, game_entity_id_type targetId,
+        PlayerLocalChat(UniquePtrNotNull<network::game::cs::Chat> param, game_entity_id_type targetId,
             game_time_point_type creationTimePoint = game_clock_type::now());
 
     private:

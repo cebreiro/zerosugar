@@ -19,8 +19,10 @@ namespace zerosugar::xr
 
         if (_clients.try_emplace(sessionId, client).second)
         {
-            [[maybe_unused]]
-            const bool inserted = _userIdIndexer.try_emplace(client->GetWorldUserUniqueId(), client).second;
+            bool inserted = _userIdIndexer.try_emplace(client->GetWorldUserUniqueId(), client).second;
+            assert(inserted);
+
+            inserted = _characterIndexer.try_emplace(client->GetCharacterId(), client).second;
             assert(inserted);
 
             return true;
@@ -39,11 +41,15 @@ namespace zerosugar::xr
             return false;
         }
 
-        [[maybe_unused]]
-        const size_t count = _userIdIndexer.erase(iter->second->GetWorldUserUniqueId());
+        const int64_t characterId = iter->second->GetCharacterId();
+
+        size_t count = _userIdIndexer.erase(iter->second->GetWorldUserUniqueId());
         assert(count > 0);
 
         _clients.erase(iter);
+
+        count = _characterIndexer.erase(characterId);
+        assert(count > 0);
 
         return true;
     }
@@ -59,12 +65,15 @@ namespace zerosugar::xr
         }
 
         const session::id_type id = iter->second->GetSessionId();
+        const int64_t characterId = iter->second->GetCharacterId();
 
-        [[maybe_unused]]
-        const size_t count = _clients.erase(id);
+        size_t count = _clients.erase(id);
         assert(count > 0);
 
         _userIdIndexer.erase(iter);
+
+        count = _characterIndexer.erase(characterId);
+        assert(count > 0);
 
         return true;
     }
@@ -85,6 +94,15 @@ namespace zerosugar::xr
         const auto iter = _userIdIndexer.find(userId);
 
         return iter != _userIdIndexer.end() ? iter->second : nullptr;
+    }
+
+    auto GameClientContainer::FindByCharacterId(int64_t characterId) -> std::shared_ptr<GameClient>
+    {
+        std::shared_lock lock(_mutex);
+
+        const auto iter = _characterIndexer.find(characterId);
+
+        return iter != _characterIndexer.end() ? iter->second : nullptr;
     }
 
     auto GameClientContainer::GetCount() const -> int64_t

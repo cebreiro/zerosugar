@@ -41,7 +41,7 @@ namespace zerosugar::xr
 
 
         auto GetId() const -> game_entity_id_type;
-        auto GetController() const->IGameController&;
+        auto GetController() const -> IGameController&;
 
         void SetId(game_entity_id_type id);
         void SetController(SharedPtrNotNull<IGameController> controller);

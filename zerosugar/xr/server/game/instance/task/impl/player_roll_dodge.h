@@ -7,7 +7,7 @@ namespace zerosugar::xr::game_task
     class PlayerRollDodge final : public GameTaskBaseParamT<IPacket, network::game::cs::RollDodgePlayer, MainTargetSelector>
     {
     public:
-        PlayerRollDodge(UniquePtrNotNull<IPacket> param, game_entity_id_type targetId,
+        PlayerRollDodge(UniquePtrNotNull<network::game::cs::RollDodgePlayer> param, game_entity_id_type targetId,
             game_time_point_type creationTimePoint = game_clock_type::now());
 
     private:

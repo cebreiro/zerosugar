@@ -16,6 +16,7 @@ namespace zerosugar::xr
 
         auto Find(session::id_type sessionId) -> std::shared_ptr<GameClient>;
         auto FindByUserId(int64_t userId) -> std::shared_ptr<GameClient>;
+        auto FindByCharacterId(int64_t characterId) -> std::shared_ptr<GameClient>;
 
         auto GetCount() const -> int64_t;
 
@@ -24,5 +25,6 @@ namespace zerosugar::xr
 
         std::unordered_map<session::id_type, SharedPtrNotNull<GameClient>> _clients;
         std::unordered_map<int64_t, SharedPtrNotNull<GameClient>> _userIdIndexer;
+        std::unordered_map<int64_t, SharedPtrNotNull<GameClient>> _characterIndexer;
     };
 }
