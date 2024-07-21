@@ -12,7 +12,7 @@
 namespace zerosugar::xr::lobby
 {
     ConnectedState::ConnectedState(LobbySessionStateMachine& stateMachine, ServiceLocator& serviceLocator, Session& session)
-        : LobbySessionStateMachine::state_type(LobbySessionState::Connected)
+        : state_type(LobbySessionState::Connected)
         , _stateMachine(stateMachine)
         , _serviceLocator(serviceLocator)
         , _session(session.weak_from_this())
@@ -66,8 +66,12 @@ namespace zerosugar::xr::lobby
         throw std::runtime_error(fmt::format("unhandled packet. opcode: {}", inPacket->GetOpcode()));
     }
 
+    void ConnectedState::OnSessionClose()
+    {
+    }
+
     AuthenticatedState::AuthenticatedState(LobbySessionStateMachine& stateMachine, ServiceLocator& serviceLocator, IUniqueIDGenerator& idGenerator, Session& session)
-        : LobbySessionStateMachine::state_type(LobbySessionState::Authenticated)
+        : state_type(LobbySessionState::Authenticated)
         , _stateMachine(stateMachine)
         , _serviceLocator(serviceLocator)
         , _idGenerator(idGenerator)
@@ -201,6 +205,34 @@ namespace zerosugar::xr::lobby
         }
 
         co_return;
+    }
+
+    void AuthenticatedState::OnSessionClose()
+    {
+        const std::shared_ptr<Session> session = _session.lock();
+        if (!session)
+        {
+            assert(false);
+
+            return;
+        }
+
+        int64_t accountId = _stateMachine.GetAccountId();
+        std::string token = _stateMachine.GetAuthenticationToken();
+
+        service::RemoveAuthParam param;
+        param.token = token;
+
+        _serviceLocator.Get<service::ILoginService>().RemoveAuthAsync(std::move(param))
+            .Then(session->GetStrand(), [self = shared_from_this(), accountId, token = std::move(token)](const service::RemoveAuthResult& result)
+                {
+                    if (result.errorCode != service::LoginServiceErrorCode::LoginErrorNone)
+                    {
+                        ZEROSUGAR_LOG_ERROR(self->_serviceLocator,
+                            fmt::format("[lobby_server_authenticated_state] fail to remove auth. account_id: {}, auth_token: {}, error: {}",
+                                accountId, token, GetEnumName(result.errorCode)));
+                    }
+                });
     }
 
     bool AuthenticatedState::HasCharacter(int32_t slotId) const
@@ -393,7 +425,7 @@ namespace zerosugar::xr::lobby
     }
 
     TransitionToGameState::TransitionToGameState(Session& session)
-        : LobbySessionStateMachine::state_type(LobbySessionState::TransitionToGame)
+        : state_type(LobbySessionState::TransitionToGame)
         , _session(session.weak_from_this())
     {
     }
@@ -419,5 +451,9 @@ namespace zerosugar::xr::lobby
         (void)inPacket;
 
         co_return;
+    }
+
+    void TransitionToGameState::OnSessionClose()
+    {
     }
 }

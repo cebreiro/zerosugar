@@ -169,6 +169,14 @@ namespace zerosugar
             return result;
         }
 
+    protected:
+        auto GetCurrentState() -> state_type*
+        {
+            assert(_currentState);
+
+            return _currentState;
+        }
+
     private:
         state_type* _currentState = nullptr;
         StateTransition* _currentTransition = nullptr;

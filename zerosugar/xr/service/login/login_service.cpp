@@ -58,13 +58,16 @@ namespace zerosugar::xr
         GetAccountResult getAccountResult = co_await databaseService.GetAccountAsync(std::move(getAccountParam));
         assert(ExecutionContext::IsEqualTo(*_strand));
 
-
         LoginResult result;
 
         do
         {
             if (getAccountResult.errorCode != DatabaseServiceErrorCode::DatabaseErrorNone)
             {
+                ZEROSUGAR_LOG_ERROR(_serviceLocator,
+                    fmt::format("[{}] database error occur. error: {}",
+                        GetName(), GetEnumName(getAccountResult.errorCode)));
+
                 break;
             }
 
@@ -78,6 +81,19 @@ namespace zerosugar::xr
             const std::string& encoded = Encode(param.password);
             if (encoded != dto.password)
             {
+                ZEROSUGAR_LOG_WARN(_serviceLocator,
+                    fmt::format("[{}] invalid password login attempt detected. account_id: {}",
+                        GetName(), dto.accountId));
+
+                break;
+            }
+
+            if (!_loggedInAccountIds.emplace(dto.accountId).second)
+            {
+                ZEROSUGAR_LOG_WARN(_serviceLocator,
+                    fmt::format("[{}] duplicate login attempt detected. account_id: {}",
+                        GetName(), dto.accountId));
+
                 break;
             }
 
@@ -97,7 +113,11 @@ namespace zerosugar::xr
                 }();
 
             result.errorCode = LoginServiceErrorCode::LoginErrorNone;
-            result.authenticationToken = std::move(token);
+            result.authenticationToken = token;
+
+            ZEROSUGAR_LOG_INFO(_serviceLocator,
+                fmt::format("[{}] login user added. account_id: {}, token",
+                    GetName(), dto.accountId, token));
 
             co_return result;
             
@@ -159,101 +179,47 @@ namespace zerosugar::xr
         co_return result;
     }
 
-    auto LoginService::Test1Async(AsyncEnumerable<service::TestParam> param) -> Future<service::TestResult>
+    auto LoginService::RemoveAuthAsync(service::RemoveAuthParam param) -> Future<service::RemoveAuthResult>
     {
         [[maybe_unused]]
         auto self = shared_from_this();
 
+        using namespace service;
+
         co_await *_strand;
         assert(ExecutionContext::IsEqualTo(*_strand));
 
-        int64_t i = 0;
+        RemoveAuthResult result;
 
-        try
+        do
         {
-            while (param.HasNext())
+            const auto iter = _authenticationTokens.find(param.token);
+            if (iter == _authenticationTokens.end())
             {
-                service::TestParam asd = co_await param;
-                ++i;
+                result.errorCode = LoginServiceErrorCode::RemoveAuthErrorTokenNotFound;
 
-                if (i > 50)
-                {
-                    throw std::runtime_error("test");
-                }
-
-                ZEROSUGAR_LOG_INFO(_serviceLocator, fmt::format("{}, {}, {}", __FUNCTION__, asd.token, i));
+                break;
             }
-        }
-        catch (const std::exception& e)
-        {
-            ZEROSUGAR_LOG_WARN(_serviceLocator, fmt::format("{}, exception: {}", __FUNCTION__, e.what()));
 
-            throw;
-        }
+            const int64_t accountId = iter->second;
 
-        service::TestResult result;
-        result.token = fmt::format("{} END", __FUNCTION__);
+            if (const size_t eraseCount = _loggedInAccountIds.erase(accountId);
+                eraseCount <= 0)
+            {
+                ZEROSUGAR_LOG_CRITICAL(_serviceLocator,
+                    fmt::format("[{}] fail to find login account from auth token. token: {}",
+                        GetName(), param.token));
+            }
 
-        ZEROSUGAR_LOG_INFO(_serviceLocator, fmt::format("{}, {} END", __FUNCTION__, i));
+            _authenticationTokens.erase(iter);
+
+            ZEROSUGAR_LOG_INFO(_serviceLocator,
+                fmt::format("[{}] logged user is removed. account_id: {}, token: {}",
+                    GetName(), accountId, param.token));
+            
+        } while (false);
 
         co_return result;
-    }
-
-    auto LoginService::Test2Async(service::TestParam param) -> AsyncEnumerable<service::TestResult>
-    {
-        [[maybe_unused]]
-        auto self = shared_from_this();
-
-        co_await *_strand;
-        assert(ExecutionContext::IsEqualTo(*_strand));
-
-        const int64_t count = boost::lexical_cast<int64_t>(param.token);
-
-        for (int64_t i = 0; i < count; ++i)
-        {
-            co_await Delay(std::chrono::milliseconds(1));
-
-            service::TestResult result;
-            result.token = fmt::format("{}:{}", __FUNCTION__, i);
-
-            co_yield result;
-        }
-
-        ZEROSUGAR_LOG_DEBUG(_serviceLocator, fmt::format("{} END", __FUNCTION__));
-
-        co_return;
-    }
-
-    auto LoginService::Test3Async(AsyncEnumerable<service::TestParam> param) -> AsyncEnumerable<service::TestResult>
-    {
-        [[maybe_unused]]
-        auto self = shared_from_this();
-
-        co_await *_strand;
-        assert(ExecutionContext::IsEqualTo(*_strand));
-
-        try
-        {
-            while (param.HasNext())
-            {
-                service::TestParam asd = co_await param;
-
-                service::TestResult result;
-                result.token = asd.token;
-
-                ZEROSUGAR_LOG_DEBUG(_serviceLocator, fmt::format("{} : {}", __FUNCTION__, asd.token));
-
-                co_yield result;
-            }
-        }
-        catch (const std::exception& e)
-        {
-            ZEROSUGAR_LOG_WARN(_serviceLocator, fmt::format("{}, exception: {}", __FUNCTION__, e.what()));
-        }
-
-        ZEROSUGAR_LOG_DEBUG(_serviceLocator, fmt::format("{} END", __FUNCTION__));
-
-        co_return;
     }
 
     auto LoginService::Encode(const std::string& str) -> std::string

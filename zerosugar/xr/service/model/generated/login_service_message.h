@@ -12,7 +12,9 @@ namespace zerosugar::xr::service
     {
         LoginErrorNone = 0,
         LoginErrorFailInvalid = 1,
-        AuthenticateErrorFail = 300001,
+        LoginErrorInternalError = 2,
+        AuthenticateErrorFail = 30001,
+        RemoveAuthErrorTokenNotFound = 40001,
 
     };
     auto GetEnumName(LoginServiceErrorCode e) -> std::string_view;
@@ -51,14 +53,14 @@ namespace zerosugar::xr::service
         int64_t accountId = {};
     };
 
-    struct TestParam
+    struct RemoveAuthParam
     {
         std::string token = {};
     };
 
-    struct TestResult
+    struct RemoveAuthResult
     {
-        std::string token = {};
+        LoginServiceErrorCode errorCode = {};
     };
 
 }

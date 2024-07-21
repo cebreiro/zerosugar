@@ -19,6 +19,7 @@ namespace zerosugar::xr::lobby
         ConnectedState(LobbySessionStateMachine& stateMachine, ServiceLocator& serviceLocator, Session& session);
 
         auto OnEvent(UniquePtrNotNull<IPacket> inPacket) -> Future<void> override;
+        void OnSessionClose() override;
 
     private:
         LobbySessionStateMachine& _stateMachine;
@@ -34,6 +35,7 @@ namespace zerosugar::xr::lobby
         struct CharacterCache
         {
             int64_t characterId = 0;
+            std::string name;
             int32_t zoneId = 0;
         };
 
@@ -42,13 +44,13 @@ namespace zerosugar::xr::lobby
 
         void OnEnter() override;
         auto OnEvent(UniquePtrNotNull<IPacket> inPacket) -> Future<void> override;
+        void OnSessionClose() override;
 
         bool HasCharacter(int32_t slotId) const;
         auto FindCharacter(int32_t slotId) const -> const CharacterCache*;
 
         void AddCharacter(int32_t slotId, const CharacterCache& character);
         void RemoveCharacter(int32_t slotId);
-
 
     private:
         auto HandlePacket(Session& session, const network::lobby::cs::CreateCharacter& packet) -> Future<void>;
@@ -57,7 +59,7 @@ namespace zerosugar::xr::lobby
 
     private:
         LobbySessionStateMachine& _stateMachine;
-        ServiceLocatorT<ILogService, service::ICoordinationService, service::IDatabaseService> _serviceLocator;
+        ServiceLocatorT<ILogService, service::ILoginService, service::ICoordinationService, service::IDatabaseService> _serviceLocator;
         IUniqueIDGenerator& _idGenerator;
         WeakPtrNotNull<Session> _session;
 
@@ -72,6 +74,7 @@ namespace zerosugar::xr::lobby
 
         void OnEnter() override;
         auto OnEvent(UniquePtrNotNull<IPacket> inPacket) -> Future<void> override;
+        void OnSessionClose() override;
 
     private:
         WeakPtrNotNull<Session> _session;

@@ -26,19 +26,9 @@ namespace zerosugar::xr::service
         return _client->CallRemoteProcedure<AuthenticateParam, Future<AuthenticateResult>::value_type>(name, "AuthenticateAsync", std::move(param));
     }
 
-    auto LoginServiceProxy::Test1Async(AsyncEnumerable<TestParam> param) -> Future<TestResult>
+    auto LoginServiceProxy::RemoveAuthAsync(RemoveAuthParam param) -> Future<RemoveAuthResult>
     {
-        return _client->CallRemoteProcedureClientStreaming<AsyncEnumerable<TestParam>::value_type, Future<TestResult>::value_type>(name, "Test1Async", std::move(param));
-    }
-
-    auto LoginServiceProxy::Test2Async(TestParam param) -> AsyncEnumerable<TestResult>
-    {
-        return _client->CallRemoteProcedureServerStreaming<TestParam, AsyncEnumerable<TestResult>::value_type>(name, "Test2Async", std::move(param));
-    }
-
-    auto LoginServiceProxy::Test3Async(AsyncEnumerable<TestParam> param) -> AsyncEnumerable<TestResult>
-    {
-        return _client->CallRemoteProcedureClientServerStreaming<AsyncEnumerable<TestParam>::value_type, AsyncEnumerable<TestResult>::value_type>(name, "Test3Async", std::move(param));
+        return _client->CallRemoteProcedure<RemoveAuthParam, Future<RemoveAuthResult>::value_type>(name, "RemoveAuthAsync", std::move(param));
     }
 
     void Configure(const SharedPtrNotNull<ILoginService>& service, RPCClient& rpcClient)
@@ -58,20 +48,10 @@ namespace zerosugar::xr::service
             {
                 return service->AuthenticateAsync(std::move(param));
             });
-        rpcClient.RegisterProcedure<true, false>("LoginService", "Test1Async",
-            [service = service](AsyncEnumerable<TestParam> param) -> Future<TestResult>
+        rpcClient.RegisterProcedure<false, false>("LoginService", "RemoveAuthAsync",
+            [service = service](RemoveAuthParam param) -> Future<RemoveAuthResult>
             {
-                return service->Test1Async(std::move(param));
-            });
-        rpcClient.RegisterProcedure<false, true>("LoginService", "Test2Async",
-            [service = service](TestParam param) -> AsyncEnumerable<TestResult>
-            {
-                return service->Test2Async(std::move(param));
-            });
-        rpcClient.RegisterProcedure<true, true>("LoginService", "Test3Async",
-            [service = service](AsyncEnumerable<TestParam> param) -> AsyncEnumerable<TestResult>
-            {
-                return service->Test3Async(std::move(param));
+                return service->RemoveAuthAsync(std::move(param));
             });
     }
 

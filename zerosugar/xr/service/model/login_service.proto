@@ -8,18 +8,18 @@ service LoginService
     rpc CreateAccount (CreateAccountParam) returns (CreateAccountResult);
 
     rpc Authenticate (AuthenticateParam) returns (AuthenticateResult);
-
-    rpc Test1 (stream TestParam) returns (TestResult);
-    rpc Test2 (TestParam) returns (stream TestResult);
-    rpc Test3 (stream TestParam) returns (stream TestResult);
+    rpc RemoveAuth (RemoveAuthParam) returns (RemoveAuthResult);
 }
 
 enum LoginServiceErrorCode
 {
     login_error_none = 0;
     login_error_fail_invalid = 1;
+    login_error_internal_error = 2;
 
-    authenticate_error_fail = 300001;
+    authenticate_error_fail = 30001;
+
+    remove_auth_error_token_not_found = 40001;
 }
 
 message LoginParam
@@ -56,12 +56,12 @@ message AuthenticateResult
     int64 account_id = 2;
 }
 
-message TestParam
+message RemoveAuthParam
 {
     string token = 1;
 }
 
-message TestResult
+message RemoveAuthResult
 {
-    string token = 1;
+    LoginServiceErrorCode error_code = 1;
 }

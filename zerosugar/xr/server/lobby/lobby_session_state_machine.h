@@ -21,12 +21,21 @@ namespace zerosugar::xr
         , public std::enable_shared_from_this<LobbySessionStateMachine>
     {
     public:
+        struct state_type : StateMachine::state_type
+        {
+            explicit state_type(LobbySessionState state);
+
+            virtual void OnSessionClose() = 0;
+        };
+
+    public:
         LobbySessionStateMachine(ServiceLocator& serviceLocator, IUniqueIDGenerator& idGenerator, Session& session);
 
         void Start();
         void Shutdown();
 
         void Receive(Buffer buffer);
+        void HandleSessionClose();
 
         auto GetName() const -> std::string_view;
         auto GetAccountId() const -> int64_t;

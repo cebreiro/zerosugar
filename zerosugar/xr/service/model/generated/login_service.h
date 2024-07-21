@@ -20,9 +20,7 @@ namespace zerosugar::xr::service
         virtual auto LoginAsync(LoginParam param) -> Future<LoginResult> = 0;
         virtual auto CreateAccountAsync(CreateAccountParam param) -> Future<CreateAccountResult> = 0;
         virtual auto AuthenticateAsync(AuthenticateParam param) -> Future<AuthenticateResult> = 0;
-        virtual auto Test1Async(AsyncEnumerable<TestParam> param) -> Future<TestResult> = 0;
-        virtual auto Test2Async(TestParam param) -> AsyncEnumerable<TestResult> = 0;
-        virtual auto Test3Async(AsyncEnumerable<TestParam> param) -> AsyncEnumerable<TestResult> = 0;
+        virtual auto RemoveAuthAsync(RemoveAuthParam param) -> Future<RemoveAuthResult> = 0;
         auto GetName() const -> std::string_view override { return "LoginService"; }
     };
 
@@ -36,9 +34,7 @@ namespace zerosugar::xr::service
         auto LoginAsync(LoginParam param) -> Future<LoginResult> override;
         auto CreateAccountAsync(CreateAccountParam param) -> Future<CreateAccountResult> override;
         auto AuthenticateAsync(AuthenticateParam param) -> Future<AuthenticateResult> override;
-        auto Test1Async(AsyncEnumerable<TestParam> param) -> Future<TestResult> override;
-        auto Test2Async(TestParam param) -> AsyncEnumerable<TestResult> override;
-        auto Test3Async(AsyncEnumerable<TestParam> param) -> AsyncEnumerable<TestResult> override;
+        auto RemoveAuthAsync(RemoveAuthParam param) -> Future<RemoveAuthResult> override;
     private:
         SharedPtrNotNull<RPCClient> _client;
     };

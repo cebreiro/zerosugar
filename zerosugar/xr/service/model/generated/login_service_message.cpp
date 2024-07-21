@@ -8,7 +8,9 @@ namespace zerosugar::xr::service
         {
             case LoginServiceErrorCode::LoginErrorNone: return "LoginErrorNone";
             case LoginServiceErrorCode::LoginErrorFailInvalid: return "LoginErrorFailInvalid";
+            case LoginServiceErrorCode::LoginErrorInternalError: return "LoginErrorInternalError";
             case LoginServiceErrorCode::AuthenticateErrorFail: return "AuthenticateErrorFail";
+            case LoginServiceErrorCode::RemoveAuthErrorTokenNotFound: return "RemoveAuthErrorTokenNotFound";
         }
         assert(false);
         return "unk";

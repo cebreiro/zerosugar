@@ -88,12 +88,12 @@ namespace zerosugar::xr::service
             };
     }
 
-    void from_json(const nlohmann::json& j, TestParam& item)
+    void from_json(const nlohmann::json& j, RemoveAuthParam& item)
     {
         j.at("token").get_to(item.token);
     }
 
-    void to_json(nlohmann::json& j, const TestParam& item)
+    void to_json(nlohmann::json& j, const RemoveAuthParam& item)
     {
         j = nlohmann::json
             {
@@ -101,16 +101,16 @@ namespace zerosugar::xr::service
             };
     }
 
-    void from_json(const nlohmann::json& j, TestResult& item)
+    void from_json(const nlohmann::json& j, RemoveAuthResult& item)
     {
-        j.at("token").get_to(item.token);
+        j.at("errorCode").get_to(item.errorCode);
     }
 
-    void to_json(nlohmann::json& j, const TestResult& item)
+    void to_json(nlohmann::json& j, const RemoveAuthResult& item)
     {
         j = nlohmann::json
             {
-                { "token", item.token },
+                { "errorCode", item.errorCode },
             };
     }
 

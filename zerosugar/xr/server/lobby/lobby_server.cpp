@@ -133,6 +133,8 @@ namespace zerosugar::xr
 
         if (stateMachine)
         {
+            stateMachine->HandleSessionClose();
+
             stateMachine->Shutdown();
         }
     }

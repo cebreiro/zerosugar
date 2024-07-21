@@ -8,6 +8,11 @@
 
 namespace zerosugar::xr
 {
+    LobbySessionStateMachine::state_type::state_type(LobbySessionState state)
+        : StateMachine::state_type(state)
+    {
+    }
+
     LobbySessionStateMachine::LobbySessionStateMachine(ServiceLocator& serviceLocator, IUniqueIDGenerator& idGenerator, Session& session)
         : _session(session.weak_from_this())
         , _name(fmt::format("lobby_session_state_machine[{}]", session.GetId()))
@@ -59,6 +64,35 @@ namespace zerosugar::xr
     void LobbySessionStateMachine::Receive(Buffer buffer)
     {
         _channel->Send(std::move(buffer), channel::ChannelSignal::NotifyOne);
+    }
+
+    void LobbySessionStateMachine::HandleSessionClose()
+    {
+        const std::shared_ptr<Session> session = _session.lock();
+        if (!session)
+        {
+            assert(false);
+
+            return;
+        }
+
+        Dispatch(session->GetStrand(),
+            [self = shared_from_this()]()
+            {
+                auto current = self->GetCurrentState();
+
+                auto casted = static_cast<state_type*>(current);
+                assert(dynamic_cast<state_type*>(current) == casted);
+
+                if (!casted)
+                {
+                    assert(false);
+
+                    return;
+                }
+
+                casted->OnSessionClose();
+            });
     }
 
     auto LobbySessionStateMachine::GetName() const -> std::string_view
