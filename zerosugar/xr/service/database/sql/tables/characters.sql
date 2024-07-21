@@ -1,0 +1,20 @@
+CREATE TABLE `characters` (
+  `cid` bigint(20) NOT NULL AUTO_INCREMENT,
+  `aid` bigint(20) NOT NULL,
+  `slot` tinyint(4) NOT NULL,
+  `name` varchar(20) NOT NULL,
+  `level` int(11) NOT NULL,
+  `str` int(11) NOT NULL,
+  `dex` int(11) NOT NULL,
+  `intell` int(11) NOT NULL,
+  `job` int(11) NOT NULL,
+  `face_id` int(11) NOT NULL,
+  `hair_id` int(11) NOT NULL,
+  `gold` int(11) NOT NULL,
+  `zone_id` int(11) NOT NULL,
+  `deleted` tinyint(4) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`cid`),
+  UNIQUE KEY `name_UNIQUE` (`name`),
+  KEY `aid_characters_fk_idx` (`aid`),
+  CONSTRAINT `aid_characters_fk` FOREIGN KEY (`aid`) REFERENCES `accounts` (`aid`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=737 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
