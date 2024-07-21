@@ -2,6 +2,8 @@
 
 namespace zerosugar::xr::db
 {
+    tbb::concurrent_unordered_map<std::string, std::optional<boost::mysql::statement>> StoredProcedure::_preparedStatements;
+
     StoredProcedure::StoredProcedure(zerosugar::db::ConnectionPool::Borrowed& conn)
         : _conn(conn)
     {
@@ -13,14 +15,18 @@ namespace zerosugar::xr::db
         {
             std::string_view sql = this->GetSQL();
 
-            boost::mysql::statement stmt = _conn->prepare_statement(sql);
+            std::optional<boost::mysql::statement>& stmt = _preparedStatements[MakeKey(*_conn, sql)];
+            if (!stmt.has_value())
+            {
+                stmt = _conn->prepare_statement(sql);
+            }
 
             Promise<boost::mysql::error_code> promise;
             Future<boost::mysql::error_code> future = promise.GetFuture();
 
             const boost::container::small_vector<boost::mysql::field, 16>& input = this->GetInput();
 
-            _conn->async_execute(stmt.bind(input.begin(), input.end()), _executeResult, _dbDiagnostics,
+            _conn->async_execute(stmt->bind(input.begin(), input.end()), _executeResult, _dbDiagnostics,
                 [p = std::move(promise)](boost::mysql::error_code ec) mutable
                 {
                     p.Set(std::move(ec));
@@ -46,6 +52,12 @@ namespace zerosugar::xr::db
         }
 
         co_return {};
+    }
+
+    auto StoredProcedure::MakeKey(const boost::mysql::tcp_ssl_connection& connection,
+        std::string_view sql) -> std::string
+    {
+        return fmt::format("{}_{}", sql, reinterpret_cast<size_t>(&connection));
     }
 
     namespace

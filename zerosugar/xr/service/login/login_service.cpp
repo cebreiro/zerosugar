@@ -116,7 +116,7 @@ namespace zerosugar::xr
             result.authenticationToken = token;
 
             ZEROSUGAR_LOG_INFO(_serviceLocator,
-                fmt::format("[{}] login user added. account_id: {}, token",
+                fmt::format("[{}] login user added. account_id: {}, token: {}",
                     GetName(), dto.accountId, token));
 
             co_return result;

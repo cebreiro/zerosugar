@@ -19,6 +19,7 @@ namespace zerosugar::xr
 
         if (_clients.try_emplace(sessionId, client).second)
         {
+            [[maybe_unused]]
             bool inserted = _userIdIndexer.try_emplace(client->GetWorldUserUniqueId(), client).second;
             assert(inserted);
 
@@ -43,6 +44,7 @@ namespace zerosugar::xr
 
         const int64_t characterId = iter->second->GetCharacterId();
 
+        [[maybe_unused]]
         size_t count = _userIdIndexer.erase(iter->second->GetWorldUserUniqueId());
         assert(count > 0);
 
@@ -67,6 +69,7 @@ namespace zerosugar::xr
         const session::id_type id = iter->second->GetSessionId();
         const int64_t characterId = iter->second->GetCharacterId();
 
+        [[maybe_unused]]
         size_t count = _clients.erase(id);
         assert(count > 0);
 

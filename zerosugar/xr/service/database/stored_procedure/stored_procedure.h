@@ -1,5 +1,6 @@
 #pragma once
 #include <boost/mysql.hpp>
+#include <tbb/concurrent_unordered_map.h>
 #include <boost/container/small_vector.hpp>
 #include "zerosugar/shared/database/database_error.h"
 #include "zerosugar/shared/database/connection/connection_pool.h"
@@ -26,9 +27,14 @@ namespace zerosugar::xr::db
         virtual void SetOutput(const boost::mysql::results& result) = 0;
 
     private:
+        static auto MakeKey(const boost::mysql::tcp_ssl_connection& connection, std::string_view sql) -> std::string;
+
+    private:
         zerosugar::db::ConnectionPool::Borrowed& _conn;
         boost::mysql::diagnostics _dbDiagnostics = {};
         boost::mysql::results _executeResult = {};
+
+        static tbb::concurrent_unordered_map<std::string, std::optional<boost::mysql::statement>> _preparedStatements;
     };
 
     auto StartTransaction(zerosugar::db::ConnectionPool::Borrowed& conn) -> Future<DatabaseError>;

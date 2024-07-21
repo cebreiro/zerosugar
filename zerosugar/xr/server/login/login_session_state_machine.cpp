@@ -76,7 +76,7 @@ namespace zerosugar::xr
         {
             Buffer buffer = co_await enumerable;
 
-            const std::shared_ptr<Session>& session = _session.lock();
+            const std::shared_ptr<Session> session = _session.lock();
 
             if (_shutdown.load() || !session)
             {

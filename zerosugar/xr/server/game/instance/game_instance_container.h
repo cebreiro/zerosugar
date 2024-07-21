@@ -23,6 +23,8 @@ namespace zerosugar::xr
         void Visit(const std::function<void(GameInstance&)>& function) const;
         void CVisit(const std::function<void(GameInstance&)>& function) const;
 
+        auto GetCount() const -> int64_t;
+
     private:
         mutable std::shared_mutex _mutex;
         boost::unordered::unordered_flat_map<game_instance_id_type, SharedPtrNotNull<GameInstance>> _gameInstances;

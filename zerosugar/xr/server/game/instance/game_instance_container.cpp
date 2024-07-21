@@ -65,4 +65,11 @@ namespace zerosugar::xr
             function(*gameInstance);
         }
     }
+
+    auto GameInstanceContainer::GetCount() const -> int64_t
+    {
+        std::shared_lock lock(_mutex);
+
+        return std::ssize(_gameInstances);
+    }
 }

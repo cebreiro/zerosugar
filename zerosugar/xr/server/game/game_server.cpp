@@ -509,8 +509,8 @@ namespace zerosugar::xr
                     const int64_t packetCount = self->_receivePacketCount.exchange(value);
 
                     ZEROSUGAR_LOG_INFO(self->GetServiceLocator(),
-                        fmt::format("[{}] session: {}, receive packet: {}"
-                            , self->GetName(), self->GetClientContainer().GetCount(), packetCount));
+                        fmt::format("[{}] session: {}, receive packet: {}, game_instance: {}",
+                            self->GetName(), self->GetClientContainer().GetCount(), packetCount, self->_gameInstanceContainer->GetCount()));
                 }
 
             }, SharedFromThis(), _serverStatusReportStopSource.get_token());;

@@ -69,7 +69,15 @@ namespace zerosugar::xr
 
     bool InventoryComponent::CanStackItem(int32_t itemId, int32_t quantity, int32_t& resultQuantity) const
     {
-        constexpr auto stackableItems = { 2000001 , 2000002, 2000003 };
+        const auto stackableItems = { 2000001 , 2000002, 2000003 };
+
+        if (std::ranges::none_of(stackableItems, [itemId](int32_t id)
+            {
+                return itemId == id;
+            }))
+        {
+            return false;
+        }
 
         int32_t stackableSize = 0;
 
