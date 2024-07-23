@@ -17,7 +17,7 @@ namespace zerosugar::xr
         , _gameExecutor(std::move(gameExecutor))
         , _concurrency(std::max<int64_t>(1, concurrency))
         , _botControllers(std::max<int64_t>(1, botCount))
-        , _behaviorTreeLogger(std::make_unique<BehaviorTreeLogServiceAdapter>(_serviceLocator.Get<ILogService>(), LogLevel::Debug))
+        //, _behaviorTreeLogger(std::make_unique<BehaviorTreeLogServiceAdapter>(_serviceLocator.Get<ILogService>(), LogLevel::Debug))
         , _nodeSerializer(std::make_unique<bt::NodeSerializer>())
     {
         bot::RegisterTask(*_nodeSerializer);

@@ -72,10 +72,10 @@ namespace zerosugar::xr
             co_await *_strand;
         }
 
-        /*for (const data::MonsterSpawner& spawnData : _data->GetMonsterSpawners())
+        for (const data::MonsterSpawner& spawnData : _data->GetMonsterSpawners())
         {
             Summit(std::make_unique<game_task::SpawnerInstall>(&spawnData), std::nullopt);
-        }*/
+        }
 
         if (_data->GetType() != data::MapType::Village)
         {
