@@ -223,7 +223,7 @@ namespace zerosugar::xr
             {
                 std::string name(service->GetName());
 
-                Future<void> future = _rpcClient->RegisterToServer(name, _config->rpcServerIP, _config->rpcServerPort);
+                Future<void> future = _rpcClient->RegisterToServer(name);
                 future.Get();
 
                 ZEROSUGAR_LOG_INFO(GetServiceLocator(), fmt::format("[rpc_client] register {} to rpc server --> Done", name));

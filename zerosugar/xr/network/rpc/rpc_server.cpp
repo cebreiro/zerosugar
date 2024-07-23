@@ -5,6 +5,7 @@
 #include "zerosugar/shared/network/session/session.h"
 #include "zerosugar/xr/network/packet_reader.h"
 #include "zerosugar/xr/network/rpc/rpc_packet_builder.h"
+#include "zerosugar/xr/network/model/generated/rpc_message_json.h"
 
 namespace zerosugar::xr
 {
@@ -91,6 +92,11 @@ namespace zerosugar::xr
 
             session.Close();
         }
+
+        network::NotifySnowflake notify;
+        notify.snowflakeValue = _nextSnowFlakeValue.fetch_add(1);
+
+        session.Send(RPCPacket::ToBuffer(notify));
     }
 
     void RPCServer::HandleReceive(Session& session, Buffer buffer)
@@ -181,12 +187,31 @@ namespace zerosugar::xr
                 const std::shared_ptr<Session>& target = FindSession(request.serviceName);
                 if (target)
                 {
+                    {
+                        decltype(_pendingRPCs)::accessor accessor;
+
+                        if (_pendingRPCs.insert(accessor, request.rpcId))
+                        {
+                            accessor->second = session.shared_from_this();
+                        }
+                        else
+                        {
+                            nlohmann::json j;
+                            to_json(j, request);
+
+                            ZEROSUGAR_LOG_CRITICAL(_serviceLocator,
+                                fmt::format("[{}] rpc id is duplicated. id: {}, request: {}",
+                                    GetName(), request.rpcId, j.dump()));
+                        }
+                    }
+
                     target->Send(RPCPacket::ToBuffer(request));
                 }
                 else
                 {
                     ZEROSUGAR_LOG_ERROR(_serviceLocator,
-                        fmt::format("[{}] fail to find service. service_name: {}", GetName(), request.serviceName));
+                        fmt::format("[{}] fail to find service. service_name: {}",
+                            GetName(), request.serviceName));
 
                     ResultRemoteProcedureCall result;
                     result.errorCode = RemoteProcedureCallErrorCode::RpcErrorInternalError;
@@ -201,15 +226,21 @@ namespace zerosugar::xr
             {
                 const ResultRemoteProcedureCall& result = *packet->Cast<ResultRemoteProcedureCall>();
 
-                const std::shared_ptr<Session>& target = FindSession(result.serviceName);
+                const std::shared_ptr<Session>& target = FindSession(result.rpcId);
                 if (target)
                 {
                     target->Send(RPCPacket::ToBuffer(result));
+
+                    _pendingRPCs.erase(result.rpcId);
                 }
                 else
                 {
+                    nlohmann::json j;
+                    to_json(j, result);
+
                     ZEROSUGAR_LOG_ERROR(_serviceLocator,
-                        fmt::format("[{}] fail to find service. service_name: {}", GetName(), result.serviceName));
+                        fmt::format("[{}] fail to find service. rpc_id: {}, param: {}",
+                            GetName(), result.rpcId, j.dump()));
                 }
             }
             break;
@@ -217,7 +248,7 @@ namespace zerosugar::xr
             {
                 const SendServerStreaming& serverStreaming = *packet->Cast<SendServerStreaming>();
 
-                const std::shared_ptr<Session>& target = FindSession(serverStreaming.serviceName);
+                const std::shared_ptr<Session>& target = FindSession(serverStreaming.rpcId);
                 if (target)
                 {
                     target->Send(RPCPacket::ToBuffer(serverStreaming));
@@ -272,6 +303,18 @@ namespace zerosugar::xr
         decltype(_sessions)::const_accessor accessor;
 
         if (_sessions.find(accessor, serviceName))
+        {
+            return accessor->second;
+        }
+
+        return {};
+    }
+
+    auto RPCServer::FindSession(int64_t rpcId) const -> std::shared_ptr<Session>
+    {
+        decltype(_pendingRPCs)::const_accessor accessor;
+
+        if (_pendingRPCs.find(accessor, rpcId))
         {
             return accessor->second;
         }

@@ -37,6 +37,7 @@ namespace zerosugar::xr
         void HandleReceive(Session& session, Buffer buffer);
 
         auto FindSession(const std::string& serviceName) const -> std::shared_ptr<Session>;
+        auto FindSession(int64_t rpcId) const -> std::shared_ptr<Session>;
 
         void SendTo(session::id_type id, Buffer buffer);
 
@@ -50,6 +51,8 @@ namespace zerosugar::xr
         std::unordered_multimap<session::id_type, service_name_type> _sessionServiceLists;
         tbb::concurrent_hash_map<service_name_type, SharedPtrNotNull<Session>> _sessions;
 
+        std::atomic<int32_t> _nextSnowFlakeValue = 0;
         tbb::concurrent_hash_map<session::id_type, SharedPtrNotNull<Buffer>> _receiveBuffers;
+        tbb::concurrent_hash_map<int64_t, SharedPtrNotNull<Session>> _pendingRPCs;
     };
 }

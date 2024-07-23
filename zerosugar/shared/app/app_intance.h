@@ -21,7 +21,6 @@ namespace zerosugar
         AppInstance& operator=(AppInstance&& other) noexcept = delete;
 
         AppInstance();
-        explicit AppInstance(int64_t workerCount);
         virtual ~AppInstance();
 
         auto Run(std::span<char*> args) -> int32_t;
@@ -48,7 +47,6 @@ namespace zerosugar
     private:
         std::atomic<bool> _running = false;
         ServiceLocator _serviceLocator;
-        int64_t _workerCount = 1;
         std::vector<boost::system::error_code> _errorCodes;
     };
 

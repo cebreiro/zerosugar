@@ -108,13 +108,19 @@ namespace zerosugar::xr
 
     auto RPCClient::ConnectAsync(std::string address, uint16_t port) -> Future<void>
     {
-        return _socket->ConnectAsync(std::move(address), port).Then(*_strand, [self = shared_from_this()]()
+        Future<void> waits = _snowflakePromise.GetFuture();
+
+        co_await _socket->ConnectAsync(std::move(address), port).Then(*_strand, [self = shared_from_this()]()
             {
                 self->Run();
             });
+
+        co_await waits;
+
+        co_return;
     }
 
-    auto RPCClient::RegisterToServer(std::string serviceName, std::string ip, uint16_t port) -> Future<void>
+    auto RPCClient::RegisterToServer(std::string serviceName) -> Future<void>
     {
         [[maybe_unused]]
         auto self = shared_from_this();
@@ -126,8 +132,6 @@ namespace zerosugar::xr
 
         network::RequestRegisterRPCClient request;
         request.serviceName = serviceName;
-        request.ip = std::move(ip);
-        request.port = port;
 
         Promise<void> promise;
         Future<void> future = promise.GetFuture();
@@ -274,6 +278,15 @@ namespace zerosugar::xr
                         HandleAbortClientStreaming(abort);
                     }
                     break;
+                    case network::NotifySnowflake::opcode:
+                    {
+                        const network::NotifySnowflake& notify = *packet->Cast<network::NotifySnowflake>();
+
+                        _snowflake.emplace(notify.snowflakeValue);
+
+                        _snowflakePromise.Set();
+                    }
+                    break;
                     default:
                         assert(false);
                     }
@@ -289,7 +302,7 @@ namespace zerosugar::xr
         }
     }
 
-    bool RPCClient::HasCompletionCallback(const std::string& serviceName, int32_t rpcId) const
+    bool RPCClient::HasCompletionCallback(const std::string& serviceName, int64_t rpcId) const
     {
         const auto iter = _remoteProcedures.find(serviceName);
         if (iter == _remoteProcedures.end())
@@ -300,17 +313,17 @@ namespace zerosugar::xr
         return iter->second.contains(rpcId);
     }
 
-    void RPCClient::SetCompletionCallback(const std::string& serviceName, int32_t rpcId, const completion_callback_type& callback)
+    void RPCClient::SetCompletionCallback(const std::string& serviceName, int64_t rpcId, const completion_callback_type& callback)
     {
         _remoteProcedures[serviceName][rpcId].second = callback;
     }
 
-    void RPCClient::SetServerStreamingCallback(const std::string& serviceName, int32_t rpcId, const server_streaming_callback& callback)
+    void RPCClient::SetServerStreamingCallback(const std::string& serviceName, int64_t rpcId, const server_streaming_callback& callback)
     {
         _remoteProcedures[serviceName][rpcId].first = callback;
     }
 
-    void RPCClient::Send(int32_t rpcId, std::string serviceName, std::string rpcName, std::string param)
+    void RPCClient::Send(int64_t rpcId, std::string serviceName, std::string rpcName, std::string param)
     {
         assert(ExecutionContext::IsEqualTo(*_strand));
         assert(HasCompletionCallback(serviceName, rpcId));
@@ -326,7 +339,7 @@ namespace zerosugar::xr
         _socket->SendAsync(std::move(buffer));
     }
 
-    void RPCClient::SendClientStreaming(int32_t rpcId, std::string serviceName, std::string param)
+    void RPCClient::SendClientStreaming(int64_t rpcId, std::string serviceName, std::string param)
     {
         assert(ExecutionContext::IsEqualTo(*_strand));
 
@@ -345,7 +358,7 @@ namespace zerosugar::xr
         _socket->SendAsync(std::move(buffer));
     }
 
-    void RPCClient::SendAbortClientStreaming(int32_t rpcId, const std::string& serviceName)
+    void RPCClient::SendAbortClientStreaming(int64_t rpcId, const std::string& serviceName)
     {
         assert(ExecutionContext::IsEqualTo(*_strand));
 
@@ -548,7 +561,7 @@ namespace zerosugar::xr
     {
         assert(ExecutionContext::IsEqualTo(*_strand));
 
-        auto* remoteProcedures = [this, &result]() -> std::unordered_map<int32_t, std::pair<server_streaming_callback, completion_callback_type>>*
+        auto* remoteProcedures = [this, &result]() -> std::unordered_map<int64_t, std::pair<server_streaming_callback, completion_callback_type>>*
             {
                 auto iter = _remoteProcedures.find(result.serviceName);
                 return iter != _remoteProcedures.end() ? &iter->second : nullptr;
@@ -580,16 +593,16 @@ namespace zerosugar::xr
         assert(callback);
         callback(result.errorCode, result.rpcResult);
 
-        //ZEROSUGAR_LOG_DEBUG(_serviceLocator,
-        //    fmt::format("[rpc_client] rpc is removed. rpc_id: {}, rpc: {}::{}, error: {}",
-        //        result.rpcId, result.serviceName, result.rpcName, GetEnumName(result.errorCode)));
+        ZEROSUGAR_LOG_DEBUG(_serviceLocator,
+            fmt::format("[rpc_client] rpc is removed. rpc_id: {}, rpc: {}::{}, error: {}",
+                result.rpcId, result.serviceName, result.rpcName, GetEnumName(result.errorCode)));
     }
 
     void RPCClient::HandleServerStreaming(const network::SendServerStreaming& serverStreaming)
     {
         assert(ExecutionContext::IsEqualTo(*_strand));
 
-        auto* remoteProcedures = [this, &serverStreaming]() -> std::unordered_map<int32_t, std::pair<server_streaming_callback, completion_callback_type>>*
+        auto* remoteProcedures = [this, &serverStreaming]() -> std::unordered_map<int64_t, std::pair<server_streaming_callback, completion_callback_type>>*
             {
                 auto iter = _remoteProcedures.find(serverStreaming.serviceName);
                 return iter != _remoteProcedures.end() ? &iter->second : nullptr;
@@ -612,9 +625,9 @@ namespace zerosugar::xr
 
         iter->second.first(serverStreaming.rpcResult);
 
-        //ZEROSUGAR_LOG_DEBUG(_serviceLocator,
-        //    fmt::format("[rpc_client] receive server streaming. rpc_id: {}, service: {}",
-        //        serverStreaming.rpcId, serverStreaming.serviceName));
+        ZEROSUGAR_LOG_DEBUG(_serviceLocator,
+            fmt::format("[rpc_client] receive server streaming. rpc_id: {}, service: {}",
+                serverStreaming.rpcId, serverStreaming.serviceName));
     }
 
     void RPCClient::HandleClientStreaming(const network::SendClientSteaming& clientStreaming)
@@ -637,6 +650,13 @@ namespace zerosugar::xr
 
             _runningClientStreamingProcedures.erase(iter);
         }
+    }
+
+    auto RPCClient::GenerateRPCId() -> int64_t
+    {
+        assert(_snowflake.has_value());
+
+        return static_cast<int64_t>(_snowflake->Generate());
     }
 
     auto RPCClient::MakeProcedureKey(const std::string& service, const std::string& rpc) -> std::string

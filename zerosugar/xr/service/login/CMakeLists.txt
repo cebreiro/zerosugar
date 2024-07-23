@@ -2,7 +2,6 @@ add_library(zerosugar_xr_service_login)
 
 target_link_libraries(zerosugar_xr_service_login PRIVATE
     zerosugar_xr_pch
-    zerosugar_xr_network
     zerosugar_xr_service_model
 )
 

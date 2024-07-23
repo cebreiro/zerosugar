@@ -31,8 +31,6 @@ namespace zerosugar::xr::network
         auto GetOpcode() const -> int32_t final { return opcode; }
 
         std::string serviceName = {};
-        std::string ip = {};
-        int32_t port = {};
     };
 
     struct ResultRegisterRPCClient final : IPacket
@@ -55,7 +53,7 @@ namespace zerosugar::xr::network
         void Serialize(PacketWriter& writer) const final;
         auto GetOpcode() const -> int32_t final { return opcode; }
 
-        int32_t rpcId = {};
+        int64_t rpcId = {};
         std::string serviceName = {};
         std::string rpcName = {};
         std::string parameter = {};
@@ -70,7 +68,7 @@ namespace zerosugar::xr::network
         auto GetOpcode() const -> int32_t final { return opcode; }
 
         RemoteProcedureCallErrorCode errorCode = {};
-        int32_t rpcId = {};
+        int64_t rpcId = {};
         std::string serviceName = {};
         std::string rpcName = {};
         std::string rpcResult = {};
@@ -84,7 +82,7 @@ namespace zerosugar::xr::network
         void Serialize(PacketWriter& writer) const final;
         auto GetOpcode() const -> int32_t final { return opcode; }
 
-        int32_t rpcId = {};
+        int64_t rpcId = {};
         std::string serviceName = {};
         std::string rpcResult = {};
     };
@@ -97,7 +95,7 @@ namespace zerosugar::xr::network
         void Serialize(PacketWriter& writer) const final;
         auto GetOpcode() const -> int32_t final { return opcode; }
 
-        int32_t rpcId = {};
+        int64_t rpcId = {};
         std::string serviceName = {};
         std::string parameter = {};
     };
@@ -110,8 +108,19 @@ namespace zerosugar::xr::network
         void Serialize(PacketWriter& writer) const final;
         auto GetOpcode() const -> int32_t final { return opcode; }
 
-        int32_t rpcId = {};
+        int64_t rpcId = {};
         std::string serviceName = {};
+    };
+
+    struct NotifySnowflake final : IPacket
+    {
+        static constexpr int32_t opcode = 8;
+
+        void Deserialize(PacketReader& reader) final;
+        void Serialize(PacketWriter& writer) const final;
+        auto GetOpcode() const -> int32_t final { return opcode; }
+
+        int32_t snowflakeValue = {};
     };
 
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>;
@@ -163,6 +172,12 @@ namespace zerosugar::xr::network
             {
                 static_assert(std::is_invocable_v<TVisitor, const AbortClientStreamingRPC&>);
                 visitor.template operator()<AbortClientStreamingRPC>(*packet.Cast<AbortClientStreamingRPC>());
+            }
+            break;
+            case NotifySnowflake::opcode:
+            {
+                static_assert(std::is_invocable_v<TVisitor, const NotifySnowflake&>);
+                visitor.template operator()<NotifySnowflake>(*packet.Cast<NotifySnowflake>());
             }
             break;
         }

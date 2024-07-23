@@ -30,4 +30,7 @@ namespace zerosugar::xr::network
     void from_json(const nlohmann::json& j, AbortClientStreamingRPC& item);
     void to_json(nlohmann::json& j, const AbortClientStreamingRPC& item);
 
+    void from_json(const nlohmann::json& j, NotifySnowflake& item);
+    void to_json(nlohmann::json& j, const NotifySnowflake& item);
+
 }

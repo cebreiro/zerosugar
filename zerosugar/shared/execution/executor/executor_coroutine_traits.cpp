@@ -2,7 +2,6 @@
 
 #include "zerosugar/shared/execution/context/execution_context.h"
 #include "zerosugar/shared/execution/executor/operation/post.h"
-#include "zerosugar/shared/execution/executor/operation/dispatch.h"
 
 namespace zerosugar::execution
 {
@@ -18,7 +17,7 @@ namespace zerosugar::execution
 
     void ExecutorAwaiter::await_suspend(std::coroutine_handle<> handle)
     {
-        Dispatch(*_executor, [handle]()
+        Post(*_executor, [handle]()
             {
                 handle();
             });

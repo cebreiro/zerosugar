@@ -5,8 +5,6 @@ namespace zerosugar::xr::network
     void from_json(const nlohmann::json& j, RequestRegisterRPCClient& item)
     {
         j.at("serviceName").get_to(item.serviceName);
-        j.at("ip").get_to(item.ip);
-        j.at("port").get_to(item.port);
     }
 
     void to_json(nlohmann::json& j, const RequestRegisterRPCClient& item)
@@ -14,8 +12,6 @@ namespace zerosugar::xr::network
         j = nlohmann::json
             {
                 { "serviceName", item.serviceName },
-                { "ip", item.ip },
-                { "port", item.port },
             };
     }
 
@@ -120,6 +116,19 @@ namespace zerosugar::xr::network
             {
                 { "rpcId", item.rpcId },
                 { "serviceName", item.serviceName },
+            };
+    }
+
+    void from_json(const nlohmann::json& j, NotifySnowflake& item)
+    {
+        j.at("snowflakeValue").get_to(item.snowflakeValue);
+    }
+
+    void to_json(nlohmann::json& j, const NotifySnowflake& item)
+    {
+        j = nlohmann::json
+            {
+                { "snowflakeValue", item.snowflakeValue },
             };
     }
 

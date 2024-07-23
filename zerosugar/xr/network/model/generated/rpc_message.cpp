@@ -25,15 +25,11 @@ namespace zerosugar::xr::network
     void RequestRegisterRPCClient::Deserialize(PacketReader& reader)
     {
         serviceName = reader.ReadString();
-        ip = reader.ReadString();
-        port = reader.Read<int32_t>();
     }
 
     void RequestRegisterRPCClient::Serialize(PacketWriter& writer) const
     {
         writer.Write(serviceName);
-        writer.Write(ip);
-        writer.Write<int32_t>(port);
     }
 
     void ResultRegisterRPCClient::Deserialize(PacketReader& reader)
@@ -50,7 +46,7 @@ namespace zerosugar::xr::network
 
     void RequestRemoteProcedureCall::Deserialize(PacketReader& reader)
     {
-        rpcId = reader.Read<int32_t>();
+        rpcId = reader.Read<int64_t>();
         serviceName = reader.ReadString();
         rpcName = reader.ReadString();
         parameter = reader.ReadString();
@@ -58,7 +54,7 @@ namespace zerosugar::xr::network
 
     void RequestRemoteProcedureCall::Serialize(PacketWriter& writer) const
     {
-        writer.Write<int32_t>(rpcId);
+        writer.Write<int64_t>(rpcId);
         writer.Write(serviceName);
         writer.Write(rpcName);
         writer.Write(parameter);
@@ -67,7 +63,7 @@ namespace zerosugar::xr::network
     void ResultRemoteProcedureCall::Deserialize(PacketReader& reader)
     {
         errorCode = reader.Read<RemoteProcedureCallErrorCode>();
-        rpcId = reader.Read<int32_t>();
+        rpcId = reader.Read<int64_t>();
         serviceName = reader.ReadString();
         rpcName = reader.ReadString();
         rpcResult = reader.ReadString();
@@ -76,7 +72,7 @@ namespace zerosugar::xr::network
     void ResultRemoteProcedureCall::Serialize(PacketWriter& writer) const
     {
         writer.Write(errorCode);
-        writer.Write<int32_t>(rpcId);
+        writer.Write<int64_t>(rpcId);
         writer.Write(serviceName);
         writer.Write(rpcName);
         writer.Write(rpcResult);
@@ -84,42 +80,52 @@ namespace zerosugar::xr::network
 
     void SendServerStreaming::Deserialize(PacketReader& reader)
     {
-        rpcId = reader.Read<int32_t>();
+        rpcId = reader.Read<int64_t>();
         serviceName = reader.ReadString();
         rpcResult = reader.ReadString();
     }
 
     void SendServerStreaming::Serialize(PacketWriter& writer) const
     {
-        writer.Write<int32_t>(rpcId);
+        writer.Write<int64_t>(rpcId);
         writer.Write(serviceName);
         writer.Write(rpcResult);
     }
 
     void SendClientSteaming::Deserialize(PacketReader& reader)
     {
-        rpcId = reader.Read<int32_t>();
+        rpcId = reader.Read<int64_t>();
         serviceName = reader.ReadString();
         parameter = reader.ReadString();
     }
 
     void SendClientSteaming::Serialize(PacketWriter& writer) const
     {
-        writer.Write<int32_t>(rpcId);
+        writer.Write<int64_t>(rpcId);
         writer.Write(serviceName);
         writer.Write(parameter);
     }
 
     void AbortClientStreamingRPC::Deserialize(PacketReader& reader)
     {
-        rpcId = reader.Read<int32_t>();
+        rpcId = reader.Read<int64_t>();
         serviceName = reader.ReadString();
     }
 
     void AbortClientStreamingRPC::Serialize(PacketWriter& writer) const
     {
-        writer.Write<int32_t>(rpcId);
+        writer.Write<int64_t>(rpcId);
         writer.Write(serviceName);
+    }
+
+    void NotifySnowflake::Deserialize(PacketReader& reader)
+    {
+        snowflakeValue = reader.Read<int32_t>();
+    }
+
+    void NotifySnowflake::Serialize(PacketWriter& writer) const
+    {
+        writer.Write<int32_t>(snowflakeValue);
     }
 
     auto CreateFrom(PacketReader& reader) -> std::unique_ptr<IPacket>
@@ -172,6 +178,13 @@ namespace zerosugar::xr::network
             case AbortClientStreamingRPC::opcode:
             {
                 auto item = std::make_unique<AbortClientStreamingRPC>();
+                item->Deserialize(reader);
+
+                return item;
+            }
+            case NotifySnowflake::opcode:
+            {
+                auto item = std::make_unique<NotifySnowflake>();
                 item->Deserialize(reader);
 
                 return item;
@@ -234,6 +247,13 @@ namespace zerosugar::xr::network
 
                 return item;
             }
+            case NotifySnowflake::opcode:
+            {
+                NotifySnowflake item;
+                item.Deserialize(reader);
+
+                return item;
+            }
         }
         return {};
     }
@@ -269,6 +289,10 @@ namespace zerosugar::xr::network
             case AbortClientStreamingRPC::opcode:
             {
                 return typeid(AbortClientStreamingRPC);
+            }
+            case NotifySnowflake::opcode:
+            {
+                return typeid(NotifySnowflake);
             }
         }
         assert(false);

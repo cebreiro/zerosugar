@@ -1,3 +1,14 @@
 add_subdirectory(all_in_one_app)
 add_subdirectory(benchmark_game_instance)
 add_subdirectory(bot_client)
+
+add_subdirectory(rpc_server)
+
+add_subdirectory(login_server)
+add_subdirectory(lobby_server)
+add_subdirectory(game_server)
+
+add_subdirectory(login_service)
+add_subdirectory(gateway_service)
+add_subdirectory(coordination_service)
+add_subdirectory(database_service)

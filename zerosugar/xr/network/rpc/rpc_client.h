@@ -5,6 +5,7 @@
 #include <boost/unordered/unordered_flat_map.hpp>
 #include "zerosugar/shared/service/service_interface.h"
 #include "zerosugar/shared/execution/executor/impl/asio_strand.h"
+#include "zerosugar/shared/snowflake/snowflake.h"
 #include "zerosugar/xr/network/model/generated/rpc_message.h"
 
 namespace zerosugar
@@ -38,7 +39,7 @@ namespace zerosugar::xr
 
         auto ConnectAsync(std::string address, uint16_t port) -> Future<void>;
 
-        auto RegisterToServer(std::string serviceName, std::string ip, uint16_t port) -> Future<void>;
+        auto RegisterToServer(std::string serviceName) -> Future<void>;
 
         template <bool ParamStreaming, bool ReturnStreaming, typename Func>
         bool RegisterProcedure(const std::string& serviceName, const std::string& rpcName, const Func& function);
@@ -60,14 +61,14 @@ namespace zerosugar::xr
     private:
         auto Run() -> Future<void>;
 
-        bool HasCompletionCallback(const std::string& serviceName, int32_t rpcId) const;
-        void SetCompletionCallback(const std::string& serviceName, int32_t rpcId, const completion_callback_type& callback);
+        bool HasCompletionCallback(const std::string& serviceName, int64_t rpcId) const;
+        void SetCompletionCallback(const std::string& serviceName, int64_t rpcId, const completion_callback_type& callback);
 
-        void SetServerStreamingCallback(const std::string& serviceName, int32_t rpcId, const server_streaming_callback& callback);
+        void SetServerStreamingCallback(const std::string& serviceName, int64_t rpcId, const server_streaming_callback& callback);
 
-        void Send(int32_t rpcId, std::string serviceName, std::string rpcName, std::string param);
-        void SendClientStreaming(int32_t rpcId, std::string serviceName, std::string param);
-        void SendAbortClientStreaming(int32_t rpcId, const std::string& serviceName);
+        void Send(int64_t rpcId, std::string serviceName, std::string rpcName, std::string param);
+        void SendClientStreaming(int64_t rpcId, std::string serviceName, std::string param);
+        void SendAbortClientStreaming(int64_t rpcId, const std::string& serviceName);
 
         auto HandleRequestRemoteProcedureCall(network::RequestRemoteProcedureCall request) -> Future<void>;
         void HandleResultRemoteProcedureCall(const network::ResultRemoteProcedureCall& result);
@@ -76,6 +77,8 @@ namespace zerosugar::xr
         void HandleAbortClientStreaming(const network::AbortClientStreamingRPC& abort);
 
     private:
+        auto GenerateRPCId() -> int64_t;
+
         static auto MakeProcedureKey(const std::string& service, const std::string& rpc) -> std::string;
         static auto GetRPCFullName(const std::string& service, const std::string& rpc) -> std::string;
 
@@ -87,7 +90,10 @@ namespace zerosugar::xr
         SharedPtrNotNull<Socket> _socket;
         bool _logLogScheduled = false;
 
-        // server-side
+        Promise<void> _snowflakePromise;
+        std::optional<UniqueSnowflake<>> _snowflake = std::nullopt;;
+
+        // provider-side
         std::unordered_map<std::string, Promise<void>> _registers;
         std::unordered_map<std::string,
             std::variant<
@@ -97,13 +103,12 @@ namespace zerosugar::xr
                 std::function<AsyncEnumerable<std::string>(SharedPtrNotNull<Channel<std::string>>)>
             >
         > _procedures;
-        std::unordered_map<int32_t, SharedPtrNotNull<Channel<std::string>>> _runningClientStreamingProcedures;
+        std::unordered_map<int64_t, SharedPtrNotNull<Channel<std::string>>> _runningClientStreamingProcedures;
         boost::unordered::unordered_flat_map<std::string, int32_t> _completeRPCCounts;
 
         // client-side
-        std::unordered_map<std::string, int32_t> _nextRemoteProcedureIds;
         std::unordered_map<std::string,
-            std::unordered_map<int32_t, std::pair<server_streaming_callback, completion_callback_type>>> _remoteProcedures;
+            std::unordered_map<int64_t, std::pair<server_streaming_callback, completion_callback_type>>> _remoteProcedures;
         boost::unordered::unordered_flat_map<std::string, int32_t> _receiveCompleteRPCCounts;
     };
 
@@ -368,7 +373,7 @@ namespace zerosugar::xr
 
         co_await *_strand;
 
-        const int32_t rpcId = ++_nextRemoteProcedureIds[serviceName];
+        const int64_t rpcId = GenerateRPCId();
 
         Promise<R> promise;
         Future<R> future = promise.GetFuture();
@@ -416,7 +421,7 @@ namespace zerosugar::xr
 
         co_await *_strand;
 
-        const int32_t rpcId = ++_nextRemoteProcedureIds[serviceName];
+        const int64_t rpcId = GenerateRPCId();
 
         Promise<R> promise;
         Future<R> future = promise.GetFuture();
@@ -508,7 +513,7 @@ namespace zerosugar::xr
         Post(*_strand, [](SharedPtrNotNull<RPCClient> self, std::string param, SharedPtrNotNull<Channel<R>> channel,
             std::string serviceName, std::string rpcName)
             {
-                const int32_t rpcId = ++self->_nextRemoteProcedureIds[serviceName];
+                const int64_t rpcId = self->GenerateRPCId();
 
                 self->SetServerStreamingCallback(serviceName, rpcId, [channel = channel](const std::string& str)
                     {
@@ -566,7 +571,7 @@ namespace zerosugar::xr
         Post(*_strand, [](SharedPtrNotNull<RPCClient> self, AsyncEnumerable<P> enumerable, SharedPtrNotNull<Channel<R>> channel,
             std::string serviceName, std::string rpcName) -> Future<void>
             {
-                const int32_t rpcId = ++self->_nextRemoteProcedureIds[serviceName];
+                const int64_t rpcId = self->GenerateRPCId();
 
                 self->SetServerStreamingCallback(serviceName, rpcId, [channel = channel](const std::string& str)
                     {
