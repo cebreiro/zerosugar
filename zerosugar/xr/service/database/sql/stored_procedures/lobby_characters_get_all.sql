@@ -1,10 +1,10 @@
 DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `lobby_characters_get_all`(
-	account_id bigint
+    account_id bigint
 )
 BEGIN
-	SELECT 
-		c.cid,
+    SELECT 
+        c.cid,
         c.slot,
         c.name,
         c.level,
@@ -16,28 +16,28 @@ BEGIN
         c.hair_id,
         c.zone_id
     FROM
-		characters AS c
-	WHERE
-		c.aid = account_id AND c.deleted = 0;
+        characters AS c
+    WHERE
+        c.aid = account_id AND c.deleted = 0;
         
     SELECT
         i.cid,
         i.data_id,
         ce.equip_position
-	FROM
-		characters_equipment AS ce
-	LEFT JOIN 
-		items AS i
-	ON
-		ce.iid = i.iid
-	WHERE 
-		ce.cid IN (
+    FROM
+        characters_equipment AS ce
+    LEFT JOIN 
+        items AS i
+    ON
+        ce.iid = i.iid
+    WHERE 
+        ce.cid IN (
         SELECT 
-			characters.cid
-		FROM
-			characters
-		WHERE
-			characters.aid = account_id AND characters.deleted = 0
-		);
+            characters.cid
+        FROM
+            characters
+        WHERE
+            characters.aid = account_id AND characters.deleted = 0
+        );
 END$$
 DELIMITER ;

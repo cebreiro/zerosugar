@@ -45,7 +45,7 @@ namespace zerosugar::xr
         bool IsRunning() const;
 
         void Start();
-        void Shutdown();
+        void Shutdown() override;
         auto Join() -> Future<void>;
 
         auto Transition(const std::string& behaviorTreeName) -> Future<void>;

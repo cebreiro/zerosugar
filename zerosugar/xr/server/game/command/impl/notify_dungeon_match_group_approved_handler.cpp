@@ -26,12 +26,13 @@ namespace zerosugar::xr
             co_return;
         }
 
-        co_await server.ShutdownClient(command.userId);
+        co_await server.ReleaseClient(command.userId);
 
         network::game::sc::NotifyDungeonMatchGroupApproved packet;
         packet.ip = command.ip;
         packet.port = command.port;
 
         client->Notify(packet);
+        client->Shutdown();
     }
 }

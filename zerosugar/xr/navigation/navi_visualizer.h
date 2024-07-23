@@ -62,7 +62,7 @@ namespace zerosugar::xr::navi
     private:
         void RenderThreadMain(Promise<std::pair<bool, std::string>>& initPromise);
 
-		void Tick();
+        void Tick();
 
         void DrawAgentCylinder(const Eigen::Vector3d& pos, double radius, vis::DrawColor drawColor);
         void DrawAgentYawArrow(const Eigen::Vector3d& pos, double radius, double yaw, vis::DrawColor drawColor);

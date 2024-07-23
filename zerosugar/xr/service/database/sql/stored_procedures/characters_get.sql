@@ -1,10 +1,10 @@
 DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `characters_get`(
-	IN character_id BIGINT
+    IN character_id BIGINT
 )
 BEGIN
 SELECT 
-		c.cid,
+        c.cid,
         c.name,
         c.level,
         c.str,
@@ -15,12 +15,12 @@ SELECT
         c.hair_id,
         c.zone_id
     FROM
-		characters AS c
-	WHERE
-		c.cid = character_id;
+        characters AS c
+    WHERE
+        c.cid = character_id;
         
     SELECT
-		i.iid,
+        i.iid,
         i.data_id,
         i.quantity,
         i.slot,
@@ -29,17 +29,17 @@ SELECT
         i.str,
         i.dex,
         i.intell
-	FROM
-		items AS i
-	WHERE 
-		i.cid = character_id;
+    FROM
+        items AS i
+    WHERE 
+        i.cid = character_id;
         
     SELECT
         ce.iid,
         ce.equip_position
-	FROM
-		characters_equipment AS ce
-	WHERE 
-		ce.cid = character_id;
+    FROM
+        characters_equipment AS ce
+    WHERE 
+        ce.cid = character_id;
 END$$
 DELIMITER ;

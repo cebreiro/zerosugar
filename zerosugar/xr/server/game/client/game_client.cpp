@@ -8,6 +8,7 @@ namespace zerosugar::xr
     GameClient::GameClient(SharedPtrNotNull<Session> session, std::string authenticationToken, int64_t accountId, int64_t characterId,
         int64_t worldUserUniqueId, WeakPtrNotNull<GameInstance> gameInstance)
         : _session(std::move(session))
+        , _sessionId(_session->GetId())
         , _authenticationToken(std::move(authenticationToken))
         , _accountId(accountId)
         , _characterId(characterId)
@@ -20,24 +21,38 @@ namespace zerosugar::xr
     {
     }
 
-    void GameClient::ResetSession()
-    {
-        _session->Close();
-        _session.reset();
-    }
-
     bool GameClient::IsRemoteController() const
     {
         return true;
     }
 
+    void GameClient::Shutdown()
+    {
+        _session->Close();
+        _session.reset();
+    }
+
     void GameClient::Notify(const IPacket& packet)
     {
+        if (!_session)
+        {
+            assert(false);
+
+            return;
+        }
+
         _session->Send(Packet::ToBuffer(packet));
     }
 
     void GameClient::Notify(const Buffer& buffer)
     {
+        if (!_session)
+        {
+            assert(false);
+
+            return;
+        }
+
         _session->Send(buffer.ShallowCopy());
     }
 
@@ -54,6 +69,7 @@ namespace zerosugar::xr
     void GameClient::SetSession(SharedPtrNotNull<Session> session)
     {
         _session = std::move(session);
+        _sessionId = _session->GetId();
     }
 
     void GameClient::SetGameInstance(WeakPtrNotNull<GameInstance> gameInstance)
@@ -68,9 +84,7 @@ namespace zerosugar::xr
 
     auto GameClient::GetSessionId() const -> session::id_type
     {
-        assert(_session);
-
-        return _session->GetId();
+        return _sessionId;
     }
 
     auto GameClient::GetAuthenticationToken() const -> const std::string&

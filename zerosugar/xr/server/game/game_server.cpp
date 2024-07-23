@@ -91,7 +91,7 @@ namespace zerosugar::xr
         return _clientContainer->Find(id);
     }
 
-    auto GameServer::ShutdownClient(int64_t userId) -> Future<void>
+    auto GameServer::ReleaseClient(int64_t userId) -> Future<void>
     {
         std::shared_ptr<GameClient> client = _clientContainer->FindByUserId(userId);
         if (!client)
@@ -318,8 +318,6 @@ namespace zerosugar::xr
     {
         const session::id_type sessionId = client->GetSessionId();
 
-        client->ResetSession();
-
         [[maybe_unused]]
         const bool removed = _clientContainer->Remove(sessionId);
         assert(removed);
@@ -341,6 +339,8 @@ namespace zerosugar::xr
         gameInstance->Summit(std::move(task), std::nullopt);
 
         co_await WaitAll(GetGameExecutor(), removeFuture, finalizeSaveFuture, despawnFuture);
+
+        client->Shutdown();
 
         service::RemovePlayerResult removeResult = removeFuture.Get();
         if (removeResult.errorCode != service::CoordinationServiceErrorCode::CoordinationErrorNone)

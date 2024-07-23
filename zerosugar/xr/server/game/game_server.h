@@ -37,7 +37,7 @@ namespace zerosugar::xr
         bool AddClient(session::id_type id, SharedPtrNotNull<GameClient> client);
         auto FindClient(session::id_type id) const -> SharedPtrNotNull<GameClient>;
 
-        auto ShutdownClient(int64_t userId) -> Future<void>;
+        auto ReleaseClient(int64_t userId) -> Future<void>;
 
         template <typename T> requires std::derived_from<T, IPacket>
         void SendCommandResponse(int64_t responseId, const T& item);

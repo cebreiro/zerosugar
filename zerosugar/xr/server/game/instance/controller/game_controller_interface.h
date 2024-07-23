@@ -16,6 +16,8 @@ namespace zerosugar::xr
 
         virtual bool IsRemoteController() const = 0;
 
+        virtual void Shutdown() = 0;
+
         virtual void Notify(const IPacket& packet) = 0;
         virtual void Notify(const Buffer& buffer) = 0;
 

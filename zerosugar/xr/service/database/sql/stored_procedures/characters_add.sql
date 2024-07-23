@@ -15,11 +15,11 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `characters_add`(
     OUT character_id BIGINT
 )
 BEGIN
-	INSERT INTO characters
-		(aid, slot, name, level, str, dex, intell, job, face_id, hair_id, gold, zone_id)
-	VALUES
-		(account_id, slot, name, level, str, dex, intell, job, face_id, hair_id, gold, zone_id)
-	;
+    INSERT INTO characters
+        (aid, slot, name, level, str, dex, intell, job, face_id, hair_id, gold, zone_id)
+    VALUES
+        (account_id, slot, name, level, str, dex, intell, job, face_id, hair_id, gold, zone_id)
+    ;
     
     SET character_id = LAST_INSERT_ID();
 END$$
