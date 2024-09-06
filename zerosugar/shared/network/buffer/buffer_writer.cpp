@@ -25,6 +25,7 @@ namespace zerosugar
                 auto end = _buffer.GetFragmentContainer().end();
 
                 _iter = Buffer::iterator(std::prev(end), end, 0);
+                _end = _buffer.end();
             }
 
             *_iter = c;
